@@ -1,10 +1,32 @@
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 
 public class MediaEditorGUI {
 
+    static JLabel sysMsg = new JLabel("");
+    static Timer clearSysMsg = new Timer(5000, e -> {
+        sysMsg.setText("");
+    });
+
     public static void main(String[] args) {
+        // setup sysmsg
+        clearSysMsg.setRepeats(false);
+
+        // test autosave stuff
+        Timer t = new Timer(1 * 60 * 60 * 1000, e -> {
+            System.out.println("autosaving...");
+            clearSysMsg.stop();
+            sysMsg.setText("Autosaving...");
+            clearSysMsg.start();
+
+            // TODO: actual saving here
+        });
+        t.setRepeats(true);
+        t.start();
+
+        // set up main view
         SwingUtilities.invokeLater(MediaEditorGUI::createAndShowGUI);
     }
 
@@ -33,6 +55,9 @@ public class MediaEditorGUI {
         rightPanel.add(effectButton);
 
         frame.add(rightPanel, BorderLayout.EAST);
+
+        frame.add(sysMsg, BorderLayout.SOUTH);
+
         // Display the window
         frame.setLocationRelativeTo(null);
         frame.setVisible(true);
