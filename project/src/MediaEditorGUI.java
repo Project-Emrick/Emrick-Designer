@@ -5,7 +5,7 @@ import java.awt.event.ActionListener;
 
 public class MediaEditorGUI {
 
-    static JLabel sysMsg = new JLabel("");
+    static JLabel sysMsg = new JLabel("Welcome to Emrick Designer!");
     static Timer clearSysMsg = new Timer(5000, e -> {
         sysMsg.setText("");
     });
@@ -13,6 +13,7 @@ public class MediaEditorGUI {
     public static void main(String[] args) {
         // setup sysmsg
         clearSysMsg.setRepeats(false);
+        clearSysMsg.start();
 
         // test autosave stuff
         Timer t = new Timer(1 * 60 * 60 * 1000, e -> {
@@ -38,13 +39,18 @@ public class MediaEditorGUI {
         frame.setSize(1000, 800);
 
         // Top panel, File and Help buttons
-        JPanel topPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        JPanel topPanel = new JPanel(new BorderLayout());
+        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
         JButton fileButton = new JButton("File");
         JButton helpButton = new JButton("Help");
-        topPanel.add(fileButton);
-        topPanel.add(helpButton);
+        buttonPanel.add(fileButton);
+        buttonPanel.add(helpButton);
         fileButton.addActionListener(e -> showFileOptions(frame));
         helpButton.addActionListener(e -> showHelpOptions(frame));
+        topPanel.add(buttonPanel, BorderLayout.WEST);
+        JPanel msgPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        msgPanel.add(sysMsg, BorderLayout.CENTER);
+        topPanel.add(msgPanel, BorderLayout.EAST);
         frame.add(topPanel, BorderLayout.NORTH);
 
         // Main content panel
@@ -81,9 +87,6 @@ public class MediaEditorGUI {
         effectViewPanel.setBorder(BorderFactory.createTitledBorder("Effect View"));
         frame.add(effectViewPanel, BorderLayout.EAST);
 
-
-        //logan's. Direction needs to be changed
-//        frame.add(sysMsg, BorderLayout.SOUTH);
         // Display the window
         frame.pack();
         frame.setLocationRelativeTo(null);
