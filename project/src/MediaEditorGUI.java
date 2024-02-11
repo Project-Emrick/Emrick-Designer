@@ -27,6 +27,7 @@ public class MediaEditorGUI {
         t.start();
 
         // set up main view
+        //  Swing is not thread-safe: execute on Event Dispatch Thread (EDT)
         SwingUtilities.invokeLater(MediaEditorGUI::createAndShowGUI);
     }
 
@@ -34,14 +35,16 @@ public class MediaEditorGUI {
         // Create the main window
         JFrame frame = new JFrame("Main View");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        frame.setSize(1000, 800);
+        frame.setSize(1200, 800);
 
         // Create the top panel with buttons for File and Help
-        JPanel topPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        JPanel topPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 0,0));
         JButton fileButton = new JButton("File");
         JButton helpButton = new JButton("Help");
         topPanel.add(fileButton);
         topPanel.add(helpButton);
+        // topPanel.setBorder(BorderFactory.createLineBorder(Color.black));
+        topPanel.setBackground(Color.lightGray);
 
         // Add action listeners to buttons
         fileButton.addActionListener(e -> showFileOptions(frame));
