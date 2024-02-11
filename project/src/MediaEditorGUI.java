@@ -105,7 +105,7 @@ public class MediaEditorGUI {
 
     private static void showFileOptions(Frame parent) {
         // file button
-        JPanel panel = new JPanel(new GridLayout(1, 4)); // 1 row, 4 cols
+        JPanel panel = new JPanel(new GridLayout(4, 1)); // 1 row, 4 cols
 
         // Import Pyware Project
         JButton importBtn = new JButton("Import Pyware Object");
@@ -142,7 +142,7 @@ public class MediaEditorGUI {
 
     private static void showHelpOptions(Frame parent) {
         // help button
-        JPanel panel = new JPanel(new GridLayout(1, 2));
+        JPanel panel = new JPanel(new GridLayout(2, 1));
         String[] labels = {"View document(open Github Wiki Page)", "Submit an Issue(open Github Issues page)"};
         for (String label : labels) {
             JButton button = new JButton(label);
@@ -207,7 +207,7 @@ public class MediaEditorGUI {
 
     private static void displayOptionsPanel(Frame parent, JPanel panel, String title) {
         // Show the panel in a dialog
-        panel.setPreferredSize(new Dimension(600,200));
+        panel.setPreferredSize(new Dimension(300,150));
         JDialog dialog = new JDialog(parent, title, true);
         dialog.getContentPane().add(panel);
         dialog.pack();
