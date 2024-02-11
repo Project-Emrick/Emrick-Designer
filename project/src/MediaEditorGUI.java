@@ -1,6 +1,7 @@
 import view.SelectFileGUI;
 
 import javax.swing.*;
+import javax.swing.filechooser.FileNameExtensionFilter;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -104,22 +105,33 @@ public class MediaEditorGUI {
     //
 
     private static void showFileOptions(Frame parent) {
-        // file button
+        // file button layout
         JPanel panel = new JPanel(new GridLayout(4, 1)); // 1 row, 4 cols
+        panel.setPreferredSize(new Dimension(300,150));
+        JDialog jd = new JDialog(parent, "File Options", true);
 
         // Import Pyware Project
         JButton importBtn = new JButton("Import Pyware Object");
         SelectFileGUI sfg = new SelectFileGUI();
-        importBtn.addActionListener(e -> {
-            sfg.show();
-        });
+        importBtn.addActionListener(e -> sfg.show());
         panel.add(importBtn);
         // TODO: make sfg not local, have it load the project after import finishes
+
+        // https://www.codejava.net/java-se/swing/add-file-filter-for-jfilechooser-dialog
 
         // Open Emrick Project
         JButton openBtn = new JButton("Open Emrick Project");
         openBtn.addActionListener(e -> {
             System.out.println("Opening project...");
+            JFileChooser fileChooser = new JFileChooser();
+            fileChooser.setDialogTitle("Open Project");
+            fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
+            fileChooser.setAcceptAllFileFilterUsed(false);
+            fileChooser.addChoosableFileFilter(new FileNameExtensionFilter("Emrick Project Files (emrick, json)", "emrick", "json"));
+            if (fileChooser.showOpenDialog(openBtn) == JFileChooser.APPROVE_OPTION) {
+                System.out.println("Opening file `"+fileChooser.getSelectedFile().getAbsolutePath()+"`.");
+                jd.dispose(); // close open dialog
+            }
         });
         panel.add(openBtn);
 
@@ -127,6 +139,12 @@ public class MediaEditorGUI {
         JButton saveBtn = new JButton("Save Emerick Project");
         saveBtn.addActionListener(e -> {
             System.out.println("Saving project...");
+            JFileChooser fileChooser = new JFileChooser();
+            fileChooser.setDialogTitle("Save Project");
+            if (fileChooser.showSaveDialog(openBtn) == JFileChooser.APPROVE_OPTION) {
+                System.out.println("Saving file `"+fileChooser.getSelectedFile().getAbsolutePath()+"`.");
+                jd.dispose(); // close open dialog
+            }
         });
         panel.add(saveBtn);
 
@@ -134,10 +152,19 @@ public class MediaEditorGUI {
         JButton exportBtn = new JButton("Export Emerick Packets");
         exportBtn.addActionListener(e -> {
             System.out.println("Exporting packets...");
+            JFileChooser fileChooser = new JFileChooser();
+            fileChooser.setDialogTitle("Export Project");
+            if (fileChooser.showSaveDialog(openBtn) == JFileChooser.APPROVE_OPTION) {
+                System.out.println("Exporting file `"+fileChooser.getSelectedFile().getAbsolutePath()+"`.");
+                jd.dispose(); // close open dialog
+            }
         });
         panel.add(exportBtn);
 
-        displayOptionsPanel(parent, panel, "File Options");
+        jd.getContentPane().add(panel);
+        jd.pack();
+        jd.setLocationRelativeTo(parent);
+        jd.setVisible(true);
     }
 
     private static void showHelpOptions(Frame parent) {
@@ -205,14 +232,15 @@ public class MediaEditorGUI {
     }
 
 
-    private static void displayOptionsPanel(Frame parent, JPanel panel, String title) {
+    private static JDialog displayOptionsPanel(Frame parent, JPanel panel, String title) {
         // Show the panel in a dialog
         panel.setPreferredSize(new Dimension(300,150));
         JDialog dialog = new JDialog(parent, title, true);
         dialog.getContentPane().add(panel);
         dialog.pack();
         dialog.setLocationRelativeTo(parent);
-        dialog.setVisible(true);
+//        dialog.setVisible(true);
+        return dialog;
     }
 
     // rectangle UI
