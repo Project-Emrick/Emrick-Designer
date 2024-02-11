@@ -1,3 +1,5 @@
+import view.SelectFileGUI;
+
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
@@ -91,6 +93,7 @@ public class MediaEditorGUI {
         frame.pack();
         frame.setLocationRelativeTo(null);
         frame.setVisible(true);
+        frame.setTitle("Emrick Designer");
     }
 
 
@@ -103,14 +106,37 @@ public class MediaEditorGUI {
     private static void showFileOptions(Frame parent) {
         // file button
         JPanel panel = new JPanel(new GridLayout(1, 4)); // 1 row, 4 cols
-        String[] labels = {"Import Pyware Object", "Open Emerick Object", "Save Emerick Project", "Export Emerick Packets File"};
-        for (String label : labels) {
-            JButton button = new JButton(label);
-            panel.add(button);
-            button.addActionListener((ActionEvent e) -> {
-                JOptionPane.showMessageDialog(parent, "You clicked: " + label);
-            });
-        }
+
+        // Import Pyware Project
+        JButton importBtn = new JButton("Import Pyware Object");
+        SelectFileGUI sfg = new SelectFileGUI();
+        importBtn.addActionListener(e -> {
+            sfg.show();
+        });
+        panel.add(importBtn);
+        // TODO: make sfg not local, have it load the project after import finishes
+
+        // Open Emrick Project
+        JButton openBtn = new JButton("Open Emrick Project");
+        openBtn.addActionListener(e -> {
+            System.out.println("Opening project...");
+        });
+        panel.add(openBtn);
+
+        // Save Emrick Project
+        JButton saveBtn = new JButton("Save Emerick Project");
+        saveBtn.addActionListener(e -> {
+            System.out.println("Saving project...");
+        });
+        panel.add(saveBtn);
+
+        // Export Emerick Packets
+        JButton exportBtn = new JButton("Export Emerick Packets");
+        exportBtn.addActionListener(e -> {
+            System.out.println("Exporting packets...");
+        });
+        panel.add(exportBtn);
+
         displayOptionsPanel(parent, panel, "File Options");
     }
 
@@ -181,7 +207,7 @@ public class MediaEditorGUI {
 
     private static void displayOptionsPanel(Frame parent, JPanel panel, String title) {
         // Show the panel in a dialog
-        panel.setPreferredSize(new Dimension(300,200));
+        panel.setPreferredSize(new Dimension(600,200));
         JDialog dialog = new JDialog(parent, title, true);
         dialog.getContentPane().add(panel);
         dialog.pack();
