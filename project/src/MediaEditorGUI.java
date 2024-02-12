@@ -13,7 +13,7 @@ class FootballFieldPanel extends JPanel {
     private final int fieldHeight = 360;
 
     public FootballFieldPanel() {
-        setPreferredSize(new Dimension(500, 300)); // Set preferred size for the drawing area
+        setPreferredSize(new Dimension(fieldWidth, fieldHeight)); // Set preferred size for the drawing area
     }
 
     public void addDot(int x, int y) {
@@ -54,6 +54,13 @@ class FootballFieldPanel extends JPanel {
 
 
 public class MediaEditorGUI {
+    private static FootballFieldPanel footballFieldPanel;    
+    
+    static Color chosenColor;
+    static JLabel sysMsg = new JLabel("Welcome to Emrick Designer!");
+    static Timer clearSysMsg = new Timer(5000, e -> {
+        sysMsg.setText("");
+    });
 
     public static void main(String[] args) {
         // setup sysmsg
