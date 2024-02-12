@@ -80,10 +80,6 @@ public class MediaEditorGUI {
         frame.add(topPanel, BorderLayout.NORTH);
 
         JPanel rightPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
-        // JPanel rightPanel = new JPanel();
-        // rightPanel.setLayout(new BoxLayout(rightPanel, BoxLayout.Y_AXIS));
-        
-        
         JButton effectButton = new JButton("Effect view");
         rightPanel.add(effectButton);
         rightPanel.setBackground(Color.LIGHT_GRAY);
@@ -93,9 +89,6 @@ public class MediaEditorGUI {
 
         footballFieldPanel = new FootballFieldPanel();
         frame.add(footballFieldPanel, BorderLayout.CENTER);
-
-        // JSplitPane splitPaneRight = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, rightPanel, footballFieldPanel);
-        // splitPaneRight.setOneTouchExpandable(true);
 
         // Display the window
         frame.setLocationRelativeTo(null);
