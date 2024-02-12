@@ -1,11 +1,15 @@
-package view;
-
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
+import java.util.Optional;
 
+/**
+ * This class constructs a Swing GUI window for importing Coordinates PDF and Pyware Archive file (.3dz)
+ * when starting new projects. Coordinates PDF provides necessary performer data, and Pyware Archive (.3dz)
+ * provides additional Pyware drill components (e.g., floorCover, ground, surface, audio).
+ */
 public class SelectFileGUI {
 
     JFrame frame;
@@ -16,6 +20,7 @@ public class SelectFileGUI {
     public SelectFileGUI() {
         coordsFilePath = null;
         archiveFilePath = null;
+
         initialize();
     }
 
@@ -55,7 +60,7 @@ public class SelectFileGUI {
         ulArchivePanel.add(ulArchiveButton);
         ulArchivePanel.add(ulArchiveFilename);
 
-
+        // Build UI structure
         ulPanel.add(ulCoordsLabel);
         ulCoordsLabel.setAlignmentX(Component.LEFT_ALIGNMENT); // Need all components left-aligned
         ulPanel.add(ulCoordsPanel);
@@ -66,6 +71,7 @@ public class SelectFileGUI {
         ulPanel.add(ulArchivePanel);
         ulArchivePanel.setAlignmentX(Component.LEFT_ALIGNMENT);
 
+        // Cancel/Import buttons
         JButton cancelButton = new JButton("Cancel");
         JButton importButton = new JButton("Import");
 
@@ -80,7 +86,10 @@ public class SelectFileGUI {
         frame.add(titleLabel, BorderLayout.NORTH);
         frame.add(ulPanel, BorderLayout.CENTER);
         frame.add(buttonPane, BorderLayout.SOUTH);
-//        frame.pack(); // Constricts window size with just enough room for components
+        // frame.pack(); // Constricts window size with just enough room for components
+
+
+        // Action Listeners
 
         // Coordinates File
         ulCoordsButton.addActionListener(new ActionListener() {
@@ -90,11 +99,20 @@ public class SelectFileGUI {
                 int returnValue = fileChooser.showOpenDialog(null);
                 if (returnValue == JFileChooser.APPROVE_OPTION) {
                     File selectedFile = fileChooser.getSelectedFile();
-                    System.out.println("Selected file: " + selectedFile.getAbsoluteFile());
+                    System.out.println("Coordinates | Selected file: " + selectedFile.getAbsoluteFile());
+
                     // TODO: check correct format/type
+                    String ext = getExtensionByStringHandling(selectedFile.getAbsolutePath()).get();
+                    if (!ext.equals("pdf")) {
+                        JOptionPane.showMessageDialog(frame,
+                                "Please select a coordinates (.pdf) file.",
+                                "File Type Error",
+                                JOptionPane.ERROR_MESSAGE);
+                        return;
+                    }
+
                     ulCoordsFilename.setText(selectedFile.getName());
                     coordsFilePath = selectedFile.getAbsoluteFile().toString();
-//                    System.out.println(coordsFilePath);
                 }
             }
         });
@@ -107,10 +125,20 @@ public class SelectFileGUI {
                 int returnValue = fileChooser.showOpenDialog(null);
                 if (returnValue == JFileChooser.APPROVE_OPTION) {
                     File selectedFile = fileChooser.getSelectedFile();
-                    System.out.println("Selected file: " + selectedFile.getAbsoluteFile());
+                    System.out.println("Archive     | Selected file: " + selectedFile.getAbsoluteFile());
+
                     // TODO: check correct format/type
+                    String ext = getExtensionByStringHandling(selectedFile.getAbsolutePath()).get();
+                    if (!ext.equals("3dz")) {
+                        JOptionPane.showMessageDialog(frame,
+                                "Please select a Pyware archive (.3dz) file.",
+                                "File Type Error",
+                                JOptionPane.ERROR_MESSAGE);
+                        return;
+                    }
+
                     ulArchiveFilename.setText(selectedFile.getName());
-                    archiveFilePath = selectedFile.getAbsoluteFile().toString();
+                    archiveFilePath = selectedFile.getAbsolutePath();
                 }
             }
         });
@@ -142,12 +170,27 @@ public class SelectFileGUI {
                     return;
                 }
                 System.out.println("begin import...");
+
+                // Import Coordinates Pdf and Pyware Archive
+
+                ImportArchive.fullImport(archiveFilePath);
             }
         });
     }
 
     public void show() {
         frame.setVisible(true);
+    }
+
+    /**
+     * Obtain the file extension programmatically in Java
+     * @param filename - We want the extension of this file
+     * @return A string representing the extension, if the extension exists
+     */
+    public Optional<String> getExtensionByStringHandling(String filename) {
+        return Optional.ofNullable(filename)
+                .filter(f -> f.contains("."))
+                .map(f -> f.substring(filename.lastIndexOf(".") + 1));
     }
 
     // For testing
