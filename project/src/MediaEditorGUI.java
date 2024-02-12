@@ -7,7 +7,7 @@ import javax.swing.colorchooser.AbstractColorChooserPanel;
 public class MediaEditorGUI {
     static Color chosenColor;
 
-    static JLabel sysMsg = new JLabel("");
+    static JLabel sysMsg = new JLabel("Welcome to Emrick Designer!");
     static Timer clearSysMsg = new Timer(5000, e -> {
         sysMsg.setText("");
     });
@@ -15,6 +15,7 @@ public class MediaEditorGUI {
     public static void main(String[] args) {
         // setup sysmsg
         clearSysMsg.setRepeats(false);
+        clearSysMsg.start();
 
         // test autosave stuff
         Timer t = new Timer(1 * 60 * 60 * 1000, e -> {
@@ -39,6 +40,7 @@ public class MediaEditorGUI {
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.setSize(1000, 800);
 
+
         JMenuBar menuBar = new JMenuBar();
 
 
@@ -46,6 +48,8 @@ public class MediaEditorGUI {
             Panels
          */
         JPanel topPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+
+
         frame.add(topPanel, BorderLayout.NORTH);
 
         // Main content panel
@@ -179,16 +183,16 @@ public class MediaEditorGUI {
 //        dialog.setLocationRelativeTo(parent);
 //        dialog.setVisible(true);
 //    }
-private static void showPredefinedEffects(Frame parent) {
-    // Open a JColorChooser dialog to let the user pick a color
-    Color selectedColor = JColorChooser.showDialog(parent, "Choose a Color", chosenColor);
-    if (selectedColor != null) {
-        chosenColor = selectedColor; // Store the chosen color
-        // For demonstration, let's print the selected RGB values
-        System.out.println("The selected color is: " + chosenColor.toString());
+    private static void showPredefinedEffects(Frame parent) {
+        // Open a JColorChooser dialog to let the user pick a color
+        Color selectedColor = JColorChooser.showDialog(parent, "Choose a Color", chosenColor);
+        if (selectedColor != null) {
+            chosenColor = selectedColor; // Store the chosen color
+            // For demonstration, let's print the selected RGB values
+            System.out.println("The selected color is: " + chosenColor.toString());
 
+        }
     }
-}
     private static void chooseRGB(Frame parent) {
         JTextField fieldR = new JTextField(5);
         JTextField fieldG = new JTextField(5);
