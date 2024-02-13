@@ -5,7 +5,7 @@ import java.io.IOException;
 import java.util.zip.*;
 
 public class Unzip {
-    public static void unzip(String archiveSrc, String archiveDest) {
+    public static void unzipPyware(String archiveSrc, String archiveDest) {
         File dest = new File(archiveDest);
         if (!dest.exists()) {
             dest.mkdirs();
