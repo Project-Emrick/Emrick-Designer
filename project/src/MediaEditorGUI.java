@@ -2,6 +2,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.HashMap;
+import java.util.Map;
 import javax.swing.colorchooser.AbstractColorChooserPanel;
 import java.util.ArrayList;
 import java.util.List;
@@ -55,9 +57,10 @@ class FootballFieldPanel extends JPanel {
 
 
 public class MediaEditorGUI {
-    private static FootballFieldPanel footballFieldPanel;    
-    
+    private static FootballFieldPanel footballFieldPanel;
+
     static Color chosenColor;
+
     static JLabel sysMsg = new JLabel("Welcome to Emrick Designer!");
     static Timer clearSysMsg = new Timer(5000, e -> {
         sysMsg.setText("");
@@ -89,7 +92,7 @@ public class MediaEditorGUI {
         //main window
         JFrame frame = new JFrame("Main View");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        frame.setSize(1100, 800);
+        frame.setSize(1600, 800);
 
 
         JMenuBar menuBar = new JMenuBar();
@@ -119,7 +122,23 @@ public class MediaEditorGUI {
         mainContentPanel.add(footballFieldPanel, BorderLayout.CENTER);
 
         // Scrub Bar panel
-        JPanel scrubBarPanel = new JPanel();
+        // JPanel scrubBarPanel = new JPanel();
+
+        // Temporary - Begin
+        Map<String, Integer> dummyData1 = new HashMap<>();
+        dummyData1.put("1", 0); // Page tab 1 maps to count 0
+        dummyData1.put("1A", 16); // Page tab 1A maps to count 16
+        dummyData1.put("2", 32); // Page tab 2 maps to count 32
+        dummyData1.put("2A", 48); // etc.
+        dummyData1.put("3", 64);
+        dummyData1.put("3A", 88);
+        dummyData1.put("4", 96);
+        dummyData1.put("4A", 112);
+        dummyData1.put("4B", 128);
+        // Temporary - End
+
+        ScrubBarGUI scrubBarGUI = new ScrubBarGUI(dummyData1);
+        JPanel scrubBarPanel = scrubBarGUI.getScrubBarPanel();
         scrubBarPanel.setBorder(BorderFactory.createTitledBorder("Scrub Bar"));
         scrubBarPanel.setPreferredSize(new Dimension(650, 100));
         mainContentPanel.add(scrubBarPanel, BorderLayout.SOUTH);
