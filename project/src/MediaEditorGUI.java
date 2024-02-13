@@ -22,6 +22,11 @@ class FootballFieldPanel extends JPanel {
         repaint(); // Repaint the panel to show the new dot
     }
 
+    public void clearDots() {
+        dotCoordinates.clear();
+        repaint();
+    }
+
     @Override
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
@@ -147,6 +152,14 @@ public class MediaEditorGUI {
         JMenuItem openItem = new JMenuItem("Open Emerick Object");
         fileMenu.add(openItem);
         openItem.addActionListener(e -> JOptionPane.showMessageDialog(frame, "You clicked: Open Emerick Object"));
+
+        JMenuItem displayCircleDrill = new JMenuItem("Display Circle Drill");
+        fileMenu.add(displayCircleDrill);
+        displayCircleDrill.addActionListener(e -> addLotsaDots());
+
+        JMenuItem displayStarDrill = new JMenuItem("Display Star Drill");
+        fileMenu.add(displayStarDrill);
+        displayStarDrill.addActionListener(e -> addStarDemo(mainContentPanel));
 
         JMenuItem saveItem = new JMenuItem("Save Emerick Project");
         fileMenu.add(saveItem);
@@ -293,5 +306,53 @@ public class MediaEditorGUI {
 
     public static void addDotToField(int x, int y) {
         footballFieldPanel.addDot(x, y);
+    }
+
+    public static void clearDotsFromField() {
+        footballFieldPanel.clearDots();
+    }
+
+    public static void addLotsaDots(){
+        clearDotsFromField();
+        addDotToField(370, 90);  // Top center
+        addDotToField(420, 115); // Top-right
+        addDotToField(450, 165); // Right upper-middle
+        addDotToField(450, 215); // Right lower-middle
+        addDotToField(420, 265); // Bottom-right
+        addDotToField(370, 290); // Bottom center
+        addDotToField(320, 265); // Bottom-left
+        addDotToField(290, 215); // Left lower-middle
+        addDotToField(290, 165); // Left upper-middle
+        addDotToField(320, 115); // Top-left
+    }
+
+    public static void addStarDemo(JPanel mainContentPanel){
+        clearDotsFromField();
+        addDotToField(360, 180);
+        addDotToField(380, 180);
+        addDotToField(400, 180);
+
+        addDotToField(400, 180);
+        addDotToField(410, 170);
+        addDotToField(420, 160);
+        addDotToField(430, 150);
+
+        addDotToField(400, 110);
+        addDotToField(410, 120);
+        addDotToField(420, 130);
+        addDotToField(430, 140);
+
+        addDotToField(340, 110);
+        addDotToField(360, 110);
+        addDotToField(380, 110);
+        addDotToField(400, 110);
+
+        addDotToField(360, 120);
+        addDotToField(360, 140);
+        addDotToField(360, 160);
+        addDotToField(360, 200);
+        addDotToField(360, 220);
+        addDotToField(360, 240);
+        addDotToField(360, 260);
     }
 }
