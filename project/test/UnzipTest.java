@@ -7,6 +7,6 @@ class UnzipTest {
         File fs = new File("test" + File.separator + "Purdue23-1-1aint_no_mountain_high_enough.3dz");
         File fd = new File("test" + File.separator + "Purdue23-1-1aint_no_mountain_high_enough");
         System.out.println(fs.getAbsolutePath());
-        Unzip.unzipPyware(fs.getAbsolutePath(), fd.getAbsolutePath());
+        Unzip.unzip(fs.getAbsolutePath(), fd.getAbsolutePath());
     }
 }
