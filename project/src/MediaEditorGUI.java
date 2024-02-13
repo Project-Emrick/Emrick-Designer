@@ -11,13 +11,14 @@ class FootballFieldPanel extends JPanel {
     private final List<Point> dotCoordinates = new ArrayList<>();
     private final int fieldWidth = 720; // Width of the football field
     private final int fieldHeight = 360;
+    private final int margin = 15;
 
     public FootballFieldPanel() {
-        setPreferredSize(new Dimension(fieldWidth, fieldHeight)); // Set preferred size for the drawing area
+        setPreferredSize(new Dimension(fieldWidth + 2*margin, fieldHeight + 2*margin)); // Set preferred size for the drawing area
     }
 
     public void addDot(int x, int y) {
-        dotCoordinates.add(new Point(x, y));
+        dotCoordinates.add(new Point(x + margin, y + margin));
         repaint(); // Repaint the panel to show the new dot
     }
 
@@ -27,27 +28,22 @@ class FootballFieldPanel extends JPanel {
 
         // Draw the football field background
         g.setColor(new Color(92,255,103));
-        g.fillRect(0, 0, fieldWidth, fieldHeight); // Position locked to the top left
+        g.fillRect(margin, margin, fieldWidth, fieldHeight); // Use margin for x and y start
 
-        // Draw field lines
+        // Adjust line and shape drawing to account for the margin
         g.setColor(Color.WHITE);
-        // Outer borders
-        g.drawRect(0, 0, fieldWidth, fieldHeight);
-        // Midfield line
-        g.drawLine(fieldWidth / 2, 0, fieldWidth / 2, fieldHeight);
-        // Center circle
-        g.drawOval((fieldWidth / 2) - (fieldHeight / 10), (fieldHeight / 2) - (fieldHeight / 10), fieldHeight / 5, fieldHeight / 5);
-        // Goal areas
-        g.drawRect(0, (fieldHeight / 2) - (fieldHeight / 4), fieldWidth / 10, fieldHeight / 2);
-        g.drawRect(fieldWidth - (fieldWidth / 10), (fieldHeight / 2) - (fieldHeight / 4), fieldWidth / 10, fieldHeight / 2);
+        g.drawRect(margin, margin, fieldWidth, fieldHeight);
+        g.drawLine(fieldWidth / 2 + margin, margin, fieldWidth / 2 + margin, fieldHeight + margin);
+        g.drawOval((fieldWidth / 2 - fieldHeight / 10) + margin, (fieldHeight / 2 - fieldHeight / 10) + margin, fieldHeight / 5, fieldHeight / 5);
+        g.drawRect(margin, (fieldHeight / 2 - fieldHeight / 4) + margin, fieldWidth / 10, fieldHeight / 2);
+        g.drawRect(fieldWidth - (fieldWidth / 10) + margin, (fieldHeight / 2 - fieldHeight / 4) + margin, fieldWidth / 10, fieldHeight / 2);
 
-        // Draw red dots for each coordinate
+        // Adjust dot drawing to account for the margin
         g.setColor(Color.RED);
         for (Point dot : dotCoordinates) {
-            // Ensure dots are placed relative to the field's position and size
-            int adjustedX = Math.min(dot.x, fieldWidth - 5); // Prevent dots from being outside the field
-            int adjustedY = Math.min(dot.y, fieldHeight - 5); // Prevent dots from being outside the field
-            g.fillOval(adjustedX - 5, adjustedY - 5, 10, 10); // Draw dot with a diameter of 10 pixels
+            int adjustedX = Math.min(dot.x, fieldWidth + margin - 5); // Adjust for margin
+            int adjustedY = Math.min(dot.y, fieldHeight + margin - 5); // Adjust for margin
+            g.fillOval(adjustedX - 5, adjustedY - 5, 10, 10);
         }
     }
 }
@@ -88,7 +84,7 @@ public class MediaEditorGUI {
         //main window
         JFrame frame = new JFrame("Main View");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        frame.setSize(1000, 800);
+        frame.setSize(1100, 800);
 
 
         JMenuBar menuBar = new JMenuBar();
@@ -107,10 +103,15 @@ public class MediaEditorGUI {
         mainContentPanel.setLayout(new BorderLayout());
 
         // Main View panel
-        JPanel mainViewPanel = new JPanel();
-        mainViewPanel.setBorder(BorderFactory.createTitledBorder("Main View"));
-        mainViewPanel.setPreferredSize(new Dimension(650, 500));
-        mainContentPanel.add(mainViewPanel, BorderLayout.CENTER);
+        // JPanel mainViewPanel = new JPanel();
+        // mainViewPanel.setBorder(BorderFactory.createTitledBorder("Main View"));
+        // mainViewPanel.setPreferredSize(new Dimension(650, 500));
+        // mainContentPanel.add(mainViewPanel, BorderLayout.CENTER);
+
+        footballFieldPanel = new FootballFieldPanel();
+        footballFieldPanel.setBorder(BorderFactory.createTitledBorder("Main View"));
+        footballFieldPanel.setPreferredSize(new Dimension(650, 500));
+        mainContentPanel.add(footballFieldPanel, BorderLayout.CENTER);
 
         // Scrub Bar panel
         JPanel scrubBarPanel = new JPanel();
