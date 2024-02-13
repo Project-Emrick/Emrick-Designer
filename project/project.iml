@@ -27,7 +27,7 @@
     <orderEntry type="module-library">
       <library>
         <CLASSES>
-          <root url="jar://$USER_HOME$/Downloads/pdfbox-app-3.0.1.jar!/" />
+          <root url="jar://$MODULE_DIR$/../lib/gson-2.10.1.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -36,7 +36,7 @@
     <orderEntry type="module-library">
       <library>
         <CLASSES>
-          <root url="jar://$USER_HOME$/Downloads/gson-2.10.1.jar!/" />
+          <root url="jar://$MODULE_DIR$/../lib/pdfbox-app-3.0.1.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
