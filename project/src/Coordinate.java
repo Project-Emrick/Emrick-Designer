@@ -1,3 +1,5 @@
+import java.awt.*;
+
 public class Coordinate {
     public double x;
     public double y;
@@ -5,6 +7,8 @@ public class Coordinate {
     public int duration;
 
     public String id;
+
+    public Color color;
 
     public double getX() {
         return x;
