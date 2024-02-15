@@ -13,8 +13,11 @@ public class Effect {
     public void changeSelectedDotsColor(List<Coordinate> dots, List<String> selectedIds, Color newColor) {
         for (Coordinate dot : dots) {
             if (selectedIds.contains(dot.getId())) {
-                dot.color = newColor;
+                dot.setColor(newColor); // Use the setColor method
             }
         }
+        //  not sure which way can repaint successfully
+        //        SwingUtilities.invokeLater(() -> footballFieldPanel.repaint());
+
     }
 }
