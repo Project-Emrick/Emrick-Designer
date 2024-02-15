@@ -2,11 +2,10 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.HashMap;
-import java.util.Map;
-import javax.swing.colorchooser.AbstractColorChooserPanel;
-import java.util.ArrayList;
+import java.util.*;
 import java.util.List;
+import javax.swing.Timer;
+import javax.swing.colorchooser.AbstractColorChooserPanel;
 
 
 class FootballFieldPanel extends JPanel {
@@ -59,6 +58,7 @@ class FootballFieldPanel extends JPanel {
 public class MediaEditorGUI {
     private static FootballFieldPanel footballFieldPanel;
 
+    private static Effect effect;
     static Color chosenColor;
 
     static JLabel sysMsg = new JLabel("Welcome to Emrick Designer!");
@@ -228,44 +228,18 @@ public class MediaEditorGUI {
         frame.pack();
         frame.setLocationRelativeTo(null);
         frame.setVisible(true);
+
+
+        // Need a list of Coordinate objects
+        // Need a list of IDs as strings
+
+        List<Coordinate> dots = new ArrayList<>();
+        List<String> selectedIds = Arrays.asList("id1", "id2", "id3");
+
+        ChangeColor(dots, selectedIds, chosenColor);
     }
 
 
-
-    private static JButton createColoredButton(String text, Color bgColor, Color fgColor) {
-        JButton button = new JButton(text);
-        button.setBackground(bgColor);
-        button.setForeground(fgColor);
-        button.setOpaque(true);
-        button.setBorderPainted(false);
-        return button;
-    }
-
-
-
-//    private static void showPredefinedEffects(Frame parent) {
-//        JDialog dialog = new JDialog(parent, "Predefined Effects", true);
-//        dialog.setLayout(new FlowLayout());
-//
-//        JButton button1 = createColoredButton("Blue", Color.BLUE, Color.WHITE);
-//        dialog.add(button1);
-//
-//        JButton button2 = createColoredButton("Red", Color.RED, Color.WHITE);
-//        dialog.add(button2);
-//
-//        JButton button3 = createColoredButton("Green", Color.GREEN, Color.WHITE);
-//        dialog.add(button3);
-//
-//        JButton button4 = createColoredButton("Orange", Color.ORANGE, Color.WHITE);
-//        dialog.add(button4);
-//
-//        JButton button5 = createColoredButton("Yellow", Color.YELLOW, Color.BLACK);
-//        dialog.add(button5);
-//
-//        dialog.pack();
-//        dialog.setLocationRelativeTo(parent);
-//        dialog.setVisible(true);
-//    }
     private static void showPredefinedEffects(Frame parent) {
         // Open a JColorChooser dialog to let the user pick a color
         Color selectedColor = JColorChooser.showDialog(parent, "Choose a Color", chosenColor);
@@ -374,4 +348,11 @@ public class MediaEditorGUI {
         addDotToField(360, 240);
         addDotToField(360, 260);
     }
+
+    public static void ChangeColor(List<Coordinate> dots, List<String> selectIds,Color newColor){
+        Effect effect = new Effect();
+        effect.changeSelectedDotsColor(dots, selectIds, newColor);
+        footballFieldPanel.repaint();
+    }
+
 }
