@@ -50,6 +50,12 @@ public class Coordinate {
         this.duration = duration;
     }
 
+    public Color getColor(){
+        return color;
+    }
+    public void setColor(Color newColor){
+        this.color = newColor;
+    }
     public Coordinate() {
         x = 0;
         y = 0;
