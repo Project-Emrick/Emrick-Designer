@@ -1,4 +1,4 @@
-import view.SelectFileGUI;
+//import view.SelectFileGUI;
 
 import javax.swing.*;
 import javax.swing.filechooser.FileNameExtensionFilter;
@@ -167,29 +167,61 @@ public class MediaEditorGUI {
         // File menu
         JMenu fileMenu = new JMenu("File");
         menuBar.add(fileMenu);
+
+        // Import Pyware Project
         JMenuItem importItem = new JMenuItem("Import Pyware Object");
         fileMenu.add(importItem);
-        importItem.addActionListener(e -> JOptionPane.showMessageDialog(frame, "You clicked: Import Pyware Object"));
+        SelectFileGUI sfg = new SelectFileGUI();
+        importItem.addActionListener(e -> sfg.show());
+        // TODO: make sfg not local, have it load the project after import finishes
 
+        // Open Emrick Project
+        // https://www.codejava.net/java-se/swing/add-file-filter-for-jfilechooser-dialog
         JMenuItem openItem = new JMenuItem("Open Emerick Object");
         fileMenu.add(openItem);
-        openItem.addActionListener(e -> JOptionPane.showMessageDialog(frame, "You clicked: Open Emerick Object"));
+        openItem.addActionListener(e -> {
+            System.out.println("Opening project...");
+            JFileChooser fileChooser = new JFileChooser();
+            fileChooser.setDialogTitle("Open Project");
+            fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
+            fileChooser.setAcceptAllFileFilterUsed(false);
+            fileChooser.addChoosableFileFilter(new FileNameExtensionFilter("Emrick Project Files (emrick, json)", "emrick", "json"));
+            if (fileChooser.showOpenDialog(fileMenu) == JFileChooser.APPROVE_OPTION) {
+                System.out.println("Opening file `"+fileChooser.getSelectedFile().getAbsolutePath()+"`.");
+            }
+        });
 
+        // Save Emrick Project
+        JMenuItem saveItem = new JMenuItem("Save Emerick Project");
+        fileMenu.add(saveItem);
+        saveItem.addActionListener(e -> {
+            System.out.println("Saving project...");
+            JFileChooser fileChooser = new JFileChooser();
+            fileChooser.setDialogTitle("Save Project");
+            if (fileChooser.showSaveDialog(fileMenu) == JFileChooser.APPROVE_OPTION) {
+                System.out.println("Saving file `"+fileChooser.getSelectedFile().getAbsolutePath()+"`.");
+            }
+        });
+
+        // Export Emerick Packets
+        JMenuItem exportItem = new JMenuItem("Export Emerick Packets File");
+        fileMenu.add(exportItem);
+        exportItem.addActionListener(e -> {
+            System.out.println("Exporting packets...");
+            JFileChooser fileChooser = new JFileChooser();
+            fileChooser.setDialogTitle("Export Project");
+            if (fileChooser.showSaveDialog(fileMenu) == JFileChooser.APPROVE_OPTION) {
+                System.out.println("Exporting file `"+fileChooser.getSelectedFile().getAbsolutePath()+"`.");
+            }
+        });
+
+        // Demos
         JMenuItem displayCircleDrill = new JMenuItem("Display Circle Drill");
         fileMenu.add(displayCircleDrill);
         displayCircleDrill.addActionListener(e -> addLotsaDots());
-
         JMenuItem displayStarDrill = new JMenuItem("Display Star Drill");
         fileMenu.add(displayStarDrill);
         displayStarDrill.addActionListener(e -> addStarDemo(mainContentPanel));
-
-        JMenuItem saveItem = new JMenuItem("Save Emerick Project");
-        fileMenu.add(saveItem);
-        saveItem.addActionListener(e -> JOptionPane.showMessageDialog(frame, "You clicked: Save Emerick Project"));
-
-        JMenuItem exportItem = new JMenuItem("Export Emerick Packets File");
-        fileMenu.add(exportItem);
-        exportItem.addActionListener(e -> JOptionPane.showMessageDialog(frame, "You clicked: Export Emerick Packets File"));
 
         // Help menu
         JMenu helpMenu = new JMenu("Help");
@@ -242,78 +274,6 @@ public class MediaEditorGUI {
         ChangeColor(dots, selectedIds, chosenColor);
     }
 
-
-    // Button
-    //
-    //
-    //
-    //
-
-    private static void showFileOptions(Frame parent) {
-        // file button layout
-        JPanel panel = new JPanel(new GridLayout(4, 1)); // 1 row, 4 cols
-        panel.setPreferredSize(new Dimension(300,150));
-        JDialog jd = new JDialog(parent, "File Options", true);
-
-        // Import Pyware Project
-        JButton importBtn = new JButton("Import Pyware Object");
-        SelectFileGUI sfg = new SelectFileGUI();
-        importBtn.addActionListener(e -> sfg.show());
-        panel.add(importBtn);
-        // TODO: make sfg not local, have it load the project after import finishes
-
-        // https://www.codejava.net/java-se/swing/add-file-filter-for-jfilechooser-dialog
-
-        // Open Emrick Project
-        JButton openBtn = new JButton("Open Emrick Project");
-        openBtn.addActionListener(e -> {
-            System.out.println("Opening project...");
-            JFileChooser fileChooser = new JFileChooser();
-            fileChooser.setDialogTitle("Open Project");
-            fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
-            fileChooser.setAcceptAllFileFilterUsed(false);
-            fileChooser.addChoosableFileFilter(new FileNameExtensionFilter("Emrick Project Files (emrick, json)", "emrick", "json"));
-            if (fileChooser.showOpenDialog(openBtn) == JFileChooser.APPROVE_OPTION) {
-                System.out.println("Opening file `"+fileChooser.getSelectedFile().getAbsolutePath()+"`.");
-                jd.dispose(); // close open dialog
-            }
-        });
-        panel.add(openBtn);
-
-        // Save Emrick Project
-        JButton saveBtn = new JButton("Save Emerick Project");
-        saveBtn.addActionListener(e -> {
-            System.out.println("Saving project...");
-            JFileChooser fileChooser = new JFileChooser();
-            fileChooser.setDialogTitle("Save Project");
-            if (fileChooser.showSaveDialog(openBtn) == JFileChooser.APPROVE_OPTION) {
-                System.out.println("Saving file `"+fileChooser.getSelectedFile().getAbsolutePath()+"`.");
-                jd.dispose(); // close open dialog
-            }
-        });
-        panel.add(saveBtn);
-
-        // Export Emerick Packets
-        JButton exportBtn = new JButton("Export Emerick Packets");
-        exportBtn.addActionListener(e -> {
-            System.out.println("Exporting packets...");
-            JFileChooser fileChooser = new JFileChooser();
-            fileChooser.setDialogTitle("Export Project");
-            if (fileChooser.showSaveDialog(openBtn) == JFileChooser.APPROVE_OPTION) {
-                System.out.println("Exporting file `"+fileChooser.getSelectedFile().getAbsolutePath()+"`.");
-                jd.dispose(); // close open dialog
-            }
-        });
-        panel.add(exportBtn);
-
-        jd.getContentPane().add(panel);
-        jd.pack();
-        jd.setLocationRelativeTo(parent);
-        jd.setVisible(true);
-    }
-  
-
-
     private static void showPredefinedEffects(Frame parent) {
         // Open a JColorChooser dialog to let the user pick a color
         Color selectedColor = JColorChooser.showDialog(parent, "Choose a Color", chosenColor);
@@ -357,19 +317,6 @@ public class MediaEditorGUI {
             Color selectedColor = new Color(r, g, b);
         }
     }
-  
-    private static void showHelpOptions(Frame parent) {
-        // help button
-        JPanel panel = new JPanel(new GridLayout(2, 1));
-        String[] labels = {"View document(open Github Wiki Page)", "Submit an Issue(open Github Issues page)"};
-        for (String label : labels) {
-            JButton button = new JButton(label);
-            panel.add(button);
-            button.addActionListener((ActionEvent e) -> {
-                JOptionPane.showMessageDialog(parent, "You clicked: " + label);
-            });
-        }
-    }
 
     private static int parseColorValue(String value) {
         try {
@@ -390,17 +337,6 @@ public class MediaEditorGUI {
 
     public static void clearDotsFromField() {
         footballFieldPanel.clearDots();
-    }
-
-    private static JDialog displayOptionsPanel(Frame parent, JPanel panel, String title) {
-        // Show the panel in a dialog
-        panel.setPreferredSize(new Dimension(300,150));
-        JDialog dialog = new JDialog(parent, title, true);
-        dialog.getContentPane().add(panel);
-        dialog.pack();
-        dialog.setLocationRelativeTo(parent);
-//        dialog.setVisible(true);
-        return dialog;
     }
 
     public static void addLotsaDots(){
