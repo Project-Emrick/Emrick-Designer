@@ -19,10 +19,10 @@ public class ImportArchive {
         // ! NOTE ! Assume Working Directory is Emrick-Designer/
         System.out.println("Working Directory = " + System.getProperty("user.dir"));
 
-        // Unzip archive into resources/ with same archive name w/o .3dz extension.
+        // Unzip archive into resources/unzip/ with same archive name w/o .3dz extension.
         File archiveFile = new File(archiveSrc);
         String fileNameNoExt = archiveFile.getName().replaceFirst("[.][^.]+$", "");
-        String unzipPath = "./project/resources/" + fileNameNoExt;
+        String unzipPath = "./src/main/resources/unzip/" + fileNameNoExt;
         Unzip.unzip(archiveSrc, unzipPath);
 
         // Parse package.ini file
@@ -91,7 +91,6 @@ public class ImportArchive {
     // For Testing
     public static void main(String[] args) {
 
-        ImportArchive.fullImport("D:\\CS407_Project\\Pyware Projects\\" +
-                "Purdue23-1-1aint_no_mountain_high_enough\\Purdue23-1-1aint_no_mountain_high_enough.3dz");
+        ImportArchive.fullImport("./src/test/java/org/emrick/project/Purdue23-1-1aint_no_mountain_high_enough.3dz");
     }
 }
