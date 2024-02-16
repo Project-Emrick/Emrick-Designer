@@ -2,9 +2,9 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.KeyEvent;
 import java.util.HashMap;
 import java.util.Map;
-import javax.swing.colorchooser.AbstractColorChooserPanel;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -56,7 +56,13 @@ class FootballFieldPanel extends JPanel {
 }
 
 
-public class MediaEditorGUI {
+public class MediaEditorGUI implements ActionListener {
+
+    // String definitions
+    public static final String FILE_MENU_NEW_PROJECT = "New Project";
+    public static final String FILE_MENU_OPEN_PROJECT = "Open Project";
+    public static final String FILE_MENU_SAVE = "Save";
+
     private static FootballFieldPanel footballFieldPanel;
 
     static Color chosenColor;
@@ -83,17 +89,33 @@ public class MediaEditorGUI {
         t.setRepeats(true);
         t.start();
 
-        // set up main view
-        //  Swing is not thread-safe: execute on Event Dispatch Thread (EDT)
-        SwingUtilities.invokeLater(MediaEditorGUI::createAndShowGUI);
+        // Run this program on the Event Dispatch Thread (EDT)
+        EventQueue.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+                MediaEditorGUI mediaEditorGUI = new MediaEditorGUI();
+                mediaEditorGUI.initialize();
+            }
+        });
     }
 
-    private static void createAndShowGUI() {
-        //main window
-        JFrame frame = new JFrame("Main View");
-        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        frame.setSize(1600, 800);
+    private void initialize() {
 
+        // Change Font Size for Menu and MenuIem
+        Font f = new Font("sans-serif", Font.PLAIN, 18);
+        UIManager.put("Menu.font", f);
+        UIManager.put("MenuItem.font", f);
+        UIManager.put("CheckBoxMenuItem.font", f);
+        UIManager.put("RadioButtonMenuItem.font", f);
+
+        createAndShowGUI();
+    }
+
+    private void createAndShowGUI() {
+        //main window
+        JFrame frame = new JFrame("Emrick Designer");
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.setSize(1200, 600);
 
         JMenuBar menuBar = new JMenuBar();
 
@@ -140,7 +162,7 @@ public class MediaEditorGUI {
         ScrubBarGUI scrubBarGUI = new ScrubBarGUI(dummyData1);
         JPanel scrubBarPanel = scrubBarGUI.getScrubBarPanel();
         scrubBarPanel.setBorder(BorderFactory.createTitledBorder("Scrub Bar"));
-        scrubBarPanel.setPreferredSize(new Dimension(650, 100));
+        scrubBarPanel.setPreferredSize(new Dimension(650, 120));
         mainContentPanel.add(scrubBarPanel, BorderLayout.SOUTH);
         frame.add(mainContentPanel, BorderLayout.CENTER);
 
@@ -162,15 +184,21 @@ public class MediaEditorGUI {
             Menus
          */
         // File menu
+
         JMenu fileMenu = new JMenu("File");
         menuBar.add(fileMenu);
-        JMenuItem importItem = new JMenuItem("Import Pyware Object");
-        fileMenu.add(importItem);
-        importItem.addActionListener(e -> JOptionPane.showMessageDialog(frame, "You clicked: Import Pyware Object"));
 
-        JMenuItem openItem = new JMenuItem("Open Emerick Object");
+        // Menu Item: New Project
+        JMenuItem newItem = new JMenuItem(FILE_MENU_NEW_PROJECT);
+        fileMenu.add(newItem);
+        newItem.addActionListener(this);
+
+        // Menu Item: Open Project
+        JMenuItem openItem = new JMenuItem(FILE_MENU_OPEN_PROJECT);
         fileMenu.add(openItem);
-        openItem.addActionListener(e -> JOptionPane.showMessageDialog(frame, "You clicked: Open Emerick Object"));
+        openItem.addActionListener(this);
+
+        fileMenu.addSeparator();
 
         JMenuItem displayCircleDrill = new JMenuItem("Display Circle Drill");
         fileMenu.add(displayCircleDrill);
@@ -180,9 +208,15 @@ public class MediaEditorGUI {
         fileMenu.add(displayStarDrill);
         displayStarDrill.addActionListener(e -> addStarDemo(mainContentPanel));
 
-        JMenuItem saveItem = new JMenuItem("Save Emerick Project");
+        fileMenu.addSeparator();
+
+        // Menu Item: Save
+        JMenuItem saveItem = new JMenuItem(FILE_MENU_SAVE);
+        saveItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S, ActionEvent.CTRL_MASK)); // Add CTRL+S Shortcut
         fileMenu.add(saveItem);
-        saveItem.addActionListener(e -> JOptionPane.showMessageDialog(frame, "You clicked: Save Emerick Project"));
+        saveItem.addActionListener(this);
+
+        fileMenu.addSeparator();
 
         JMenuItem exportItem = new JMenuItem("Export Emerick Packets File");
         fileMenu.add(exportItem);
@@ -373,5 +407,37 @@ public class MediaEditorGUI {
         addDotToField(360, 220);
         addDotToField(360, 240);
         addDotToField(360, 260);
+    }
+
+    @Override
+    public void actionPerformed(ActionEvent e) {
+        if (e.getSource() instanceof JMenuItem) {
+            menuActionPerformed(e);
+        }
+    }
+
+    private void menuActionPerformed(ActionEvent e) {
+        JMenuItem item = (JMenuItem) e.getSource();
+        String text = item.getText();
+
+        // New Project
+        if (text.equals(FILE_MENU_NEW_PROJECT)) {
+            System.out.println("New Project.");
+
+            SelectFileGUI selectFileGUI = new SelectFileGUI();
+            selectFileGUI.show();
+        }
+
+        // Open Project
+        else if (text.equals(FILE_MENU_OPEN_PROJECT)) {
+            System.out.println("Open Project.");
+        }
+
+        // Save
+        else if (text.equals(FILE_MENU_SAVE)) {
+            System.out.println("Save.");
+
+            // TODO: Saving
+        }
     }
 }

@@ -9,7 +9,14 @@ import java.util.regex.Pattern;
 
 public class ScrubBarGUI {
 
-    JPanel scrubBarPanel;
+    // String definitions
+    public static final String X = "";
+
+    private JPanel scrubBarPanel;
+    private JCheckBox audioCheckbox;
+    private JCheckBox fastPlayCheckbox;
+    private JCheckBox fullPlayCheckbox;
+
     Map<String, Integer> pageTabCounts; // [pageTab]:[count] e.g., k:"2A", v:30
     int lastCount;
     int currSetStartCount;
@@ -65,10 +72,13 @@ public class ScrubBarGUI {
         JSlider topSlider = new JSlider(JSlider.HORIZONTAL,0, pageTabCounts.size() - 1, 0);
         Hashtable<Integer, JLabel> labelTable = buildLabelTable();
         topSlider.setLabelTable(labelTable);
+        topSlider.setMinorTickSpacing(1);
+        topSlider.setPaintTicks(true);
         topSlider.setPaintLabels(true);
 
         // Slider for navigating within a set
         JSlider botSlider = new JSlider(JSlider.HORIZONTAL, currSetStartCount, currSetEndCount, 0);
+        botSlider.setMinorTickSpacing(1);
         botSlider.setMajorTickSpacing(2);
         botSlider.setPaintTicks(true);
         botSlider.setPaintLabels(true);
@@ -113,36 +123,130 @@ public class ScrubBarGUI {
         return labelTable;
     }
 
-    private static JPanel getToolBarPanel() {
-        JPanel toolBarPanel = new JPanel(new GridLayout(2, 1));
+    private JPanel getToolBarPanel() {
+        JPanel toolBarPanel = new JPanel(new GridLayout(3, 1));
 
-        JPanel topToolBarPanel = new JPanel(new BorderLayout());
+        JPanel topToolBarPanel = new JPanel(new GridLayout(1,3));
 
-        JButton backButton1 = new JButton("Prev");
-        JButton playPauseButton1 = new JButton("Play");
-        JButton forwardButton1 = new JButton("Next");
+        // Scrub-bar Toolbar Buttons
 
-        topToolBarPanel.add(backButton1, BorderLayout.WEST);
-        topToolBarPanel.add(playPauseButton1, BorderLayout.CENTER);
-        topToolBarPanel.add(forwardButton1, BorderLayout.EAST);
+        JButton syncButton = new JButton();
+        syncButton.setIcon(scaleImageIcon(
+                new ImageIcon("./project/resources/icons/scrub-bar/time_sync_flaticon.png")));
+        syncButton.setToolTipText("Sync audio timing");
 
-        JPanel botToolBarPanel = new JPanel(new BorderLayout());
+        JButton prevSetButton = new JButton();
+        prevSetButton.setIcon(scaleImageIcon(
+                new ImageIcon("./project/resources/icons/scrub-bar/prev_set_flaticon.png")));
+        prevSetButton.setToolTipText("Previous set");
 
-        JButton backButton2 = new JButton("Prev");
-        JButton playPauseButton2 = new JButton("Play");
-        JButton forwardButton2 = new JButton("Next");
+        JButton nextSetButton = new JButton();
+        nextSetButton.setIcon(scaleImageIcon(
+                new ImageIcon("./project/resources/icons/scrub-bar/next_set_flaticon.png")));
+        nextSetButton.setToolTipText("Next set");
 
-        botToolBarPanel.add(backButton2, BorderLayout.WEST);
-        botToolBarPanel.add(playPauseButton2, BorderLayout.CENTER);
-        botToolBarPanel.add(forwardButton2, BorderLayout.EAST);
+        topToolBarPanel.add(syncButton);
+        topToolBarPanel.add(prevSetButton);
+        topToolBarPanel.add(nextSetButton);
+
+        JPanel midToolBarPanel = new JPanel(new GridLayout(1,3));
+
+        JButton playPauseButton = new JButton();
+        playPauseButton.setIcon(scaleImageIcon(
+                new ImageIcon("./project/resources/icons/scrub-bar/play_flaticon.png")));
+        playPauseButton.setToolTipText("Play/Pause playback");
+
+        JButton prevCountButton = new JButton();
+        prevCountButton.setIcon(scaleImageIcon(
+                new ImageIcon("./project/resources/icons/scrub-bar/prev_count_flaticon.png")));
+        prevCountButton.setToolTipText("Previous count");
+
+        JButton nextCountButton = new JButton();
+        nextCountButton.setIcon(scaleImageIcon(
+                new ImageIcon("./project/resources/icons/scrub-bar/next_count_flaticon.png")));
+        nextCountButton.setToolTipText("Next count");
+
+        midToolBarPanel.add(playPauseButton);
+        midToolBarPanel.add(prevCountButton);
+        midToolBarPanel.add(nextCountButton);
+
+        JPanel botToolBarPanel = new JPanel(new GridLayout(1,3));
+
+        // Audio toggle
+        this.audioCheckbox = new JCheckBox();
+        this.audioCheckbox.setToolTipText("Toggle audio on/off");
+        JLabel audioLabel = new JLabel();
+        audioLabel.setIcon(scaleImageIcon(
+                new ImageIcon("./project/resources/icons/scrub-bar/audio_flaticon.png")));
+        JPanel audioPanel = new JPanel(new FlowLayout());
+        audioPanel.add(this.audioCheckbox);
+        audioPanel.add(audioLabel);
+
+        // Fast playback toggle
+        this.fastPlayCheckbox = new JCheckBox();
+        this.fastPlayCheckbox.setToolTipText("Toggle fast playback on/off");
+        JLabel fastPlayLabel = new JLabel();
+        fastPlayLabel.setIcon(scaleImageIcon(
+                new ImageIcon("./project/resources/icons/scrub-bar/fast_play_flaticon.png")));
+        JPanel fastPlayPanel = new JPanel(new FlowLayout());
+        fastPlayPanel.add(this.fastPlayCheckbox);
+        fastPlayPanel.add(fastPlayLabel);
+
+        // Full playback toggle
+        this.fullPlayCheckbox = new JCheckBox();
+        this.fullPlayCheckbox.setToolTipText("Toggle full playback on/off");
+        JLabel fullPlayLabel = new JLabel();
+        fullPlayLabel.setIcon(scaleImageIcon(
+                new ImageIcon("./project/resources/icons/scrub-bar/double_arrow_flaticon.png")));
+        JPanel fullPlayPanel = new JPanel(new FlowLayout());
+        fullPlayPanel.add(this.fullPlayCheckbox);
+        fullPlayPanel.add(fullPlayLabel);
+
+        // Playback should always be done with synced times, because lighting effect params involve timing.
+        //  Therefore, no option to disable synced time, for now...
+
+        botToolBarPanel.add(audioPanel);
+        botToolBarPanel.add(fastPlayPanel);
+        botToolBarPanel.add(fullPlayPanel);
 
         toolBarPanel.add(topToolBarPanel);
+        toolBarPanel.add(midToolBarPanel);
         toolBarPanel.add(botToolBarPanel);
         return toolBarPanel;
     }
 
+    /**
+     * Rescale ImageIcon to fit for toolbar icons, or for other purposes
+     * @param imageIcon - ImageIcon object to rescale.
+     * @return Altered ImageIcon with rescaled icon.
+     */
+    public ImageIcon scaleImageIcon(ImageIcon imageIcon, int width, int height) {
+        Image image = imageIcon.getImage(); // transform it
+        Image newImg = image.getScaledInstance(width, height, java.awt.Image.SCALE_SMOOTH); // scale it the smooth way
+        return new ImageIcon(newImg);  // transform it back
+    }
+
+    // Overloaded
+    private ImageIcon scaleImageIcon(ImageIcon imageIcon) {
+        Image image = imageIcon.getImage(); // transform it
+        Image newImg = image.getScaledInstance(15, 15, java.awt.Image.SCALE_SMOOTH); // scale it the smooth way
+        return new ImageIcon(newImg);  // transform it back
+    }
+
     public JPanel getScrubBarPanel() {
         return scrubBarPanel;
+    }
+
+    public JCheckBox getAudioCheckbox() {
+        return audioCheckbox;
+    }
+
+    public JCheckBox getFastPlayCheckbox() {
+        return fastPlayCheckbox;
+    }
+
+    public JCheckBox getFullPlayCheckbox() {
+        return fullPlayCheckbox;
     }
 
     /**

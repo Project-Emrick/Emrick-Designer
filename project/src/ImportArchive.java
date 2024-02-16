@@ -17,10 +17,10 @@ public class ImportArchive {
         // ! NOTE ! Assume Working Directory is Emrick-Designer/
         System.out.println("Working Directory = " + System.getProperty("user.dir"));
 
-        // Unzip archive into resources/ with same archive name w/o .3dz extension.
+        // Unzip archive into resources/unzip/ with same archive name w/o .3dz extension.
         File archiveFile = new File(archiveSrc);
         String fileNameNoExt = archiveFile.getName().replaceFirst("[.][^.]+$", "");
-        String unzipPath = "./project/resources/" + fileNameNoExt;
+        String unzipPath = "./project/resources/unzip/" + fileNameNoExt;
         Unzip.unzip(archiveSrc, unzipPath);
 
         // Parse package.ini file
