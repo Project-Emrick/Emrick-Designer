@@ -64,7 +64,7 @@ public class MediaEditorGUI {
     private static Effect effect;
     static Color chosenColor;
 
-    static JLabel sysMsg = new JLabel("Welcome to Emrick Designer!");
+    static JLabel sysMsg = new JLabel("Welcome to Emrick Designer!", SwingConstants.RIGHT);
     static Timer clearSysMsg = new Timer(5000, e -> {
         sysMsg.setText("");
     });
@@ -233,6 +233,11 @@ public class MediaEditorGUI {
         JMenuItem submitIssueItem = new JMenuItem("Submit an Issue (open Github Issues page)");
         helpMenu.add(submitIssueItem);
         submitIssueItem.addActionListener(e -> JOptionPane.showMessageDialog(frame, "You clicked: Submit an Issue"));
+
+
+        // System message
+        menuBar.add(Box.createHorizontalGlue());
+        menuBar.add(sysMsg);
 
 
         //Light menu. and adjust its menu location
