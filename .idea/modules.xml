@@ -2,8 +2,8 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/.idea/Emrick-Designer.iml" filepath="$PROJECT_DIR$/.idea/Emrick-Designer.iml" />
-      <module fileurl="file://$PROJECT_DIR$/project/project.iml" filepath="$PROJECT_DIR$/project/project.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/Emrick-Designer.iml" filepath="$PROJECT_DIR$/.idea/modules/Emrick-Designer.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/Emrick-Designer.main.iml" filepath="$PROJECT_DIR$/.idea/modules/Emrick-Designer.main.iml" />
     </modules>
   </component>
 </project>
