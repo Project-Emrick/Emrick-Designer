@@ -1,4 +1,7 @@
+//import view.SelectFileGUI;
+
 import javax.swing.*;
+import javax.swing.filechooser.FileNameExtensionFilter;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -61,7 +64,7 @@ public class MediaEditorGUI {
     private static Effect effect;
     static Color chosenColor;
 
-    static JLabel sysMsg = new JLabel("Welcome to Emrick Designer!");
+    static JLabel sysMsg = new JLabel("Welcome to Emrick Designer!", SwingConstants.RIGHT);
     static Timer clearSysMsg = new Timer(5000, e -> {
         sysMsg.setText("");
     });
@@ -164,29 +167,61 @@ public class MediaEditorGUI {
         // File menu
         JMenu fileMenu = new JMenu("File");
         menuBar.add(fileMenu);
+
+        // Import Pyware Project
         JMenuItem importItem = new JMenuItem("Import Pyware Object");
         fileMenu.add(importItem);
-        importItem.addActionListener(e -> JOptionPane.showMessageDialog(frame, "You clicked: Import Pyware Object"));
+        SelectFileGUI sfg = new SelectFileGUI();
+        importItem.addActionListener(e -> sfg.show());
+        // TODO: make sfg not local, have it load the project after import finishes
 
+        // Open Emrick Project
+        // https://www.codejava.net/java-se/swing/add-file-filter-for-jfilechooser-dialog
         JMenuItem openItem = new JMenuItem("Open Emerick Object");
         fileMenu.add(openItem);
-        openItem.addActionListener(e -> JOptionPane.showMessageDialog(frame, "You clicked: Open Emerick Object"));
+        openItem.addActionListener(e -> {
+            System.out.println("Opening project...");
+            JFileChooser fileChooser = new JFileChooser();
+            fileChooser.setDialogTitle("Open Project");
+            fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
+            fileChooser.setAcceptAllFileFilterUsed(false);
+            fileChooser.addChoosableFileFilter(new FileNameExtensionFilter("Emrick Project Files (emrick, json)", "emrick", "json"));
+            if (fileChooser.showOpenDialog(fileMenu) == JFileChooser.APPROVE_OPTION) {
+                System.out.println("Opening file `"+fileChooser.getSelectedFile().getAbsolutePath()+"`.");
+            }
+        });
 
+        // Save Emrick Project
+        JMenuItem saveItem = new JMenuItem("Save Emerick Project");
+        fileMenu.add(saveItem);
+        saveItem.addActionListener(e -> {
+            System.out.println("Saving project...");
+            JFileChooser fileChooser = new JFileChooser();
+            fileChooser.setDialogTitle("Save Project");
+            if (fileChooser.showSaveDialog(fileMenu) == JFileChooser.APPROVE_OPTION) {
+                System.out.println("Saving file `"+fileChooser.getSelectedFile().getAbsolutePath()+"`.");
+            }
+        });
+
+        // Export Emerick Packets
+        JMenuItem exportItem = new JMenuItem("Export Emerick Packets File");
+        fileMenu.add(exportItem);
+        exportItem.addActionListener(e -> {
+            System.out.println("Exporting packets...");
+            JFileChooser fileChooser = new JFileChooser();
+            fileChooser.setDialogTitle("Export Project");
+            if (fileChooser.showSaveDialog(fileMenu) == JFileChooser.APPROVE_OPTION) {
+                System.out.println("Exporting file `"+fileChooser.getSelectedFile().getAbsolutePath()+"`.");
+            }
+        });
+
+        // Demos
         JMenuItem displayCircleDrill = new JMenuItem("Display Circle Drill");
         fileMenu.add(displayCircleDrill);
         displayCircleDrill.addActionListener(e -> addLotsaDots());
-
         JMenuItem displayStarDrill = new JMenuItem("Display Star Drill");
         fileMenu.add(displayStarDrill);
         displayStarDrill.addActionListener(e -> addStarDemo(mainContentPanel));
-
-        JMenuItem saveItem = new JMenuItem("Save Emerick Project");
-        fileMenu.add(saveItem);
-        saveItem.addActionListener(e -> JOptionPane.showMessageDialog(frame, "You clicked: Save Emerick Project"));
-
-        JMenuItem exportItem = new JMenuItem("Export Emerick Packets File");
-        fileMenu.add(exportItem);
-        exportItem.addActionListener(e -> JOptionPane.showMessageDialog(frame, "You clicked: Export Emerick Packets File"));
 
         // Help menu
         JMenu helpMenu = new JMenu("Help");
@@ -198,6 +233,11 @@ public class MediaEditorGUI {
         JMenuItem submitIssueItem = new JMenuItem("Submit an Issue (open Github Issues page)");
         helpMenu.add(submitIssueItem);
         submitIssueItem.addActionListener(e -> JOptionPane.showMessageDialog(frame, "You clicked: Submit an Issue"));
+
+
+        // System message
+        menuBar.add(Box.createHorizontalGlue());
+        menuBar.add(sysMsg);
 
 
         //Light menu. and adjust its menu location
@@ -228,7 +268,7 @@ public class MediaEditorGUI {
         frame.pack();
         frame.setLocationRelativeTo(null);
         frame.setVisible(true);
-
+        frame.setTitle("Emrick Designer");
 
         // Need a list of Coordinate objects
         // Need a list of IDs as strings
@@ -238,7 +278,6 @@ public class MediaEditorGUI {
 
         ChangeColor(dots, selectedIds, chosenColor);
     }
-
 
     private static void showPredefinedEffects(Frame parent) {
         // Open a JColorChooser dialog to let the user pick a color
@@ -250,6 +289,7 @@ public class MediaEditorGUI {
 
         }
     }
+
     private static void chooseRGB(Frame parent) {
         JTextField fieldR = new JTextField(5);
         JTextField fieldG = new JTextField(5);
@@ -280,7 +320,6 @@ public class MediaEditorGUI {
 
             // Now you have r, g, b values, you can use them to set the color
             Color selectedColor = new Color(r, g, b);
-
         }
     }
 
