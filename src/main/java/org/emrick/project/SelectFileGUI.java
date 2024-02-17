@@ -15,21 +15,37 @@ import java.util.Optional;
  */
 public class SelectFileGUI implements ActionListener {
 
+    // Parent frame
     JFrame frame;
 
+    // Paths to selected files
     String coordsFilePath;
     String archiveFilePath;
 
+    // Upload File Buttons
     JButton ulCoordsButton;
     JButton ulArchiveButton;
 
+    // Filename Display Labels
     JLabel ulCoordsFilename;
     JLabel ulArchiveFilename;
 
+    // Import / Cancel Buttons
     JButton cancelButton;
     JButton importButton;
 
-    public SelectFileGUI() {
+    // Import Archive Service
+    ImportArchive importArchive;
+
+    /**
+     * Prepare ImportArchive service object.
+     * @param importListener Passed down from a class that overrides ImportListener methods.
+     *                       Provides callback functionality (e.g., to repaint field after importing
+     *                       floorCover or surface images).
+     */
+    public SelectFileGUI(ImportListener importListener) {
+        importArchive = new ImportArchive(importListener);
+
         coordsFilePath = null;
         archiveFilePath = null;
 
@@ -124,19 +140,6 @@ public class SelectFileGUI implements ActionListener {
                 .map(f -> f.substring(filename.lastIndexOf(".") + 1));
     }
 
-    // For testing
-    public static void main(String[] args) {
-
-        // Run Swing programs on the Event Dispatch Thread (EDT)
-        SwingUtilities.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-                SelectFileGUI selectFileGUI = new SelectFileGUI();
-                selectFileGUI.show();
-            }
-        });
-    }
-
     @Override
     public void actionPerformed(ActionEvent e) {
         if (e.getSource() instanceof JButton) {
@@ -193,7 +196,9 @@ public class SelectFileGUI implements ActionListener {
 
                 // TODO: Import Coordinates Pdf and Pyware Archive
 
-                ImportArchive.fullImport(archiveFilePath);
+                importArchive.fullImport(archiveFilePath);
+
+                frame.dispose();
             }
 
         }
@@ -220,5 +225,30 @@ public class SelectFileGUI implements ActionListener {
         });
 
         return fileChooser;
+    }
+
+    // For testing
+    public static void main(String[] args) {
+
+        // Run Swing programs on the Event Dispatch Thread (EDT)
+        SwingUtilities.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+                ImportListener importListener = new ImportListener() {
+                    @Override
+                    public void onFloorCoverImport(Image image) {
+                        System.out.println("onFloorCoverImport called.");
+                    }
+
+                    @Override
+                    public void onSurfaceImport(Image image) {
+                        System.out.println("onSurfaceImport called.");
+                    }
+                };
+
+                SelectFileGUI selectFileGUI = new SelectFileGUI(importListener);
+                selectFileGUI.show();
+            }
+        });
     }
 }
