@@ -1,7 +1,12 @@
 package org.emrick.project;
 
+import javax.imageio.ImageIO;
+import java.awt.*;
+import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Scanner;
@@ -14,7 +19,13 @@ import java.util.Scanner;
  */
 public class ImportArchive {
 
-    public static void fullImport(String archiveSrc) {
+    private final ImportListener importListener;
+
+    public ImportArchive(ImportListener importListener) {
+        this.importListener = importListener;
+    }
+
+    public void fullImport(String archiveSrc) {
 
         // ! NOTE ! Assume Working Directory is Emrick-Designer/
         System.out.println("Working Directory = " + System.getProperty("user.dir"));
@@ -66,13 +77,18 @@ public class ImportArchive {
             if (entry.getValue().isEmpty()) {
                 continue;
             }
-
-            String componentPath = unzipPath + File.separator + entry.getValue();
+            String componentPath = unzipPath + "/" + entry.getValue();
 
             // Import floorCover
             if (entry.getKey().equals("floorCover")) {
                 importFloorCover(componentPath);
             }
+
+            // Import surface
+            else if (entry.getKey().equals("surface")) {
+                importSurface(componentPath);
+            }
+
             // Import audio
             else if (entry.getKey().equals("audio")) {
                 importAudio(componentPath);
@@ -80,17 +96,48 @@ public class ImportArchive {
         }
     }
 
-    private static void importFloorCover(String path) {
+    private void importFloorCover(String path) {
         System.out.println("Importing floor cover..." + path);
+        importListener.onFloorCoverImport(loadImage(path));
     }
 
-    private static void importAudio(String path) {
+    private void importSurface(String path) {
+        System.out.println("Importing surface..." + path);
+        BufferedImage image = (BufferedImage) loadImage(path);
+        // Write cropped image to file?
+        BufferedImage cropped = image.getSubimage(1102, 578, 2196, 1157);
+        importListener.onSurfaceImport(cropped);
+    }
+
+    private void importAudio(String path) {
         System.out.println("Importing audio..." + path);
+    }
+
+    // Return Image object for images, e.g., field floorCover, surface
+    private static Image loadImage(String path) {
+        try {
+            return ImageIO.read(new File(path));
+        } catch (IOException e) {
+            System.err.println("ImportArchive.loadImage() " + e.getMessage());
+        }
+        return null;
     }
 
     // For Testing
     public static void main(String[] args) {
+        ImportListener importListener = new ImportListener() {
+            @Override
+            public void onFloorCoverImport(Image image) {
+                System.out.println("onFloorCoverImport called.");
+            }
 
-        ImportArchive.fullImport("./src/test/java/org/emrick/project/Purdue23-1-1aint_no_mountain_high_enough.3dz");
+            @Override
+            public void onSurfaceImport(Image image) {
+                System.out.println("onSurfaceImport called.");
+            }
+        };
+
+        ImportArchive importArchive = new ImportArchive(importListener);
+        importArchive.fullImport("./src/test/java/org/emrick/project/Purdue23-1-1aint_no_mountain_high_enough.3dz");
     }
 }
