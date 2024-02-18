@@ -236,6 +236,11 @@ public class SelectFileGUI implements ActionListener {
             public void run() {
                 ImportListener importListener = new ImportListener() {
                     @Override
+                    public void onImport() {
+                        System.out.println("onImport called.");
+                    }
+
+                    @Override
                     public void onFloorCoverImport(Image image) {
                         System.out.println("onFloorCoverImport called.");
                     }
