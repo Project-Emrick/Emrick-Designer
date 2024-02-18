@@ -244,6 +244,11 @@ public class SelectFileGUI implements ActionListener {
                     public void onSurfaceImport(Image image) {
                         System.out.println("onSurfaceImport called.");
                     }
+
+                    @Override
+                    public void onAudioImport(File audioFile) {
+                        System.out.println("onAudioImport called.");
+                    }
                 };
 
                 SelectFileGUI selectFileGUI = new SelectFileGUI(importListener);
