@@ -6,6 +6,7 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.image.BufferedImage;
+import java.io.File;
 import java.util.*;
 import java.awt.event.KeyEvent;
 import java.util.HashMap;
@@ -135,10 +136,13 @@ public class MediaEditorGUI implements ActionListener, ImportListener {
     public static final String FILE_MENU_OPEN_PROJECT = "Open Project";
     public static final String FILE_MENU_SAVE = "Save";
 
-    // Components of MediaEditorGUI
+    // UI Components of MediaEditorGUI
     private JFrame frame;
     private FootballFieldPanel footballFieldPanel;
     private ScrubBarGUI scrubBarGUI;
+
+    // Audio Components
+    private AudioPlayer audioPlayer;
 
     private Effect effect;
     private Color chosenColor;
@@ -225,6 +229,13 @@ public class MediaEditorGUI implements ActionListener, ImportListener {
         footballFieldPanel.repaint();
     }
 
+    @Override
+    public void onAudioImport(File audioFile) {
+
+        // Play or pause audio through the AudioPlayer service class
+//        audioPlayer = new AudioPlayer(audioFile, true);
+    }
+
 
     private void createAndShowGUI() {
         //main window
@@ -306,7 +317,7 @@ public class MediaEditorGUI implements ActionListener, ImportListener {
             fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
             fileChooser.setAcceptAllFileFilterUsed(false);
             fileChooser.addChoosableFileFilter(new FileNameExtensionFilter("Emrick Project Files (emrick, json)", "emrick", "json"));
-            if (fileChooser.showOpenDialog(fileMenu) == JFileChooser.APPROVE_OPTION) {
+            if (fileChooser.showOpenDialog(null) == JFileChooser.APPROVE_OPTION) {
                 System.out.println("Opening file `"+fileChooser.getSelectedFile().getAbsolutePath()+"`.");
             }
         });
@@ -320,7 +331,7 @@ public class MediaEditorGUI implements ActionListener, ImportListener {
             System.out.println("Saving project...");
             JFileChooser fileChooser = new JFileChooser();
             fileChooser.setDialogTitle("Save Project");
-            if (fileChooser.showSaveDialog(fileMenu) == JFileChooser.APPROVE_OPTION) {
+            if (fileChooser.showSaveDialog(null) == JFileChooser.APPROVE_OPTION) {
                 System.out.println("Saving file `"+fileChooser.getSelectedFile().getAbsolutePath()+"`.");
             }
         });

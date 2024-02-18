@@ -105,16 +105,18 @@ public class ImportArchive {
         System.out.println("Importing surface..." + path);
         BufferedImage image = (BufferedImage) loadImage(path);
         // Write cropped image to file?
+        //  Crop obtained through trial and error, may change.
         BufferedImage cropped = image.getSubimage(1102, 578, 2196, 1157);
         importListener.onSurfaceImport(cropped);
     }
 
     private void importAudio(String path) {
         System.out.println("Importing audio..." + path);
+        importListener.onAudioImport(new File(path));
     }
 
     // Return Image object for images, e.g., field floorCover, surface
-    private static Image loadImage(String path) {
+    public static Image loadImage(String path) {
         try {
             return ImageIO.read(new File(path));
         } catch (IOException e) {
@@ -134,6 +136,11 @@ public class ImportArchive {
             @Override
             public void onSurfaceImport(Image image) {
                 System.out.println("onSurfaceImport called.");
+            }
+
+            @Override
+            public void onAudioImport(File audioFile) {
+                System.out.println("onAudioImport called.");
             }
         };
 
