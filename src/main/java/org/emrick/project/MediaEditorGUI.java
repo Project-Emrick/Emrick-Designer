@@ -1,5 +1,7 @@
 package org.emrick.project;
 
+import org.emrick.project.audio.AudioPlayer;
+
 import javax.swing.*;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import java.awt.*;
@@ -8,7 +10,6 @@ import java.awt.event.ActionListener;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.util.*;
-import java.awt.event.KeyEvent;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.ArrayList;
@@ -129,7 +130,7 @@ class FootballFieldPanel extends JPanel {
 }
 
 
-public class MediaEditorGUI implements ActionListener, ImportListener {
+public class MediaEditorGUI implements ActionListener, ImportListener, ScrubBarListener {
 
     // String definitions
     public static final String FILE_MENU_NEW_PROJECT = "New Project";
@@ -153,7 +154,6 @@ public class MediaEditorGUI implements ActionListener, ImportListener {
     });
 
 
-    // MAIN - LAUNCHER
     public static void main(String[] args) {
         // setup sysmsg
         clearSysMsg.setRepeats(false);
@@ -181,6 +181,7 @@ public class MediaEditorGUI implements ActionListener, ImportListener {
         });
     }
 
+
     public MediaEditorGUI() {
 
         // Change Font Size for Menu and MenuIem
@@ -192,13 +193,13 @@ public class MediaEditorGUI implements ActionListener, ImportListener {
 
         // Field
         footballFieldPanel = new FootballFieldPanel();
-        footballFieldPanel.setBackground(Color.red); // temp. Visual indicator for unfilled space
+        footballFieldPanel.setBackground(Color.lightGray); // temp. Visual indicator for unfilled space
         JScrollPane fieldScrollPane = new JScrollPane(footballFieldPanel);
         fieldScrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
         fieldScrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
 
         // Scrub Bar
-        // Temporary - Begin
+        // Temporary. TODO: Probably hide parsed data from MediaEditorGUI. Leave it import functionality.
         Map<String, Integer> dummyData1 = new HashMap<>();
         dummyData1.put("1", 0); // Page tab 1 maps to count 0
         dummyData1.put("1A", 16); // Page tab 1A maps to count 16
@@ -209,13 +210,18 @@ public class MediaEditorGUI implements ActionListener, ImportListener {
         dummyData1.put("4", 96);
         dummyData1.put("4A", 112);
         dummyData1.put("4B", 128);
-        // Temporary - End
 
-        scrubBarGUI = new ScrubBarGUI(dummyData1);
+        scrubBarGUI = new ScrubBarGUI(dummyData1, this);
     }
 
 
-    // Importing - Callbacks to Update UI
+    // Importing Listeners
+    //  If you are not familiar with this, please check out how to use Java Listeners
+
+    @Override
+    public void onImport() {
+        scrubBarGUI.setReady(true);
+    }
 
     @Override
     public void onFloorCoverImport(Image image) {
@@ -233,7 +239,22 @@ public class MediaEditorGUI implements ActionListener, ImportListener {
     public void onAudioImport(File audioFile) {
 
         // Play or pause audio through the AudioPlayer service class
-//        audioPlayer = new AudioPlayer(audioFile, true);
+        audioPlayer = new AudioPlayer(audioFile);
+    }
+
+
+    // ScrubBar Listeners
+
+    @Override
+    public void onPlay() {
+        if (scrubBarGUI.getAudioCheckbox().isSelected()) {
+            audioPlayer.playAudio();
+        }
+    }
+
+    @Override
+    public void onPause() {
+        audioPlayer.pauseAudio();
     }
 
 

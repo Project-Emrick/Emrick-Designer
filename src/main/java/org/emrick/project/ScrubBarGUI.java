@@ -4,12 +4,14 @@ import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.util.*;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class ScrubBarGUI {
+public class ScrubBarGUI implements ActionListener {
 
     // String definitions
     public static final String PATH_SYNC_ICON = "./src/main/resources/icons/scrub-bar/time_sync_flaticon.png";
@@ -24,17 +26,35 @@ public class ScrubBarGUI {
     public static final String PATH_FULL_PLAY_ICON = "./src/main/resources/icons/scrub-bar/double_arrow_flaticon.png";
 
     private JPanel scrubBarPanel;
+
+    // Scrub-Bar Toolbar Buttons
+    boolean isReady; // Whether the drill is ready to play
+    boolean isPlaying; // Whether the drill is being played
+    JButton syncButton;
+    JButton prevSetButton;
+    JButton nextSetButton;
+    JButton playPauseButton;
+    JButton prevCountButton;
+    JButton nextCountButton;
+
+    // Toggles / Checkboxes
     private JCheckBox audioCheckbox;
     private JCheckBox fastPlayCheckbox;
     private JCheckBox fullPlayCheckbox;
 
+    // Page Tabs / Counts
     Map<String, Integer> pageTabCounts; // [pageTab]:[count] e.g., k:"2A", v:30
     int lastCount;
     int currSetStartCount;
     int currSetEndCount;
 
-    public ScrubBarGUI(Map<String, Integer> pageTabCounts) {
+    // Listener
+    private ScrubBarListener scrubBarListener;
+
+    public ScrubBarGUI(Map<String, Integer> pageTabCounts, ScrubBarListener scrubBarListener) {
         this.pageTabCounts = pageTabCounts;
+
+        this.scrubBarListener = scrubBarListener;
 
         // Get the last count
         this.lastCount = Collections.max(
@@ -58,6 +78,9 @@ public class ScrubBarGUI {
         updateCurrSetCounts("1");
 
         initialize();
+
+        isReady = false;
+        isPlaying = false;
     }
 
     private void initialize() {
@@ -141,17 +164,20 @@ public class ScrubBarGUI {
 
         // Scrub-bar Toolbar Buttons
 
-        JButton syncButton = new JButton();
+        syncButton = new JButton();
         syncButton.setIcon(scaleImageIcon(new ImageIcon(PATH_SYNC_ICON)));
         syncButton.setToolTipText("Sync audio timing");
+        syncButton.addActionListener(this);
 
-        JButton prevSetButton = new JButton();
+        prevSetButton = new JButton();
         prevSetButton.setIcon(scaleImageIcon(new ImageIcon(PATH_PREV_SET_ICON)));
         prevSetButton.setToolTipText("Previous set");
+        prevSetButton.addActionListener(this);
 
-        JButton nextSetButton = new JButton();
+        nextSetButton = new JButton();
         nextSetButton.setIcon(scaleImageIcon(new ImageIcon(PATH_NEXT_SET_ICON)));
         nextSetButton.setToolTipText("Next set");
+        nextSetButton.addActionListener(this);
 
         topToolBarPanel.add(syncButton);
         topToolBarPanel.add(prevSetButton);
@@ -159,17 +185,20 @@ public class ScrubBarGUI {
 
         JPanel midToolBarPanel = new JPanel(new GridLayout(1,3));
 
-        JButton playPauseButton = new JButton();
+        playPauseButton = new JButton();
         playPauseButton.setIcon(scaleImageIcon(new ImageIcon(PATH_PLAY_ICON)));
         playPauseButton.setToolTipText("Play/Pause playback");
+        playPauseButton.addActionListener(this);
 
-        JButton prevCountButton = new JButton();
+        prevCountButton = new JButton();
         prevCountButton.setIcon(scaleImageIcon(new ImageIcon(PATH_PREV_COUNT_ICON)));
         prevCountButton.setToolTipText("Previous count");
+        prevCountButton.addActionListener(this);
 
-        JButton nextCountButton = new JButton();
+        nextCountButton = new JButton();
         nextCountButton.setIcon(scaleImageIcon(new ImageIcon(PATH_NEXT_COUNT_ICON)));
         nextCountButton.setToolTipText("Next count");
+        nextCountButton.addActionListener(this);
 
         midToolBarPanel.add(playPauseButton);
         midToolBarPanel.add(prevCountButton);
@@ -233,6 +262,14 @@ public class ScrubBarGUI {
         Image image = imageIcon.getImage(); // transform it
         Image newImg = image.getScaledInstance(15, 15, java.awt.Image.SCALE_SMOOTH); // scale it the smooth way
         return new ImageIcon(newImg);  // transform it back
+    }
+
+    public void setReady(boolean ready) {
+        this.isReady = ready;
+    }
+
+    public void setPlaying(boolean playing) {
+        this.isPlaying = playing;
     }
 
     public JPanel getScrubBarPanel() {
@@ -313,11 +350,33 @@ public class ScrubBarGUI {
     }
 
     public void printSetStartEndCounts(String set) {
+        // Debugging
         /*
         System.out.println("set = " + set);
         System.out.println("currSetStartCount = " + currSetStartCount);
         System.out.println("currSetEndCount = " + currSetEndCount);
         */
+    }
+
+    @Override
+    public void actionPerformed(ActionEvent e) {
+
+        if (e.getSource().equals(playPauseButton)) {
+            if (!isReady) {
+                return;
+            }
+            if (isPlaying) {
+                // Pause
+                playPauseButton.setIcon(scaleImageIcon(new ImageIcon(PATH_PLAY_ICON)));
+                scrubBarListener.onPause();
+            } else {
+                // Play
+                playPauseButton.setIcon(scaleImageIcon(new ImageIcon(PATH_PAUSE_ICON)));
+                scrubBarListener.onPlay();
+            }
+            isPlaying = !isPlaying;
+            System.out.println("Drill isPlaying: " + isPlaying);
+        }
     }
 
     // For testing

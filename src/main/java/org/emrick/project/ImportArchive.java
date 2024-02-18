@@ -6,7 +6,6 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Scanner;
@@ -79,6 +78,9 @@ public class ImportArchive {
             }
             String componentPath = unzipPath + "/" + entry.getValue();
 
+            // General-purpose callback
+            importListener.onImport();
+
             // Import floorCover
             if (entry.getKey().equals("floorCover")) {
                 importFloorCover(componentPath);
@@ -128,6 +130,11 @@ public class ImportArchive {
     // For Testing
     public static void main(String[] args) {
         ImportListener importListener = new ImportListener() {
+            @Override
+            public void onImport() {
+                System.out.println("onImport called.");
+            }
+
             @Override
             public void onFloorCoverImport(Image image) {
                 System.out.println("onFloorCoverImport called.");
