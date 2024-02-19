@@ -16,6 +16,7 @@ import java.util.Map;
 import java.util.ArrayList;
 import java.util.List;
 import javax.swing.Timer;
+import com.formdev.flatlaf.FlatLightLaf;
 
 
  class FootballFieldPanel extends JPanel {
@@ -169,6 +170,13 @@ public class MediaEditorGUI implements ActionListener, ImportListener, ScrubBarL
 
     public static void main(String[] args) {
         // setup sysmsg
+
+        try {
+            UIManager.setLookAndFeel( new FlatLightLaf() );
+        } catch( Exception ex ) {
+            System.err.println( "Failed to initialize LaF" );
+        }
+
         clearSysMsg.setRepeats(false);
         clearSysMsg.start();
 
