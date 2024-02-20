@@ -151,13 +151,13 @@ public class DrillParser {
             yLine = yLine.substring(1);
         }
         if (yLine.contains("side")) {
-            if (yLine.contains("back")) {
+            if (yLine.contains("Back")) {
                 y = 84.0;
             } else {
                 y = 0.0;
             }
         } else {
-            if (yLine.contains("back")) {
+            if (yLine.contains("Back")) {
                 y = 52.0;
             } else {
                 y = 32.0;
