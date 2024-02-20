@@ -17,18 +17,20 @@ import java.util.ArrayList;
 import java.util.List;
 import javax.swing.Timer;
 import com.formdev.flatlaf.FlatLightLaf;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.io.IOException;
+import java.util.stream.Collectors;
+import java.awt.geom.Point2D;
 
 
- class FootballFieldPanel extends JPanel {
-    private final List<Point> dotCoordinates = new ArrayList<>();
+
+class FootballFieldPanel extends JPanel {
+    private final List<Point2D> dotCoordinates = new ArrayList<>();
+    private double fieldWidth = 720; // Width of the football field
+    private double fieldHeight = 360;
 
     private Color colorChosen;
-     public FootballFieldPanel(Color colorChosen) {
-         this.colorChosen = colorChosen;
-     }
-
-    private final int fieldWidth = 720; // Width of the football field
-    private final int fieldHeight = 360;
     private final int margin = 15;
 
     // Loading field decor.
@@ -40,14 +42,28 @@ import com.formdev.flatlaf.FlatLightLaf;
         setMinimumSize(new Dimension(1042, 548));
     }
 
-    public void addDot(int x, int y) {
-        dotCoordinates.add(new Point(x + margin, y + margin));
+    public FootballFieldPanel(Color colorChosen) {
+        this.colorChosen = colorChosen;
+    }
+
+    public void addDot(double x, double y) {
+        double newY = ((80 - y)  / 80) * fieldHeight;
+        double newX = (x * (fieldWidth/160)) + (fieldWidth/2);
+        dotCoordinates.add(new Point2D.Double( newX, newY));
         repaint(); // Repaint the panel to show the new dot
     }
 
     public void clearDots() {
         dotCoordinates.clear();
         repaint();
+    }
+
+    public double getFieldWidth() {
+        return fieldWidth;
+    }
+
+    public double getFieldHeight() {
+        return fieldHeight;
     }
 
 //    @Override
@@ -66,10 +82,10 @@ import com.formdev.flatlaf.FlatLightLaf;
 //        g.drawRect(margin, (fieldHeight / 2 - fieldHeight / 4) + margin, fieldWidth / 10, fieldHeight / 2);
 //        g.drawRect(fieldWidth - (fieldWidth / 10) + margin, (fieldHeight / 2 - fieldHeight / 4) + margin, fieldWidth / 10, fieldHeight / 2);
 //
-//        // Adjust dot drawing to account for the margin
+        // Adjust dot drawing to account for the margin
 //        g.setColor(Color.RED);
 //        for (Point dot : dotCoordinates) {
-//            int adjustedX = Math.min(dot.x, fieldWidth + margin - 5); // Adjust for margin
+//            double adjustedX = Math.min(dot.x, fieldWidth + margin - 5); // Adjust for margin
 //            int adjustedY = Math.min(dot.y, fieldHeight + margin - 5); // Adjust for margin
 //            g.fillOval(adjustedX - 5, adjustedY - 5, 10, 10);
 //        }
@@ -94,10 +110,13 @@ import com.formdev.flatlaf.FlatLightLaf;
 
         // (Carried Over) Adjust dot drawing to account for the margin
         g.setColor(colorChosen);
-        for (Point dot : dotCoordinates) {
-            int adjustedX = Math.min(dot.x, fieldWidth + margin - 5); // Adjust for margin
-            int adjustedY = Math.min(dot.y, fieldHeight + margin - 5); // Adjust for margin
-            g.fillOval(adjustedX - 5, adjustedY - 5, 10, 10);
+        for (Point2D dot : dotCoordinates) {
+            //double adjustedX = Math.min(dot.x, fieldWidth); // Adjust for margin
+            //double adjustedY = Math.min(dot.y, fieldHeight); // Adjust for margin
+            g.fillOval((int)dot.getX(), (int)dot.getY(), 7, 7);
+            g.setColor(Color.BLACK);
+            g.drawOval((int)dot.getX(), (int)dot.getY(), 7, 7);
+            g.setColor(Color.RED);
         }
     }
      public void setColorChosen(Color color) {
@@ -115,6 +134,9 @@ import com.formdev.flatlaf.FlatLightLaf;
 
         int width = (int) (image.getWidth() * ratio);
         int height = (int) (image.getHeight() * ratio);
+
+        this.fieldWidth = (image.getWidth() * ratio);
+        this.fieldHeight = (image.getHeight() * ratio);
 
         // Center the image
         int x = (getWidth() - width) / 2;
@@ -156,7 +178,7 @@ public class MediaEditorGUI implements ActionListener, ImportListener, ScrubBarL
     // Audio Components
     private AudioPlayer audioPlayer;
 
-    // Color Components
+    private Effect effect;
     private Color chosenColor;
     private JPanel colorDisplayPanel;
 
@@ -406,9 +428,10 @@ public class MediaEditorGUI implements ActionListener, ImportListener, ScrubBarL
         fileMenu.addSeparator();
 
         // Demos
-        JMenuItem displayCircleDrill = new JMenuItem("Display Circle Drill");
+        JMenuItem displayCircleDrill = new JMenuItem("Load Demo Drill Object");
         fileMenu.add(displayCircleDrill);
-        displayCircleDrill.addActionListener(e -> addLotsaDots());
+        displayCircleDrill.addActionListener(e -> loadDemoDrillObj());
+
         JMenuItem displayStarDrill = new JMenuItem("Display Star Drill");
         fileMenu.add(displayStarDrill);
         displayStarDrill.addActionListener(e -> addStarDemo(mainContentPanel));
@@ -518,7 +541,7 @@ public class MediaEditorGUI implements ActionListener, ImportListener, ScrubBarL
         return -1; // Return -1 if the input was invalid
     }
 
-    public void addDotToField(int x, int y) {
+    public void addDotToField(double x, double y) {
         footballFieldPanel.addDot(x, y);
     }
 
@@ -526,18 +549,47 @@ public class MediaEditorGUI implements ActionListener, ImportListener, ScrubBarL
         footballFieldPanel.clearDots();
     }
 
-    public void addLotsaDots(){
+    public double getFieldHeight() {
+        return footballFieldPanel.getFieldHeight();
+    }
+
+    public double getFieldWidth() {
+        return footballFieldPanel.getFieldWidth();
+    }
+
+
+
+    public void loadDemoDrillObj(){
         clearDotsFromField();
-        addDotToField(370, 90);  // Top center
-        addDotToField(420, 115); // Top-right
-        addDotToField(450, 165); // Right upper-middle
-        addDotToField(450, 215); // Right lower-middle
-        addDotToField(420, 265); // Bottom-right
-        addDotToField(370, 290); // Bottom center
-        addDotToField(320, 265); // Bottom-left
-        addDotToField(290, 215); // Left lower-middle
-        addDotToField(290, 165); // Left upper-middle
-        addDotToField(320, 115); // Top-left
+        String filePath = "./src/test/java/org/emrick/project/ExpectedPDFOutput.txt";
+        try {
+            String DrillString = Files.lines(Paths.get(filePath))
+                    .collect(Collectors.joining(System.lineSeparator()));
+            System.out.println("Got drill string");
+            System.out.println(DrillString);
+            DrillParser parse1 = new DrillParser();
+            Drill drillby = parse1.parseWholeDrill(DrillString);
+
+            ArrayList<String> positionsAtTimestamp = drillby.getPositionsAtTimestamp("1zy");
+            int j = 10;
+            for (String position : positionsAtTimestamp) {
+                j--;
+                String[] parts = position.substring(position.indexOf('(') + 1, position.indexOf(')')).split(",");
+
+                // Assuming the second and third parts are the x and y coordinates
+                // Convert the string representations of x and y into float, then cast to int
+                double x = Float.parseFloat(parts[1].trim());
+                double y = Float.parseFloat(parts[2].trim());
+
+                if (j > 0) {
+                    System.out.println(position + " " + x + " " + y);
+                }
+
+                addDotToField(x, y);
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     public void addStarDemo(JPanel mainContentPanel){
@@ -568,43 +620,12 @@ public class MediaEditorGUI implements ActionListener, ImportListener, ScrubBarL
         addDotToField(360, 220);
         addDotToField(360, 240);
         addDotToField(360, 260);
-//        dotCoordinates.add(new Coordinate(360, 180, null, 0, null));
-//        addDotToField(360, 180);
-
-//        dotCoordinates.add(new Point(380, 180));
-//        dotCoordinates.add(new Point(400, 180));
-//
-//        dotCoordinates.add(new Point(400, 180));
-//        dotCoordinates.add(new Point(410, 170));
-//        dotCoordinates.add(new Point(420, 160));
-//        dotCoordinates.add(new Point(430, 150));
-//
-//        dotCoordinates.add(new Point(400, 110));
-//        dotCoordinates.add(new Point(410, 120));
-//        dotCoordinates.add(new Point(420, 130));
-//        dotCoordinates.add(new Point(430, 140));
-//
-//        dotCoordinates.add(new Point(340, 110));
-//        dotCoordinates.add(new Point(360, 110));
-//        dotCoordinates.add(new Point(380, 110));
-//        dotCoordinates.add(new Point(400, 110));
-//
-//        dotCoordinates.add(new Point(360, 120));
-//        dotCoordinates.add(new Point(360, 140));
-//        dotCoordinates.add(new Point(360, 160));
-//        dotCoordinates.add(new Point(360, 200));
-//        dotCoordinates.add(new Point(360, 220));
-//        dotCoordinates.add(new Point(360, 240));
-//        dotCoordinates.add(new Point(360, 260));
-
-        // Now iterate over the list and use your method to add each point to the field
-
     }
 
-    public void ChangeColor(List<Coordinate> dots,Color newColor){
+    public void ChangeColor(List<Coordinate> dots, List<String> selectIds,Color newColor){
         Effect effect = new Effect();
-        effect.changeSelectedDotsColor(dotCoordinates, Color.RED, footballFieldPanel);
-//        footballFieldPanel.repaint();
+        effect.changeSelectedDotsColor(dots, selectIds, newColor);
+        footballFieldPanel.repaint();
     }
 
 
@@ -630,6 +651,8 @@ public class MediaEditorGUI implements ActionListener, ImportListener, ScrubBarL
 
             SelectFileGUI selectFileGUI = new SelectFileGUI(this);
             selectFileGUI.show();
+
+            System.out.println("Should have loaded the field by now");
         }
 
         // Open Project

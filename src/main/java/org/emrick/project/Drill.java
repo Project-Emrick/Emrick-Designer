@@ -59,6 +59,27 @@ public class Drill {
         performers.add(performer);
     }
 
+
+    /**
+     * Retrieves the positions of all performers at a specific timestamp.
+     * @param timestamp The specific timestamp to query.
+     * @return A list of strings representing the performers and their positions at the timestamp.
+     */
+    public ArrayList<String> getPositionsAtTimestamp(String timestamp) {
+        ArrayList<String> results = new ArrayList<>();
+        for (Performer performer : this.performers) {
+            for (Coordinate coordinate : performer.getCoordinates()) {
+                if (coordinate.getSet().equals(timestamp)) {
+                    String result = String.format("(Performer %s%s, %f, %f)",
+                            performer.getSymbol(), performer.getLabel(), coordinate.getX(), coordinate.getY());
+                    results.add(result);
+                    break; // Assuming only one coordinate per performer per timestamp
+                }
+            }
+        }
+        return results;
+    }
+
     public String toString() {
         String out = "";
         for (Performer p : performers) {
