@@ -11,13 +11,11 @@ public class Effect {
      * @param dots A list of Coordinate objects representing dots.
      * @param newColor The new color to apply to the selected dots.
      */
-    public void changeSelectedDotsColor(List<Coordinate> dots, Color newColor) {
+    public void changeSelectedDotsColor(List<Coordinate> dots, Color newColor, FootballFieldPanel panel) {
         for (Coordinate dot : dots) {
-            dot.setColor(newColor); // Use the setColor method
-
+            dot.setColor(newColor);
         }
-        //  not sure which way can repaint successfully
-        //        SwingUtilities.invokeLater(() -> footballFieldPanel.repaint());
-
+        panel.repaint(); // Repaint the panel to reflect color changes
     }
+
 }
