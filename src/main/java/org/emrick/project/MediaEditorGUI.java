@@ -1,5 +1,6 @@
 package org.emrick.project;
 
+import com.google.gson.internal.sql.SqlTypesSupport;
 import org.emrick.project.audio.AudioPlayer;
 
 import javax.swing.*;
@@ -145,9 +146,12 @@ public class MediaEditorGUI implements ActionListener, ImportListener, ScrubBarL
     // Audio Components
     private AudioPlayer audioPlayer;
 
-    private Effect effect;
+    // Color Components
     private Color chosenColor;
+    private JPanel colorDisplayPanel;
 
+    // dots
+    private List<Coordinate> dotCoordinates = new ArrayList<>();
     static JLabel sysMsg = new JLabel("Welcome to Emrick Designer!", SwingConstants.RIGHT);
     static Timer clearSysMsg = new Timer(5000, e -> {
         sysMsg.setText("");
@@ -279,18 +283,10 @@ public class MediaEditorGUI implements ActionListener, ImportListener, ScrubBarL
         JPanel mainContentPanel = new JPanel();
         mainContentPanel.setLayout(new BorderLayout());
 
-        // Main View panel
-        // JPanel mainViewPanel = new JPanel();
-        // mainViewPanel.setBorder(BorderFactory.createTitledBorder("Main View"));
-        // mainViewPanel.setPreferredSize(new Dimension(650, 500));
-        // mainContentPanel.add(mainViewPanel, BorderLayout.CENTER);
 
         footballFieldPanel.setBorder(BorderFactory.createTitledBorder("Main View"));
 //        footballFieldPanel.setPreferredSize(new Dimension(650, 500));
         mainContentPanel.add(footballFieldPanel, BorderLayout.CENTER);
-
-        // Scrub Bar panel
-        // JPanel scrubBarPanel = new JPanel();
 
         JPanel scrubBarPanel = scrubBarGUI.getScrubBarPanel();
         scrubBarPanel.setBorder(BorderFactory.createTitledBorder("Scrub Bar"));
@@ -311,6 +307,29 @@ public class MediaEditorGUI implements ActionListener, ImportListener, ScrubBarL
         effectViewPanel.setBorder(BorderFactory.createTitledBorder("Effect View"));
         frame.add(effectViewPanel, BorderLayout.EAST);
 
+        // Initialize the color display panel with a default color or make it transparent initially
+        colorDisplayPanel = new JPanel();
+        colorDisplayPanel.setBackground(Color.LIGHT_GRAY); // Default color
+        colorDisplayPanel.setPreferredSize(new Dimension(50, 40)); // Adjust size as needed
+        JLabel colorLabel = new JLabel("Selected Color");
+        colorDisplayPanel.add(colorLabel, BorderLayout.WEST);
+        // Add the color display panel to the Effect View panel
+        colorDisplayPanel.setLayout(new BoxLayout(colorDisplayPanel, BoxLayout.Y_AXIS));
+
+        // Create the "Apply" button
+        JButton applyButton = new JButton("Apply");
+        applyButton.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                // TODO:
+
+
+                List<String> selectedIds = Arrays.asList("id1", "id2", "id3");
+
+                ChangeColor(dotCoordinates, chosenColor);            }
+        });
+
+        colorDisplayPanel.add(applyButton);
+        effectViewPanel.add(colorDisplayPanel, BorderLayout.SOUTH);
 
         /*
             Menus
@@ -431,20 +450,16 @@ public class MediaEditorGUI implements ActionListener, ImportListener, ScrubBarL
         // Need a list of Coordinate objects
         // Need a list of IDs as strings
 
-        List<Coordinate> dots = new ArrayList<>();
-        List<String> selectedIds = Arrays.asList("id1", "id2", "id3");
 
-        ChangeColor(dots, selectedIds, chosenColor);
     }
 
     private void showPredefinedEffects(Frame parent) {
-        // Open a JColorChooser dialog to let the user pick a color
+        // Example in showPredefinedEffects method
         Color selectedColor = JColorChooser.showDialog(parent, "Choose a Color", chosenColor);
         if (selectedColor != null) {
-            chosenColor = selectedColor; // Store the chosen color
-            // For demonstration, let's print the selected RGB values
-            System.out.println("The selected color is: " + chosenColor.toString());
-
+            chosenColor = selectedColor;
+            colorDisplayPanel.setBackground(chosenColor); // Update the color display panel
+            colorDisplayPanel.repaint(); // Repaint to reflect changes
         }
     }
 
@@ -478,6 +493,8 @@ public class MediaEditorGUI implements ActionListener, ImportListener, ScrubBarL
 
             // Now you have r, g, b values, you can use them to set the color
             Color selectedColor = new Color(r, g, b);
+            colorDisplayPanel.setBackground(selectedColor); // Update the color display panel
+            colorDisplayPanel.repaint(); // Repaint to reflect changes
         }
     }
 
@@ -517,37 +534,68 @@ public class MediaEditorGUI implements ActionListener, ImportListener, ScrubBarL
 
     public void addStarDemo(JPanel mainContentPanel){
         clearDotsFromField();
+//        addDotToField(360, 180);
+//        addDotToField(380, 180);
+//        addDotToField(400, 180);
+//
+//        addDotToField(400, 180);
+//        addDotToField(410, 170);
+//        addDotToField(420, 160);
+//        addDotToField(430, 150);
+//
+//        addDotToField(400, 110);
+//        addDotToField(410, 120);
+//        addDotToField(420, 130);
+//        addDotToField(430, 140);
+//
+//        addDotToField(340, 110);
+//        addDotToField(360, 110);
+//        addDotToField(380, 110);
+//        addDotToField(400, 110);
+//
+//        addDotToField(360, 120);
+//        addDotToField(360, 140);
+//        addDotToField(360, 160);
+//        addDotToField(360, 200);
+//        addDotToField(360, 220);
+//        addDotToField(360, 240);
+//        addDotToField(360, 260);
+        dotCoordinates.add(new Coordinate(360, 180, null, 0, null));
         addDotToField(360, 180);
-        addDotToField(380, 180);
-        addDotToField(400, 180);
 
-        addDotToField(400, 180);
-        addDotToField(410, 170);
-        addDotToField(420, 160);
-        addDotToField(430, 150);
+//        dotCoordinates.add(new Point(380, 180));
+//        dotCoordinates.add(new Point(400, 180));
+//
+//        dotCoordinates.add(new Point(400, 180));
+//        dotCoordinates.add(new Point(410, 170));
+//        dotCoordinates.add(new Point(420, 160));
+//        dotCoordinates.add(new Point(430, 150));
+//
+//        dotCoordinates.add(new Point(400, 110));
+//        dotCoordinates.add(new Point(410, 120));
+//        dotCoordinates.add(new Point(420, 130));
+//        dotCoordinates.add(new Point(430, 140));
+//
+//        dotCoordinates.add(new Point(340, 110));
+//        dotCoordinates.add(new Point(360, 110));
+//        dotCoordinates.add(new Point(380, 110));
+//        dotCoordinates.add(new Point(400, 110));
+//
+//        dotCoordinates.add(new Point(360, 120));
+//        dotCoordinates.add(new Point(360, 140));
+//        dotCoordinates.add(new Point(360, 160));
+//        dotCoordinates.add(new Point(360, 200));
+//        dotCoordinates.add(new Point(360, 220));
+//        dotCoordinates.add(new Point(360, 240));
+//        dotCoordinates.add(new Point(360, 260));
 
-        addDotToField(400, 110);
-        addDotToField(410, 120);
-        addDotToField(420, 130);
-        addDotToField(430, 140);
+        // Now iterate over the list and use your method to add each point to the field
 
-        addDotToField(340, 110);
-        addDotToField(360, 110);
-        addDotToField(380, 110);
-        addDotToField(400, 110);
-
-        addDotToField(360, 120);
-        addDotToField(360, 140);
-        addDotToField(360, 160);
-        addDotToField(360, 200);
-        addDotToField(360, 220);
-        addDotToField(360, 240);
-        addDotToField(360, 260);
     }
 
-    public void ChangeColor(List<Coordinate> dots, List<String> selectIds,Color newColor){
+    public void ChangeColor(List<Coordinate> dots,Color newColor){
         Effect effect = new Effect();
-        effect.changeSelectedDotsColor(dots, selectIds, newColor);
+        effect.changeSelectedDotsColor(dots, newColor);
         footballFieldPanel.repaint();
     }
 
