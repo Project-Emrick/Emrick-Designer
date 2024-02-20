@@ -18,8 +18,14 @@ import java.util.List;
 import javax.swing.Timer;
 
 
-class FootballFieldPanel extends JPanel {
+ class FootballFieldPanel extends JPanel {
     private final List<Point> dotCoordinates = new ArrayList<>();
+
+    private Color colorChosen;
+     public FootballFieldPanel(Color colorChosen) {
+         this.colorChosen = colorChosen;
+     }
+
     private final int fieldWidth = 720; // Width of the football field
     private final int fieldHeight = 360;
     private final int margin = 15;
@@ -86,13 +92,16 @@ class FootballFieldPanel extends JPanel {
         }
 
         // (Carried Over) Adjust dot drawing to account for the margin
-        g.setColor(Color.RED);
+        g.setColor(colorChosen);
         for (Point dot : dotCoordinates) {
             int adjustedX = Math.min(dot.x, fieldWidth + margin - 5); // Adjust for margin
             int adjustedY = Math.min(dot.y, fieldHeight + margin - 5); // Adjust for margin
             g.fillOval(adjustedX - 5, adjustedY - 5, 10, 10);
         }
     }
+     public void setColorChosen(Color color) {
+         this.colorChosen = color;
+     }
 
     // Draw image while maintaining aspect ratio (don't let field stretch/compress)
     private void drawBetterImage(Graphics g, BufferedImage image) {
@@ -318,14 +327,10 @@ public class MediaEditorGUI implements ActionListener, ImportListener, ScrubBarL
 
         // Create the "Apply" button
         JButton applyButton = new JButton("Apply");
-        applyButton.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent e) {
-                // TODO:
-
-
-                List<String> selectedIds = Arrays.asList("id1", "id2", "id3");
-
-                ChangeColor(dotCoordinates, chosenColor);            }
+        // Inside the ActionListener of the apply button
+        applyButton.addActionListener(e -> {
+            footballFieldPanel.setColorChosen(chosenColor);
+            footballFieldPanel.repaint(); // This will cause the panel to redraw with the new color
         });
 
         colorDisplayPanel.add(applyButton);
@@ -446,11 +451,6 @@ public class MediaEditorGUI implements ActionListener, ImportListener, ScrubBarL
         frame.setLocationRelativeTo(null);
         frame.setVisible(true);
         frame.setTitle("Emrick Designer");
-
-        // Need a list of Coordinate objects
-        // Need a list of IDs as strings
-
-
     }
 
     private void showPredefinedEffects(Frame parent) {
@@ -534,34 +534,34 @@ public class MediaEditorGUI implements ActionListener, ImportListener, ScrubBarL
 
     public void addStarDemo(JPanel mainContentPanel){
         clearDotsFromField();
-//        addDotToField(360, 180);
-//        addDotToField(380, 180);
-//        addDotToField(400, 180);
-//
-//        addDotToField(400, 180);
-//        addDotToField(410, 170);
-//        addDotToField(420, 160);
-//        addDotToField(430, 150);
-//
-//        addDotToField(400, 110);
-//        addDotToField(410, 120);
-//        addDotToField(420, 130);
-//        addDotToField(430, 140);
-//
-//        addDotToField(340, 110);
-//        addDotToField(360, 110);
-//        addDotToField(380, 110);
-//        addDotToField(400, 110);
-//
-//        addDotToField(360, 120);
-//        addDotToField(360, 140);
-//        addDotToField(360, 160);
-//        addDotToField(360, 200);
-//        addDotToField(360, 220);
-//        addDotToField(360, 240);
-//        addDotToField(360, 260);
-        dotCoordinates.add(new Coordinate(360, 180, null, 0, null));
         addDotToField(360, 180);
+        addDotToField(380, 180);
+        addDotToField(400, 180);
+
+        addDotToField(400, 180);
+        addDotToField(410, 170);
+        addDotToField(420, 160);
+        addDotToField(430, 150);
+
+        addDotToField(400, 110);
+        addDotToField(410, 120);
+        addDotToField(420, 130);
+        addDotToField(430, 140);
+
+        addDotToField(340, 110);
+        addDotToField(360, 110);
+        addDotToField(380, 110);
+        addDotToField(400, 110);
+
+        addDotToField(360, 120);
+        addDotToField(360, 140);
+        addDotToField(360, 160);
+        addDotToField(360, 200);
+        addDotToField(360, 220);
+        addDotToField(360, 240);
+        addDotToField(360, 260);
+//        dotCoordinates.add(new Coordinate(360, 180, null, 0, null));
+//        addDotToField(360, 180);
 
 //        dotCoordinates.add(new Point(380, 180));
 //        dotCoordinates.add(new Point(400, 180));
@@ -595,8 +595,8 @@ public class MediaEditorGUI implements ActionListener, ImportListener, ScrubBarL
 
     public void ChangeColor(List<Coordinate> dots,Color newColor){
         Effect effect = new Effect();
-        effect.changeSelectedDotsColor(dots, newColor);
-        footballFieldPanel.repaint();
+        effect.changeSelectedDotsColor(dotCoordinates, Color.RED, footballFieldPanel);
+//        footballFieldPanel.repaint();
     }
 
 
