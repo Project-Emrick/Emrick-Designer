@@ -130,7 +130,6 @@ class FootballFieldPanel extends JPanel {
 
             double y = frontSideline50.y - p.currentLocation.getY()/84 * fieldHeight;
             double x = frontSideline50.x + p.currentLocation.getX()/160 * fieldWidth;
-            System.out.println(p.currentLocation);
             g.setColor(colorChosen);
             g.fillOval((int)x, (int)y, 7, 7);
             g.setColor(Color.BLACK);
