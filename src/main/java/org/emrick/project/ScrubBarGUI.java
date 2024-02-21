@@ -14,85 +14,129 @@ import java.util.regex.Pattern;
 public class ScrubBarGUI implements ActionListener {
 
     // String definitions
-    public static final String PATH_SYNC_ICON = "./src/main/resources/icons/scrub-bar/time_sync_flaticon.png";
-    public static final String PATH_PREV_SET_ICON = "./src/main/resources/icons/scrub-bar/prev_set_flaticon.png";
-    public static final String PATH_NEXT_SET_ICON = "./src/main/resources/icons/scrub-bar/next_set_flaticon.png";
-    public static final String PATH_PLAY_ICON = "./src/main/resources/icons/scrub-bar/play_flaticon.png";
-    public static final String PATH_PAUSE_ICON = "./src/main/resources/icons/scrub-bar/pause_flaticon.png";
-    public static final String PATH_PREV_COUNT_ICON = "./src/main/resources/icons/scrub-bar/prev_count_flaticon.png";
-    public static final String PATH_NEXT_COUNT_ICON = "./src/main/resources/icons/scrub-bar/next_count_flaticon.png";
-    public static final String PATH_AUDIO_ICON = "./src/main/resources/icons/scrub-bar/audio_flaticon.png";
-    public static final String PATH_FAST_PLAY_ICON = "./src/main/resources/icons/scrub-bar/fast_play_flaticon.png";
-    public static final String PATH_FULL_PLAY_ICON = "./src/main/resources/icons/scrub-bar/double_arrow_flaticon.png";
+    private static final String PATH_SYNC_ICON = "./src/main/resources/images/scrub/time_sync_flaticon.png";
+    private static final String PATH_PREV_SET_ICON = "./src/main/resources/images/scrub/prev_set_flaticon.png";
+    private static final String PATH_NEXT_SET_ICON = "./src/main/resources/images/scrub/next_set_flaticon.png";
+    private static final String PATH_PLAY_ICON = "./src/main/resources/images/scrub/play_flaticon.png";
+    private static final String PATH_PAUSE_ICON = "./src/main/resources/images/scrub/pause_flaticon.png";
+    private static final String PATH_PREV_COUNT_ICON = "./src/main/resources/images/scrub/prev_count_flaticon.png";
+    private static final String PATH_NEXT_COUNT_ICON = "./src/main/resources/images/scrub/next_count_flaticon.png";
+    private static final String PATH_AUDIO_ICON = "./src/main/resources/images/scrub/audio_flaticon.png";
+    private static final String PATH_FAST_PLAY_ICON = "./src/main/resources/images/scrub/fast_play_flaticon.png";
+    private static final String PATH_FULL_PLAY_ICON = "./src/main/resources/images/scrub/double_arrow_flaticon.png";
 
     private JPanel scrubBarPanel;
 
+    // Scrub Bars / Sliders
+    private JSlider topSlider;
+    private JSlider botSlider;
+
+    // Scrub-Bar Status
+    private boolean isReady; // Whether the drill is ready to play
+    private boolean isPlaying; // Whether the drill is being played
+
     // Scrub-Bar Toolbar Buttons
-    boolean isReady; // Whether the drill is ready to play
-    boolean isPlaying; // Whether the drill is being played
-    JButton syncButton;
-    JButton prevSetButton;
-    JButton nextSetButton;
-    JButton playPauseButton;
-    JButton prevCountButton;
-    JButton nextCountButton;
+    private JButton syncButton;
+    private JButton prevSetButton;
+    private JButton nextSetButton;
+    private JButton playPauseButton;
+    private JButton prevCountButton;
+    private JButton nextCountButton;
 
     // Toggles / Checkboxes
     private JCheckBox audioCheckbox;
     private JCheckBox fastPlayCheckbox;
     private JCheckBox fullPlayCheckbox;
 
+    // Time-Sync GUI
+    private SyncTimeGUI syncTimeGUI;
+
     // Page Tabs / Counts
-    Map<String, Integer> pageTabCounts; // [pageTab]:[count] e.g., k:"2A", v:30
-    int lastCount;
-    int currSetStartCount;
-    int currSetEndCount;
+    private Map<String, Integer> pageTabCounts; // [pageTab]:[count] e.g., k:"2A", v:30
+    private int lastCount;
+    private int currSetStartCount;
+    private int currSetEndCount;
 
     // Listener
-    private ScrubBarListener scrubBarListener;
+    private final ScrubBarListener scrubBarListener;
 
-    public ScrubBarGUI(Map<String, Integer> pageTabCounts, ScrubBarListener scrubBarListener) {
-        this.pageTabCounts = pageTabCounts;
+    public ScrubBarGUI(ScrubBarListener scrubBarListener) {
+
+        // Placeholder. E.g., When Emrick Designer is first opened, no project is loaded.
+        this.pageTabCounts = new HashMap<>();
+        this.pageTabCounts.put("1", 0);
+
+        updateLastCount();
+        updateCurrSetCounts("1");
+
+        this.syncTimeGUI = null;
 
         this.scrubBarListener = scrubBarListener;
 
-        // Get the last count
+        this.isReady = false;
+        this.isPlaying = false;
+
+        initialize();
+    }
+
+    public void updatePageTabCounts(Map<String, Integer> pageTabCounts) {
+
+        this.pageTabCounts = pageTabCounts;
+
+        // Because SyncTimeGUI depends on pageTabCounts, update it as well
+        syncTimeGUI = new SyncTimeGUI(pageTabCounts);
+
+        // There should exist at least a first Page Tab, for logic purposes
+        if (pageTabCounts.isEmpty()) {
+            System.out.println("Note: No page tabs found.");
+            return;
+        }
+
+        // Can't find Page Tab 1
+        else if (pageTabCounts.get("1") == null) {
+            System.out.println("Note: Can't find page tab 1.");
+            return;
+        }
+
+        reinitialize();
+    }
+
+    /**
+     * Upon receiving new data for pageTabCount, call this method to update the Scrub Bar.
+     */
+    private void reinitialize() {
+        updateLastCount();
+        updateCurrSetCounts("1");
+
+        // Debugging - Existing components cause UI bugging
+        scrubBarPanel.removeAll();
+
+        initialize();
+    }
+
+    /**
+     * Update lastCount field. Important for managing display of the bottom slider.
+     * Call this whenever the Scrub Bar receives a new set of Page Tab : Count data.
+     * i.e., upon receiving new data for pageTabCount.
+     */
+    private void updateLastCount() {
         this.lastCount = Collections.max(
                 pageTabCounts.entrySet(),
                 Map.Entry.comparingByValue()
         ).getValue();
-
-        // Start slides on first count of first set
-        if (pageTabCounts.size() == 0) {
-            System.out.println("Error: No page tabs found.");
-            return;
-        }
-        else if (pageTabCounts.size() == 1) {
-            System.out.println("Error: Only one page tab found.");
-            return;
-        }
-        else if (pageTabCounts.get("1") == null) {
-            System.out.println("Error: Can't find page tab 1.");
-        }
-
-        updateCurrSetCounts("1");
-
-        initialize();
-
-        isReady = false;
-        isPlaying = false;
     }
 
     private void initialize() {
 
         scrubBarPanel = new JPanel(new BorderLayout(10, 10));
-        scrubBarPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
+        // Toolbar Panel.
         JPanel toolBarPanel = getToolBarPanel();
 
         scrubBarPanel.add(toolBarPanel, BorderLayout.WEST);
 
-        // Status Panel
+        // Status Panel.
+        // TODO: Add more info (like start/end times?)
         JPanel statusPanel = new JPanel(new GridLayout(2, 1));
         statusPanel.setPreferredSize(new Dimension(100, 1));
         JLabel statusLabel = new JLabel("Set : 0", JLabel.CENTER);
@@ -103,7 +147,7 @@ public class ScrubBarGUI implements ActionListener {
         JPanel sliderPanel = new JPanel(new GridLayout(2, 1));
 
         // Slider for navigating different sets
-        JSlider topSlider = new JSlider(JSlider.HORIZONTAL,0, pageTabCounts.size() - 1, 0);
+        topSlider = new JSlider(JSlider.HORIZONTAL,0, pageTabCounts.size() - 1, 0);
         Hashtable<Integer, JLabel> labelTable = buildLabelTable();
         topSlider.setLabelTable(labelTable);
         topSlider.setMinorTickSpacing(1);
@@ -111,7 +155,7 @@ public class ScrubBarGUI implements ActionListener {
         topSlider.setPaintLabels(true);
 
         // Slider for navigating within a set
-        JSlider botSlider = new JSlider(JSlider.HORIZONTAL, currSetStartCount, currSetEndCount, 0);
+        botSlider = new JSlider(JSlider.HORIZONTAL, currSetStartCount, currSetEndCount, 0);
         botSlider.setMinorTickSpacing(1);
         botSlider.setMajorTickSpacing(2);
         botSlider.setPaintTicks(true);
@@ -146,8 +190,7 @@ public class ScrubBarGUI implements ActionListener {
 
         Hashtable<Integer, JLabel> labelTable = new Hashtable<>();
 
-        List<Map.Entry<String, Integer>> list = new ArrayList<>(pageTabCounts.entrySet());
-        list.sort(Map.Entry.comparingByValue());
+        List<Map.Entry<String, Integer>> list = sortMap(pageTabCounts);
 
         int val = 0;
         for (Map.Entry<String, Integer> entry : list) {
@@ -155,6 +198,19 @@ public class ScrubBarGUI implements ActionListener {
         }
 
         return labelTable;
+    }
+
+    /**
+     * Takes in a map of [String]:[Integer] entries and returns a list of those entries, sorted by the
+     * value [Integer] in ascending order. Useful for a variety of situations, not only within this class.
+     *
+     * @param map - The map of [String]:[Integer] entries
+     * @return a list of map entries, sorted by the value [Integer] in ascending order.
+     */
+    public static List<Map.Entry<String, Integer>> sortMap(Map<String, Integer> map) {
+        List<Map.Entry<String, Integer>> list = new ArrayList<>(map.entrySet());
+        list.sort(Map.Entry.comparingByValue());
+        return list;
     }
 
     private JPanel getToolBarPanel() {
@@ -243,15 +299,17 @@ public class ScrubBarGUI implements ActionListener {
         toolBarPanel.add(topToolBarPanel);
         toolBarPanel.add(midToolBarPanel);
         toolBarPanel.add(botToolBarPanel);
+
         return toolBarPanel;
     }
 
     /**
      * Rescale ImageIcon to fit for toolbar icons, or for other purposes
+     *
      * @param imageIcon - ImageIcon object to rescale.
      * @return Altered ImageIcon with rescaled icon.
      */
-    public ImageIcon scaleImageIcon(ImageIcon imageIcon, int width, int height) {
+    public static ImageIcon scaleImageIcon(ImageIcon imageIcon, int width, int height) {
         Image image = imageIcon.getImage(); // transform it
         Image newImg = image.getScaledInstance(width, height, java.awt.Image.SCALE_SMOOTH); // scale it the smooth way
         return new ImageIcon(newImg);  // transform it back
@@ -260,7 +318,7 @@ public class ScrubBarGUI implements ActionListener {
     // Overloaded
     private ImageIcon scaleImageIcon(ImageIcon imageIcon) {
         Image image = imageIcon.getImage(); // transform it
-        Image newImg = image.getScaledInstance(15, 15, java.awt.Image.SCALE_SMOOTH); // scale it the smooth way
+        Image newImg = image.getScaledInstance(16, 16, java.awt.Image.SCALE_SMOOTH); // scale it the smooth way
         return new ImageIcon(newImg);  // transform it back
     }
 
@@ -289,14 +347,18 @@ public class ScrubBarGUI implements ActionListener {
     }
 
     /**
-     * Will update currSetBeginCount and currSetEndCount.
+     * Call this method to update currSetBeginCount and currSetEndCount, which are important
+     * for displaying Count values on the bottom Scrub Bar.
+     * Provide the Page Tab of the Set (a Page Tab denotes the start of a new Set).
+     * Implementation Details:
+     * If you provide:
+     * "2", then consider "2A" or "3" as next Page Tab,
+     * "2A", then consider "2B" or "3" as next Page Tab,
+     * "2Z", then consider "3" as next Page Tab,
+     * By knowing the current Page Tab and next Page Tab, we find the beginning and end Counts
+     * for the given set. (Technically the parameter is the Page Tab String).
      *
-     * If the set's page tab is, e.g.,
-     * "2", then consider "2A" or "3" as next.
-     * "2A", then consider "2B" or "3" as next.
-     * "2Z", then consider "3" as next.
-     *
-     * @param set e.g., "1", "2A", "5B"
+     * @param set - For example, "1", "2A", "5B"
      */
     private void updateCurrSetCounts(String set) {
 
@@ -351,11 +413,9 @@ public class ScrubBarGUI implements ActionListener {
 
     public void printSetStartEndCounts(String set) {
         // Debugging
-        /*
-        System.out.println("set = " + set);
-        System.out.println("currSetStartCount = " + currSetStartCount);
-        System.out.println("currSetEndCount = " + currSetEndCount);
-        */
+//        System.out.println("set = " + set);
+//        System.out.println("currSetStartCount = " + currSetStartCount);
+//        System.out.println("currSetEndCount = " + currSetEndCount);
     }
 
     @Override
@@ -377,6 +437,13 @@ public class ScrubBarGUI implements ActionListener {
             isPlaying = !isPlaying;
             System.out.println("Drill isPlaying: " + isPlaying);
         }
+        else if (e.getSource().equals(syncButton)) {
+
+            // syncTimeGUI will be null if Emrick Project not loaded
+            if (syncTimeGUI != null) {
+                syncTimeGUI.show();
+            }
+        }
     }
 
     // For testing
@@ -386,6 +453,18 @@ public class ScrubBarGUI implements ActionListener {
         SwingUtilities.invokeLater(new Runnable() {
             @Override
             public void run() {
+
+                ScrubBarGUI scrubBarGUI = new ScrubBarGUI(new ScrubBarListener() {
+                    @Override
+                    public void onPlay() {
+                        System.out.println("onPlay called.");
+                    }
+
+                    @Override
+                    public void onPause() {
+                        System.out.println("onPause called.");
+                    }
+                });
 
                 // Dummy input
                 Map<String, Integer> dummyData1 = new HashMap<>();
@@ -398,6 +477,15 @@ public class ScrubBarGUI implements ActionListener {
                 dummyData1.put("4", 96);
                 dummyData1.put("4A", 112);
                 dummyData1.put("4B", 128);
+
+                // When updating Scrub Bar GUI
+                scrubBarGUI.updatePageTabCounts(dummyData1);
+
+                JFrame testFrame = new JFrame();
+                testFrame.add(scrubBarGUI.getScrubBarPanel());
+                testFrame.setSize(new Dimension(800, 200));
+                testFrame.setLocationRelativeTo(null);
+                testFrame.setVisible(true);
             }
         });
     }
