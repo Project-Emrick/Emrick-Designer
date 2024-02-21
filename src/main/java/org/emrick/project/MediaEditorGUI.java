@@ -304,6 +304,13 @@ public class MediaEditorGUI implements ActionListener, ImportListener, ScrubBarL
         audioPlayer = new AudioPlayer(audioFile);
     }
 
+    @Override
+    public void onDrillImport(String drill) {
+        String text = DrillParser.extractText(drill);
+        footballFieldPanel.drill = DrillParser.parseWholeDrill(text);
+        footballFieldPanel.addSetToField("1");
+    }
+
 
     // ScrubBar Listeners
 

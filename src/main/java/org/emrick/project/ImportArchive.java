@@ -24,7 +24,7 @@ public class ImportArchive {
         this.importListener = importListener;
     }
 
-    public void fullImport(String archiveSrc) {
+    public void fullImport(String archiveSrc, String drillSrc) {
 
         // ! NOTE ! Assume Working Directory is Emrick-Designer/
         System.out.println("Working Directory = " + System.getProperty("user.dir"));
@@ -96,6 +96,9 @@ public class ImportArchive {
                 importAudio(componentPath);
             }
         }
+
+        // Import drill
+        importDrill(drillSrc);
     }
 
     private void importFloorCover(String path) {
@@ -115,6 +118,11 @@ public class ImportArchive {
     private void importAudio(String path) {
         System.out.println("Importing audio..." + path);
         importListener.onAudioImport(new File(path));
+    }
+
+    private void importDrill(String path) {
+        System.out.println("Importing drill..." + path);
+        importListener.onDrillImport(path);
     }
 
     // Return Image object for images, e.g., field floorCover, surface
@@ -149,9 +157,14 @@ public class ImportArchive {
             public void onAudioImport(File audioFile) {
                 System.out.println("onAudioImport called.");
             }
+
+            @Override
+            public void onDrillImport(String drill) {
+                System.out.println("onDrillImport called.");
+            }
         };
 
         ImportArchive importArchive = new ImportArchive(importListener);
-        importArchive.fullImport("./src/test/java/org/emrick/project/Purdue23-1-1aint_no_mountain_high_enough.3dz");
+        importArchive.fullImport("./src/test/java/org/emrick/project/Purdue23-1-1aint_no_mountain_high_enough.3dz", "./src/test/java/org/emrick/project/DrillExample.pdf");
     }
 }

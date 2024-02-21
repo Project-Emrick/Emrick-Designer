@@ -26,7 +26,7 @@ public class DrillParser {
             document.close();
         }
         catch (IOException ioe){
-            ioe.printStackTrace();
+            throw new RuntimeException(ioe);
         }
         return text;
     }
@@ -54,10 +54,10 @@ public class DrillParser {
             drill.loadAllPerformers();
         }
         catch (FileNotFoundException fnfe) {
-            fnfe.printStackTrace();
+            throw new RuntimeException(fnfe);
         }
         catch (IOException ioe) {
-            ioe.printStackTrace();
+            throw new RuntimeException(ioe);
         }
         return drill;
     }

@@ -8,4 +8,5 @@ public interface ImportListener {
     void onFloorCoverImport(Image image);
     void onSurfaceImport(Image image);
     void onAudioImport(File audioFile);
+    void onDrillImport(String drill);
 }
