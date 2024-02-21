@@ -7,6 +7,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 
 /**
  * This class constructs a Swing GUI window for importing Coordinates PDF and Pyware Archive file (.3dz)
@@ -193,6 +194,7 @@ public class SelectFileGUI implements ActionListener {
                             JOptionPane.ERROR_MESSAGE);
                     return;
                 }
+                // TODO: add status of import here?
                 System.out.println("begin import...");
 
                 // TODO: Import Coordinates Pdf and Pyware Archive
