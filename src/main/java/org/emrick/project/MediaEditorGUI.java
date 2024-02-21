@@ -124,7 +124,6 @@ class FootballFieldPanel extends JPanel {
         }
 
         // (Carried Over) Adjust dot drawing to account for the margin
-        g.setColor(colorChosen);
         for (Performer p : drill.performers) {
             //double adjustedX = Math.min(dot.x, fieldWidth); // Adjust for margin
             //double adjustedY = Math.min(dot.y, fieldHeight); // Adjust for margin
@@ -132,10 +131,10 @@ class FootballFieldPanel extends JPanel {
             double y = frontSideline50.y - p.currentLocation.getY()/84 * fieldHeight;
             double x = frontSideline50.x + p.currentLocation.getX()/160 * fieldWidth;
             System.out.println(p.currentLocation);
+            g.setColor(colorChosen);
             g.fillOval((int)x, (int)y, 7, 7);
             g.setColor(Color.BLACK);
             g.drawOval((int)x, (int)y, 7, 7);
-            g.setColor(Color.RED);
         }
     }
      public void setColorChosen(Color color) {
