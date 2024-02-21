@@ -383,10 +383,8 @@ public class MediaEditorGUI implements ActionListener, ImportListener, ScrubBarL
         dummyPageTabCounts.put("4A", 112);
         dummyPageTabCounts.put("4B", 128);
 
-        scrubBarGUI.setPageTabCounts(dummyPageTabCounts);
-
-        // Refresh after update to scrubBarGUI
-        addScrubBarPanel();
+        scrubBarGUI.updatePageTabCounts(dummyPageTabCounts);
+        buildScrubBarPanel();
     }
 
 
@@ -408,12 +406,12 @@ public class MediaEditorGUI implements ActionListener, ImportListener, ScrubBarL
 
 
     /**
-     * Loads the Scrub Bar Panel if it has not been created, or refreshes it if it already exists.
+     * Loads the ScrubBarGUI Panel if it has not been created, or refreshes it if it already exists.
      */
-    private void addScrubBarPanel() {
-        if (scrubBarPanel != null) {
+    private void buildScrubBarPanel() {
 
-            // Remove the existing scrubBarPanel
+        // Remove the existing scrubBarPanel
+        if (scrubBarPanel != null) {
             mainContentPanel.remove(scrubBarPanel);
         }
 
@@ -452,7 +450,7 @@ public class MediaEditorGUI implements ActionListener, ImportListener, ScrubBarL
         mainContentPanel.add(footballFieldPanel, BorderLayout.CENTER);
 
         // Scrub Bar Panel
-        addScrubBarPanel();
+        buildScrubBarPanel();
 
         frame.add(mainContentPanel, BorderLayout.CENTER);
 
@@ -524,6 +522,7 @@ public class MediaEditorGUI implements ActionListener, ImportListener, ScrubBarL
 
         // Save Emrick Project
         JMenuItem saveItem = new JMenuItem(FILE_MENU_SAVE);
+        saveItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S, ActionEvent.CTRL_MASK));
         fileMenu.add(saveItem);
         saveItem.addActionListener(e -> {
             System.out.println("Saving project...");

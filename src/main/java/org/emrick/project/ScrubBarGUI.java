@@ -31,9 +31,11 @@ public class ScrubBarGUI implements ActionListener {
     private JSlider topSlider;
     private JSlider botSlider;
 
-    // Scrub-Bar Toolbar Buttons
+    // Scrub-Bar Status
     private boolean isReady; // Whether the drill is ready to play
     private boolean isPlaying; // Whether the drill is being played
+
+    // Scrub-Bar Toolbar Buttons
     private JButton syncButton;
     private JButton prevSetButton;
     private JButton nextSetButton;
@@ -60,44 +62,41 @@ public class ScrubBarGUI implements ActionListener {
 
     public ScrubBarGUI(ScrubBarListener scrubBarListener) {
 
-        // Placeholder when no project is loaded
+        // Placeholder. E.g., When Emrick Designer is first opened, no project is loaded.
         this.pageTabCounts = new HashMap<>();
-        pageTabCounts.put("1", 0);
+        this.pageTabCounts.put("1", 0);
 
         updateLastCount();
         updateCurrSetCounts("1");
 
-        syncTimeGUI = null;
+        this.syncTimeGUI = null;
 
         this.scrubBarListener = scrubBarListener;
 
-        isReady = false;
-        isPlaying = false;
+        this.isReady = false;
+        this.isPlaying = false;
 
         initialize();
     }
 
-    public ScrubBarGUI(Map<String, Integer> pageTabCounts, ScrubBarListener scrubBarListener) {
+    public void updatePageTabCounts(Map<String, Integer> pageTabCounts) {
+
         this.pageTabCounts = pageTabCounts;
 
+        // Because SyncTimeGUI depends on pageTabCounts, update it as well
         syncTimeGUI = new SyncTimeGUI(pageTabCounts);
 
-        updateLastCount();
-        updateCurrSetCounts("1");
+        // There should exist at least a first Page Tab, for logic purposes
+        if (pageTabCounts.isEmpty()) {
+            System.out.println("Note: No page tabs found.");
+            return;
+        }
 
-        syncTimeGUI = null;
-
-        this.scrubBarListener = scrubBarListener;
-
-        isReady = false;
-        isPlaying = false;
-
-        initialize();
-    }
-
-    public void setPageTabCounts(Map<String, Integer> pageTabCounts) {
-        this.pageTabCounts = pageTabCounts;
-        syncTimeGUI = new SyncTimeGUI(pageTabCounts);
+        // Can't find Page Tab 1
+        else if (pageTabCounts.get("1") == null) {
+            System.out.println("Note: Can't find page tab 1.");
+            return;
+        }
 
         reinitialize();
     }
@@ -109,27 +108,18 @@ public class ScrubBarGUI implements ActionListener {
         updateLastCount();
         updateCurrSetCounts("1");
 
-        // Start slides on first count of first set
-        if (pageTabCounts.isEmpty()) {
-            System.out.println("Note: No page tabs found.");
-            return;
-        }
-        else if (pageTabCounts.get("1") == null) {
-            System.out.println("Note: Can't find page tab 1.");
-        }
-
-        scrubBarPanel.removeAll(); // Debugging
+        // Debugging - Existing components cause UI bugging
+        scrubBarPanel.removeAll();
 
         initialize();
     }
 
     /**
+     * Update lastCount field. Important for managing display of the bottom slider.
      * Call this whenever the Scrub Bar receives a new set of Page Tab : Count data.
      * i.e., upon receiving new data for pageTabCount.
      */
     private void updateLastCount() {
-
-        // Update lastCount field. Important for managing display of bottom scrub bar
         this.lastCount = Collections.max(
                 pageTabCounts.entrySet(),
                 Map.Entry.comparingByValue()
@@ -315,6 +305,7 @@ public class ScrubBarGUI implements ActionListener {
 
     /**
      * Rescale ImageIcon to fit for toolbar icons, or for other purposes
+     *
      * @param imageIcon - ImageIcon object to rescale.
      * @return Altered ImageIcon with rescaled icon.
      */
@@ -359,8 +350,8 @@ public class ScrubBarGUI implements ActionListener {
      * Call this method to update currSetBeginCount and currSetEndCount, which are important
      * for displaying Count values on the bottom Scrub Bar.
      * Provide the Page Tab of the Set (a Page Tab denotes the start of a new Set).
-     * How it works:
-     * If you provide...
+     * Implementation Details:
+     * If you provide:
      * "2", then consider "2A" or "3" as next Page Tab,
      * "2A", then consider "2B" or "3" as next Page Tab,
      * "2Z", then consider "3" as next Page Tab,
@@ -488,7 +479,7 @@ public class ScrubBarGUI implements ActionListener {
                 dummyData1.put("4B", 128);
 
                 // When updating Scrub Bar GUI
-                scrubBarGUI.setPageTabCounts(dummyData1);
+                scrubBarGUI.updatePageTabCounts(dummyData1);
 
                 JFrame testFrame = new JFrame();
                 testFrame.add(scrubBarGUI.getScrubBarPanel());

@@ -8,7 +8,6 @@ import java.awt.event.ActionListener;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -28,12 +27,13 @@ public class SyncTimeGUI implements ActionListener {
             "</p></html>";
 
     // Page Tab / Count / Times
-    Map<String, Integer> pageTabCounts; // [pageTab]:[count] e.g., k:"2A", v:30 , From ScrubBarGUI
-    Map<String, Integer> pageTabTimes; // [pageTab]:[time] e.g., k:"2A", v:21 , [time] in seconds
+    private Map<String, Integer> pageTabCounts; // [pageTab]:[count] e.g., k:"2A", v:30 , From ScrubBarGUI
+    private Map<String, Integer> pageTabTimes; // [pageTab]:[time] e.g., k:"2A", v:21 , [time] in seconds
+    private Map<String, JTextField> pageTabTimeFields;
 
-    JFrame frame;
-    JButton cancelButton;
-    JButton syncButton;
+    private JFrame frame;
+    private JButton cancelButton;
+    private JButton syncButton;
 
     public SyncTimeGUI(Map<String, Integer> pageTabCounts) {
         this.pageTabCounts = pageTabCounts;
@@ -93,7 +93,7 @@ public class SyncTimeGUI implements ActionListener {
 
         List<Map.Entry<String, Integer>> ptCounts = ScrubBarGUI.sortMap(pageTabCounts);
 
-        Map<String, JTextField> ptTimeFields = new HashMap<>();
+        pageTabTimeFields = new HashMap<>();
 
         for (Map.Entry<String, Integer> entry : ptCounts) {
             JLabel setLabel = new JLabel(entry.getKey());
@@ -104,7 +104,7 @@ public class SyncTimeGUI implements ActionListener {
             JTextField textField = new JTextField();
             textField.setBorder(BorderFactory.createLineBorder(Color.LIGHT_GRAY));
             textField.setToolTipText("Enter timestamp of Page Tab " + entry.getKey());
-            ptTimeFields.put(entry.getKey(), textField); // Keep a reference to text fields
+            pageTabTimeFields.put(entry.getKey(), textField); // Keep a reference to text fields
             entryPanel.add(textField);
 
             JLabel countLabel = new JLabel(entry.getValue().toString());
@@ -135,6 +135,22 @@ public class SyncTimeGUI implements ActionListener {
 
     public void show() {
         frame.setVisible(true);
+    }
+
+    public Map<String, Integer> getPageTabTimes() {
+        return this.pageTabTimes;
+    }
+
+    public Map<String, Integer> getPageTabCounts() {
+        return this.pageTabCounts;
+    }
+
+    private void setPageTabTimes() {
+        for (Map.Entry<String, JTextField> ptField : pageTabTimeFields.entrySet()) {
+
+            // Key will be the Set String, e.g., "2A". Value is the corresponding JTextField
+            // TODO
+        }
     }
 
     @Override
