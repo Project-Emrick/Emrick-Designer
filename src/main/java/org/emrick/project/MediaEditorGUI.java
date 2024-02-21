@@ -1,6 +1,5 @@
 package org.emrick.project;
 
-import com.google.gson.internal.sql.SqlTypesSupport;
 import org.emrick.project.audio.AudioPlayer;
 
 import javax.swing.*;
@@ -10,7 +9,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.image.BufferedImage;
 import java.io.File;
-import java.util.*;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.ArrayList;
@@ -26,9 +24,10 @@ import java.awt.geom.Point2D;
 
 
 class FootballFieldPanel extends JPanel {
-    private final List<Point2D> dotCoordinates = new ArrayList<>();
+    public Drill drill;
     private double fieldWidth = 720; // Width of the football field
     private double fieldHeight = 360;
+    private Point frontSideline50 = new Point(360,360);
 
     private Color colorChosen;
     private final int margin = 15;
@@ -40,21 +39,37 @@ class FootballFieldPanel extends JPanel {
     public FootballFieldPanel() {
 //        setPreferredSize(new Dimension(fieldWidth + 2*margin, fieldHeight + 2*margin)); // Set preferred size for the drawing area
         setMinimumSize(new Dimension(1042, 548));
+        drill = new Drill();
     }
 
     public FootballFieldPanel(Color colorChosen) {
         this.colorChosen = colorChosen;
+        setMinimumSize(new Dimension(1042, 548));
+        drill = new Drill();
     }
 
-    public void addDot(double x, double y) {
-        double newY = ((80 - y)  / 80) * fieldHeight;
-        double newX = (x * (fieldWidth/160)) + (fieldWidth/2);
-        dotCoordinates.add(new Point2D.Double( newX, newY));
-        repaint(); // Repaint the panel to show the new dot
+    public void addSetToField(String set) {
+        if (!set.equals("0")) {
+            for (Performer p : drill.performers) {
+                for (Coordinate c : p.getCoordinates()) {
+                    if (c.set.equals(set)) {
+                        p.currentLocation = new Point2D.Double(c.x, c.y);
+                        break;
+                    }
+                }
+            }
+        } else {
+            for (Performer p : drill.performers) {
+                p.currentLocation = new Point2D.Double(-1,-1);
+            }
+        }
+        repaint();
     }
 
     public void clearDots() {
-        dotCoordinates.clear();
+        for (Performer p : drill.performers) {
+            p.currentLocation = new Point2D.Double(-1,-1);
+        }
         repaint();
     }
 
@@ -110,12 +125,16 @@ class FootballFieldPanel extends JPanel {
 
         // (Carried Over) Adjust dot drawing to account for the margin
         g.setColor(colorChosen);
-        for (Point2D dot : dotCoordinates) {
+        for (Performer p : drill.performers) {
             //double adjustedX = Math.min(dot.x, fieldWidth); // Adjust for margin
             //double adjustedY = Math.min(dot.y, fieldHeight); // Adjust for margin
-            g.fillOval((int)dot.getX(), (int)dot.getY(), 7, 7);
+
+            double y = frontSideline50.y - p.currentLocation.getY()/84 * fieldHeight;
+            double x = frontSideline50.x + p.currentLocation.getX()/160 * fieldWidth;
+            System.out.println(p.currentLocation);
+            g.fillOval((int)x, (int)y, 7, 7);
             g.setColor(Color.BLACK);
-            g.drawOval((int)dot.getX(), (int)dot.getY(), 7, 7);
+            g.drawOval((int)x, (int)y, 7, 7);
             g.setColor(Color.RED);
         }
     }
@@ -141,6 +160,8 @@ class FootballFieldPanel extends JPanel {
         // Center the image
         int x = (getWidth() - width) / 2;
         int y = (getHeight() - height) / 2;
+        frontSideline50 = new Point(x + (int)fieldWidth / 2,y + (int)fieldHeight);
+        System.out.println(frontSideline50);
 
         g.drawImage(image, x, y, width, height, this);
     }
@@ -432,10 +453,6 @@ public class MediaEditorGUI implements ActionListener, ImportListener, ScrubBarL
         fileMenu.add(displayCircleDrill);
         displayCircleDrill.addActionListener(e -> loadDemoDrillObj());
 
-        JMenuItem displayStarDrill = new JMenuItem("Display Star Drill");
-        fileMenu.add(displayStarDrill);
-        displayStarDrill.addActionListener(e -> addStarDemo(mainContentPanel));
-
         // Help menu
         JMenu helpMenu = new JMenu("Help");
         menuBar.add(helpMenu);
@@ -541,10 +558,6 @@ public class MediaEditorGUI implements ActionListener, ImportListener, ScrubBarL
         return -1; // Return -1 if the input was invalid
     }
 
-    public void addDotToField(double x, double y) {
-        footballFieldPanel.addDot(x, y);
-    }
-
     public void clearDotsFromField() {
         footballFieldPanel.clearDots();
     }
@@ -565,66 +578,20 @@ public class MediaEditorGUI implements ActionListener, ImportListener, ScrubBarL
         try {
             String DrillString = Files.lines(Paths.get(filePath))
                     .collect(Collectors.joining(System.lineSeparator()));
-            System.out.println("Got drill string");
-            System.out.println(DrillString);
+            //System.out.println("Got drill string");
+            //System.out.println(DrillString);
             DrillParser parse1 = new DrillParser();
             Drill drillby = parse1.parseWholeDrill(DrillString);
-
-            ArrayList<String> positionsAtTimestamp = drillby.getPositionsAtTimestamp("4A");
-            int j = 10;
-            for (String position : positionsAtTimestamp) {
-                j--;
-                String[] parts = position.substring(position.indexOf('(') + 1, position.indexOf(')')).split(",");
-
-                // Assuming the second and third parts are the x and y coordinates
-                // Convert the string representations of x and y into float, then cast to int
-                double x = Float.parseFloat(parts[1].trim());
-                double y = Float.parseFloat(parts[2].trim());
-
-                if (j > 0) {
-                    System.out.println(position + " " + x + " " + y);
-                }
-
-                addDotToField(x, y);
-            }
+            footballFieldPanel.drill = drillby;
+            footballFieldPanel.addSetToField("4A");
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
-    public void addStarDemo(JPanel mainContentPanel){
-        clearDotsFromField();
-        addDotToField(360, 180);
-        addDotToField(380, 180);
-        addDotToField(400, 180);
-
-        addDotToField(400, 180);
-        addDotToField(410, 170);
-        addDotToField(420, 160);
-        addDotToField(430, 150);
-
-        addDotToField(400, 110);
-        addDotToField(410, 120);
-        addDotToField(420, 130);
-        addDotToField(430, 140);
-
-        addDotToField(340, 110);
-        addDotToField(360, 110);
-        addDotToField(380, 110);
-        addDotToField(400, 110);
-
-        addDotToField(360, 120);
-        addDotToField(360, 140);
-        addDotToField(360, 160);
-        addDotToField(360, 200);
-        addDotToField(360, 220);
-        addDotToField(360, 240);
-        addDotToField(360, 260);
-    }
-
     public void ChangeColor(List<Coordinate> dots, List<String> selectIds,Color newColor){
         Effect effect = new Effect();
-        effect.changeSelectedDotsColor(dots, selectIds, newColor);
+        effect.changeSelectedDotsColor(dots, newColor, footballFieldPanel);
         footballFieldPanel.repaint();
     }
 

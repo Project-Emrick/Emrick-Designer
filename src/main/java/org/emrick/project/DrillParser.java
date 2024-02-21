@@ -121,13 +121,16 @@ public class DrillParser {
         String xLine = line.split(" yd ln")[0];
         if (!line.contains("On 50 yd ln")) {
             String[] tmp = xLine.split(" ");
-            x = 50 - (double) Integer.parseInt(tmp[tmp.length-1]);
+            x = (50 - (double) Integer.parseInt(tmp[tmp.length-1])) * 8.0/5.0;
             if (xLine.contains("Side 1")) {
                 x *= -1;
             }
             if (!xLine.contains("On")) {
                 double offset = Double.parseDouble(xLine.split(": ")[1].split(" ")[0]);
                 if (xLine.contains("inside")) {
+                    offset *= -1;
+                }
+                if (xLine.contains("Side 1")) {
                     offset *= -1;
                 }
                 x += offset;
