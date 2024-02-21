@@ -12,9 +12,11 @@ import java.util.ArrayList;
 public class Drill {
     public ArrayList<Performer> performers;
     public ArrayList<Coordinate> coordinates;
+    public ArrayList<Set> sets;
     public Drill() {
         performers = new ArrayList<>();
         coordinates = new ArrayList<>();
+        sets = new ArrayList<>();
     }
 
     public void saveDrill(String filename) {
@@ -48,6 +50,15 @@ public class Drill {
     public void loadAllPerformers() {
         for (Performer p : performers) {
             p.loadCoordinates(coordinates);
+        }
+
+    }
+
+    public void loadSets() {
+        ArrayList<Coordinate> c = performers.get(0).getCoordinates();
+        sets = new ArrayList<>();
+        for (int i = 0; i < c.size(); i++) {
+            sets.add(new Set(c.get(i).set, i, c.get(i).duration));
         }
     }
 

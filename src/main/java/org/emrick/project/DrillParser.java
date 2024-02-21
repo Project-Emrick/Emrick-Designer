@@ -52,6 +52,7 @@ public class DrillParser {
             drill.coordinates = new Gson().fromJson(new String(fis.readAllBytes()), coordType);
             fis.close();
             drill.loadAllPerformers();
+            drill.loadSets();
         }
         catch (FileNotFoundException fnfe) {
             throw new RuntimeException(fnfe);
@@ -77,6 +78,7 @@ public class DrillParser {
                 drill.addPerformer(parseDrill(t, drill));
             }
         }
+        drill.loadSets();
         return drill;
     }
 

@@ -37,7 +37,7 @@ class FootballFieldPanel extends JPanel {
     private BufferedImage surfaceImage;
     private BufferedImage floorCoverImage;
     private boolean ctrlHeld = false;
-    private String currentSet = "";
+    private Set currentSet;
 
     public FootballFieldPanel() {
 //        setPreferredSize(new Dimension(fieldWidth + 2*margin, fieldHeight + 2*margin)); // Set preferred size for the drawing area
@@ -56,7 +56,7 @@ class FootballFieldPanel extends JPanel {
         this.addMouseListener(new MouseInput());
     }
 
-    public void addSetToField(String set) {
+    public void addSetToField(Set set) {
         currentSet = set;
         if (!set.equals("0")) {
             for (Performer p : drill.performers) {
@@ -142,7 +142,7 @@ class FootballFieldPanel extends JPanel {
         for (Performer p : drill.performers) {
             //double adjustedX = Math.min(dot.x, fieldWidth); // Adjust for margin
             //double adjustedY = Math.min(dot.y, fieldHeight); // Adjust for margin
-            Coordinate c = p.getCoordinateFromSet(currentSet);
+            Coordinate c = p.getCoordinateFromSet(currentSet.label);
             p.currentLocation = dotToPoint(c.x,c.y);
             double x = p.currentLocation.getX();
             double y = p.currentLocation.getY();
@@ -211,7 +211,7 @@ class FootballFieldPanel extends JPanel {
             int my = e.getY();
             if (e.isControlDown()) {
                 for (Performer p : drill.performers) {
-                    Coordinate c = p.getCoordinateFromSet(currentSet);
+                    Coordinate c = p.getCoordinateFromSet(currentSet.label);
                     p.currentLocation = dotToPoint(c.x,c.y);
                     int px = (int)p.currentLocation.getX();
                     int py = (int)p.currentLocation.getY();
@@ -222,7 +222,7 @@ class FootballFieldPanel extends JPanel {
                 }
             } else {
                 for (Performer p : drill.performers) {
-                    Coordinate c = p.getCoordinateFromSet(currentSet);
+                    Coordinate c = p.getCoordinateFromSet(currentSet.label);
                     p.currentLocation = dotToPoint(c.x,c.y);
                     double px = p.currentLocation.getX();
                     double py = p.currentLocation.getY();
@@ -369,7 +369,7 @@ public class MediaEditorGUI implements ActionListener, ImportListener, ScrubBarL
     public void onDrillImport(String drill) {
         String text = DrillParser.extractText(drill);
         footballFieldPanel.drill = DrillParser.parseWholeDrill(text);
-        footballFieldPanel.addSetToField("1");
+        footballFieldPanel.addSetToField(footballFieldPanel.drill.sets.get(0));
 
         // TODO: Q: Any way to get the Page Tabs w/ their respective counts?
         Map<String, Integer> dummyPageTabCounts = new HashMap<>();
@@ -684,7 +684,7 @@ public class MediaEditorGUI implements ActionListener, ImportListener, ScrubBarL
             DrillParser parse1 = new DrillParser();
             Drill drillby = parse1.parseWholeDrill(DrillString);
             footballFieldPanel.drill = drillby;
-            footballFieldPanel.addSetToField("4A");
+            footballFieldPanel.addSetToField(drillby.sets.get(0));
         } catch (IOException e) {
             e.printStackTrace();
         }
