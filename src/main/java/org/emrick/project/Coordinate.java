@@ -66,6 +66,7 @@ public class Coordinate {
         id = "";
     }
 
+
     public Coordinate(double x, double y, String set, int duration, String id) {
         this.x = x;
         this.y = y;

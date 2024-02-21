@@ -26,7 +26,7 @@ public class DrillParser {
             document.close();
         }
         catch (IOException ioe){
-            ioe.printStackTrace();
+            throw new RuntimeException(ioe);
         }
         return text;
     }
@@ -54,10 +54,10 @@ public class DrillParser {
             drill.loadAllPerformers();
         }
         catch (FileNotFoundException fnfe) {
-            fnfe.printStackTrace();
+            throw new RuntimeException(fnfe);
         }
         catch (IOException ioe) {
-            ioe.printStackTrace();
+            throw new RuntimeException(ioe);
         }
         return drill;
     }
@@ -121,13 +121,16 @@ public class DrillParser {
         String xLine = line.split(" yd ln")[0];
         if (!line.contains("On 50 yd ln")) {
             String[] tmp = xLine.split(" ");
-            x = 50 - (double) Integer.parseInt(tmp[tmp.length-1]);
+            x = (50 - (double) Integer.parseInt(tmp[tmp.length-1])) * 8.0/5.0;
             if (xLine.contains("Side 1")) {
                 x *= -1;
             }
             if (!xLine.contains("On")) {
                 double offset = Double.parseDouble(xLine.split(": ")[1].split(" ")[0]);
                 if (xLine.contains("inside")) {
+                    offset *= -1;
+                }
+                if (xLine.contains("Side 1")) {
                     offset *= -1;
                 }
                 x += offset;
@@ -151,13 +154,13 @@ public class DrillParser {
             yLine = yLine.substring(1);
         }
         if (yLine.contains("side")) {
-            if (yLine.contains("back")) {
+            if (yLine.contains("Back")) {
                 y = 84.0;
             } else {
                 y = 0.0;
             }
         } else {
-            if (yLine.contains("back")) {
+            if (yLine.contains("Back")) {
                 y = 52.0;
             } else {
                 y = 32.0;

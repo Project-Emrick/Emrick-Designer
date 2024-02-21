@@ -3,43 +3,97 @@ package org.emrick.project;
 import org.emrick.project.audio.AudioPlayer;
 
 import javax.swing.*;
+import javax.swing.event.MouseInputListener;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
+import java.awt.event.*;
 import java.awt.image.BufferedImage;
 import java.io.File;
-import java.util.*;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.ArrayList;
 import java.util.List;
 import javax.swing.Timer;
+import com.formdev.flatlaf.FlatLightLaf;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.io.IOException;
+import java.util.stream.Collectors;
+import java.awt.geom.Point2D;
+
 
 
 class FootballFieldPanel extends JPanel {
-    private final List<Point> dotCoordinates = new ArrayList<>();
-    private final int fieldWidth = 720; // Width of the football field
-    private final int fieldHeight = 360;
+    public Drill drill;
+    public HashMap<String,Performer> selectedPerformers;
+    private double fieldWidth = 720; // Width of the football field
+    private double fieldHeight = 360;
+    private Point frontSideline50 = new Point(360,360);
+
+    private Color colorChosen;
     private final int margin = 15;
 
     // Loading field decor.
     private BufferedImage surfaceImage;
     private BufferedImage floorCoverImage;
+    private boolean ctrlHeld = false;
+    private String currentSet = "";
 
     public FootballFieldPanel() {
 //        setPreferredSize(new Dimension(fieldWidth + 2*margin, fieldHeight + 2*margin)); // Set preferred size for the drawing area
         setMinimumSize(new Dimension(1042, 548));
+        drill = new Drill();
+        selectedPerformers = new HashMap<>();
+        this.addMouseListener(new MouseInput());
+        colorChosen = Color.RED;
     }
 
-    public void addDot(int x, int y) {
-        dotCoordinates.add(new Point(x + margin, y + margin));
-        repaint(); // Repaint the panel to show the new dot
+    public FootballFieldPanel(Color colorChosen) {
+        this.colorChosen = colorChosen;
+        setMinimumSize(new Dimension(1042, 548));
+        drill = new Drill();
+        selectedPerformers = new HashMap<>();
+        this.addMouseListener(new MouseInput());
+    }
+
+    public void addSetToField(String set) {
+        currentSet = set;
+        if (!set.equals("0")) {
+            for (Performer p : drill.performers) {
+                for (Coordinate c : p.getCoordinates()) {
+                    if (c.set.equals(set)) {
+                        p.currentLocation = dotToPoint(c.x, c.y);
+                        break;
+                    }
+                }
+            }
+        } else {
+            for (Performer p : drill.performers) {
+                p.currentLocation = new Point2D.Double(-20,-20);
+            }
+        }
+        repaint();
+    }
+
+    public Point2D dotToPoint(double x, double y) {
+        double newY = frontSideline50.y - y/84 * fieldHeight;
+        double newX = frontSideline50.x + x/160 * fieldWidth;
+        return new Point2D.Double(newX,newY);
     }
 
     public void clearDots() {
-        dotCoordinates.clear();
+        for (Performer p : drill.performers) {
+            p.currentLocation = new Point2D.Double(-20,-20);
+        }
         repaint();
+    }
+
+    public double getFieldWidth() {
+        return fieldWidth;
+    }
+
+    public double getFieldHeight() {
+        return fieldHeight;
     }
 
 //    @Override
@@ -58,10 +112,10 @@ class FootballFieldPanel extends JPanel {
 //        g.drawRect(margin, (fieldHeight / 2 - fieldHeight / 4) + margin, fieldWidth / 10, fieldHeight / 2);
 //        g.drawRect(fieldWidth - (fieldWidth / 10) + margin, (fieldHeight / 2 - fieldHeight / 4) + margin, fieldWidth / 10, fieldHeight / 2);
 //
-//        // Adjust dot drawing to account for the margin
+        // Adjust dot drawing to account for the margin
 //        g.setColor(Color.RED);
 //        for (Point dot : dotCoordinates) {
-//            int adjustedX = Math.min(dot.x, fieldWidth + margin - 5); // Adjust for margin
+//            double adjustedX = Math.min(dot.x, fieldWidth + margin - 5); // Adjust for margin
 //            int adjustedY = Math.min(dot.y, fieldHeight + margin - 5); // Adjust for margin
 //            g.fillOval(adjustedX - 5, adjustedY - 5, 10, 10);
 //        }
@@ -85,13 +139,30 @@ class FootballFieldPanel extends JPanel {
         }
 
         // (Carried Over) Adjust dot drawing to account for the margin
-        g.setColor(Color.RED);
-        for (Point dot : dotCoordinates) {
-            int adjustedX = Math.min(dot.x, fieldWidth + margin - 5); // Adjust for margin
-            int adjustedY = Math.min(dot.y, fieldHeight + margin - 5); // Adjust for margin
-            g.fillOval(adjustedX - 5, adjustedY - 5, 10, 10);
+        for (Performer p : drill.performers) {
+            //double adjustedX = Math.min(dot.x, fieldWidth); // Adjust for margin
+            //double adjustedY = Math.min(dot.y, fieldHeight); // Adjust for margin
+            Coordinate c = p.getCoordinateFromSet(currentSet);
+            p.currentLocation = dotToPoint(c.x,c.y);
+            double x = p.currentLocation.getX();
+            double y = p.currentLocation.getY();
+            g.setColor(colorChosen);
+            g.fillRect((int)x-6,(int)y-6,6,12);
+            g.setColor(colorChosen);
+            g.fillRect((int)x,(int)y-6,6,12);
+            if (selectedPerformers.get(p.getSymbol()+p.getLabel()) != null) {
+                g.setColor(Color.GREEN);
+            } else {
+                g.setColor(Color.BLACK);
+            }
+            g.drawRect((int)x-7,(int)y-7,14,14);
+            g.drawRect((int)x-6,(int)y-6,12,12);
+            g.drawLine((int)x,(int)y-5,(int)x,(int)y+6);
         }
     }
+     public void setColorChosen(Color color) {
+         this.colorChosen = color;
+     }
 
     // Draw image while maintaining aspect ratio (don't let field stretch/compress)
     private void drawBetterImage(Graphics g, BufferedImage image) {
@@ -105,9 +176,13 @@ class FootballFieldPanel extends JPanel {
         int width = (int) (image.getWidth() * ratio);
         int height = (int) (image.getHeight() * ratio);
 
+        this.fieldWidth = (image.getWidth() * ratio);
+        this.fieldHeight = (image.getHeight() * ratio);
+
         // Center the image
         int x = (getWidth() - width) / 2;
         int y = (getHeight() - height) / 2;
+        frontSideline50 = new Point(x + (int)fieldWidth / 2,y + (int)fieldHeight);
 
         g.drawImage(image, x, y, width, height, this);
     }
@@ -126,6 +201,53 @@ class FootballFieldPanel extends JPanel {
 
     public Image getSurfaceImage() {
         return surfaceImage;
+    }
+
+    private class MouseInput implements MouseInputListener {
+
+        @Override
+        public void mouseClicked(MouseEvent e) {
+            int mx = e.getX();
+            int my = e.getY();
+            if (e.isControlDown()) {
+                for (Performer p : drill.performers) {
+                    Coordinate c = p.getCoordinateFromSet(currentSet);
+                    p.currentLocation = dotToPoint(c.x,c.y);
+                    int px = (int)p.currentLocation.getX();
+                    int py = (int)p.currentLocation.getY();
+                    if (mx <= px+7 && my <= py+7 && mx >= px-7 && my >= py-7) {
+                        selectedPerformers.put(p.getSymbol()+p.getLabel(), p);
+                        break;
+                    }
+                }
+            } else {
+                for (Performer p : drill.performers) {
+                    Coordinate c = p.getCoordinateFromSet(currentSet);
+                    p.currentLocation = dotToPoint(c.x,c.y);
+                    double px = p.currentLocation.getX();
+                    double py = p.currentLocation.getY();
+                    if (mx <= px+7 && my <= py+7 && mx >= px-7 && my >= py-7) {
+                        selectedPerformers = new HashMap<>();
+                        selectedPerformers.put(p.getSymbol()+p.getLabel(), p);
+                        break;
+                    }
+                    selectedPerformers = new HashMap<>();
+                }
+            }
+            repaint();
+        }
+        @Override
+        public void mousePressed(MouseEvent e) {}
+        @Override
+        public void mouseReleased(MouseEvent e) {}
+        @Override
+        public void mouseEntered(MouseEvent e) {}
+        @Override
+        public void mouseExited(MouseEvent e) {}
+        @Override
+        public void mouseDragged(MouseEvent e) {}
+        @Override
+        public void mouseMoved(MouseEvent e) {}
     }
 }
 
@@ -148,7 +270,10 @@ public class MediaEditorGUI implements ActionListener, ImportListener, ScrubBarL
 
     private Effect effect;
     private Color chosenColor;
+    private JPanel colorDisplayPanel;
 
+    // dots
+    private List<Coordinate> dotCoordinates = new ArrayList<>();
     static JLabel sysMsg = new JLabel("Welcome to Emrick Designer!", SwingConstants.RIGHT);
     static Timer clearSysMsg = new Timer(5000, e -> {
         sysMsg.setText("");
@@ -157,6 +282,13 @@ public class MediaEditorGUI implements ActionListener, ImportListener, ScrubBarL
 
     public static void main(String[] args) {
         // setup sysmsg
+
+        try {
+            UIManager.setLookAndFeel( new FlatLightLaf() );
+        } catch( Exception ex ) {
+            System.err.println( "Failed to initialize LaF" );
+        }
+
         clearSysMsg.setRepeats(false);
         clearSysMsg.start();
 
@@ -243,6 +375,13 @@ public class MediaEditorGUI implements ActionListener, ImportListener, ScrubBarL
         audioPlayer = new AudioPlayer(audioFile);
     }
 
+    @Override
+    public void onDrillImport(String drill) {
+        String text = DrillParser.extractText(drill);
+        footballFieldPanel.drill = DrillParser.parseWholeDrill(text);
+        footballFieldPanel.addSetToField("1");
+    }
+
 
     // ScrubBar Listeners
 
@@ -282,18 +421,10 @@ public class MediaEditorGUI implements ActionListener, ImportListener, ScrubBarL
         JPanel mainContentPanel = new JPanel();
         mainContentPanel.setLayout(new BorderLayout());
 
-        // Main View panel
-        // JPanel mainViewPanel = new JPanel();
-        // mainViewPanel.setBorder(BorderFactory.createTitledBorder("Main View"));
-        // mainViewPanel.setPreferredSize(new Dimension(650, 500));
-        // mainContentPanel.add(mainViewPanel, BorderLayout.CENTER);
 
         footballFieldPanel.setBorder(BorderFactory.createTitledBorder("Main View"));
 //        footballFieldPanel.setPreferredSize(new Dimension(650, 500));
         mainContentPanel.add(footballFieldPanel, BorderLayout.CENTER);
-
-        // Scrub Bar panel
-        // JPanel scrubBarPanel = new JPanel();
 
         JPanel scrubBarPanel = scrubBarGUI.getScrubBarPanel();
         scrubBarPanel.setBorder(BorderFactory.createTitledBorder("Scrub Bar"));
@@ -314,6 +445,25 @@ public class MediaEditorGUI implements ActionListener, ImportListener, ScrubBarL
         effectViewPanel.setBorder(BorderFactory.createTitledBorder("Effect View"));
         frame.add(effectViewPanel, BorderLayout.EAST);
 
+        // Initialize the color display panel with a default color or make it transparent initially
+        colorDisplayPanel = new JPanel();
+        colorDisplayPanel.setBackground(Color.LIGHT_GRAY); // Default color
+        colorDisplayPanel.setPreferredSize(new Dimension(50, 40)); // Adjust size as needed
+        JLabel colorLabel = new JLabel("Selected Color");
+        colorDisplayPanel.add(colorLabel, BorderLayout.WEST);
+        // Add the color display panel to the Effect View panel
+        colorDisplayPanel.setLayout(new BoxLayout(colorDisplayPanel, BoxLayout.Y_AXIS));
+
+        // Create the "Apply" button
+        JButton applyButton = new JButton("Apply");
+        // Inside the ActionListener of the apply button
+        applyButton.addActionListener(e -> {
+            footballFieldPanel.setColorChosen(chosenColor);
+            footballFieldPanel.repaint(); // This will cause the panel to redraw with the new color
+        });
+
+        colorDisplayPanel.add(applyButton);
+        effectViewPanel.add(colorDisplayPanel, BorderLayout.SOUTH);
 
         /*
             Menus
@@ -377,12 +527,9 @@ public class MediaEditorGUI implements ActionListener, ImportListener, ScrubBarL
         fileMenu.addSeparator();
 
         // Demos
-        JMenuItem displayCircleDrill = new JMenuItem("Display Circle Drill");
+        JMenuItem displayCircleDrill = new JMenuItem("Load Demo Drill Object");
         fileMenu.add(displayCircleDrill);
-        displayCircleDrill.addActionListener(e -> addLotsaDots());
-        JMenuItem displayStarDrill = new JMenuItem("Display Star Drill");
-        fileMenu.add(displayStarDrill);
-        displayStarDrill.addActionListener(e -> addStarDemo(mainContentPanel));
+        displayCircleDrill.addActionListener(e -> loadDemoDrillObj());
 
         // Help menu
         JMenu helpMenu = new JMenu("Help");
@@ -430,24 +577,15 @@ public class MediaEditorGUI implements ActionListener, ImportListener, ScrubBarL
         frame.setLocationRelativeTo(null);
         frame.setVisible(true);
         frame.setTitle("Emrick Designer");
-
-        // Need a list of Coordinate objects
-        // Need a list of IDs as strings
-
-        List<Coordinate> dots = new ArrayList<>();
-        List<String> selectedIds = Arrays.asList("id1", "id2", "id3");
-
-        ChangeColor(dots, selectedIds, chosenColor);
     }
 
     private void showPredefinedEffects(Frame parent) {
-        // Open a JColorChooser dialog to let the user pick a color
+        // Example in showPredefinedEffects method
         Color selectedColor = JColorChooser.showDialog(parent, "Choose a Color", chosenColor);
         if (selectedColor != null) {
-            chosenColor = selectedColor; // Store the chosen color
-            // For demonstration, let's print the selected RGB values
-            System.out.println("The selected color is: " + chosenColor.toString());
-
+            chosenColor = selectedColor;
+            colorDisplayPanel.setBackground(chosenColor); // Update the color display panel
+            colorDisplayPanel.repaint(); // Repaint to reflect changes
         }
     }
 
@@ -481,6 +619,8 @@ public class MediaEditorGUI implements ActionListener, ImportListener, ScrubBarL
 
             // Now you have r, g, b values, you can use them to set the color
             Color selectedColor = new Color(r, g, b);
+            colorDisplayPanel.setBackground(selectedColor); // Update the color display panel
+            colorDisplayPanel.repaint(); // Repaint to reflect changes
         }
     }
 
@@ -496,61 +636,40 @@ public class MediaEditorGUI implements ActionListener, ImportListener, ScrubBarL
         return -1; // Return -1 if the input was invalid
     }
 
-    public void addDotToField(int x, int y) {
-        footballFieldPanel.addDot(x, y);
-    }
-
     public void clearDotsFromField() {
         footballFieldPanel.clearDots();
     }
 
-    public void addLotsaDots(){
-        clearDotsFromField();
-        addDotToField(370, 90);  // Top center
-        addDotToField(420, 115); // Top-right
-        addDotToField(450, 165); // Right upper-middle
-        addDotToField(450, 215); // Right lower-middle
-        addDotToField(420, 265); // Bottom-right
-        addDotToField(370, 290); // Bottom center
-        addDotToField(320, 265); // Bottom-left
-        addDotToField(290, 215); // Left lower-middle
-        addDotToField(290, 165); // Left upper-middle
-        addDotToField(320, 115); // Top-left
+    public double getFieldHeight() {
+        return footballFieldPanel.getFieldHeight();
     }
 
-    public void addStarDemo(JPanel mainContentPanel){
+    public double getFieldWidth() {
+        return footballFieldPanel.getFieldWidth();
+    }
+
+
+
+    public void loadDemoDrillObj(){
         clearDotsFromField();
-        addDotToField(360, 180);
-        addDotToField(380, 180);
-        addDotToField(400, 180);
-
-        addDotToField(400, 180);
-        addDotToField(410, 170);
-        addDotToField(420, 160);
-        addDotToField(430, 150);
-
-        addDotToField(400, 110);
-        addDotToField(410, 120);
-        addDotToField(420, 130);
-        addDotToField(430, 140);
-
-        addDotToField(340, 110);
-        addDotToField(360, 110);
-        addDotToField(380, 110);
-        addDotToField(400, 110);
-
-        addDotToField(360, 120);
-        addDotToField(360, 140);
-        addDotToField(360, 160);
-        addDotToField(360, 200);
-        addDotToField(360, 220);
-        addDotToField(360, 240);
-        addDotToField(360, 260);
+        String filePath = "./src/test/java/org/emrick/project/ExpectedPDFOutput.txt";
+        try {
+            String DrillString = Files.lines(Paths.get(filePath))
+                    .collect(Collectors.joining(System.lineSeparator()));
+            //System.out.println("Got drill string");
+            //System.out.println(DrillString);
+            DrillParser parse1 = new DrillParser();
+            Drill drillby = parse1.parseWholeDrill(DrillString);
+            footballFieldPanel.drill = drillby;
+            footballFieldPanel.addSetToField("4A");
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     public void ChangeColor(List<Coordinate> dots, List<String> selectIds,Color newColor){
         Effect effect = new Effect();
-        effect.changeSelectedDotsColor(dots, selectIds, newColor);
+        effect.changeSelectedDotsColor(dots, newColor, footballFieldPanel);
         footballFieldPanel.repaint();
     }
 
@@ -577,6 +696,8 @@ public class MediaEditorGUI implements ActionListener, ImportListener, ScrubBarL
 
             SelectFileGUI selectFileGUI = new SelectFileGUI(this);
             selectFileGUI.show();
+
+            System.out.println("Should have loaded the field by now");
         }
 
         // Open Project

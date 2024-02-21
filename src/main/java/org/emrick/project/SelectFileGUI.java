@@ -197,7 +197,7 @@ public class SelectFileGUI implements ActionListener {
 
                 // TODO: Import Coordinates Pdf and Pyware Archive
 
-                importArchive.fullImport(archiveFilePath);
+                importArchive.fullImport(archiveFilePath, coordsFilePath);
 
                 frame.dispose();
             }
@@ -254,6 +254,11 @@ public class SelectFileGUI implements ActionListener {
                     @Override
                     public void onAudioImport(File audioFile) {
                         System.out.println("onAudioImport called.");
+                    }
+
+                    @Override
+                    public void onDrillImport(String drill) {
+                        System.out.println("onDrillImport called.");
                     }
                 };
 

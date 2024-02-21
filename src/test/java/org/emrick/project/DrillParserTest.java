@@ -1,11 +1,10 @@
+package org.emrick.project;
+
 import org.emrick.project.Drill;
 import org.emrick.project.DrillParser;
 import org.emrick.project.Performer;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
+import java.io.*;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -33,8 +32,8 @@ public class DrillParserTest {
 
     @org.junit.jupiter.api.Test
     public void testParseDrill() {
-        File input = new File(".\\test\\ExpectedPDFOutput.txt");
-        File expected = new File(".\\test\\ExpectedParsedDrillOutput.txt");
+        File input = new File(".\\src\\test\\java\\org\\emrick\\project\\ExpectedPDFOutput.txt");
+        File expected = new File(".\\src\\test\\java\\org\\emrick\\project\\ExpectedParsedDrillOutput.txt");
         try {
             FileInputStream fis = new FileInputStream(input);
             Drill act = DrillParser.parseWholeDrill(new String(fis.readAllBytes()));
@@ -42,6 +41,7 @@ public class DrillParserTest {
             fis = new FileInputStream(expected);
             String exp = new String(fis.readAllBytes());
             assertEquals(exp,act.toString());
+            fis.close();
         }
         catch (FileNotFoundException fnfe) {
             fnfe.printStackTrace();
