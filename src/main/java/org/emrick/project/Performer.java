@@ -50,6 +50,15 @@ public class Performer {
         return coordinates;
     }
 
+    public Coordinate getCoordinateFromSet(String set) {
+        for (Coordinate c : coordinates) {
+            if (c.set.equals(set)) {
+                return c;
+            }
+        }
+        return null;
+    }
+
     public void setCoordinates(ArrayList<Coordinate> coordinates) {
         this.coordinates = coordinates;
     }
