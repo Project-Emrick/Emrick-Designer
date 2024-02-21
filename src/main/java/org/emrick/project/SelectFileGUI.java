@@ -61,6 +61,7 @@ public class SelectFileGUI implements ActionListener {
         frame.setResizable(false); // resize window option
 
         JLabel titleLabel = new JLabel("New Project - Import");
+        titleLabel.setFont(new Font("Arial", Font.BOLD, 14));
         titleLabel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
         // Here, "ul" is short for "upload"

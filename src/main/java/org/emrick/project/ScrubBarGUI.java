@@ -14,16 +14,16 @@ import java.util.regex.Pattern;
 public class ScrubBarGUI implements ActionListener {
 
     // String definitions
-    public static final String PATH_SYNC_ICON = "./src/main/resources/icons/scrub-bar/time_sync_flaticon.png";
-    public static final String PATH_PREV_SET_ICON = "./src/main/resources/icons/scrub-bar/prev_set_flaticon.png";
-    public static final String PATH_NEXT_SET_ICON = "./src/main/resources/icons/scrub-bar/next_set_flaticon.png";
-    public static final String PATH_PLAY_ICON = "./src/main/resources/icons/scrub-bar/play_flaticon.png";
-    public static final String PATH_PAUSE_ICON = "./src/main/resources/icons/scrub-bar/pause_flaticon.png";
-    public static final String PATH_PREV_COUNT_ICON = "./src/main/resources/icons/scrub-bar/prev_count_flaticon.png";
-    public static final String PATH_NEXT_COUNT_ICON = "./src/main/resources/icons/scrub-bar/next_count_flaticon.png";
-    public static final String PATH_AUDIO_ICON = "./src/main/resources/icons/scrub-bar/audio_flaticon.png";
-    public static final String PATH_FAST_PLAY_ICON = "./src/main/resources/icons/scrub-bar/fast_play_flaticon.png";
-    public static final String PATH_FULL_PLAY_ICON = "./src/main/resources/icons/scrub-bar/double_arrow_flaticon.png";
+    private static final String PATH_SYNC_ICON = "./src/main/resources/icons/scrub-bar/time_sync_flaticon.png";
+    private static final String PATH_PREV_SET_ICON = "./src/main/resources/icons/scrub-bar/prev_set_flaticon.png";
+    private static final String PATH_NEXT_SET_ICON = "./src/main/resources/icons/scrub-bar/next_set_flaticon.png";
+    private static final String PATH_PLAY_ICON = "./src/main/resources/icons/scrub-bar/play_flaticon.png";
+    private static final String PATH_PAUSE_ICON = "./src/main/resources/icons/scrub-bar/pause_flaticon.png";
+    private static final String PATH_PREV_COUNT_ICON = "./src/main/resources/icons/scrub-bar/prev_count_flaticon.png";
+    private static final String PATH_NEXT_COUNT_ICON = "./src/main/resources/icons/scrub-bar/next_count_flaticon.png";
+    private static final String PATH_AUDIO_ICON = "./src/main/resources/icons/scrub-bar/audio_flaticon.png";
+    private static final String PATH_FAST_PLAY_ICON = "./src/main/resources/icons/scrub-bar/fast_play_flaticon.png";
+    private static final String PATH_FULL_PLAY_ICON = "./src/main/resources/icons/scrub-bar/double_arrow_flaticon.png";
 
     private JPanel scrubBarPanel;
 
@@ -42,6 +42,9 @@ public class ScrubBarGUI implements ActionListener {
     private JCheckBox fastPlayCheckbox;
     private JCheckBox fullPlayCheckbox;
 
+    // Time-Sync GUI
+    private SyncTimeGUI syncTimeGUI;
+
     // Page Tabs / Counts
     Map<String, Integer> pageTabCounts; // [pageTab]:[count] e.g., k:"2A", v:30
     int lastCount;
@@ -49,7 +52,7 @@ public class ScrubBarGUI implements ActionListener {
     int currSetEndCount;
 
     // Listener
-    private ScrubBarListener scrubBarListener;
+    private final ScrubBarListener scrubBarListener;
 
     public ScrubBarGUI(Map<String, Integer> pageTabCounts, ScrubBarListener scrubBarListener) {
         this.pageTabCounts = pageTabCounts;
@@ -63,7 +66,7 @@ public class ScrubBarGUI implements ActionListener {
         ).getValue();
 
         // Start slides on first count of first set
-        if (pageTabCounts.size() == 0) {
+        if (pageTabCounts.isEmpty()) {
             System.out.println("Error: No page tabs found.");
             return;
         }
@@ -146,8 +149,7 @@ public class ScrubBarGUI implements ActionListener {
 
         Hashtable<Integer, JLabel> labelTable = new Hashtable<>();
 
-        List<Map.Entry<String, Integer>> list = new ArrayList<>(pageTabCounts.entrySet());
-        list.sort(Map.Entry.comparingByValue());
+        List<Map.Entry<String, Integer>> list = sortMap(pageTabCounts);
 
         int val = 0;
         for (Map.Entry<String, Integer> entry : list) {
@@ -155,6 +157,19 @@ public class ScrubBarGUI implements ActionListener {
         }
 
         return labelTable;
+    }
+
+    /**
+     * Takes in a map of [String]:[Integer] entries and returns a list of those entries, sorted by the
+     * value [Integer] in ascending order. Useful for a variety of situations, not only within this class.
+     *
+     * @param map - The map of [String]:[Integer] entries
+     * @return a list of map entries, sorted by the value [Integer] in ascending order.
+     */
+    public static List<Map.Entry<String, Integer>> sortMap(Map<String, Integer> map) {
+        List<Map.Entry<String, Integer>> list = new ArrayList<>(map.entrySet());
+        list.sort(Map.Entry.comparingByValue());
+        return list;
     }
 
     private JPanel getToolBarPanel() {
@@ -251,7 +266,7 @@ public class ScrubBarGUI implements ActionListener {
      * @param imageIcon - ImageIcon object to rescale.
      * @return Altered ImageIcon with rescaled icon.
      */
-    public ImageIcon scaleImageIcon(ImageIcon imageIcon, int width, int height) {
+    public static ImageIcon scaleImageIcon(ImageIcon imageIcon, int width, int height) {
         Image image = imageIcon.getImage(); // transform it
         Image newImg = image.getScaledInstance(width, height, java.awt.Image.SCALE_SMOOTH); // scale it the smooth way
         return new ImageIcon(newImg);  // transform it back

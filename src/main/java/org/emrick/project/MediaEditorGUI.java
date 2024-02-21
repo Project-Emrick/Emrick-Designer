@@ -143,6 +143,7 @@ public class MediaEditorGUI implements ActionListener, ImportListener, ScrubBarL
     private ScrubBarGUI scrubBarGUI;
 
     // Audio Components
+    //  May want to abstract this away into some DrillPlayer class in the future
     private AudioPlayer audioPlayer;
 
     private Effect effect;
@@ -216,7 +217,7 @@ public class MediaEditorGUI implements ActionListener, ImportListener, ScrubBarL
 
 
     // Importing Listeners
-    //  If you are not familiar with this, please check out how to use Java Listeners
+    //  If you are not familiar with this, please check out how to use listener interfaces in Java
 
     @Override
     public void onImport() {
@@ -247,14 +248,16 @@ public class MediaEditorGUI implements ActionListener, ImportListener, ScrubBarL
 
     @Override
     public void onPlay() {
-        if (scrubBarGUI.getAudioCheckbox().isSelected()) {
+        if (audioPlayer != null && scrubBarGUI.getAudioCheckbox().isSelected()) {
             audioPlayer.playAudio();
         }
     }
 
     @Override
     public void onPause() {
-        audioPlayer.pauseAudio();
+        if (audioPlayer != null) {
+            audioPlayer.pauseAudio();
+        }
     }
 
 
