@@ -8,6 +8,8 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 
 public class Drill {
     public ArrayList<Performer> performers;
@@ -60,6 +62,12 @@ public class Drill {
         for (int i = 0; i < c.size(); i++) {
             sets.add(new Set(c.get(i).set, i, c.get(i).duration));
         }
+        Collections.sort(sets, new Comparator<Set>() {
+            @Override
+            public int compare(Set o1, Set o2) {
+                return o1.compareTo(o2);
+            }
+        });
     }
 
     public void addSet(Coordinate coordinate) {

@@ -334,7 +334,7 @@ public class MediaEditorGUI implements ActionListener, ImportListener, ScrubBarL
         fieldScrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
 
         // Scrub Bar
-        scrubBarGUI = new ScrubBarGUI(this);
+        scrubBarGUI = new ScrubBarGUI(this, footballFieldPanel);
     }
 
 
@@ -372,18 +372,14 @@ public class MediaEditorGUI implements ActionListener, ImportListener, ScrubBarL
         footballFieldPanel.addSetToField(footballFieldPanel.drill.sets.get(0));
 
         // TODO: Q: Any way to get the Page Tabs w/ their respective counts?
-        Map<String, Integer> dummyPageTabCounts = new HashMap<>();
-        dummyPageTabCounts.put("1", 0); // Page tab 1 maps to count 0
-        dummyPageTabCounts.put("1A", 16); // Page tab 1A maps to count 16
-        dummyPageTabCounts.put("2", 32); // Page tab 2 maps to count 32
-        dummyPageTabCounts.put("2A", 48); // etc.
-        dummyPageTabCounts.put("3", 64);
-        dummyPageTabCounts.put("3A", 88);
-        dummyPageTabCounts.put("4", 96);
-        dummyPageTabCounts.put("4A", 112);
-        dummyPageTabCounts.put("4B", 128);
+        Map<String, Integer> pageTabCounts = new HashMap<>();
+        int startCount = 0;
+        for (Set s : footballFieldPanel.drill.sets) {
+            startCount += s.duration;
+            pageTabCounts.put(s.label, startCount);
+        }
 
-        scrubBarGUI.updatePageTabCounts(dummyPageTabCounts);
+        scrubBarGUI.updatePageTabCounts(pageTabCounts);
         buildScrubBarPanel();
     }
 

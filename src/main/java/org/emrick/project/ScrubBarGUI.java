@@ -56,11 +56,12 @@ public class ScrubBarGUI implements ActionListener {
     private int lastCount;
     private int currSetStartCount;
     private int currSetEndCount;
+    private FootballFieldPanel footballFieldPanel;
 
     // Listener
     private final ScrubBarListener scrubBarListener;
 
-    public ScrubBarGUI(ScrubBarListener scrubBarListener) {
+    public ScrubBarGUI(ScrubBarListener scrubBarListener, FootballFieldPanel footballFieldPanel) {
 
         // Placeholder. E.g., When Emrick Designer is first opened, no project is loaded.
         this.pageTabCounts = new HashMap<>();
@@ -75,6 +76,7 @@ public class ScrubBarGUI implements ActionListener {
 
         this.isReady = false;
         this.isPlaying = false;
+        this.footballFieldPanel = footballFieldPanel;
 
         initialize();
     }
@@ -172,6 +174,11 @@ public class ScrubBarGUI implements ActionListener {
                 statusLabel.setText("Set : " + set);
 
                 updateCurrSetCounts(set);
+                for (Set s : footballFieldPanel.drill.sets) {
+                    if (s.equalsString(set)) {
+                        footballFieldPanel.addSetToField(s);
+                    }
+                }
 
                 // Update bottom slider
                 botSlider.setMinimum(currSetStartCount);
@@ -209,7 +216,7 @@ public class ScrubBarGUI implements ActionListener {
      */
     public static List<Map.Entry<String, Integer>> sortMap(Map<String, Integer> map) {
         List<Map.Entry<String, Integer>> list = new ArrayList<>(map.entrySet());
-        list.sort(Map.Entry.comparingByValue());
+        list.sort(Map.Entry.comparingByKey());
         return list;
     }
 
@@ -464,7 +471,7 @@ public class ScrubBarGUI implements ActionListener {
                     public void onPause() {
                         System.out.println("onPause called.");
                     }
-                });
+                }, new FootballFieldPanel());
 
                 // Dummy input
                 Map<String, Integer> dummyData1 = new HashMap<>();
