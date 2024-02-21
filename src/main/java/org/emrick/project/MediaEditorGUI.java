@@ -570,7 +570,7 @@ public class MediaEditorGUI implements ActionListener, ImportListener, ScrubBarL
             DrillParser parse1 = new DrillParser();
             Drill drillby = parse1.parseWholeDrill(DrillString);
 
-            ArrayList<String> positionsAtTimestamp = drillby.getPositionsAtTimestamp("1zy");
+            ArrayList<String> positionsAtTimestamp = drillby.getPositionsAtTimestamp("4A");
             int j = 10;
             for (String position : positionsAtTimestamp) {
                 j--;
