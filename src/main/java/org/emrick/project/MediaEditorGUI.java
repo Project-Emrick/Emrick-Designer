@@ -229,7 +229,9 @@ class FootballFieldPanel extends JPanel {
                     if (mx <= px+7 && my <= py+7 && mx >= px-7 && my >= py-7) {
                         selectedPerformers = new HashMap<>();
                         selectedPerformers.put(p.getSymbol()+p.getLabel(), p);
+                        break;
                     }
+                    selectedPerformers = new HashMap<>();
                 }
             }
             repaint();
