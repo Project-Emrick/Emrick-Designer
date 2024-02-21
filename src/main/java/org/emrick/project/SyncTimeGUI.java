@@ -3,6 +3,8 @@ package org.emrick.project;
 import javax.imageio.ImageIO;
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
@@ -11,7 +13,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class SyncTimeGUI {
+public class SyncTimeGUI implements ActionListener {
 
     // String Constants
     private static final String PATH_INSTR_IMAGE = "./src/main/resources/images/sync_time_instr.jpg";
@@ -41,7 +43,7 @@ public class SyncTimeGUI {
     private void initialize() {
         frame = new JFrame();
         frame.setTitle("Sync Time to Original Drill");
-        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         frame.setSize(400, 600);
         frame.setLayout(new BorderLayout(10, 10));
         frame.setResizable(false);
@@ -96,24 +98,27 @@ public class SyncTimeGUI {
         for (Map.Entry<String, Integer> entry : ptCounts) {
             JLabel setLabel = new JLabel(entry.getKey());
             setLabel.setFont(new Font("Arial", Font.BOLD, 16));
-            setLabel.setBorder(BorderFactory.createLineBorder(Color.BLACK));
+            setLabel.setBorder(BorderFactory.createLineBorder(Color.LIGHT_GRAY));
             entryPanel.add(setLabel); // Set e.g., "2A"
 
             JTextField textField = new JTextField();
-            textField.setBorder(BorderFactory.createLineBorder(Color.BLACK));
+            textField.setBorder(BorderFactory.createLineBorder(Color.LIGHT_GRAY));
             textField.setToolTipText("Enter timestamp of Page Tab " + entry.getKey());
             ptTimeFields.put(entry.getKey(), textField); // Keep a reference to text fields
             entryPanel.add(textField);
 
             JLabel countLabel = new JLabel(entry.getValue().toString());
             countLabel.setFont(new Font("Arial", Font.BOLD, 16));
-            countLabel.setBorder(BorderFactory.createLineBorder(Color.BLACK));
+            countLabel.setBorder(BorderFactory.createLineBorder(Color.LIGHT_GRAY));
             entryPanel.add(countLabel); // Count e.g., "48"
         }
 
         // Cancel/Import buttons
-        this.cancelButton = new JButton("Cancel");
-        this.syncButton = new JButton("Sync");
+        cancelButton = new JButton("Cancel");
+        cancelButton.addActionListener(this);
+
+        syncButton = new JButton("Sync");
+        syncButton.addActionListener(this);
 
         JPanel buttonPane = new JPanel();
         buttonPane.setLayout(new BoxLayout(buttonPane, BoxLayout.LINE_AXIS));
@@ -130,6 +135,16 @@ public class SyncTimeGUI {
 
     public void show() {
         frame.setVisible(true);
+    }
+
+    @Override
+    public void actionPerformed(ActionEvent e) {
+        if (e.getSource().equals(cancelButton)) {
+            frame.dispose();
+        }
+        else if (e.getSource().equals(syncButton)) {
+            // TODO: Sync Times
+        }
     }
 
     // For testing

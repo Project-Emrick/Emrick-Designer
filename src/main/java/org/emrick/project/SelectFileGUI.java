@@ -16,26 +16,26 @@ import java.util.Optional;
 public class SelectFileGUI implements ActionListener {
 
     // Parent frame
-    JFrame frame;
+    private JFrame frame;
 
     // Paths to selected files
-    String coordsFilePath;
-    String archiveFilePath;
+    private String coordsFilePath;
+    private String archiveFilePath;
 
     // Upload File Buttons
-    JButton ulCoordsButton;
-    JButton ulArchiveButton;
+    private JButton ulCoordsButton;
+    private JButton ulArchiveButton;
 
     // Filename Display Labels
-    JLabel ulCoordsFilename;
-    JLabel ulArchiveFilename;
+    private JLabel ulCoordsFilename;
+    private JLabel ulArchiveFilename;
 
     // Import / Cancel Buttons
-    JButton cancelButton;
-    JButton importButton;
+    private JButton cancelButton;
+    private JButton importButton;
 
     // Import Archive Service
-    ImportArchive importArchive;
+    private ImportArchive importArchive;
 
     /**
      * Prepare ImportArchive service object.

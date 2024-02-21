@@ -261,8 +261,10 @@ public class MediaEditorGUI implements ActionListener, ImportListener, ScrubBarL
 
     // UI Components of MediaEditorGUI
     private JFrame frame;
+    private JPanel mainContentPanel;
     private FootballFieldPanel footballFieldPanel;
-    private ScrubBarGUI scrubBarGUI;
+    private JPanel scrubBarPanel; // Refers directly to panel of ScrubBarGUI. Reduces UI refreshing issues.
+    private ScrubBarGUI scrubBarGUI; // Refers to ScrubBarGUI instance, with functionality
 
     // Audio Components
     //  May want to abstract this away into some DrillPlayer class in the future
@@ -318,7 +320,7 @@ public class MediaEditorGUI implements ActionListener, ImportListener, ScrubBarL
     public MediaEditorGUI() {
 
         // Change Font Size for Menu and MenuIem
-        Font f = new Font("sans-serif", Font.PLAIN, 18);
+        Font f = new Font("FlatLaf.style", Font.PLAIN, 16);
         UIManager.put("Menu.font", f);
         UIManager.put("MenuItem.font", f);
         UIManager.put("CheckBoxMenuItem.font", f);
@@ -332,19 +334,7 @@ public class MediaEditorGUI implements ActionListener, ImportListener, ScrubBarL
         fieldScrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
 
         // Scrub Bar
-        // Temporary. TODO: Probably hide parsed data from MediaEditorGUI. Leave it import functionality.
-        Map<String, Integer> dummyData1 = new HashMap<>();
-        dummyData1.put("1", 0); // Page tab 1 maps to count 0
-        dummyData1.put("1A", 16); // Page tab 1A maps to count 16
-        dummyData1.put("2", 32); // Page tab 2 maps to count 32
-        dummyData1.put("2A", 48); // etc.
-        dummyData1.put("3", 64);
-        dummyData1.put("3A", 88);
-        dummyData1.put("4", 96);
-        dummyData1.put("4A", 112);
-        dummyData1.put("4B", 128);
-
-        scrubBarGUI = new ScrubBarGUI(dummyData1, this);
+        scrubBarGUI = new ScrubBarGUI(this);
     }
 
 
@@ -380,6 +370,23 @@ public class MediaEditorGUI implements ActionListener, ImportListener, ScrubBarL
         String text = DrillParser.extractText(drill);
         footballFieldPanel.drill = DrillParser.parseWholeDrill(text);
         footballFieldPanel.addSetToField("1");
+
+        // TODO: Q: Any way to get the Page Tabs w/ their respective counts?
+        Map<String, Integer> dummyPageTabCounts = new HashMap<>();
+        dummyPageTabCounts.put("1", 0); // Page tab 1 maps to count 0
+        dummyPageTabCounts.put("1A", 16); // Page tab 1A maps to count 16
+        dummyPageTabCounts.put("2", 32); // Page tab 2 maps to count 32
+        dummyPageTabCounts.put("2A", 48); // etc.
+        dummyPageTabCounts.put("3", 64);
+        dummyPageTabCounts.put("3A", 88);
+        dummyPageTabCounts.put("4", 96);
+        dummyPageTabCounts.put("4A", 112);
+        dummyPageTabCounts.put("4B", 128);
+
+        scrubBarGUI.setPageTabCounts(dummyPageTabCounts);
+
+        // Refresh after update to scrubBarGUI
+        addScrubBarPanel();
     }
 
 
@@ -400,6 +407,27 @@ public class MediaEditorGUI implements ActionListener, ImportListener, ScrubBarL
     }
 
 
+    /**
+     * Loads the Scrub Bar Panel if it has not been created, or refreshes it if it already exists.
+     */
+    private void addScrubBarPanel() {
+        if (scrubBarPanel != null) {
+
+            // Remove the existing scrubBarPanel
+            mainContentPanel.remove(scrubBarPanel);
+        }
+
+        scrubBarPanel = scrubBarGUI.getScrubBarPanel();
+        scrubBarPanel.setBorder(BorderFactory.createTitledBorder("Scrub Bar"));
+        scrubBarPanel.setPreferredSize(new Dimension(650, 120));
+
+        mainContentPanel.add(scrubBarPanel, BorderLayout.SOUTH);
+
+        // IMPORTANT
+        mainContentPanel.revalidate();
+        mainContentPanel.repaint();
+    }
+
     private void createAndShowGUI() {
         //main window
         frame = new JFrame("Emrick Designer");
@@ -414,22 +442,18 @@ public class MediaEditorGUI implements ActionListener, ImportListener, ScrubBarL
          */
         JPanel topPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
 
-
         frame.add(topPanel, BorderLayout.NORTH);
 
         // Main content panel
-        JPanel mainContentPanel = new JPanel();
+        mainContentPanel = new JPanel();
         mainContentPanel.setLayout(new BorderLayout());
 
-
         footballFieldPanel.setBorder(BorderFactory.createTitledBorder("Main View"));
-//        footballFieldPanel.setPreferredSize(new Dimension(650, 500));
         mainContentPanel.add(footballFieldPanel, BorderLayout.CENTER);
 
-        JPanel scrubBarPanel = scrubBarGUI.getScrubBarPanel();
-        scrubBarPanel.setBorder(BorderFactory.createTitledBorder("Scrub Bar"));
-        scrubBarPanel.setPreferredSize(new Dimension(650, 120));
-        mainContentPanel.add(scrubBarPanel, BorderLayout.SOUTH);
+        // Scrub Bar Panel
+        addScrubBarPanel();
+
         frame.add(mainContentPanel, BorderLayout.CENTER);
 
         // Timeline panel
