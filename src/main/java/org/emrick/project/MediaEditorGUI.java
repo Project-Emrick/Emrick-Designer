@@ -1,14 +1,18 @@
 package org.emrick.project;
 
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonIOException;
+import com.google.gson.JsonSyntaxException;
 import org.emrick.project.audio.AudioPlayer;
 
 import javax.swing.*;
-import javax.swing.event.MouseInputListener;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import java.awt.*;
 import java.awt.event.*;
-import java.awt.image.BufferedImage;
-import java.io.File;
+import java.awt.geom.Point2D;
+import java.io.*;
+import java.net.URI;
+import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.ArrayList;
@@ -17,63 +21,12 @@ import javax.swing.Timer;
 import com.formdev.flatlaf.FlatLightLaf;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.io.IOException;
 import java.util.stream.Collectors;
-import java.awt.geom.Point2D;
+import com.google.gson.Gson;
+import org.emrick.project.serde.ColorAdapter;
+import org.emrick.project.serde.Point2DAdapter;
+import org.emrick.project.serde.ProjectFile;
 
-
-
-class FootballFieldPanel extends JPanel {
-    public Drill drill;
-    public HashMap<String,Performer> selectedPerformers;
-    private double fieldWidth = 720; // Width of the football field
-    private double fieldHeight = 360;
-    private Point frontSideline50 = new Point(360,360);
-
-    private Color colorChosen;
-    private final int margin = 15;
-
-    // Loading field decor.
-    private BufferedImage surfaceImage;
-    private BufferedImage floorCoverImage;
-    private boolean ctrlHeld = false;
-    private Set currentSet;
-
-    public FootballFieldPanel() {
-//        setPreferredSize(new Dimension(fieldWidth + 2*margin, fieldHeight + 2*margin)); // Set preferred size for the drawing area
-        setMinimumSize(new Dimension(1042, 548));
-        drill = new Drill();
-        selectedPerformers = new HashMap<>();
-        this.addMouseListener(new MouseInput());
-        colorChosen = Color.RED;
-    }
-
-    public FootballFieldPanel(Color colorChosen) {
-        this.colorChosen = colorChosen;
-        setMinimumSize(new Dimension(1042, 548));
-        drill = new Drill();
-        selectedPerformers = new HashMap<>();
-        this.addMouseListener(new MouseInput());
-    }
-
-    public void addSetToField(Set set) {
-        currentSet = set;
-        if (!set.equals("0")) {
-            for (Performer p : drill.performers) {
-                for (Coordinate c : p.getCoordinates()) {
-                    if (c.set.equals(set)) {
-                        p.currentLocation = dotToPoint(c.x, c.y);
-                        break;
-                    }
-                }
-            }
-        } else {
-            for (Performer p : drill.performers) {
-                p.currentLocation = new Point2D.Double(-20,-20);
-            }
-        }
-        repaint();
-    }
 
     public Point2D dotToPoint(double x, double y) {
         double newY = frontSideline50.y - y/84 * fieldHeight;
@@ -261,7 +214,7 @@ public class MediaEditorGUI implements ActionListener, ImportListener, ScrubBarL
     // String definitions
     public static final String FILE_MENU_NEW_PROJECT = "New Project";
     public static final String FILE_MENU_OPEN_PROJECT = "Open Project";
-    public static final String FILE_MENU_SAVE = "Save";
+    public static final String FILE_MENU_SAVE = "Save Project";
 
     // UI Components of MediaEditorGUI
     private JFrame frame;
@@ -280,10 +233,17 @@ public class MediaEditorGUI implements ActionListener, ImportListener, ScrubBarL
 
     // dots
     private List<Coordinate> dotCoordinates = new ArrayList<>();
-    static JLabel sysMsg = new JLabel("Welcome to Emrick Designer!", SwingConstants.RIGHT);
-    static Timer clearSysMsg = new Timer(5000, e -> {
+    private JLabel sysMsg = new JLabel("Welcome to Emrick Designer!", SwingConstants.RIGHT);
+    private Timer clearSysMsg = new Timer(5000, e -> {
         sysMsg.setText("");
     });
+
+    // JSON serde
+    private Gson gson;
+
+    // Project info
+    private URI archivePath = null;
+    private URI drillPath = null;
 
 
     public static void main(String[] args) {
@@ -294,21 +254,6 @@ public class MediaEditorGUI implements ActionListener, ImportListener, ScrubBarL
         } catch( Exception ex ) {
             System.err.println( "Failed to initialize LaF" );
         }
-
-        clearSysMsg.setRepeats(false);
-        clearSysMsg.start();
-
-        // test autosave stuff
-        Timer t = new Timer(1 * 60 * 60 * 1000, e -> {
-            System.out.println("autosaving...");
-            clearSysMsg.stop();
-            sysMsg.setText("Autosaving...");
-            clearSysMsg.start();
-
-            // TODO: actual saving here
-        });
-        t.setRepeats(true);
-        t.start();
 
         // Run this program on the Event Dispatch Thread (EDT)
         EventQueue.invokeLater(new Runnable() {
@@ -322,6 +267,31 @@ public class MediaEditorGUI implements ActionListener, ImportListener, ScrubBarL
 
 
     public MediaEditorGUI() {
+        // serde setup
+        GsonBuilder builder = new GsonBuilder();
+        builder.registerTypeAdapter(Color.class, new ColorAdapter());
+        builder.registerTypeAdapter(Point2D.class, new Point2DAdapter());
+        builder.serializeNulls();
+        gson = builder.create();
+
+        // Autosave and system message things
+        clearSysMsg.setRepeats(false);
+        clearSysMsg.start();
+
+        // test autosave stuff
+        Timer t = new Timer(1 * 60 * 60 * 1000, e -> {
+            System.out.println("autosaving...");
+            writeSysMsg("Autosaving...");
+
+            // TODO: actual saving here
+            String tempFile = System.getProperty("user.home") + "/emrick.temp.json";
+            System.out.println("autosaving to `" + tempFile + "`");
+//            saveProject(tempFile);
+
+            writeSysMsg("Autosaved.");
+        });
+        t.setRepeats(true);
+        t.start();
 
         // Change Font Size for Menu and MenuIem
         Font f = new Font("FlatLaf.style", Font.PLAIN, 16);
@@ -344,6 +314,12 @@ public class MediaEditorGUI implements ActionListener, ImportListener, ScrubBarL
 
     // Importing Listeners
     //  If you are not familiar with this, please check out how to use listener interfaces in Java
+
+    @Override
+    public void onFileSelect(URI archivePath, URI drillPath) {
+        this.archivePath = archivePath;
+        this.drillPath = drillPath;
+    }
 
     @Override
     public void onImport() {
@@ -374,7 +350,10 @@ public class MediaEditorGUI implements ActionListener, ImportListener, ScrubBarL
         String text = DrillParser.extractText(drill);
         footballFieldPanel.drill = DrillParser.parseWholeDrill(text);
         footballFieldPanel.addSetToField(footballFieldPanel.drill.sets.get(0));
+        rebuildPageTabCounts();
+    }
 
+    private void rebuildPageTabCounts() {
         // TODO: Q: Any way to get the Page Tabs w/ their respective counts?
         Map<String, Integer> pageTabCounts = new HashMap<>();
         int startCount = 0;
@@ -500,14 +479,27 @@ public class MediaEditorGUI implements ActionListener, ImportListener, ScrubBarL
 
         // Import Pyware Project
         JMenuItem importItem = new JMenuItem(FILE_MENU_NEW_PROJECT);
+        importItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_N, ActionEvent.CTRL_MASK));
         fileMenu.add(importItem);
-        importItem.addActionListener(this);
+//        importItem.addActionListener(this);
+        importItem.addActionListener(e -> {
+            System.out.println("New Project...");
+
+            // Important: ImportListener allows import services (e.g., SelectFileGUI > ImportArchive) to call update
+            //  methods belonging to the current class (MediaEditorGUI).
+
+            SelectFileGUI selectFileGUI = new SelectFileGUI(this);
+            selectFileGUI.show();
+
+            System.out.println("Should have loaded the field by now");
+        });
 
         // TODO: make sfg not local, have it load the project after import finishes
 
         // Open Emrick Project
         // https://www.codejava.net/java-se/swing/add-file-filter-for-jfilechooser-dialog
         JMenuItem openItem = new JMenuItem(FILE_MENU_OPEN_PROJECT);
+        openItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_O, ActionEvent.CTRL_MASK));
         fileMenu.add(openItem);
         openItem.addActionListener(e -> {
             System.out.println("Opening project...");
@@ -518,6 +510,7 @@ public class MediaEditorGUI implements ActionListener, ImportListener, ScrubBarL
             fileChooser.addChoosableFileFilter(new FileNameExtensionFilter("Emrick Project Files (emrick, json)", "emrick", "json"));
             if (fileChooser.showOpenDialog(null) == JFileChooser.APPROVE_OPTION) {
                 System.out.println("Opening file `"+fileChooser.getSelectedFile().getAbsolutePath()+"`.");
+                loadProject(fileChooser.getSelectedFile());
             }
         });
 
@@ -528,11 +521,18 @@ public class MediaEditorGUI implements ActionListener, ImportListener, ScrubBarL
         saveItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S, ActionEvent.CTRL_MASK));
         fileMenu.add(saveItem);
         saveItem.addActionListener(e -> {
+            if (archivePath == null || drillPath == null) {
+                System.out.println("Nothing to save.");
+                writeSysMsg("Nothing to save!");
+                return;
+            }
+
             System.out.println("Saving project...");
             JFileChooser fileChooser = new JFileChooser();
             fileChooser.setDialogTitle("Save Project");
             if (fileChooser.showSaveDialog(null) == JFileChooser.APPROVE_OPTION) {
                 System.out.println("Saving file `"+fileChooser.getSelectedFile().getAbsolutePath()+"`.");
+                saveProject(fileChooser.getSelectedFile());
             }
         });
 
@@ -540,6 +540,7 @@ public class MediaEditorGUI implements ActionListener, ImportListener, ScrubBarL
 
         // Export Emerick Packets
         JMenuItem exportItem = new JMenuItem("Export Emerick Packets File");
+        saveItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_E, ActionEvent.CTRL_MASK));
         fileMenu.add(exportItem);
         exportItem.addActionListener(e -> {
             System.out.println("Exporting packets...");
@@ -699,43 +700,51 @@ public class MediaEditorGUI implements ActionListener, ImportListener, ScrubBarL
         footballFieldPanel.repaint();
     }
 
+    public void saveProject(File path) {
+        String relArchive = path.getParentFile().toURI().relativize(archivePath).getPath();
+        String relDrill = path.getParentFile().toURI().relativize(drillPath).getPath();
 
-    // Actions
+        ProjectFile pf = new ProjectFile(footballFieldPanel.drill, relArchive, relDrill);
+        String g = gson.toJson(pf);
 
-    @Override
-    public void actionPerformed(ActionEvent e) {
-        if (e.getSource() instanceof JMenuItem) {
-            menuActionPerformed(e);
+        System.out.println("saving to `" + path + "`");
+//        System.out.println(g);
+
+        try {
+            FileWriter w = new FileWriter(path);
+            w.write(g);
+            w.close();
+        } catch (IOException e) {
+            writeSysMsg("Failed to save to `" + path + "`.");
+            throw new RuntimeException(e);
+        }
+
+        writeSysMsg("Saved project to `" + path + "`.");
+    }
+
+    public void loadProject(File path) {
+        try {
+            // TODO: pdf loading is redundant with project file. fix? - LHD
+            FileReader r = new FileReader(path);
+            ProjectFile pf = gson.fromJson(r, ProjectFile.class);
+            ImportArchive ia = new ImportArchive(this);
+            Path fullArchive = Paths.get(path.getParentFile().getPath(), pf.archivePath);
+            Path fullDrill = Paths.get(path.getParentFile().getPath(), pf.drillPath);
+            ia.fullImport(fullArchive.toString(), fullDrill.toString());
+            footballFieldPanel.drill = pf.drill;
+            footballFieldPanel.setCurrentSet(footballFieldPanel.drill.sets.get(0));
+//            rebuildPageTabCounts();
+//            scrubBarGUI.setReady(true);
+            footballFieldPanel.repaint();
+        } catch (JsonIOException | JsonSyntaxException | FileNotFoundException e) {
+            writeSysMsg("Failed to open to `" + path + "`.");
+            throw new RuntimeException(e);
         }
     }
 
-    private void menuActionPerformed(ActionEvent e) {
-        JMenuItem item = (JMenuItem) e.getSource();
-        String text = item.getText();
-
-        // New Project
-        if (text.equals(FILE_MENU_NEW_PROJECT)) {
-            System.out.println("New Project.");
-
-            // Important: ImportListener allows import services (e.g., SelectFileGUI > ImportArchive) to call update
-            //  methods belonging to the current class (MediaEditorGUI).
-
-            SelectFileGUI selectFileGUI = new SelectFileGUI(this);
-            selectFileGUI.show();
-
-            System.out.println("Should have loaded the field by now");
-        }
-
-        // Open Project
-        else if (text.equals(FILE_MENU_OPEN_PROJECT)) {
-            System.out.println("Open Project.");
-        }
-
-        // Save
-        else if (text.equals(FILE_MENU_SAVE)) {
-            System.out.println("Save.");
-
-            // TODO: Saving
-        }
+    private void writeSysMsg(String msg) {
+        clearSysMsg.stop();
+        sysMsg.setText(msg);
+        clearSysMsg.start();
     }
 }
