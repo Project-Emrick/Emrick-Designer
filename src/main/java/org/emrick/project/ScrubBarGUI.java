@@ -450,7 +450,22 @@ public class ScrubBarGUI implements ActionListener {
             if (syncTimeGUI != null) {
                 syncTimeGUI.show();
             }
+        }             
+        // Handle previous count button click
+        else if (e.getSource() == prevCountButton) {
+            int currentValue = botSlider.getValue();
+            if (currentValue > botSlider.getMinimum()) {
+                botSlider.setValue(currentValue - 1); // Step backward by 1
+            }
         }
+
+        // Handle next count button click
+        else if (e.getSource() == nextCountButton) {
+            int currentValue = botSlider.getValue();
+            if (currentValue < botSlider.getMaximum()) {
+                botSlider.setValue(currentValue + 1); // Step forward by 1
+            }
+        }        
     }
 
     // For testing
