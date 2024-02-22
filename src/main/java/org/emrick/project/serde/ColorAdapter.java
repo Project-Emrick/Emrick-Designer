@@ -14,6 +14,11 @@ public class ColorAdapter extends TypeAdapter<Color> {
     public Color read(JsonReader reader) throws IOException {
         Integer r = null, g = null, b = null, a = null;
         String fieldname = null;
+        if (reader.peek().equals(JsonToken.NULL)) {
+            reader.nextNull();
+            return null;
+        }
+
         reader.beginObject();
         while (reader.hasNext()) {
             JsonToken token = reader.peek();
@@ -45,16 +50,6 @@ public class ColorAdapter extends TypeAdapter<Color> {
     public void write(JsonWriter writer, Color color) throws IOException {
         if (color == null) {
             // color isn't defined so we'll ignore
-//            writer.beginObject();
-//            writer.name("r");
-//            writer.value(0);
-//            writer.name("g");
-//            writer.value(0);
-//            writer.name("b");
-//            writer.value(0);
-//            writer.name("a");
-//            writer.value(0);
-//            writer.endObject();
             writer.nullValue();
             return;
         }

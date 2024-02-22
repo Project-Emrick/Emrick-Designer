@@ -234,4 +234,8 @@ class FootballFieldPanel extends JPanel {
         @Override
         public void mouseMoved(MouseEvent e) {}
     }
+
+    public void setCurrentSet(Set currentSet) {
+        this.currentSet = currentSet;
+    }
 }

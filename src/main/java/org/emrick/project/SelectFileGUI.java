@@ -16,12 +16,13 @@ import java.util.concurrent.TimeUnit;
  */
 public class SelectFileGUI implements ActionListener {
 
+    private ImportListener importListener;
     // Parent frame
     private JFrame frame;
 
     // Paths to selected files
-    private String coordsFilePath;
-    private String archiveFilePath;
+    private File coordsFilePath;
+    private File archiveFilePath;
 
     // Upload File Buttons
     private JButton ulCoordsButton;
@@ -45,6 +46,7 @@ public class SelectFileGUI implements ActionListener {
      *                       floorCover or surface images).
      */
     public SelectFileGUI(ImportListener importListener) {
+        this.importListener = importListener;
         importArchive = new ImportArchive(importListener);
 
         coordsFilePath = null;
@@ -156,7 +158,7 @@ public class SelectFileGUI implements ActionListener {
                     File selectedFile = fileChooser.getSelectedFile();
                     System.out.println("Coordinates | Selected file: " + selectedFile.getAbsoluteFile());
                     ulCoordsFilename.setText(selectedFile.getName());
-                    coordsFilePath = selectedFile.getAbsoluteFile().toString();
+                    coordsFilePath = selectedFile;
                 }
             }
 
@@ -169,7 +171,7 @@ public class SelectFileGUI implements ActionListener {
                     File selectedFile = fileChooser.getSelectedFile();
                     System.out.println("Archive     | Selected file: " + selectedFile.getAbsoluteFile());
                     ulArchiveFilename.setText(selectedFile.getName());
-                    archiveFilePath = selectedFile.getAbsolutePath();
+                    archiveFilePath = selectedFile;
                 }
             }
 
@@ -199,7 +201,8 @@ public class SelectFileGUI implements ActionListener {
 
                 // TODO: Import Coordinates Pdf and Pyware Archive
 
-                importArchive.fullImport(archiveFilePath, coordsFilePath);
+                importListener.onFileSelect(archiveFilePath.toURI(), coordsFilePath.toURI());
+                importArchive.fullImport(archiveFilePath.getAbsolutePath(), coordsFilePath.getAbsolutePath());
 
                 frame.dispose();
             }
@@ -231,42 +234,42 @@ public class SelectFileGUI implements ActionListener {
     }
 
     // For testing
-    public static void main(String[] args) {
-
-        // Run Swing programs on the Event Dispatch Thread (EDT)
-        SwingUtilities.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-                ImportListener importListener = new ImportListener() {
-                    @Override
-                    public void onImport() {
-                        System.out.println("onImport called.");
-                    }
-
-                    @Override
-                    public void onFloorCoverImport(Image image) {
-                        System.out.println("onFloorCoverImport called.");
-                    }
-
-                    @Override
-                    public void onSurfaceImport(Image image) {
-                        System.out.println("onSurfaceImport called.");
-                    }
-
-                    @Override
-                    public void onAudioImport(File audioFile) {
-                        System.out.println("onAudioImport called.");
-                    }
-
-                    @Override
-                    public void onDrillImport(String drill) {
-                        System.out.println("onDrillImport called.");
-                    }
-                };
-
-                SelectFileGUI selectFileGUI = new SelectFileGUI(importListener);
-                selectFileGUI.show();
-            }
-        });
-    }
+//    public static void main(String[] args) {
+//
+//        // Run Swing programs on the Event Dispatch Thread (EDT)
+//        SwingUtilities.invokeLater(new Runnable() {
+//            @Override
+//            public void run() {
+//                ImportListener importListener = new ImportListener() {
+//                    @Override
+//                    public void onImport() {
+//                        System.out.println("onImport called.");
+//                    }
+//
+//                    @Override
+//                    public void onFloorCoverImport(Image image) {
+//                        System.out.println("onFloorCoverImport called.");
+//                    }
+//
+//                    @Override
+//                    public void onSurfaceImport(Image image) {
+//                        System.out.println("onSurfaceImport called.");
+//                    }
+//
+//                    @Override
+//                    public void onAudioImport(File audioFile) {
+//                        System.out.println("onAudioImport called.");
+//                    }
+//
+//                    @Override
+//                    public void onDrillImport(String drill) {
+//                        System.out.println("onDrillImport called.");
+//                    }
+//                };
+//
+//                SelectFileGUI selectFileGUI = new SelectFileGUI(importListener);
+//                selectFileGUI.show();
+//            }
+//        });
+//    }
 }

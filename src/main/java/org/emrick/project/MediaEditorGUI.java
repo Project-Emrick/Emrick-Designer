@@ -1,14 +1,18 @@
 package org.emrick.project;
 
 import com.google.gson.GsonBuilder;
+import com.google.gson.JsonIOException;
+import com.google.gson.JsonSyntaxException;
 import org.emrick.project.audio.AudioPlayer;
 
 import javax.swing.*;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import java.awt.*;
 import java.awt.event.*;
-import java.io.File;
-import java.io.FileWriter;
+import java.awt.geom.Point2D;
+import java.io.*;
+import java.net.URI;
+import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.ArrayList;
@@ -17,10 +21,11 @@ import javax.swing.Timer;
 import com.formdev.flatlaf.FlatLightLaf;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.io.IOException;
 import java.util.stream.Collectors;
 import com.google.gson.Gson;
 import org.emrick.project.serde.ColorAdapter;
+import org.emrick.project.serde.Point2DAdapter;
+import org.emrick.project.serde.ProjectFile;
 
 public class MediaEditorGUI implements ImportListener, ScrubBarListener {
 
@@ -54,6 +59,10 @@ public class MediaEditorGUI implements ImportListener, ScrubBarListener {
     // JSON serde
     private Gson gson;
 
+    // Project info
+    private URI archivePath = null;
+    private URI drillPath = null;
+
 
     public static void main(String[] args) {
         // setup sysmsg
@@ -79,6 +88,7 @@ public class MediaEditorGUI implements ImportListener, ScrubBarListener {
         // serde setup
         GsonBuilder builder = new GsonBuilder();
         builder.registerTypeAdapter(Color.class, new ColorAdapter());
+        builder.registerTypeAdapter(Point2D.class, new Point2DAdapter());
         builder.serializeNulls();
         gson = builder.create();
 
@@ -89,14 +99,14 @@ public class MediaEditorGUI implements ImportListener, ScrubBarListener {
         // test autosave stuff
         Timer t = new Timer(1 * 60 * 60 * 1000, e -> {
             System.out.println("autosaving...");
-            clearSysMsg.stop();
-            sysMsg.setText("Autosaving...");
-            clearSysMsg.start();
+            writeSysMsg("Autosaving...");
 
             // TODO: actual saving here
             String tempFile = System.getProperty("user.home") + "/emrick.temp.json";
             System.out.println("autosaving to `" + tempFile + "`");
-            saveProject(tempFile);
+//            saveProject(tempFile);
+
+            writeSysMsg("Autosaved.");
         });
         t.setRepeats(true);
         t.start();
@@ -122,6 +132,12 @@ public class MediaEditorGUI implements ImportListener, ScrubBarListener {
 
     // Importing Listeners
     //  If you are not familiar with this, please check out how to use listener interfaces in Java
+
+    @Override
+    public void onFileSelect(URI archivePath, URI drillPath) {
+        this.archivePath = archivePath;
+        this.drillPath = drillPath;
+    }
 
     @Override
     public void onImport() {
@@ -152,7 +168,10 @@ public class MediaEditorGUI implements ImportListener, ScrubBarListener {
         String text = DrillParser.extractText(drill);
         footballFieldPanel.drill = DrillParser.parseWholeDrill(text);
         footballFieldPanel.addSetToField(footballFieldPanel.drill.sets.get(0));
+        rebuildPageTabCounts();
+    }
 
+    private void rebuildPageTabCounts() {
         // TODO: Q: Any way to get the Page Tabs w/ their respective counts?
         Map<String, Integer> pageTabCounts = new HashMap<>();
         int startCount = 0;
@@ -304,6 +323,7 @@ public class MediaEditorGUI implements ImportListener, ScrubBarListener {
             fileChooser.addChoosableFileFilter(new FileNameExtensionFilter("Emrick Project Files (emrick, json)", "emrick", "json"));
             if (fileChooser.showOpenDialog(null) == JFileChooser.APPROVE_OPTION) {
                 System.out.println("Opening file `"+fileChooser.getSelectedFile().getAbsolutePath()+"`.");
+                loadProject(fileChooser.getSelectedFile());
             }
         });
 
@@ -319,7 +339,7 @@ public class MediaEditorGUI implements ImportListener, ScrubBarListener {
             fileChooser.setDialogTitle("Save Project");
             if (fileChooser.showSaveDialog(null) == JFileChooser.APPROVE_OPTION) {
                 System.out.println("Saving file `"+fileChooser.getSelectedFile().getAbsolutePath()+"`.");
-                saveProject(fileChooser.getSelectedFile().getAbsolutePath());
+                saveProject(fileChooser.getSelectedFile());
             }
         });
 
@@ -486,10 +506,50 @@ public class MediaEditorGUI implements ImportListener, ScrubBarListener {
         footballFieldPanel.repaint();
     }
 
-    public void saveProject(String path) {
-        String g = gson.toJson(footballFieldPanel.drill);
-        System.out.println("saving drill");
-        System.out.println(g);
+    public void saveProject(File path) {
+        String relArchive = path.getParentFile().toURI().relativize(archivePath).getPath();
+        String relDrill = path.getParentFile().toURI().relativize(drillPath).getPath();
+
+        ProjectFile pf = new ProjectFile(footballFieldPanel.drill, relArchive, relDrill);
+        String g = gson.toJson(pf);
+
         System.out.println("saving to `" + path + "`");
+//        System.out.println(g);
+
+        try {
+            FileWriter w = new FileWriter(path);
+            w.write(g);
+            w.close();
+        } catch (IOException e) {
+            writeSysMsg("Failed to save to `" + path + "`.");
+            throw new RuntimeException(e);
+        }
+
+        writeSysMsg("Saved project to `" + path + "`.");
+    }
+
+    public void loadProject(File path) {
+        try {
+            FileReader r = new FileReader(path);
+            ProjectFile pf = gson.fromJson(r, ProjectFile.class);
+            ImportArchive ia = new ImportArchive(this);
+            Path fullArchive = Paths.get(path.getParentFile().getPath(), pf.archivePath);
+            Path fullDrill = Paths.get(path.getParentFile().getPath(), pf.drillPath);
+            ia.fullImport(fullArchive.toString(), fullDrill.toString());
+            footballFieldPanel.drill = pf.drill;
+            footballFieldPanel.setCurrentSet(footballFieldPanel.drill.sets.get(0));
+//            rebuildPageTabCounts();
+//            scrubBarGUI.setReady(true);
+            footballFieldPanel.repaint();
+        } catch (JsonIOException | JsonSyntaxException | FileNotFoundException e) {
+            writeSysMsg("Failed to open to `" + path + "`.");
+            throw new RuntimeException(e);
+        }
+    }
+
+    private void writeSysMsg(String msg) {
+        clearSysMsg.stop();
+        sysMsg.setText(msg);
+        clearSysMsg.start();
     }
 }
