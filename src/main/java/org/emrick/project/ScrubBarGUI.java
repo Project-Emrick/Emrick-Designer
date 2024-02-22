@@ -444,6 +444,30 @@ public class ScrubBarGUI implements ActionListener {
             isPlaying = !isPlaying;
             System.out.println("Drill isPlaying: " + isPlaying);
         }
+        else if (e.getSource().equals(prevSetButton)) {
+            int currentValue = topSlider.getValue();
+            if (currentValue >= topSlider.getMinimum()) {
+                topSlider.setValue(currentValue - 1); // Move one step backward
+            }
+        }
+        else if (e.getSource().equals(nextSetButton)) {
+            int currentValue = topSlider.getValue();
+            if (currentValue >= topSlider.getMinimum()) {
+                topSlider.setValue(currentValue + 1); // Move one step forward
+            }
+        }
+        else if (e.getSource().equals(nextCountButton)) {
+            int currentValue = botSlider.getValue();
+            if (currentValue >= botSlider.getMinimum()) {
+                botSlider.setValue(currentValue + 1); // Move one step forward
+            }
+        }
+        else if (e.getSource().equals(prevCountButton)) {
+            int currentValue = botSlider.getValue();
+            if (currentValue >= botSlider.getMinimum()) {
+                botSlider.setValue(currentValue - 1); // Move one step backward
+            }
+        }
         else if (e.getSource().equals(syncButton)) {
 
             // syncTimeGUI will be null if Emrick Project not loaded
