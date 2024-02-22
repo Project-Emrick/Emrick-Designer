@@ -294,6 +294,7 @@ public class MediaEditorGUI implements ImportListener, ScrubBarListener {
 
         // Import Pyware Project
         JMenuItem importItem = new JMenuItem(FILE_MENU_NEW_PROJECT);
+        importItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_N, ActionEvent.CTRL_MASK));
         fileMenu.add(importItem);
 //        importItem.addActionListener(this);
         importItem.addActionListener(e -> {
@@ -313,6 +314,7 @@ public class MediaEditorGUI implements ImportListener, ScrubBarListener {
         // Open Emrick Project
         // https://www.codejava.net/java-se/swing/add-file-filter-for-jfilechooser-dialog
         JMenuItem openItem = new JMenuItem(FILE_MENU_OPEN_PROJECT);
+        openItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_O, ActionEvent.CTRL_MASK));
         fileMenu.add(openItem);
         openItem.addActionListener(e -> {
             System.out.println("Opening project...");
@@ -334,6 +336,12 @@ public class MediaEditorGUI implements ImportListener, ScrubBarListener {
         saveItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S, ActionEvent.CTRL_MASK));
         fileMenu.add(saveItem);
         saveItem.addActionListener(e -> {
+            if (archivePath == null || drillPath == null) {
+                System.out.println("Nothing to save.");
+                writeSysMsg("Nothing to save!");
+                return;
+            }
+
             System.out.println("Saving project...");
             JFileChooser fileChooser = new JFileChooser();
             fileChooser.setDialogTitle("Save Project");
@@ -347,6 +355,7 @@ public class MediaEditorGUI implements ImportListener, ScrubBarListener {
 
         // Export Emerick Packets
         JMenuItem exportItem = new JMenuItem("Export Emerick Packets File");
+        saveItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_E, ActionEvent.CTRL_MASK));
         fileMenu.add(exportItem);
         exportItem.addActionListener(e -> {
             System.out.println("Exporting packets...");
@@ -530,6 +539,7 @@ public class MediaEditorGUI implements ImportListener, ScrubBarListener {
 
     public void loadProject(File path) {
         try {
+            // TODO: pdf loading is redundant with project file. fix? - LHD
             FileReader r = new FileReader(path);
             ProjectFile pf = gson.fromJson(r, ProjectFile.class);
             ImportArchive ia = new ImportArchive(this);
