@@ -27,7 +27,189 @@ import org.emrick.project.serde.ColorAdapter;
 import org.emrick.project.serde.Point2DAdapter;
 import org.emrick.project.serde.ProjectFile;
 
-public class MediaEditorGUI implements ImportListener, ScrubBarListener {
+
+    public Point2D dotToPoint(double x, double y) {
+        double newY = frontSideline50.y - y/84 * fieldHeight;
+        double newX = frontSideline50.x + x/160 * fieldWidth;
+        return new Point2D.Double(newX,newY);
+    }
+
+    public void clearDots() {
+        for (Performer p : drill.performers) {
+            p.currentLocation = new Point2D.Double(-20,-20);
+        }
+        repaint();
+    }
+
+    public double getFieldWidth() {
+        return fieldWidth;
+    }
+
+    public double getFieldHeight() {
+        return fieldHeight;
+    }
+
+//    @Override
+//    protected void paintComponent(Graphics g) {
+//        super.paintComponent(g);
+//
+//        // Draw the football field background
+//        g.setColor(new Color(92,255,103));
+//        g.fillRect(margin, margin, fieldWidth, fieldHeight); // Use margin for x and y start
+//
+//        // Adjust line and shape drawing to account for the margin
+//        g.setColor(Color.WHITE);
+//        g.drawRect(margin, margin, fieldWidth, fieldHeight);
+//        g.drawLine(fieldWidth / 2 + margin, margin, fieldWidth / 2 + margin, fieldHeight + margin);
+//        g.drawOval((fieldWidth / 2 - fieldHeight / 10) + margin, (fieldHeight / 2 - fieldHeight / 10) + margin, fieldHeight / 5, fieldHeight / 5);
+//        g.drawRect(margin, (fieldHeight / 2 - fieldHeight / 4) + margin, fieldWidth / 10, fieldHeight / 2);
+//        g.drawRect(fieldWidth - (fieldWidth / 10) + margin, (fieldHeight / 2 - fieldHeight / 4) + margin, fieldWidth / 10, fieldHeight / 2);
+//
+    // Adjust dot drawing to account for the margin
+//        g.setColor(Color.RED);
+//        for (Point dot : dotCoordinates) {
+//            double adjustedX = Math.min(dot.x, fieldWidth + margin - 5); // Adjust for margin
+//            int adjustedY = Math.min(dot.y, fieldHeight + margin - 5); // Adjust for margin
+//            g.fillOval(adjustedX - 5, adjustedY - 5, 10, 10);
+//        }
+//    }
+
+    @Override
+    protected void paintComponent(Graphics g) {
+        super.paintComponent(g);
+
+        // Draw the surface image
+        if (surfaceImage != null) {
+            drawBetterImage(g, surfaceImage);
+        }
+
+        // Draw the floorCover image on top
+        if (floorCoverImage != null) {
+            drawBetterImage(g, floorCoverImage);
+        }
+//        for (Performer p : drill.performers) { // Replace 'performers' with your actual collection of performers.
+//            g.setColor(p.getColor()); // This will use the color stored in the performer.
+//            // Paint the performer
+//        }
+
+            // Draw performers with their colors
+        for (Performer p : drill.performers) {
+            g.setColor(p.getColor()); // This will use the color stored in the performer.
+
+            Coordinate c = p.getCoordinateFromSet(currentSet.label);
+            p.currentLocation = dotToPoint(c.x, c.y);
+            double x = p.currentLocation.getX();
+            double y = p.currentLocation.getY();
+
+            if (selectedPerformers.containsKey(p.getSymbol() + p.getLabel())) {
+                g.setColor(selectedPerformers.get(p.getSymbol() + p.getLabel()).getColor());
+            }
+
+            g.fillRect((int)x-6,(int)y-6,6,12);
+            g.fillRect((int)x,(int)y-6,6,12);
+            if (selectedPerformers.get(p.getSymbol()+p.getLabel()) != null) {
+                g.setColor(Color.GREEN);
+            } else {
+                g.setColor(Color.BLACK);
+            }
+            g.drawRect((int)x-7,(int)y-7,14,14);
+            g.drawRect((int)x-6,(int)y-6,12,12);
+            g.drawLine((int)x,(int)y-5,(int)x,(int)y+6);
+        }
+    }
+     public void setColorChosen(Color color) {
+         this.colorChosen = color;
+     }
+
+    // Draw image while maintaining aspect ratio (don't let field stretch/compress)
+    private void drawBetterImage(Graphics g, BufferedImage image) {
+        assert image != null;
+
+        // Calculate the best width and height to maintain aspect ratio
+        double widthRatio = (double) getWidth() / image.getWidth();
+        double heightRatio = (double) getHeight() / image.getHeight();
+        double ratio = Math.min(widthRatio, heightRatio);
+
+        int width = (int) (image.getWidth() * ratio);
+        int height = (int) (image.getHeight() * ratio);
+
+        this.fieldWidth = (image.getWidth() * ratio);
+        this.fieldHeight = (image.getHeight() * ratio);
+
+        // Center the image
+        int x = (getWidth() - width) / 2;
+        int y = (getHeight() - height) / 2;
+        frontSideline50 = new Point(x + (int)fieldWidth / 2,y + (int)fieldHeight);
+
+        g.drawImage(image, x, y, width, height, this);
+    }
+
+    public void setFloorCoverImage(Image floorCoverImage) {
+        this.floorCoverImage = (BufferedImage) floorCoverImage;
+    }
+
+    public void setSurfaceImage(Image surfaceImage) {
+        this.surfaceImage = (BufferedImage) surfaceImage;
+    }
+
+    public Image getFloorCoverImage() {
+        return floorCoverImage;
+    }
+
+    public Image getSurfaceImage() {
+        return surfaceImage;
+    }
+
+    private class MouseInput implements MouseInputListener {
+
+        @Override
+        public void mouseClicked(MouseEvent e) {
+            int mx = e.getX();
+            int my = e.getY();
+
+            for (Performer p : drill.performers) {
+                Coordinate c = p.getCoordinateFromSet(currentSet.label);
+                p.currentLocation = dotToPoint(c.x,c.y);
+                double px = p.currentLocation.getX();
+                double py = p.currentLocation.getY();
+                if (mx >= px - 7 && mx <= px + 7 && my >= py - 7 && my <= py + 7) {
+                    if (e.isControlDown()) {
+
+                        String key = p.getSymbol() + p.getLabel();
+                        if (selectedPerformers.containsKey(key)) {
+                            selectedPerformers.remove(key); // Deselect if already selected
+                        } else {
+                            selectedPerformers.put(key, p); // Select if not already selected
+                        }
+                    } else {
+
+                        selectedPerformers.clear();
+                        selectedPerformers.put(p.getSymbol() + p.getLabel(), p);
+                    }
+                    repaint();
+                    break;
+                }
+            }
+        }
+
+
+        @Override
+        public void mousePressed(MouseEvent e) {}
+        @Override
+        public void mouseReleased(MouseEvent e) {}
+        @Override
+        public void mouseEntered(MouseEvent e) {}
+        @Override
+        public void mouseExited(MouseEvent e) {}
+        @Override
+        public void mouseDragged(MouseEvent e) {}
+        @Override
+        public void mouseMoved(MouseEvent e) {}
+    }
+}
+
+
+public class MediaEditorGUI implements ActionListener, ImportListener, ScrubBarListener {
 
     // String definitions
     public static final String FILE_MENU_NEW_PROJECT = "New Project";
@@ -275,11 +457,14 @@ public class MediaEditorGUI implements ImportListener, ScrubBarListener {
 
         // Create the "Apply" button
         JButton applyButton = new JButton("Apply");
-        // Inside the ActionListener of the apply button
         applyButton.addActionListener(e -> {
-            footballFieldPanel.setColorChosen(chosenColor);
-            footballFieldPanel.repaint(); // This will cause the panel to redraw with the new color
+            Color newColor = chosenColor;
+            for (Performer performer : footballFieldPanel.selectedPerformers.values()) {
+                performer.setColor(newColor);
+            }
+            footballFieldPanel.repaint();
         });
+
 
         colorDisplayPanel.add(applyButton);
         effectViewPanel.add(colorDisplayPanel, BorderLayout.SOUTH);

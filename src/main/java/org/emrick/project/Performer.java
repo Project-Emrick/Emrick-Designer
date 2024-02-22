@@ -1,13 +1,16 @@
 package org.emrick.project;
 
+import java.awt.*;
 import java.awt.geom.Point2D;
 import java.util.ArrayList;
 
 public class Performer {
+    private Color color;
     private String symbol;
     private int label;
     private ArrayList<Coordinate> coordinates;
     public Point2D currentLocation;
+
     public Performer() {
         symbol = "";
         label = 0;
@@ -15,6 +18,7 @@ public class Performer {
         currentLocation = new Point2D.Double(0,0);
     }
     public Performer(String symbol, int label) {
+        this.color = Color.RED;
         this.symbol = symbol;
         this.label = label;
         coordinates = new ArrayList<>();
@@ -25,6 +29,13 @@ public class Performer {
         return symbol;
     }
 
+    public void setColor(Color color){
+        this.color = color;
+    }
+
+    public Color getColor(){
+        return color;
+    }
     public void setSymbol(String symbol) {
         this.symbol = symbol;
     }
