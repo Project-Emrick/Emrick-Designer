@@ -1,5 +1,6 @@
 package org.emrick.project;
 
+import com.google.gson.GsonBuilder;
 import org.emrick.project.audio.AudioPlayer;
 
 import javax.swing.*;
@@ -7,6 +8,7 @@ import javax.swing.filechooser.FileNameExtensionFilter;
 import java.awt.*;
 import java.awt.event.*;
 import java.io.File;
+import java.io.FileWriter;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.ArrayList;
@@ -18,6 +20,7 @@ import java.nio.file.Paths;
 import java.io.IOException;
 import java.util.stream.Collectors;
 import com.google.gson.Gson;
+import org.emrick.project.serde.ColorAdapter;
 
 public class MediaEditorGUI implements ImportListener, ScrubBarListener {
 
@@ -43,13 +46,13 @@ public class MediaEditorGUI implements ImportListener, ScrubBarListener {
 
     // dots
     private List<Coordinate> dotCoordinates = new ArrayList<>();
-    static JLabel sysMsg = new JLabel("Welcome to Emrick Designer!", SwingConstants.RIGHT);
-    static Timer clearSysMsg = new Timer(5000, e -> {
+    private JLabel sysMsg = new JLabel("Welcome to Emrick Designer!", SwingConstants.RIGHT);
+    private Timer clearSysMsg = new Timer(5000, e -> {
         sysMsg.setText("");
     });
 
     // JSON serde
-    private Gson gson = new Gson();
+    private Gson gson;
 
 
     public static void main(String[] args) {
@@ -60,21 +63,6 @@ public class MediaEditorGUI implements ImportListener, ScrubBarListener {
         } catch( Exception ex ) {
             System.err.println( "Failed to initialize LaF" );
         }
-
-        clearSysMsg.setRepeats(false);
-        clearSysMsg.start();
-
-        // test autosave stuff
-        Timer t = new Timer(1 * 60 * 60 * 1000, e -> {
-            System.out.println("autosaving...");
-            clearSysMsg.stop();
-            sysMsg.setText("Autosaving...");
-            clearSysMsg.start();
-
-            // TODO: actual saving here
-        });
-        t.setRepeats(true);
-        t.start();
 
         // Run this program on the Event Dispatch Thread (EDT)
         EventQueue.invokeLater(new Runnable() {
@@ -88,6 +76,30 @@ public class MediaEditorGUI implements ImportListener, ScrubBarListener {
 
 
     public MediaEditorGUI() {
+        // serde setup
+        GsonBuilder builder = new GsonBuilder();
+        builder.registerTypeAdapter(Color.class, new ColorAdapter());
+        builder.serializeNulls();
+        gson = builder.create();
+
+        // Autosave and system message things
+        clearSysMsg.setRepeats(false);
+        clearSysMsg.start();
+
+        // test autosave stuff
+        Timer t = new Timer(1 * 60 * 60 * 1000, e -> {
+            System.out.println("autosaving...");
+            clearSysMsg.stop();
+            sysMsg.setText("Autosaving...");
+            clearSysMsg.start();
+
+            // TODO: actual saving here
+            String tempFile = System.getProperty("user.home") + "/emrick.temp.json";
+            System.out.println("autosaving to `" + tempFile + "`");
+            saveProject(tempFile);
+        });
+        t.setRepeats(true);
+        t.start();
 
         // Change Font Size for Menu and MenuIem
         Font f = new Font("FlatLaf.style", Font.PLAIN, 16);
@@ -307,8 +319,7 @@ public class MediaEditorGUI implements ImportListener, ScrubBarListener {
             fileChooser.setDialogTitle("Save Project");
             if (fileChooser.showSaveDialog(null) == JFileChooser.APPROVE_OPTION) {
                 System.out.println("Saving file `"+fileChooser.getSelectedFile().getAbsolutePath()+"`.");
-
-//                gson.toJson()
+                saveProject(fileChooser.getSelectedFile().getAbsolutePath());
             }
         });
 
@@ -473,5 +484,12 @@ public class MediaEditorGUI implements ImportListener, ScrubBarListener {
         Effect effect = new Effect();
         effect.changeSelectedDotsColor(dots, newColor, footballFieldPanel);
         footballFieldPanel.repaint();
+    }
+
+    public void saveProject(String path) {
+        String g = gson.toJson(footballFieldPanel.drill);
+        System.out.println("saving drill");
+        System.out.println(g);
+        System.out.println("saving to `" + path + "`");
     }
 }
