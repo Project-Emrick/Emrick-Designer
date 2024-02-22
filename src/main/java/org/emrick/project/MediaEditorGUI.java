@@ -112,7 +112,7 @@ class FootballFieldPanel extends JPanel {
 //        g.drawRect(margin, (fieldHeight / 2 - fieldHeight / 4) + margin, fieldWidth / 10, fieldHeight / 2);
 //        g.drawRect(fieldWidth - (fieldWidth / 10) + margin, (fieldHeight / 2 - fieldHeight / 4) + margin, fieldWidth / 10, fieldHeight / 2);
 //
-        // Adjust dot drawing to account for the margin
+    // Adjust dot drawing to account for the margin
 //        g.setColor(Color.RED);
 //        for (Point dot : dotCoordinates) {
 //            double adjustedX = Math.min(dot.x, fieldWidth + margin - 5); // Adjust for margin
@@ -127,28 +127,32 @@ class FootballFieldPanel extends JPanel {
 
         // Draw the surface image
         if (surfaceImage != null) {
-//            g.drawImage(surfaceImage, 0, 0, this.getWidth(), this.getHeight(), this);
             drawBetterImage(g, surfaceImage);
         }
 
         // Draw the floorCover image on top
         if (floorCoverImage != null) {
-            // Adjust the x, y, width, and height as needed
-//            g.drawImage(floorCoverImage, 0, 0, this.getWidth(), this.getHeight(), this);
             drawBetterImage(g, floorCoverImage);
         }
+//        for (Performer p : drill.performers) { // Replace 'performers' with your actual collection of performers.
+//            g.setColor(p.getColor()); // This will use the color stored in the performer.
+//            // Paint the performer
+//        }
 
-        // (Carried Over) Adjust dot drawing to account for the margin
+            // Draw performers with their colors
         for (Performer p : drill.performers) {
-            //double adjustedX = Math.min(dot.x, fieldWidth); // Adjust for margin
-            //double adjustedY = Math.min(dot.y, fieldHeight); // Adjust for margin
+            g.setColor(p.getColor()); // This will use the color stored in the performer.
+
             Coordinate c = p.getCoordinateFromSet(currentSet.label);
-            p.currentLocation = dotToPoint(c.x,c.y);
+            p.currentLocation = dotToPoint(c.x, c.y);
             double x = p.currentLocation.getX();
             double y = p.currentLocation.getY();
-            g.setColor(colorChosen);
+
+            if (selectedPerformers.containsKey(p.getSymbol() + p.getLabel())) {
+                g.setColor(selectedPerformers.get(p.getSymbol() + p.getLabel()).getColor());
+            }
+
             g.fillRect((int)x-6,(int)y-6,6,12);
-            g.setColor(colorChosen);
             g.fillRect((int)x,(int)y-6,6,12);
             if (selectedPerformers.get(p.getSymbol()+p.getLabel()) != null) {
                 g.setColor(Color.GREEN);
@@ -209,33 +213,33 @@ class FootballFieldPanel extends JPanel {
         public void mouseClicked(MouseEvent e) {
             int mx = e.getX();
             int my = e.getY();
-            if (e.isControlDown()) {
-                for (Performer p : drill.performers) {
-                    Coordinate c = p.getCoordinateFromSet(currentSet.label);
-                    p.currentLocation = dotToPoint(c.x,c.y);
-                    int px = (int)p.currentLocation.getX();
-                    int py = (int)p.currentLocation.getY();
-                    if (mx <= px+7 && my <= py+7 && mx >= px-7 && my >= py-7) {
-                        selectedPerformers.put(p.getSymbol()+p.getLabel(), p);
-                        break;
+
+            for (Performer p : drill.performers) {
+                Coordinate c = p.getCoordinateFromSet(currentSet.label);
+                p.currentLocation = dotToPoint(c.x,c.y);
+                double px = p.currentLocation.getX();
+                double py = p.currentLocation.getY();
+                if (mx >= px - 7 && mx <= px + 7 && my >= py - 7 && my <= py + 7) {
+                    if (e.isControlDown()) {
+
+                        String key = p.getSymbol() + p.getLabel();
+                        if (selectedPerformers.containsKey(key)) {
+                            selectedPerformers.remove(key); // Deselect if already selected
+                        } else {
+                            selectedPerformers.put(key, p); // Select if not already selected
+                        }
+                    } else {
+
+                        selectedPerformers.clear();
+                        selectedPerformers.put(p.getSymbol() + p.getLabel(), p);
                     }
-                }
-            } else {
-                for (Performer p : drill.performers) {
-                    Coordinate c = p.getCoordinateFromSet(currentSet.label);
-                    p.currentLocation = dotToPoint(c.x,c.y);
-                    double px = p.currentLocation.getX();
-                    double py = p.currentLocation.getY();
-                    if (mx <= px+7 && my <= py+7 && mx >= px-7 && my >= py-7) {
-                        selectedPerformers = new HashMap<>();
-                        selectedPerformers.put(p.getSymbol()+p.getLabel(), p);
-                        break;
-                    }
-                    selectedPerformers = new HashMap<>();
+                    repaint();
+                    break;
                 }
             }
-            repaint();
         }
+
+
         @Override
         public void mousePressed(MouseEvent e) {}
         @Override
@@ -474,11 +478,14 @@ public class MediaEditorGUI implements ActionListener, ImportListener, ScrubBarL
 
         // Create the "Apply" button
         JButton applyButton = new JButton("Apply");
-        // Inside the ActionListener of the apply button
         applyButton.addActionListener(e -> {
-            footballFieldPanel.setColorChosen(chosenColor);
-            footballFieldPanel.repaint(); // This will cause the panel to redraw with the new color
+            Color newColor = chosenColor;
+            for (Performer performer : footballFieldPanel.selectedPerformers.values()) {
+                performer.setColor(newColor);
+            }
+            footballFieldPanel.repaint();
         });
+
 
         colorDisplayPanel.add(applyButton);
         effectViewPanel.add(colorDisplayPanel, BorderLayout.SOUTH);
