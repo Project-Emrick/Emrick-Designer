@@ -136,35 +136,35 @@ public class ImportArchive {
     }
 
     // For Testing
-    public static void main(String[] args) {
-        ImportListener importListener = new ImportListener() {
-            @Override
-            public void onImport() {
-                System.out.println("onImport called.");
-            }
-
-            @Override
-            public void onFloorCoverImport(Image image) {
-                System.out.println("onFloorCoverImport called.");
-            }
-
-            @Override
-            public void onSurfaceImport(Image image) {
-                System.out.println("onSurfaceImport called.");
-            }
-
-            @Override
-            public void onAudioImport(File audioFile) {
-                System.out.println("onAudioImport called.");
-            }
-
-            @Override
-            public void onDrillImport(String drill) {
-                System.out.println("onDrillImport called.");
-            }
-        };
-
-        ImportArchive importArchive = new ImportArchive(importListener);
-        importArchive.fullImport("./src/test/java/org/emrick/project/Purdue23-1-1aint_no_mountain_high_enough.3dz", "./src/test/java/org/emrick/project/DrillExample.pdf");
-    }
+//    public static void main(String[] args) {
+//        ImportListener importListener = new ImportListener() {
+//            @Override
+//            public void onImport() {
+//                System.out.println("onImport called.");
+//            }
+//
+//            @Override
+//            public void onFloorCoverImport(Image image) {
+//                System.out.println("onFloorCoverImport called.");
+//            }
+//
+//            @Override
+//            public void onSurfaceImport(Image image) {
+//                System.out.println("onSurfaceImport called.");
+//            }
+//
+//            @Override
+//            public void onAudioImport(File audioFile) {
+//                System.out.println("onAudioImport called.");
+//            }
+//
+//            @Override
+//            public void onDrillImport(String drill) {
+//                System.out.println("onDrillImport called.");
+//            }
+//        };
+//
+//        ImportArchive importArchive = new ImportArchive(importListener);
+//        importArchive.fullImport("./src/test/java/org/emrick/project/Purdue23-1-1aint_no_mountain_high_enough.3dz", "./src/test/java/org/emrick/project/DrillExample.pdf");
+//    }
 }
