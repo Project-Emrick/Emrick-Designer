@@ -444,28 +444,37 @@ public class ScrubBarGUI implements ActionListener {
             isPlaying = !isPlaying;
             System.out.println("Drill isPlaying: " + isPlaying);
         }
+        else if (e.getSource().equals(prevSetButton)) {
+            int currentValue = topSlider.getValue();
+            if (currentValue >= topSlider.getMinimum()) {
+                topSlider.setValue(currentValue - 1); // Move one step backward
+            }
+        }
+        else if (e.getSource().equals(nextSetButton)) {
+            int currentValue = topSlider.getValue();
+            if (currentValue >= topSlider.getMinimum()) {
+                topSlider.setValue(currentValue + 1); // Move one step forward
+            }
+        }
+        else if (e.getSource().equals(nextCountButton)) {
+            int currentValue = botSlider.getValue();
+            if (currentValue >= botSlider.getMinimum()) {
+                botSlider.setValue(currentValue + 1); // Move one step forward
+            }
+        }
+        else if (e.getSource().equals(prevCountButton)) {
+            int currentValue = botSlider.getValue();
+            if (currentValue >= botSlider.getMinimum()) {
+                botSlider.setValue(currentValue - 1); // Move one step backward
+            }
+        }
         else if (e.getSource().equals(syncButton)) {
 
             // syncTimeGUI will be null if Emrick Project not loaded
             if (syncTimeGUI != null) {
                 syncTimeGUI.show();
             }
-        }             
-        // Handle previous count button click
-        else if (e.getSource() == prevCountButton) {
-            int currentValue = botSlider.getValue();
-            if (currentValue > botSlider.getMinimum()) {
-                botSlider.setValue(currentValue - 1); // Step backward by 1
-            }
         }
-
-        // Handle next count button click
-        else if (e.getSource() == nextCountButton) {
-            int currentValue = botSlider.getValue();
-            if (currentValue < botSlider.getMaximum()) {
-                botSlider.setValue(currentValue + 1); // Step forward by 1
-            }
-        }        
     }
 
     // For testing
