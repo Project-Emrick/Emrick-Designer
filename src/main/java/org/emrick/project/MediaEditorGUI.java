@@ -323,16 +323,7 @@ public class MediaEditorGUI implements ImportListener, ScrubBarListener {
         openItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_O, ActionEvent.CTRL_MASK));
         fileMenu.add(openItem);
         openItem.addActionListener(e -> {
-            System.out.println("Opening project...");
-            JFileChooser fileChooser = new JFileChooser();
-            fileChooser.setDialogTitle("Open Project");
-            fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
-            fileChooser.setAcceptAllFileFilterUsed(false);
-            fileChooser.addChoosableFileFilter(new FileNameExtensionFilter("Emrick Project Files (emrick, json)", "emrick", "json"));
-            if (fileChooser.showOpenDialog(null) == JFileChooser.APPROVE_OPTION) {
-                System.out.println("Opening file `"+fileChooser.getSelectedFile().getAbsolutePath()+"`.");
-                loadProject(fileChooser.getSelectedFile());
-            }
+            saveProjectDialog();
         });
 
         fileMenu.addSeparator();
@@ -353,7 +344,7 @@ public class MediaEditorGUI implements ImportListener, ScrubBarListener {
             fileChooser.setDialogTitle("Save Project");
             if (fileChooser.showSaveDialog(null) == JFileChooser.APPROVE_OPTION) {
                 System.out.println("Saving file `"+fileChooser.getSelectedFile().getAbsolutePath()+"`.");
-                saveProject(fileChooser.getSelectedFile());
+                saveProject(fileChooser.getSelectedFile(), archivePath, drillPath);
             }
         });
 
@@ -361,7 +352,7 @@ public class MediaEditorGUI implements ImportListener, ScrubBarListener {
 
         // Export Emerick Packets
         JMenuItem exportItem = new JMenuItem("Export Emerick Packets File");
-        saveItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_E, ActionEvent.CTRL_MASK));
+        exportItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_E, ActionEvent.CTRL_MASK));
         fileMenu.add(exportItem);
         exportItem.addActionListener(e -> {
             System.out.println("Exporting packets...");
@@ -418,6 +409,27 @@ public class MediaEditorGUI implements ImportListener, ScrubBarListener {
         });
         effectViewPanel.add(lightButton, BorderLayout.NORTH);
 
+        // handle closing the window
+        frame.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
+        frame.addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowClosing(WindowEvent e) {
+                if (archivePath != null && drillPath != null) {
+                    int resp = JOptionPane.showConfirmDialog(frame, "Would you like to save before quitting?", "Save and Quit?", JOptionPane.YES_NO_CANCEL_OPTION);
+                    if (resp == JOptionPane.CANCEL_OPTION) {
+                        System.out.println("User cancelled exit.");
+                        return;
+                    } else if (resp == JOptionPane.YES_OPTION) {
+                        System.out.println("User saving and quitting.");
+                        saveProjectDialog();
+                    } else if (resp == JOptionPane.NO_OPTION) {
+                        System.out.println("User not saving but quitting anyway.");
+                    }
+                }
+                frame.dispose();
+                super.windowClosing(e);
+            }
+        });
 
         // Display the window
         frame.setJMenuBar(menuBar);
@@ -521,7 +533,30 @@ public class MediaEditorGUI implements ImportListener, ScrubBarListener {
         footballFieldPanel.repaint();
     }
 
-    public void saveProject(File path) {
+    private void saveProjectDialog() {
+        System.out.println("Opening project...");
+        JFileChooser fileChooser = new JFileChooser();
+        fileChooser.setDialogTitle("Open Project");
+        fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
+        fileChooser.setAcceptAllFileFilterUsed(false);
+        fileChooser.addChoosableFileFilter(new FileNameExtensionFilter("Emrick Project Files (emrick, json)", "emrick", "json"));
+        if (fileChooser.showOpenDialog(null) == JFileChooser.APPROVE_OPTION) {
+            System.out.println("Opening file `"+fileChooser.getSelectedFile().getAbsolutePath()+"`.");
+            loadProject(fileChooser.getSelectedFile());
+        }
+    }
+
+    private void autosaveProject() {
+        // todo:
+        // - create program folder in home directory if it does not exist
+        // - create backups folder
+        // - create folder with unix timestamp as name
+        // - copy drill pdf and 3dz to folder
+        // - saveProject(backups/<time>/backup.json)
+        // - make sure the archive and drill paths are properly relativized
+    }
+
+    public void saveProject(File path, URI archivePath, URI drillPath) {
         String relArchive = path.getParentFile().toURI().relativize(archivePath).getPath();
         String relDrill = path.getParentFile().toURI().relativize(drillPath).getPath();
 
@@ -551,6 +586,10 @@ public class MediaEditorGUI implements ImportListener, ScrubBarListener {
             ImportArchive ia = new ImportArchive(this);
             Path fullArchive = Paths.get(path.getParentFile().getPath(), pf.archivePath);
             Path fullDrill = Paths.get(path.getParentFile().getPath(), pf.drillPath);
+
+            archivePath = fullArchive.toUri();
+            drillPath = fullDrill.toUri();
+
             ia.fullImport(fullArchive.toString(), fullDrill.toString());
             footballFieldPanel.drill = pf.drill;
             footballFieldPanel.setCurrentSet(footballFieldPanel.drill.sets.get(0));
