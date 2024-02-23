@@ -8,7 +8,7 @@ import java.awt.geom.Point2D;
 import java.awt.image.BufferedImage;
 import java.util.HashMap;
 
-class FootballFieldPanel extends JPanel {
+public class FootballFieldPanel extends JPanel {
     public Drill drill;
     public HashMap<String,Performer> selectedPerformers;
     private double fieldWidth = 720; // Width of the football field
@@ -60,6 +60,9 @@ class FootballFieldPanel extends JPanel {
         repaint();
     }
 
+    public Set getCurrentSet() {
+        return currentSet;
+    }
 
     public Point2D dotToPoint(double x, double y) {
         double newY = frontSideline50.y - y/84 * fieldHeight;
@@ -134,9 +137,10 @@ class FootballFieldPanel extends JPanel {
             double x = p.currentLocation.getX();
             double y = p.currentLocation.getY();
 
-            if (selectedPerformers.containsKey(p.getSymbol() + p.getLabel())) {
-                g.setColor(selectedPerformers.get(p.getSymbol() + p.getLabel()).getColor());
-            }
+//            if (selectedPerformers.containsKey(p.getSymbol() + p.getLabel())) {
+//                g.setColor(selectedPerformers.get(p.getSymbol() + p.getLabel()).getColor());
+//            }
+            g.setColor(c.getColor());
 
             g.fillRect((int)x-6,(int)y-6,6,12);
             g.fillRect((int)x,(int)y-6,6,12);
@@ -215,9 +219,12 @@ class FootballFieldPanel extends JPanel {
                             selectedPerformers.put(key, p); // Select if not already selected
                         }
                     } else {
-
-                        selectedPerformers.clear();
-                        selectedPerformers.put(p.getSymbol() + p.getLabel(), p);
+                        if (selectedPerformers.containsKey(p.getSymbol() + p.getLabel())) {
+                            selectedPerformers.clear();
+                        } else {
+                            selectedPerformers.clear();
+                            selectedPerformers.put(p.getSymbol() + p.getLabel(), p);
+                        }
                     }
                     repaint();
                     break;

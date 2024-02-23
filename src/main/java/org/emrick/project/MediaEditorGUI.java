@@ -274,7 +274,7 @@ public class MediaEditorGUI implements ImportListener, ScrubBarListener {
         applyButton.addActionListener(e -> {
             Color newColor = chosenColor;
             for (Performer performer : footballFieldPanel.selectedPerformers.values()) {
-                performer.setColor(newColor);
+                performer.getCoordinateFromSet(footballFieldPanel.getCurrentSet().label).setColor(newColor);
             }
             footballFieldPanel.repaint();
         });

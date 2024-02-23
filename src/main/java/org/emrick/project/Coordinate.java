@@ -64,6 +64,7 @@ public class Coordinate {
         set = "";
         duration = 0;
         id = "";
+        color = Color.RED;
     }
 
 
@@ -73,6 +74,7 @@ public class Coordinate {
         this.set = set;
         this.duration = duration;
         this.id = id;
+        color = Color.RED;
     }
 
     public String toString() {
