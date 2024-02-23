@@ -201,7 +201,7 @@ public class SelectFileGUI implements ActionListener {
 
                 // TODO: Import Coordinates Pdf and Pyware Archive
 
-                importListener.onFileSelect(archiveFilePath.toURI(), coordsFilePath.toURI());
+                importListener.onFileSelect(archiveFilePath, coordsFilePath);
                 importArchive.fullImport(archiveFilePath.getAbsolutePath(), coordsFilePath.getAbsolutePath());
 
                 frame.dispose();

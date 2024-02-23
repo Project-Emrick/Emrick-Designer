@@ -63,9 +63,9 @@ public class MediaEditorGUI implements ImportListener, ScrubBarListener {
     private Gson gson;
 
     // Project info
-    private URI archivePath = null;
-    private URI drillPath = null;
-
+    private File archivePath = null;
+    private File drillPath = null;
+    private Path userHome = Paths.get(System.getProperty("user.home"), ".emrick");
 
     public static void main(String[] args) {
         // setup sysmsg
@@ -100,14 +100,11 @@ public class MediaEditorGUI implements ImportListener, ScrubBarListener {
         clearSysMsg.start();
 
         // test autosave stuff
-        Timer t = new Timer(1 * 60 * 60 * 1000, e -> {
+        Timer t = new Timer(15 * 60 * 1000, e -> {
             System.out.println("autosaving...");
             writeSysMsg("Autosaving...");
 
-            // TODO: actual saving here
-            String tempFile = System.getProperty("user.home") + "/emrick.temp.json";
-            System.out.println("autosaving to `" + tempFile + "`");
-//            saveProject(tempFile);
+            autosaveProject();
 
             writeSysMsg("Autosaved.");
         });
@@ -137,7 +134,7 @@ public class MediaEditorGUI implements ImportListener, ScrubBarListener {
     //  If you are not familiar with this, please check out how to use listener interfaces in Java
 
     @Override
-    public void onFileSelect(URI archivePath, URI drillPath) {
+    public void onFileSelect(File archivePath, File drillPath) {
         this.archivePath = archivePath;
         this.drillPath = drillPath;
     }
@@ -323,7 +320,7 @@ public class MediaEditorGUI implements ImportListener, ScrubBarListener {
         openItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_O, ActionEvent.CTRL_MASK));
         fileMenu.add(openItem);
         openItem.addActionListener(e -> {
-            saveProjectDialog();
+            openProjectDialog();
         });
 
         fileMenu.addSeparator();
@@ -333,19 +330,7 @@ public class MediaEditorGUI implements ImportListener, ScrubBarListener {
         saveItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S, ActionEvent.CTRL_MASK));
         fileMenu.add(saveItem);
         saveItem.addActionListener(e -> {
-            if (archivePath == null || drillPath == null) {
-                System.out.println("Nothing to save.");
-                writeSysMsg("Nothing to save!");
-                return;
-            }
-
-            System.out.println("Saving project...");
-            JFileChooser fileChooser = new JFileChooser();
-            fileChooser.setDialogTitle("Save Project");
-            if (fileChooser.showSaveDialog(null) == JFileChooser.APPROVE_OPTION) {
-                System.out.println("Saving file `"+fileChooser.getSelectedFile().getAbsolutePath()+"`.");
-                saveProject(fileChooser.getSelectedFile(), archivePath, drillPath);
-            }
+            saveProjectDialog();
         });
 
         fileMenu.addSeparator();
@@ -533,32 +518,73 @@ public class MediaEditorGUI implements ImportListener, ScrubBarListener {
         footballFieldPanel.repaint();
     }
 
-    private void saveProjectDialog() {
+    private void openProjectDialog() {
         System.out.println("Opening project...");
         JFileChooser fileChooser = new JFileChooser();
         fileChooser.setDialogTitle("Open Project");
         fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
         fileChooser.setAcceptAllFileFilterUsed(false);
         fileChooser.addChoosableFileFilter(new FileNameExtensionFilter("Emrick Project Files (emrick, json)", "emrick", "json"));
+
         if (fileChooser.showOpenDialog(null) == JFileChooser.APPROVE_OPTION) {
             System.out.println("Opening file `"+fileChooser.getSelectedFile().getAbsolutePath()+"`.");
             loadProject(fileChooser.getSelectedFile());
         }
     }
 
-    private void autosaveProject() {
-        // todo:
-        // - create program folder in home directory if it does not exist
-        // - create backups folder
-        // - create folder with unix timestamp as name
-        // - copy drill pdf and 3dz to folder
-        // - saveProject(backups/<time>/backup.json)
-        // - make sure the archive and drill paths are properly relativized
+    private void saveProjectDialog() {
+        if (archivePath == null || drillPath == null) {
+            System.out.println("Nothing to save.");
+            writeSysMsg("Nothing to save!");
+            return;
+        }
+
+        System.out.println("Saving project...");
+        JFileChooser fileChooser = new JFileChooser();
+        fileChooser.setDialogTitle("Save Project");
+        fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
+        fileChooser.setAcceptAllFileFilterUsed(false);
+        fileChooser.addChoosableFileFilter(new FileNameExtensionFilter("Emrick Project Files (emrick, json)", "emrick", "json"));
+
+        if (fileChooser.showSaveDialog(null) == JFileChooser.APPROVE_OPTION) {
+            System.out.println("Saving file `"+fileChooser.getSelectedFile().getAbsolutePath()+"`.");
+            saveProject(fileChooser.getSelectedFile(), archivePath, drillPath);
+        }
     }
 
-    public void saveProject(File path, URI archivePath, URI drillPath) {
-        String relArchive = path.getParentFile().toURI().relativize(archivePath).getPath();
-        String relDrill = path.getParentFile().toURI().relativize(drillPath).getPath();
+    private void autosaveProject() {
+        // we don't have a project open, nothing to save
+        if (archivePath == null || drillPath == null) {
+            return;
+        }
+
+        long time = System.currentTimeMillis() / 1000L;
+        Path dir = Paths.get(userHome.toString(), String.valueOf(time));
+        Path jsonDir = Paths.get(dir.toString(), "backup.json");
+        Path archiveDir = Paths.get(dir.toString(), archivePath.getName());
+        Path drillDir = Paths.get(dir.toString(), drillPath.getName());
+        File backupDir = new File(dir.toUri());
+        if (!backupDir.mkdirs()) {
+            // TODO: handle error from the backup failing
+            return;
+        }
+
+        try {
+            Files.copy(archivePath.toPath(), archiveDir);
+            Files.copy(drillPath.toPath(), drillDir);
+        } catch (IOException e) {
+            // TODO: handle error from the backup failing
+            System.out.println(e.getMessage());
+            return;
+        }
+
+        saveProject(jsonDir.toFile(), archiveDir.toFile(), drillDir.toFile());
+        writeSysMsg("Autosaved project to `" + jsonDir + "`.");
+    }
+
+    public void saveProject(File path, File archivePath, File drillPath) {
+        String relArchive = path.getParentFile().toURI().relativize(archivePath.toURI()).getPath();
+        String relDrill = path.getParentFile().toURI().relativize(drillPath.toURI()).getPath();
 
         ProjectFile pf = new ProjectFile(footballFieldPanel.drill, relArchive, relDrill);
         String g = gson.toJson(pf);
@@ -587,8 +613,8 @@ public class MediaEditorGUI implements ImportListener, ScrubBarListener {
             Path fullArchive = Paths.get(path.getParentFile().getPath(), pf.archivePath);
             Path fullDrill = Paths.get(path.getParentFile().getPath(), pf.drillPath);
 
-            archivePath = fullArchive.toUri();
-            drillPath = fullDrill.toUri();
+            archivePath = fullArchive.toFile();
+            drillPath = fullDrill.toFile();
 
             ia.fullImport(fullArchive.toString(), fullDrill.toString());
             footballFieldPanel.drill = pf.drill;
