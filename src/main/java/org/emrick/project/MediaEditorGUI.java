@@ -358,6 +358,7 @@ public class MediaEditorGUI implements ImportListener, ScrubBarListener {
         editMenu.add(resetColorsItem);
         resetColorsItem.addActionListener(e -> {
             if (archivePath == null || drillPath == null) {
+                System.out.println("no project loaded");
                 return;
             }
 
@@ -371,6 +372,10 @@ public class MediaEditorGUI implements ImportListener, ScrubBarListener {
             for (int i = 0; i < drill.performers.size(); i++) {
                 Performer p = drill.performers.get(i);
                 p.setColor(new Color(0, 0,0));
+                for (int j = 0; j < p.getCoordinates().size(); j++) {
+                    Coordinate c = p.getCoordinates().get(j);
+                    c.setColor(new Color(0, 0, 0));
+                }
             }
 
             footballFieldPanel.drill = drill;
