@@ -351,6 +351,32 @@ public class MediaEditorGUI implements ImportListener, ScrubBarListener {
         fileMenu.add(displayCircleDrill);
         displayCircleDrill.addActionListener(e -> loadDemoDrillObj());
 
+        // Edit menu
+        JMenu editMenu = new JMenu("Edit");
+        menuBar.add(editMenu);
+        JMenuItem resetColorsItem = new JMenuItem("Reset all effects");
+        editMenu.add(resetColorsItem);
+        resetColorsItem.addActionListener(e -> {
+            if (archivePath == null || drillPath == null) {
+                return;
+            }
+
+            Drill drill = footballFieldPanel.drill;
+
+            for (int i = 0; i < drill.coordinates.size(); i++) {
+                Coordinate c = drill.coordinates.get(i);
+                c.setColor(new Color(0, 0, 0));
+            }
+
+            for (int i = 0; i < drill.performers.size(); i++) {
+                Performer p = drill.performers.get(i);
+                p.setColor(new Color(0, 0,0));
+            }
+
+            footballFieldPanel.drill = drill;
+            footballFieldPanel.repaint();
+        });
+
         // Help menu
         JMenu helpMenu = new JMenu("Help");
         menuBar.add(helpMenu);
