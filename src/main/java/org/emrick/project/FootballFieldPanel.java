@@ -32,7 +32,7 @@ public class FootballFieldPanel extends JPanel {
         drill = new Drill();
         selectedPerformers = new HashMap<>();
         this.addMouseListener(new MouseInput());
-        colorChosen = Color.RED;
+        colorChosen = Color.BLACK;
     }
 
     public FootballFieldPanel(Color colorChosen) {

@@ -16,9 +16,10 @@ public class Performer {
         label = 0;
         coordinates = new ArrayList<>();
         currentLocation = new Point2D.Double(0,0);
+        this.color = Color.BLACK;
     }
     public Performer(String symbol, int label) {
-        this.color = Color.RED;
+        this.color = Color.BLACK;
         this.symbol = symbol;
         this.label = label;
         coordinates = new ArrayList<>();
