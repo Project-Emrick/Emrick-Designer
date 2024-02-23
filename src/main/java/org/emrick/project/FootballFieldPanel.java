@@ -234,8 +234,6 @@ public class FootballFieldPanel extends JPanel {
             int my = e.getY();
 
             for (Performer p : drill.performers) {
-                Coordinate c = p.getCoordinateFromSet(currentSet.label);
-                p.currentLocation = dotToPoint(c.x,c.y);
                 double px = p.currentLocation.getX();
                 double py = p.currentLocation.getY();
                 if (mx >= px - 7 && mx <= px + 7 && my >= py - 7 && my <= py + 7) {
