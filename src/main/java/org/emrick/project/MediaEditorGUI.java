@@ -11,7 +11,6 @@ import java.awt.*;
 import java.awt.event.*;
 import java.awt.geom.Point2D;
 import java.io.*;
-import java.net.URI;
 import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
@@ -26,9 +25,6 @@ import com.google.gson.Gson;
 import org.emrick.project.serde.ColorAdapter;
 import org.emrick.project.serde.Point2DAdapter;
 import org.emrick.project.serde.ProjectFile;
-
-
-
 
 public class MediaEditorGUI implements ImportListener, ScrubBarListener {
 
