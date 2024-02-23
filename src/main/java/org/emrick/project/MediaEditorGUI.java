@@ -351,6 +351,10 @@ public class MediaEditorGUI implements ImportListener, ScrubBarListener {
         fileMenu.add(displayCircleDrill);
         displayCircleDrill.addActionListener(e -> loadDemoDrillObj());
 
+        JMenuItem displayTestDrill = new JMenuItem("Load Test Drill Object");
+        fileMenu.add(displayTestDrill);
+        displayTestDrill.addActionListener(e -> loadTestDrillObj());
+
         // Edit menu
         JMenu editMenu = new JMenu("Edit");
         menuBar.add(editMenu);
@@ -529,6 +533,22 @@ public class MediaEditorGUI implements ImportListener, ScrubBarListener {
             Drill drillby = parse1.parseWholeDrill(DrillString);
             footballFieldPanel.drill = drillby;
             footballFieldPanel.addSetToField(drillby.sets.get(0));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void loadTestDrillObj(){
+        clearDotsFromField();
+        String filePath = "./src/test/java/org/emrick/project/testDrillParsed.txt";
+        try {
+            String DrillString = Files.lines(Paths.get(filePath))
+                    .collect(Collectors.joining(System.lineSeparator()));
+            DrillParser parse1 = new DrillParser();
+            Drill drilltest = parse1.parseWholeDrill(DrillString);
+            footballFieldPanel.drill = drilltest;
+            footballFieldPanel.addSetToField(drilltest.sets.get(0));
+
         } catch (IOException e) {
             e.printStackTrace();
         }
