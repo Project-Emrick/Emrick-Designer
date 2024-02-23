@@ -68,6 +68,9 @@ public class Drill {
                 return o1.compareTo(o2);
             }
         });
+        for (int i = 0; i < sets.size(); i++) {
+            sets.get(i).index = i;
+        }
     }
 
     public void addSet(Coordinate coordinate) {

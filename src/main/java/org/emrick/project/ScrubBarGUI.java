@@ -182,8 +182,16 @@ public class ScrubBarGUI implements ActionListener {
 
                 // Update bottom slider
                 botSlider.setMinimum(currSetStartCount);
+                footballFieldPanel.setCurrentSetStartCount(currSetStartCount);
                 botSlider.setMaximum(currSetEndCount);
                 botSlider.setValue(currSetStartCount);
+            }
+        });
+        botSlider.addChangeListener(new ChangeListener() {
+            @Override
+            public void stateChanged(ChangeEvent e) {
+                int val = ((JSlider)e.getSource()).getValue();
+                footballFieldPanel.setCurrentCount(val);
             }
         });
 
@@ -475,6 +483,8 @@ public class ScrubBarGUI implements ActionListener {
                 syncTimeGUI.show();
             }
         }
+        int val = botSlider.getValue();
+        footballFieldPanel.setCurrentCount(val);
     }
 
     // For testing

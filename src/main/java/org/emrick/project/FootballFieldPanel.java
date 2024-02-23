@@ -23,6 +23,8 @@ public class FootballFieldPanel extends JPanel {
     private BufferedImage floorCoverImage;
     private boolean ctrlHeld = false;
     private Set currentSet;
+    private int currentCount = 0;
+    private int currentSetStartCount = 0;
 
     public FootballFieldPanel() {
 //        setPreferredSize(new Dimension(fieldWidth + 2*margin, fieldHeight + 2*margin)); // Set preferred size for the drawing area
@@ -58,6 +60,23 @@ public class FootballFieldPanel extends JPanel {
             }
         }
         repaint();
+    }
+
+    public int getCurrentCount() {
+        return currentCount;
+    }
+
+    public void setCurrentCount(int currentCount) {
+        this.currentCount = currentCount;
+        repaint();
+    }
+
+    public int getCurrentSetStartCount() {
+        return currentSetStartCount;
+    }
+
+    public void setCurrentSetStartCount(int currentSetStartCount) {
+        this.currentSetStartCount = currentSetStartCount;
     }
 
     public Set getCurrentSet() {
@@ -132,15 +151,22 @@ public class FootballFieldPanel extends JPanel {
         for (Performer p : drill.performers) {
             g.setColor(p.getColor()); // This will use the color stored in the performer.
 
-            Coordinate c = p.getCoordinateFromSet(currentSet.label);
-            p.currentLocation = dotToPoint(c.x, c.y);
+            Coordinate c1 = p.getCoordinateFromSet(currentSet.label);
+            Coordinate c2 = p.getCoordinateFromSet(drill.sets.get(currentSet.index+1).label);
+            int duration = drill.sets.get(currentSet.index+1).duration;
+            if (c1.x == c2.x && c1.y == c2.y || currentCount == currentSetStartCount) {
+                p.currentLocation = dotToPoint(c1.x, c1.y);
+            } else {
+                p.currentLocation = dotToPoint((c2.x - c1.x) * (double)(currentCount - currentSetStartCount) / duration + c1.x, (c2.y - c1.y) * (double)(currentCount - currentSetStartCount) / duration + c1.y);
+                System.out.println(currentSet.duration);
+            }
             double x = p.currentLocation.getX();
             double y = p.currentLocation.getY();
 
 //            if (selectedPerformers.containsKey(p.getSymbol() + p.getLabel())) {
 //                g.setColor(selectedPerformers.get(p.getSymbol() + p.getLabel()).getColor());
 //            }
-            g.setColor(c.getColor());
+            g.setColor(c1.getColor());
 
             g.fillRect((int)x-6,(int)y-6,6,12);
             g.fillRect((int)x,(int)y-6,6,12);
