@@ -96,7 +96,7 @@ public class MediaEditorGUI implements ImportListener, ScrubBarListener {
         clearSysMsg.start();
 
         // test autosave stuff
-        Timer t = new Timer(15 * 60 * 1000, e -> {
+        Timer t = new Timer(60 * 1000, e -> {
             System.out.println("autosaving...");
             writeSysMsg("Autosaving...");
 
