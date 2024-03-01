@@ -19,6 +19,8 @@ public class SerialTransmitter {
     }
 
     public void writeToSerialPort(String str) {
+        sp.clearRTS();
+        sp.clearDTR();
         if (!sp.openPort()) {
             System.out.println("Port is busy");
         }
