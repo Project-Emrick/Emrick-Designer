@@ -389,7 +389,7 @@ public class MediaEditorGUI implements ImportListener, ScrubBarListener {
         // Run menu
         JMenu runMenu = new JMenu("Run");
         menuBar.add(runMenu);
-        JMenuItem runShowItem = new JMenuItem("Run Show");
+        JMenuItem runShowItem = new JMenuItem("Run Show Linked to Viewport");
         runMenu.add(runShowItem);
         JMenuItem stopShowItem = new JMenuItem("Stop show");
         stopShowItem.addActionListener(e -> {
