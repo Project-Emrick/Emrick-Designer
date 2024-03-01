@@ -386,6 +386,43 @@ public class MediaEditorGUI implements ImportListener, ScrubBarListener {
             footballFieldPanel.repaint();
         });
 
+        // Run menu
+        JMenu runMenu = new JMenu("Run");
+        menuBar.add(runMenu);
+        JMenuItem runShowItem = new JMenuItem("Run Show");
+        runMenu.add(runShowItem);
+        runShowItem.addActionListener(e -> {
+            SerialTransmitter st = new SerialTransmitter();
+            String port = st.getSerialPort().getDescriptivePortName();
+            int option = 1;
+            while (option > 0) {
+                if (option == 1) {
+                    option = JOptionPane.showConfirmDialog(null, "Is (" + port + ") the correct port for the transmitter?", "Run Show", JOptionPane.YES_NO_OPTION);
+                } else if (option == 2) {
+                    option = JOptionPane.showConfirmDialog(null, "Port invalid: Make sure you have the right port and that it is not already in use then try again.", "Run show: ERROR", JOptionPane.OK_CANCEL_OPTION);
+                    if (option == 2) {
+                        option = -1;
+                    } else if (option == 0) {
+                        option = 1;
+                    }
+                }
+                if (option == 1) {
+                    port = JOptionPane.showInputDialog("Enter COM port (example: COM7): ");
+                    if (port != null) {
+                        if (!st.setSerialPort(port)) {
+                            option = 2;
+                        } else {
+                            port = st.getSerialPort().getDescriptivePortName();
+                        }
+                    } else {
+                        option = -1;
+                    }
+                } else if (option == 0) {
+                    footballFieldPanel.setSerialTransmitter(st);
+                }
+            }
+        });
+
         // Help menu
         JMenu helpMenu = new JMenu("Help");
         menuBar.add(helpMenu);

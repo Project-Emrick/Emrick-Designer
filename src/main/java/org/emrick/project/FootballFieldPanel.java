@@ -25,6 +25,7 @@ public class FootballFieldPanel extends JPanel {
     private Set currentSet;
     private int currentCount = 0;
     private int currentSetStartCount = 0;
+    private SerialTransmitter serialTransmitter;
 
     public FootballFieldPanel() {
 //        setPreferredSize(new Dimension(fieldWidth + 2*margin, fieldHeight + 2*margin)); // Set preferred size for the drawing area
@@ -46,6 +47,7 @@ public class FootballFieldPanel extends JPanel {
     public void addSetToField(Set set) {
         currentSet = set;
         if (!set.equals("0")) {
+            serialTransmitter.writeSet(set.index);
             for (Performer p : drill.performers) {
                 for (Coordinate c : p.getCoordinates()) {
                     if (c.set.equals(set)) {
@@ -60,6 +62,14 @@ public class FootballFieldPanel extends JPanel {
             }
         }
         repaint();
+    }
+
+    public SerialTransmitter getSerialTransmitter() {
+        return serialTransmitter;
+    }
+
+    public void setSerialTransmitter(SerialTransmitter serialTransmitter) {
+        this.serialTransmitter = serialTransmitter;
     }
 
     public int getCurrentCount() {
