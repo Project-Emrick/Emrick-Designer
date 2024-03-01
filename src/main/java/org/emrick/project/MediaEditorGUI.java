@@ -391,6 +391,12 @@ public class MediaEditorGUI implements ImportListener, ScrubBarListener {
         menuBar.add(runMenu);
         JMenuItem runShowItem = new JMenuItem("Run Show");
         runMenu.add(runShowItem);
+        JMenuItem stopShowItem = new JMenuItem("Stop show");
+        stopShowItem.addActionListener(e -> {
+            footballFieldPanel.setSerialTransmitter(null);
+            runMenu.remove(stopShowItem);
+            runMenu.add(runShowItem);
+        });
         runShowItem.addActionListener(e -> {
             SerialTransmitter st = new SerialTransmitter();
             String port = st.getSerialPort().getDescriptivePortName();
@@ -419,6 +425,9 @@ public class MediaEditorGUI implements ImportListener, ScrubBarListener {
                     }
                 } else if (option == 0) {
                     footballFieldPanel.setSerialTransmitter(st);
+                    footballFieldPanel.addSetToField(footballFieldPanel.drill.sets.get(0));
+                    runMenu.remove(runShowItem);
+                    runMenu.add(stopShowItem);
                 }
             }
         });

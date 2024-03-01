@@ -47,7 +47,9 @@ public class FootballFieldPanel extends JPanel {
     public void addSetToField(Set set) {
         currentSet = set;
         if (!set.equals("0")) {
-            serialTransmitter.writeSet(set.index);
+            if (serialTransmitter != null) {
+                serialTransmitter.writeSet(set.index);
+            }
             for (Performer p : drill.performers) {
                 for (Coordinate c : p.getCoordinates()) {
                     if (c.set.equals(set)) {
