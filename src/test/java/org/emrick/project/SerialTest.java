@@ -5,12 +5,6 @@ public class SerialTest {
     public void testSerial() {
         SerialTransmitter st = new SerialTransmitter();
         st.setSerialPort("COM7");
-        st.writeToSerialPort("s3\n");
-        try {
-            Thread.sleep(2000);
-        }
-        catch (InterruptedException ie) {
-            ie.printStackTrace();
-        }
+        st.writeToSerialPort("s2\n");
     }
 }
