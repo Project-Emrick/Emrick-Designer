@@ -6,6 +6,8 @@ import com.google.gson.JsonSyntaxException;
 import org.emrick.project.audio.AudioPlayer;
 
 import javax.swing.*;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import java.awt.*;
 import java.awt.event.*;
@@ -391,11 +393,84 @@ public class MediaEditorGUI implements ImportListener, ScrubBarListener {
         menuBar.add(runMenu);
         JMenuItem runShowItem = new JMenuItem("Run Show Linked to Viewport");
         runMenu.add(runShowItem);
+        JMenuItem flowViewerItem = new JMenuItem("Run Show via Flow View");
+        runMenu.add(flowViewerItem);
         JMenuItem stopShowItem = new JMenuItem("Stop show");
         stopShowItem.addActionListener(e -> {
             footballFieldPanel.setSerialTransmitter(null);
             runMenu.remove(stopShowItem);
-            runMenu.add(runShowItem);
+            if (!runMenu.isMenuComponent(runShowItem)) {
+                runMenu.add(runShowItem);
+            }
+            if (!runMenu.isMenuComponent(flowViewerItem)) {
+                runMenu.add(flowViewerItem);
+            }
+        });
+        flowViewerItem.addActionListener(e -> {
+            SerialTransmitter st = new SerialTransmitter();
+            String port = st.getSerialPort().getDescriptivePortName();
+            int option = 1;
+            while (option > 0) {
+                if (option == 1) {
+                    option = JOptionPane.showConfirmDialog(null, "Is (" + port + ") the correct port for the transmitter?", "Run Show", JOptionPane.YES_NO_OPTION);
+                } else if (option == 2) {
+                    option = JOptionPane.showConfirmDialog(null, "Port invalid: Make sure you have the right port and that it is not already in use then try again.", "Run show: ERROR", JOptionPane.OK_CANCEL_OPTION);
+                    if (option == 2) {
+                        option = -1;
+                        return;
+                    } else if (option == 0) {
+                        option = 1;
+                    }
+                }
+                if (option == 1) {
+                    port = JOptionPane.showInputDialog("Enter COM port (example: COM7): ");
+                    if (port != null) {
+                        if (!st.setSerialPort(port)) {
+                            option = 2;
+                        } else {
+                            port = st.getSerialPort().getDescriptivePortName();
+                        }
+                    } else {
+                        option = -1;
+                        return;
+                    }
+                } else if (option == 0) {
+                    runMenu.remove(flowViewerItem);
+                    runMenu.add(stopShowItem);
+                }
+            }
+            JFrame flowFrame = new JFrame("Emrick Designer - Flow Viewer");
+            flowFrame.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
+            flowFrame.setSize(1200,800);
+            flowFrame.setVisible(true);
+            String[][] sets = new String[footballFieldPanel.drill.sets.size()][2];
+            for (int i = 0; i < footballFieldPanel.drill.sets.size(); i++) {
+                sets[i][0] = footballFieldPanel.drill.sets.get(i).label;
+            }
+            for (int i = 0; i < footballFieldPanel.drill.sets.size(); i++) {
+                sets[i][1] = Integer.toString(i);
+            }
+            String[] labels = new String[2];
+            labels[0] = "Set";
+            labels[1] = "Example";
+            JTable table = new JTable(sets, labels);
+            table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+            ListSelectionModel lsm = table.getSelectionModel();
+            lsm.addListSelectionListener(new ListSelectionListener() {
+                @Override
+                public void valueChanged(ListSelectionEvent e) {
+                    if (e.getValueIsAdjusting()) {
+                        st.writeSet(e.getLastIndex());
+                        // without a connected transmitter, above line will fail
+                        // for debug, comment out above line and uncomment line below
+                        //System.out.println(e.getLastIndex());
+                    }
+                }
+            });
+            table.setRowSelectionAllowed(true);
+            table.setFillsViewportHeight(true);
+            JScrollPane jsp = new JScrollPane(table);
+            flowFrame.add(jsp);
         });
         runShowItem.addActionListener(e -> {
             SerialTransmitter st = new SerialTransmitter();

@@ -12,6 +12,9 @@ public class SerialTransmitter {
                 break;
             }
         }
+        if (sp == null) {
+            sp = SerialPort.getCommPorts()[0];
+        }
     }
 
     public boolean setSerialPort(String port) {
