@@ -11,7 +11,7 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class ScrubBarGUI implements ActionListener {
+public class ScrubBarGUI extends JComponent implements ActionListener {
 
     // String definitions
     private static final String PATH_SYNC_ICON = "./src/main/resources/images/scrub/time_sync_flaticon.png";
@@ -26,6 +26,8 @@ public class ScrubBarGUI implements ActionListener {
     private static final String PATH_FULL_PLAY_ICON = "./src/main/resources/images/scrub/double_arrow_flaticon.png";
 
     private JPanel scrubBarPanel;
+
+    private JFrame parent;
 
     // Scrub Bars / Sliders
     private JSlider topSlider;
@@ -60,8 +62,10 @@ public class ScrubBarGUI implements ActionListener {
 
     // Listener
     private final ScrubBarListener scrubBarListener;
+    private final SyncListener syncListener;
 
-    public ScrubBarGUI(ScrubBarListener scrubBarListener, FootballFieldPanel footballFieldPanel) {
+    public ScrubBarGUI(JFrame parent, ScrubBarListener scrubBarListener, SyncListener syncListener, FootballFieldPanel footballFieldPanel) {
+        this.parent = parent;
 
         // Placeholder. E.g., When Emrick Designer is first opened, no project is loaded.
         this.pageTabCounts = new HashMap<>();
@@ -73,6 +77,7 @@ public class ScrubBarGUI implements ActionListener {
         this.syncTimeGUI = null;
 
         this.scrubBarListener = scrubBarListener;
+        this.syncListener = syncListener;
 
         this.isReady = false;
         this.isPlaying = false;
@@ -86,7 +91,7 @@ public class ScrubBarGUI implements ActionListener {
         this.pageTabCounts = pageTabCounts;
 
         // Because SyncTimeGUI depends on pageTabCounts, update it as well
-        syncTimeGUI = new SyncTimeGUI(pageTabCounts);
+//        syncTimeGUI = new SyncTimeGUI(pageTabCounts);
 
         // There should exist at least a first Page Tab, for logic purposes
         if (pageTabCounts.isEmpty()) {
@@ -479,55 +484,56 @@ public class ScrubBarGUI implements ActionListener {
         else if (e.getSource().equals(syncButton)) {
 
             // syncTimeGUI will be null if Emrick Project not loaded
-            if (syncTimeGUI != null) {
-                syncTimeGUI.show();
-            }
+//            if (syncTimeGUI != null) {
+//                syncTimeGUI.show();
+//            }
+            new SyncTimeGUI(parent, syncListener, pageTabCounts);
         }
         int val = botSlider.getValue();
         footballFieldPanel.setCurrentCount(val);
     }
 
     // For testing
-    public static void main(String[] args) {
-
-        // Run Swing programs on the Event Dispatch Thread (EDT)
-        SwingUtilities.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-
-                ScrubBarGUI scrubBarGUI = new ScrubBarGUI(new ScrubBarListener() {
-                    @Override
-                    public void onPlay() {
-                        System.out.println("onPlay called.");
-                    }
-
-                    @Override
-                    public void onPause() {
-                        System.out.println("onPause called.");
-                    }
-                }, new FootballFieldPanel());
-
-                // Dummy input
-                Map<String, Integer> dummyData1 = new HashMap<>();
-                dummyData1.put("1", 0); // Page tab 1 maps to count 0
-                dummyData1.put("1A", 16); // Page tab 1A maps to count 16
-                dummyData1.put("2", 32); // Page tab 2 maps to count 32
-                dummyData1.put("2A", 48); // etc.
-                dummyData1.put("3", 64);
-                dummyData1.put("3A", 88);
-                dummyData1.put("4", 96);
-                dummyData1.put("4A", 112);
-                dummyData1.put("4B", 128);
-
-                // When updating Scrub Bar GUI
-                scrubBarGUI.updatePageTabCounts(dummyData1);
-
-                JFrame testFrame = new JFrame();
-                testFrame.add(scrubBarGUI.getScrubBarPanel());
-                testFrame.setSize(new Dimension(800, 200));
-                testFrame.setLocationRelativeTo(null);
-                testFrame.setVisible(true);
-            }
-        });
-    }
+//    public static void main(String[] args) {
+//
+//        // Run Swing programs on the Event Dispatch Thread (EDT)
+//        SwingUtilities.invokeLater(new Runnable() {
+//            @Override
+//            public void run() {
+//
+//                ScrubBarGUI scrubBarGUI = new ScrubBarGUI(new ScrubBarListener() {
+//                    @Override
+//                    public void onPlay() {
+//                        System.out.println("onPlay called.");
+//                    }
+//
+//                    @Override
+//                    public void onPause() {
+//                        System.out.println("onPause called.");
+//                    }
+//                }, new FootballFieldPanel());
+//
+//                // Dummy input
+//                Map<String, Integer> dummyData1 = new HashMap<>();
+//                dummyData1.put("1", 0); // Page tab 1 maps to count 0
+//                dummyData1.put("1A", 16); // Page tab 1A maps to count 16
+//                dummyData1.put("2", 32); // Page tab 2 maps to count 32
+//                dummyData1.put("2A", 48); // etc.
+//                dummyData1.put("3", 64);
+//                dummyData1.put("3A", 88);
+//                dummyData1.put("4", 96);
+//                dummyData1.put("4A", 112);
+//                dummyData1.put("4B", 128);
+//
+//                // When updating Scrub Bar GUI
+//                scrubBarGUI.updatePageTabCounts(dummyData1);
+//
+//                JFrame testFrame = new JFrame();
+//                testFrame.add(scrubBarGUI.getScrubBarPanel());
+//                testFrame.setSize(new Dimension(800, 200));
+//                testFrame.setLocationRelativeTo(null);
+//                testFrame.setVisible(true);
+//            }
+//        });
+//    }
 }

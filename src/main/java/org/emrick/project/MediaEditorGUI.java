@@ -26,7 +26,7 @@ import org.emrick.project.serde.ColorAdapter;
 import org.emrick.project.serde.Point2DAdapter;
 import org.emrick.project.serde.ProjectFile;
 
-public class MediaEditorGUI implements ImportListener, ScrubBarListener {
+public class MediaEditorGUI implements ImportListener, ScrubBarListener, SyncListener {
 
     // String definitions
     public static final String FILE_MENU_NEW_PROJECT = "New Project";
@@ -77,7 +77,7 @@ public class MediaEditorGUI implements ImportListener, ScrubBarListener {
             @Override
             public void run() {
                 MediaEditorGUI mediaEditorGUI = new MediaEditorGUI();
-                mediaEditorGUI.createAndShowGUI();
+//                mediaEditorGUI.createAndShowGUI();
             }
         });
     }
@@ -121,8 +121,13 @@ public class MediaEditorGUI implements ImportListener, ScrubBarListener {
         fieldScrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
         fieldScrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
 
+        // Main frame
+        frame = new JFrame("Emrick Designer");
+
         // Scrub Bar
-        scrubBarGUI = new ScrubBarGUI(this, footballFieldPanel);
+        scrubBarGUI = new ScrubBarGUI(frame, this, this, footballFieldPanel);
+
+        createAndShowGUI();
     }
 
 
@@ -180,6 +185,11 @@ public class MediaEditorGUI implements ImportListener, ScrubBarListener {
         buildScrubBarPanel();
     }
 
+    @Override
+    public void onSync(Map<String, Integer> times) {
+
+    }
+
 
     // ScrubBar Listeners
 
@@ -188,6 +198,8 @@ public class MediaEditorGUI implements ImportListener, ScrubBarListener {
         if (audioPlayer != null && scrubBarGUI.getAudioCheckbox().isSelected()) {
             audioPlayer.playAudio();
         }
+
+        System.out.println("PLAYING NOW");
     }
 
     @Override
@@ -195,6 +207,8 @@ public class MediaEditorGUI implements ImportListener, ScrubBarListener {
         if (audioPlayer != null) {
             audioPlayer.pauseAudio();
         }
+
+        System.out.println("PAUSING");
     }
 
 
@@ -220,8 +234,6 @@ public class MediaEditorGUI implements ImportListener, ScrubBarListener {
     }
 
     private void createAndShowGUI() {
-        //main window
-        frame = new JFrame("Emrick Designer");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.setSize(1200, 600);
 
@@ -302,7 +314,7 @@ public class MediaEditorGUI implements ImportListener, ScrubBarListener {
             // Important: ImportListener allows import services (e.g., SelectFileGUI > ImportArchive) to call update
             //  methods belonging to the current class (MediaEditorGUI).
 
-            SelectFileGUI selectFileGUI = new SelectFileGUI(this);
+            SelectFileGUI selectFileGUI = new SelectFileGUI(frame, this);
             selectFileGUI.show();
 
             System.out.println("Should have loaded the field by now");
