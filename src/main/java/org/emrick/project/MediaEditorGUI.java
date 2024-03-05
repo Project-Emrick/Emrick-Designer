@@ -187,7 +187,8 @@ public class MediaEditorGUI implements ImportListener, ScrubBarListener, SyncLis
 
     @Override
     public void onSync(Map<String, Integer> times) {
-
+        System.out.println("TODO: HANDLE SYNCING");
+        System.out.println(times);
     }
 
 
@@ -198,6 +199,8 @@ public class MediaEditorGUI implements ImportListener, ScrubBarListener, SyncLis
         if (audioPlayer != null && scrubBarGUI.getAudioCheckbox().isSelected()) {
             audioPlayer.playAudio();
         }
+
+        // TODO: Handle if not synced
 
         System.out.println("PLAYING NOW");
     }

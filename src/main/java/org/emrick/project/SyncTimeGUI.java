@@ -35,8 +35,11 @@ public class SyncTimeGUI implements ActionListener {
     private JButton cancelButton;
     private JButton syncButton;
 
+    private SyncListener syncListener;
+
     public SyncTimeGUI(JFrame parent, SyncListener syncListener, Map<String, Integer> pageTabCounts) {
         this.pageTabCounts = pageTabCounts;
+        this.syncListener = syncListener;
 
         frame = new JDialog(parent, true);
         frame.setTitle("Sync Time to Original Drill");
@@ -188,8 +191,7 @@ public class SyncTimeGUI implements ActionListener {
                 times.put(set, time);
             }
 
-            // TODO: send times to MediaEditorGUI
-            System.out.println(times);
+            syncListener.onSync(times);
         }
     }
 
