@@ -444,18 +444,20 @@ public class MediaEditorGUI implements ImportListener, ScrubBarListener {
             flowFrame.setSize(1200,800);
             flowFrame.setVisible(true);
             // TODO - When we add RF triggers, swap the list of sets to a list of triggers
-            String[][] sets = new String[footballFieldPanel.drill.sets.size()][4];
+            String[][] sets = new String[footballFieldPanel.drill.sets.size()][5];
             for (int i = 0; i < footballFieldPanel.drill.sets.size(); i++) {
                 sets[i][0] = footballFieldPanel.drill.sets.get(i).label;
                 sets[i][1] = Integer.toString(footballFieldPanel.drill.sets.get(i).duration);
                 sets[i][2] = "";
                 sets[i][3] = "";
+                sets[i][4] = "";
             }
-            String[] labels = new String[4];
+            String[] labels = new String[5];
             labels[0] = "Set";
             labels[1] = "Counts";
-            labels[2] = "Cue";
-            labels[3] = "Description";
+            labels[2] = "Title";
+            labels[3] = "Cue";
+            labels[4] = "Description";
             JTable table = new JTable(sets, labels);
             table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
             ListSelectionModel lsm = table.getSelectionModel();
