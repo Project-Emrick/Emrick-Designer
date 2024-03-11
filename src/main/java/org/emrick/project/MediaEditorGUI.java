@@ -55,6 +55,9 @@ public class MediaEditorGUI implements ImportListener, ScrubBarListener, SyncLis
         sysMsg.setText("");
     });
 
+    // Time keeping
+    private Map<String, Integer> timeSync = null;
+
     // JSON serde
     private Gson gson;
 
@@ -187,8 +190,7 @@ public class MediaEditorGUI implements ImportListener, ScrubBarListener, SyncLis
 
     @Override
     public void onSync(Map<String, Integer> times) {
-        System.out.println("TODO: HANDLE SYNCING");
-        System.out.println(times);
+        timeSync = times;
     }
 
 
@@ -196,17 +198,23 @@ public class MediaEditorGUI implements ImportListener, ScrubBarListener, SyncLis
 
     @Override
     public void onPlay() {
+        if (timeSync == null) {
+            return;
+        }
+
         if (audioPlayer != null && scrubBarGUI.getAudioCheckbox().isSelected()) {
             audioPlayer.playAudio();
         }
 
-        // TODO: Handle if not synced
-
-        System.out.println("PLAYING NOW");
+        System.out.println("PLAYING");
     }
 
     @Override
     public void onPause() {
+        if (timeSync == null) {
+            return;
+        }
+
         if (audioPlayer != null) {
             audioPlayer.pauseAudio();
         }
