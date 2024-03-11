@@ -451,13 +451,13 @@ public class ScrubBarGUI extends JComponent implements ActionListener {
             if (isPlaying) {
                 // Pause
                 if (scrubBarListener.onPause()) {
-                    playPauseButton.setIcon(PLAY_ICON);
+                    setPlaybackButtonPlay();
                     isPlaying = false;
                 }
             } else {
                 // Play
                 if (scrubBarListener.onPlay()) {
-                    playPauseButton.setIcon(PAUSE_ICON);
+                    setPlaybackButtonPause();
                     isPlaying = true;
                 }
             }
@@ -474,6 +474,16 @@ public class ScrubBarGUI extends JComponent implements ActionListener {
         }
         int val = botSlider.getValue();
         footballFieldPanel.setCurrentCount(val);
+    }
+
+    // these might be misleading, fix?
+    public void setIsPlayingPause() {
+        playPauseButton.setIcon(PAUSE_ICON);
+        isPlaying = true;
+    }
+    public void setIsPlayingPlay() {
+        playPauseButton.setIcon(PLAY_ICON);
+        isPlaying = false;
     }
 
     public void prevSet() {

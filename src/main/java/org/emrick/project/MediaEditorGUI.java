@@ -121,7 +121,8 @@ public class MediaEditorGUI implements ImportListener, ScrubBarListener, SyncLis
             scrubBarGUI.nextCount();
             if (scrubBarGUI.isAtLastSet() && scrubBarGUI.isAtEndOfSet()) {
                 playbackTimer.stop();
-                // TODO: stop music etc.
+                // TODO: stop music
+                scrubBarGUI.setIsPlayingPlay();
                 return;
             } else if (scrubBarGUI.isAtEndOfSet()) {
                 scrubBarGUI.nextSet();
@@ -215,6 +216,8 @@ public class MediaEditorGUI implements ImportListener, ScrubBarListener, SyncLis
     public void onSync(ArrayList<Map.Entry<String, Integer>> times) {
         // we're treating the integers as duration. this may not be a great idea for the future.
         timeSync = times;
+        System.out.println(times);
+        System.out.println("got times");
     }
 
 
@@ -223,16 +226,17 @@ public class MediaEditorGUI implements ImportListener, ScrubBarListener, SyncLis
     @Override
     public boolean onPlay() {
         if (timeSync == null) {
-            // TODO: pop up an error
             JOptionPane.showMessageDialog(frame, "Cannot play without syncing time!", "Playback Error", JOptionPane.ERROR_MESSAGE);
             return false;
         }
 
         if (audioPlayer != null && scrubBarGUI.getAudioCheckbox().isSelected()) {
+            // TODO: get audio to correct position
             audioPlayer.playAudio();
         }
 
-        System.out.println("PLAYING");
+        setPlaybackTimerTime();
+        playbackTimer.start();
 
         return true;
     }
@@ -240,6 +244,7 @@ public class MediaEditorGUI implements ImportListener, ScrubBarListener, SyncLis
     @Override
     public boolean onPause() {
         if (timeSync == null) {
+            JOptionPane.showMessageDialog(frame, "Cannot play without syncing time!", "Playback Error", JOptionPane.ERROR_MESSAGE);
             return false;
         }
 
@@ -247,7 +252,7 @@ public class MediaEditorGUI implements ImportListener, ScrubBarListener, SyncLis
             audioPlayer.pauseAudio();
         }
 
-        System.out.println("PAUSING");
+        playbackTimer.stop();
 
         return true;
     }

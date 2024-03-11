@@ -97,8 +97,7 @@ public class AudioPlayer extends Thread {
     // Play / Pause Logic
 
     public void playAudio() {
-
-        // TODO: seek to correct position before playing?
+        // TODO: seek to correct position before playing
         if (sequencer != null) {
             //  For seeking, consider sequencer.setTickPosition(tick); or sequencer.setMicrosecondPosition(microseconds);
             sequencer.start();

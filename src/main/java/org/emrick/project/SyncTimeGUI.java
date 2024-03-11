@@ -92,7 +92,7 @@ public class SyncTimeGUI implements ActionListener {
 
         List<Map.Entry<String, Integer>> ptCounts = ScrubBarGUI.sortMap(pageTabCounts);
 
-        ArrayList<Map.Entry<String, JTextField>> pageTabTimeFields = new ArrayList<>();
+        pageTabTimeFields = new ArrayList<>();
 
         for (Map.Entry<String, Integer> entry : ptCounts) {
             JLabel setLabel = new JLabel(entry.getKey());
@@ -192,6 +192,8 @@ public class SyncTimeGUI implements ActionListener {
             }
 
             syncListener.onSync(times);
+
+            frame.dispose();
         }
     }
 
