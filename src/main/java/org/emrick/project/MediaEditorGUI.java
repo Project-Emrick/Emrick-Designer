@@ -12,17 +12,16 @@ import java.awt.event.*;
 import java.awt.geom.Point2D;
 import java.io.*;
 import java.nio.file.Path;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 import javax.swing.Timer;
 import com.formdev.flatlaf.FlatLightLaf;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.List;
 import java.util.stream.Collectors;
 import com.google.gson.Gson;
 import org.emrick.project.serde.ColorAdapter;
+import org.emrick.project.serde.PairAdapter;
 import org.emrick.project.serde.Point2DAdapter;
 import org.emrick.project.serde.ProjectFile;
 
@@ -57,7 +56,7 @@ public class MediaEditorGUI implements ImportListener, ScrubBarListener, SyncLis
 
     // Time keeping
     // TODO: save this
-    private ArrayList<Map.Entry<String, Integer>> timeSync = null;
+    private ArrayList<SyncTimeGUI.Pair> timeSync = null;
     private Timer playbackTimer = null;
 
     // JSON serde
@@ -93,6 +92,7 @@ public class MediaEditorGUI implements ImportListener, ScrubBarListener, SyncLis
         GsonBuilder builder = new GsonBuilder();
         builder.registerTypeAdapter(Color.class, new ColorAdapter());
         builder.registerTypeAdapter(Point2D.class, new Point2DAdapter());
+        builder.registerTypeAdapter(SyncTimeGUI.Pair.class, new PairAdapter());
         builder.serializeNulls();
         gson = builder.create();
 
@@ -213,7 +213,7 @@ public class MediaEditorGUI implements ImportListener, ScrubBarListener, SyncLis
     }
 
     @Override
-    public void onSync(ArrayList<Map.Entry<String, Integer>> times) {
+    public void onSync(ArrayList<SyncTimeGUI.Pair> times) {
         // we're treating the integers as duration. this may not be a great idea for the future.
         timeSync = times;
         System.out.println(times);
@@ -691,7 +691,7 @@ public class MediaEditorGUI implements ImportListener, ScrubBarListener, SyncLis
         String relArchive = path.getParentFile().toURI().relativize(archivePath.toURI()).getPath();
         String relDrill = path.getParentFile().toURI().relativize(drillPath.toURI()).getPath();
 
-        ProjectFile pf = new ProjectFile(footballFieldPanel.drill, relArchive, relDrill);
+        ProjectFile pf = new ProjectFile(footballFieldPanel.drill, relArchive, relDrill, timeSync);
         String g = gson.toJson(pf);
 
         System.out.println("saving to `" + path + "`");
@@ -717,6 +717,8 @@ public class MediaEditorGUI implements ImportListener, ScrubBarListener, SyncLis
             ImportArchive ia = new ImportArchive(this);
             Path fullArchive = Paths.get(path.getParentFile().getPath(), pf.archivePath);
             Path fullDrill = Paths.get(path.getParentFile().getPath(), pf.drillPath);
+
+            timeSync = pf.timeSync;
 
             archivePath = fullArchive.toFile();
             drillPath = fullDrill.toFile();

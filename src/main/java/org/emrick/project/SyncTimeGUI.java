@@ -155,13 +155,31 @@ public class SyncTimeGUI implements ActionListener {
         }
     }
 
+    public static class Pair {
+        private String key;
+        private Integer value;
+
+        public Pair(String key, Integer value) {
+            this.key = key;
+            this.value = value;
+        }
+
+        public String getKey() {
+            return key;
+        }
+
+        public Integer getValue() {
+            return value;
+        }
+    }
+
     @Override
     public void actionPerformed(ActionEvent e) {
         if (e.getSource().equals(cancelButton)) {
             frame.dispose();
         } else if (e.getSource().equals(syncButton)) {
             // TODO: this currently expects the text input to be a duration, despite the help text implying it needs to be a timestamp. this is planned to be changed to beats per minute, so plan accordingly!
-            ArrayList<Map.Entry<String, Integer>> times = new ArrayList<>();
+            ArrayList<Pair> times = new ArrayList<>();
             for (Map.Entry<String, JTextField> ptField : pageTabTimeFields) {
                 String set = ptField.getKey();
 
@@ -188,7 +206,7 @@ public class SyncTimeGUI implements ActionListener {
                     }
                 }
 
-                times.add(new AbstractMap.SimpleEntry<>(set, time));
+                times.add(new Pair(set, time));
             }
 
             syncListener.onSync(times);

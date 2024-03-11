@@ -451,13 +451,13 @@ public class ScrubBarGUI extends JComponent implements ActionListener {
             if (isPlaying) {
                 // Pause
                 if (scrubBarListener.onPause()) {
-                    setPlaybackButtonPlay();
+                    setIsPlayingPlay();
                     isPlaying = false;
                 }
             } else {
                 // Play
                 if (scrubBarListener.onPlay()) {
-                    setPlaybackButtonPause();
+                    setIsPlayingPause();
                     isPlaying = true;
                 }
             }
@@ -500,7 +500,6 @@ public class ScrubBarGUI extends JComponent implements ActionListener {
 
     public void nextCount() {
         botSlider.setValue(botSlider.getValue() + 1);
-        System.out.println(botSlider.getValue());
     }
 
     public int getCurrentSetIndex() {
