@@ -14,21 +14,20 @@ import java.awt.event.*;
 import java.awt.geom.Point2D;
 import java.io.*;
 import java.nio.file.Path;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 import javax.swing.Timer;
 import com.formdev.flatlaf.FlatLightLaf;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.List;
 import java.util.stream.Collectors;
 import com.google.gson.Gson;
 import org.emrick.project.serde.ColorAdapter;
+import org.emrick.project.serde.PairAdapter;
 import org.emrick.project.serde.Point2DAdapter;
 import org.emrick.project.serde.ProjectFile;
 
-public class MediaEditorGUI implements ImportListener, ScrubBarListener {
+public class MediaEditorGUI implements ImportListener, ScrubBarListener, SyncListener {
 
     // String definitions
     public static final String FILE_MENU_NEW_PROJECT = "New Project";
@@ -57,6 +56,11 @@ public class MediaEditorGUI implements ImportListener, ScrubBarListener {
         sysMsg.setText("");
     });
 
+    // Time keeping
+    // TODO: save this
+    private ArrayList<SyncTimeGUI.Pair> timeSync = null;
+    private Timer playbackTimer = null;
+
     // JSON serde
     private Gson gson;
 
@@ -79,7 +83,7 @@ public class MediaEditorGUI implements ImportListener, ScrubBarListener {
             @Override
             public void run() {
                 MediaEditorGUI mediaEditorGUI = new MediaEditorGUI();
-                mediaEditorGUI.createAndShowGUI();
+//                mediaEditorGUI.createAndShowGUI();
             }
         });
     }
@@ -90,6 +94,7 @@ public class MediaEditorGUI implements ImportListener, ScrubBarListener {
         GsonBuilder builder = new GsonBuilder();
         builder.registerTypeAdapter(Color.class, new ColorAdapter());
         builder.registerTypeAdapter(Point2D.class, new Point2DAdapter());
+        builder.registerTypeAdapter(SyncTimeGUI.Pair.class, new PairAdapter());
         builder.serializeNulls();
         gson = builder.create();
 
@@ -109,6 +114,28 @@ public class MediaEditorGUI implements ImportListener, ScrubBarListener {
         t.setRepeats(true);
         t.start();
 
+        // playback timer
+        playbackTimer = new Timer(0, e -> {
+            if (scrubBarGUI == null || playbackTimer == null) {
+                // TODO: throw an error, we shouldn't be able to be here!
+                return;
+            }
+            scrubBarGUI.nextCount();
+            if (scrubBarGUI.isAtLastSet() && scrubBarGUI.isAtEndOfSet()) {
+                playbackTimer.stop();
+                // TODO: stop music
+                scrubBarGUI.setIsPlayingPlay();
+                return;
+            } else if (scrubBarGUI.isAtEndOfSet()) {
+                scrubBarGUI.nextSet();
+            }
+
+            setPlaybackTimerTime();
+
+            // TODO: repaint everything relevant (field, timer, etc)
+        });
+        t.setRepeats(true);
+
         // Change Font Size for Menu and MenuIem
         Font f = new Font("FlatLaf.style", Font.PLAIN, 16);
         UIManager.put("Menu.font", f);
@@ -123,8 +150,13 @@ public class MediaEditorGUI implements ImportListener, ScrubBarListener {
         fieldScrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
         fieldScrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
 
+        // Main frame
+        frame = new JFrame("Emrick Designer");
+
         // Scrub Bar
-        scrubBarGUI = new ScrubBarGUI(this, footballFieldPanel);
+        scrubBarGUI = new ScrubBarGUI(frame, this, this, footballFieldPanel);
+
+        createAndShowGUI();
     }
 
 
@@ -182,21 +214,49 @@ public class MediaEditorGUI implements ImportListener, ScrubBarListener {
         buildScrubBarPanel();
     }
 
+    @Override
+    public void onSync(ArrayList<SyncTimeGUI.Pair> times) {
+        // we're treating the integers as duration. this may not be a great idea for the future.
+        timeSync = times;
+        System.out.println(times);
+        System.out.println("got times");
+    }
+
 
     // ScrubBar Listeners
 
     @Override
-    public void onPlay() {
+    public boolean onPlay() {
+        if (timeSync == null) {
+            JOptionPane.showMessageDialog(frame, "Cannot play without syncing time!", "Playback Error", JOptionPane.ERROR_MESSAGE);
+            return false;
+        }
+
         if (audioPlayer != null && scrubBarGUI.getAudioCheckbox().isSelected()) {
+            // TODO: get audio to correct position
             audioPlayer.playAudio();
         }
+
+        setPlaybackTimerTime();
+        playbackTimer.start();
+
+        return true;
     }
 
     @Override
-    public void onPause() {
+    public boolean onPause() {
+        if (timeSync == null) {
+            JOptionPane.showMessageDialog(frame, "Cannot play without syncing time!", "Playback Error", JOptionPane.ERROR_MESSAGE);
+            return false;
+        }
+
         if (audioPlayer != null) {
             audioPlayer.pauseAudio();
         }
+
+        playbackTimer.stop();
+
+        return true;
     }
 
 
@@ -222,8 +282,6 @@ public class MediaEditorGUI implements ImportListener, ScrubBarListener {
     }
 
     private void createAndShowGUI() {
-        //main window
-        frame = new JFrame("Emrick Designer");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.setSize(1200, 600);
 
@@ -304,7 +362,7 @@ public class MediaEditorGUI implements ImportListener, ScrubBarListener {
             // Important: ImportListener allows import services (e.g., SelectFileGUI > ImportArchive) to call update
             //  methods belonging to the current class (MediaEditorGUI).
 
-            SelectFileGUI selectFileGUI = new SelectFileGUI(this);
+            SelectFileGUI selectFileGUI = new SelectFileGUI(frame, this);
             selectFileGUI.show();
 
             System.out.println("Should have loaded the field by now");
@@ -759,7 +817,7 @@ public class MediaEditorGUI implements ImportListener, ScrubBarListener {
         String relArchive = path.getParentFile().toURI().relativize(archivePath.toURI()).getPath();
         String relDrill = path.getParentFile().toURI().relativize(drillPath.toURI()).getPath();
 
-        ProjectFile pf = new ProjectFile(footballFieldPanel.drill, relArchive, relDrill);
+        ProjectFile pf = new ProjectFile(footballFieldPanel.drill, relArchive, relDrill, timeSync);
         String g = gson.toJson(pf);
 
         System.out.println("saving to `" + path + "`");
@@ -786,6 +844,8 @@ public class MediaEditorGUI implements ImportListener, ScrubBarListener {
             Path fullArchive = Paths.get(path.getParentFile().getPath(), pf.archivePath);
             Path fullDrill = Paths.get(path.getParentFile().getPath(), pf.drillPath);
 
+            timeSync = pf.timeSync;
+
             archivePath = fullArchive.toFile();
             drillPath = fullDrill.toFile();
 
@@ -805,5 +865,11 @@ public class MediaEditorGUI implements ImportListener, ScrubBarListener {
         clearSysMsg.stop();
         sysMsg.setText(msg);
         clearSysMsg.start();
+    }
+
+    private void setPlaybackTimerTime() {
+        float setSyncDuration = timeSync.get(scrubBarGUI.getCurrentSetIndex()).getValue();
+        float setDuration = scrubBarGUI.getCurrSetDuration();
+        playbackTimer.setDelay( (int)(setSyncDuration / setDuration * 1000) );
     }
 }

@@ -7,7 +7,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
 import java.util.Optional;
-import java.util.concurrent.TimeUnit;
 
 /**
  * This class constructs a Swing GUI window for importing Coordinates PDF and Pyware Archive file (.3dz)
@@ -18,7 +17,7 @@ public class SelectFileGUI implements ActionListener {
 
     private ImportListener importListener;
     // Parent frame
-    private JFrame frame;
+    private JDialog frame;
 
     // Paths to selected files
     private File coordsFilePath;
@@ -45,18 +44,14 @@ public class SelectFileGUI implements ActionListener {
      *                       Provides callback functionality (e.g., to repaint field after importing
      *                       floorCover or surface images).
      */
-    public SelectFileGUI(ImportListener importListener) {
+    public SelectFileGUI(JFrame parent, ImportListener importListener) {
         this.importListener = importListener;
         importArchive = new ImportArchive(importListener);
 
         coordsFilePath = null;
         archiveFilePath = null;
 
-        initialize();
-    }
-
-    private void initialize() {
-        frame = new JFrame();
+        frame = new JDialog(parent, true);
         frame.setTitle("New Project - Import");
         frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         frame.setSize(400, 300);
