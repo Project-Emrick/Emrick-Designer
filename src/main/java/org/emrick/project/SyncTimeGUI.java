@@ -160,7 +160,7 @@ public class SyncTimeGUI implements ActionListener {
         if (e.getSource().equals(cancelButton)) {
             frame.dispose();
         } else if (e.getSource().equals(syncButton)) {
-            // TODO: Sync Times
+            // TODO: this currently expects the text input to be a duration, despite the help text implying it needs to be a timestamp. this is planned to be changed to beats per minute, so plan accordingly!
             ArrayList<Map.Entry<String, Integer>> times = new ArrayList<>();
             for (Map.Entry<String, JTextField> ptField : pageTabTimeFields) {
                 String set = ptField.getKey();
