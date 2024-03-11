@@ -8,9 +8,8 @@ import java.awt.event.ActionListener;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
-import java.util.HashMap;
+import java.util.*;
 import java.util.List;
-import java.util.Map;
 
 public class SyncTimeGUI implements ActionListener {
 
@@ -29,7 +28,7 @@ public class SyncTimeGUI implements ActionListener {
     // Page Tab / Count / Times
     private Map<String, Integer> pageTabCounts; // [pageTab]:[count] e.g., k:"2A", v:30 , From ScrubBarGUI
     private Map<String, Integer> pageTabTimes; // [pageTab]:[time] e.g., k:"2A", v:21 , [time] in seconds
-    private Map<String, JTextField> pageTabTimeFields;
+    private ArrayList<Map.Entry<String, JTextField>> pageTabTimeFields;
 
     private JDialog frame;
     private JButton cancelButton;
@@ -93,7 +92,7 @@ public class SyncTimeGUI implements ActionListener {
 
         List<Map.Entry<String, Integer>> ptCounts = ScrubBarGUI.sortMap(pageTabCounts);
 
-        pageTabTimeFields = new HashMap<>();
+        ArrayList<Map.Entry<String, JTextField>> pageTabTimeFields = new ArrayList<>();
 
         for (Map.Entry<String, Integer> entry : ptCounts) {
             JLabel setLabel = new JLabel(entry.getKey());
@@ -104,7 +103,8 @@ public class SyncTimeGUI implements ActionListener {
             JTextField textField = new JTextField();
             textField.setBorder(BorderFactory.createLineBorder(Color.LIGHT_GRAY));
             textField.setToolTipText("Enter timestamp of Page Tab " + entry.getKey());
-            pageTabTimeFields.put(entry.getKey(), textField); // Keep a reference to text fields
+
+            pageTabTimeFields.add(new AbstractMap.SimpleEntry<>(entry.getKey(), textField)); // Keep a reference to text fields
             entryPanel.add(textField);
 
             JLabel countLabel = new JLabel(entry.getValue().toString());
@@ -148,7 +148,7 @@ public class SyncTimeGUI implements ActionListener {
     }
 
     private void setPageTabTimes() {
-        for (Map.Entry<String, JTextField> ptField : pageTabTimeFields.entrySet()) {
+        for (Map.Entry<String, JTextField> ptField : pageTabTimeFields) {
 
             // Key will be the Set String, e.g., "2A". Value is the corresponding JTextField
             // TODO
@@ -161,8 +161,8 @@ public class SyncTimeGUI implements ActionListener {
             frame.dispose();
         } else if (e.getSource().equals(syncButton)) {
             // TODO: Sync Times
-            Map<String, Integer> times = new HashMap<>();
-            for (Map.Entry<String, JTextField> ptField : pageTabTimeFields.entrySet()) {
+            ArrayList<Map.Entry<String, Integer>> times = new ArrayList<>();
+            for (Map.Entry<String, JTextField> ptField : pageTabTimeFields) {
                 String set = ptField.getKey();
 
                 String in = ptField.getValue().getText();
@@ -188,7 +188,7 @@ public class SyncTimeGUI implements ActionListener {
                     }
                 }
 
-                times.put(set, time);
+                times.add(new AbstractMap.SimpleEntry<>(set, time));
             }
 
             syncListener.onSync(times);

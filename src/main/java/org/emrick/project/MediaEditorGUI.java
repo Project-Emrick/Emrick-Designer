@@ -56,7 +56,9 @@ public class MediaEditorGUI implements ImportListener, ScrubBarListener, SyncLis
     });
 
     // Time keeping
-    private Map<String, Integer> timeSync = null;
+    // TODO: save this
+    private ArrayList<Map.Entry<String, Integer>> timeSync = null;
+    private Timer playbackTimer = null;
 
     // JSON serde
     private Gson gson;
@@ -109,6 +111,27 @@ public class MediaEditorGUI implements ImportListener, ScrubBarListener, SyncLis
         });
         t.setRepeats(true);
         t.start();
+
+        // playback timer
+        playbackTimer = new Timer(0, e -> {
+            if (scrubBarGUI == null || playbackTimer == null) {
+                // TODO: throw an error, we shouldn't be able to be here!
+                return;
+            }
+            scrubBarGUI.nextCount();
+            if (scrubBarGUI.isAtLastSet() && scrubBarGUI.isAtEndOfSet()) {
+                playbackTimer.stop();
+                // TODO: stop music etc.
+                return;
+            } else if (scrubBarGUI.isAtEndOfSet()) {
+                scrubBarGUI.nextSet();
+            }
+
+            setPlaybackTimerTime();
+
+            // TODO: repaint everything relevant (field, timer, etc)
+        });
+        t.setRepeats(true);
 
         // Change Font Size for Menu and MenuIem
         Font f = new Font("FlatLaf.style", Font.PLAIN, 16);
@@ -189,7 +212,8 @@ public class MediaEditorGUI implements ImportListener, ScrubBarListener, SyncLis
     }
 
     @Override
-    public void onSync(Map<String, Integer> times) {
+    public void onSync(ArrayList<Map.Entry<String, Integer>> times) {
+        // we're treating the integers as duration. this may not be a great idea for the future.
         timeSync = times;
     }
 
@@ -197,9 +221,11 @@ public class MediaEditorGUI implements ImportListener, ScrubBarListener, SyncLis
     // ScrubBar Listeners
 
     @Override
-    public void onPlay() {
+    public boolean onPlay() {
         if (timeSync == null) {
-            return;
+            // TODO: pop up an error
+            JOptionPane.showMessageDialog(frame, "Cannot play without syncing time!", "Playback Error", JOptionPane.ERROR_MESSAGE);
+            return false;
         }
 
         if (audioPlayer != null && scrubBarGUI.getAudioCheckbox().isSelected()) {
@@ -207,12 +233,14 @@ public class MediaEditorGUI implements ImportListener, ScrubBarListener, SyncLis
         }
 
         System.out.println("PLAYING");
+
+        return true;
     }
 
     @Override
-    public void onPause() {
+    public boolean onPause() {
         if (timeSync == null) {
-            return;
+            return false;
         }
 
         if (audioPlayer != null) {
@@ -220,6 +248,8 @@ public class MediaEditorGUI implements ImportListener, ScrubBarListener, SyncLis
         }
 
         System.out.println("PAUSING");
+
+        return true;
     }
 
 
@@ -702,5 +732,11 @@ public class MediaEditorGUI implements ImportListener, ScrubBarListener, SyncLis
         clearSysMsg.stop();
         sysMsg.setText(msg);
         clearSysMsg.start();
+    }
+
+    private void setPlaybackTimerTime() {
+        float setSyncDuration = timeSync.get(scrubBarGUI.getCurrentSetIndex()).getValue();
+        float setDuration = scrubBarGUI.getCurrSetDuration();
+        playbackTimer.setDelay( (int)(setSyncDuration / setDuration * 1000) );
     }
 }

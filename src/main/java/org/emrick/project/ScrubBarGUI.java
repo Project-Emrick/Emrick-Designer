@@ -63,6 +63,8 @@ public class ScrubBarGUI extends JComponent implements ActionListener {
     // Listener
     private final ScrubBarListener scrubBarListener;
     private final SyncListener syncListener;
+    private ImageIcon PLAY_ICON;
+    private ImageIcon PAUSE_ICON;
 
     public ScrubBarGUI(JFrame parent, ScrubBarListener scrubBarListener, SyncListener syncListener, FootballFieldPanel footballFieldPanel) {
         this.parent = parent;
@@ -82,6 +84,9 @@ public class ScrubBarGUI extends JComponent implements ActionListener {
         this.isReady = false;
         this.isPlaying = false;
         this.footballFieldPanel = footballFieldPanel;
+
+        PLAY_ICON = scaleImageIcon(new ImageIcon(PATH_PLAY_ICON));
+        PAUSE_ICON = scaleImageIcon(new ImageIcon(PATH_PAUSE_ICON));
 
         initialize();
     }
@@ -337,9 +342,7 @@ public class ScrubBarGUI extends JComponent implements ActionListener {
 
     // Overloaded
     private ImageIcon scaleImageIcon(ImageIcon imageIcon) {
-        Image image = imageIcon.getImage(); // transform it
-        Image newImg = image.getScaledInstance(16, 16, java.awt.Image.SCALE_SMOOTH); // scale it the smooth way
-        return new ImageIcon(newImg);  // transform it back
+        return scaleImageIcon(imageIcon, 16, 16);
     }
 
     public void setReady(boolean ready) {
@@ -447,50 +450,71 @@ public class ScrubBarGUI extends JComponent implements ActionListener {
             }
             if (isPlaying) {
                 // Pause
-                playPauseButton.setIcon(scaleImageIcon(new ImageIcon(PATH_PLAY_ICON)));
-                scrubBarListener.onPause();
+                if (scrubBarListener.onPause()) {
+                    playPauseButton.setIcon(PLAY_ICON);
+                    isPlaying = false;
+                }
             } else {
                 // Play
-                playPauseButton.setIcon(scaleImageIcon(new ImageIcon(PATH_PAUSE_ICON)));
-                scrubBarListener.onPlay();
+                if (scrubBarListener.onPlay()) {
+                    playPauseButton.setIcon(PAUSE_ICON);
+                    isPlaying = true;
+                }
             }
-            isPlaying = !isPlaying;
-            System.out.println("Drill isPlaying: " + isPlaying);
-        }
-        else if (e.getSource().equals(prevSetButton)) {
-            int currentValue = topSlider.getValue();
-            if (currentValue >= topSlider.getMinimum()) {
-                topSlider.setValue(currentValue - 1); // Move one step backward
-            }
-        }
-        else if (e.getSource().equals(nextSetButton)) {
-            int currentValue = topSlider.getValue();
-            if (currentValue >= topSlider.getMinimum()) {
-                topSlider.setValue(currentValue + 1); // Move one step forward
-            }
-        }
-        else if (e.getSource().equals(nextCountButton)) {
-            int currentValue = botSlider.getValue();
-            if (currentValue >= botSlider.getMinimum()) {
-                botSlider.setValue(currentValue + 1); // Move one step forward
-            }
-        }
-        else if (e.getSource().equals(prevCountButton)) {
-            int currentValue = botSlider.getValue();
-            if (currentValue >= botSlider.getMinimum()) {
-                botSlider.setValue(currentValue - 1); // Move one step backward
-            }
-        }
-        else if (e.getSource().equals(syncButton)) {
-
-            // syncTimeGUI will be null if Emrick Project not loaded
-//            if (syncTimeGUI != null) {
-//                syncTimeGUI.show();
-//            }
+        } else if (e.getSource().equals(prevSetButton)) {
+            prevSet();
+        } else if (e.getSource().equals(nextSetButton)) {
+            nextSet();
+        } else if (e.getSource().equals(prevCountButton)) {
+            prevCount();
+        } else if (e.getSource().equals(nextCountButton)) {
+            nextCount();
+        } else if (e.getSource().equals(syncButton)) {
             new SyncTimeGUI(parent, syncListener, pageTabCounts);
         }
         int val = botSlider.getValue();
         footballFieldPanel.setCurrentCount(val);
+    }
+
+    public void prevSet() {
+        topSlider.setValue(topSlider.getValue() - 1);
+    }
+
+    public void nextSet() {
+        topSlider.setValue(topSlider.getValue() + 1);
+    }
+
+    public void prevCount() {
+        botSlider.setValue(botSlider.getValue() - 1);
+    }
+
+    public void nextCount() {
+        botSlider.setValue(botSlider.getValue() + 1);
+        System.out.println(botSlider.getValue());
+    }
+
+    public int getCurrentSetIndex() {
+        return topSlider.getValue();
+    }
+
+//    public int getCurrentCountInIndex() {
+//        return botSlider.getValue() - botSlider.getMinimum();
+//    }
+//
+//    public int getCurrentCount() {
+//        return botSlider.getValue();
+//    }
+
+    public boolean isAtEndOfSet() {
+        return botSlider.getValue() == botSlider.getMaximum();
+    }
+
+    public boolean isAtLastSet() {
+        return topSlider.getValue() == topSlider.getMaximum();
+    }
+
+    public int getCurrSetDuration() {
+        return botSlider.getMaximum() - botSlider.getMinimum(); // gets duration in counts
     }
 
     // For testing
