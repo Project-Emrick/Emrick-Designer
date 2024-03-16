@@ -234,7 +234,8 @@ public class ScrubBarGUI extends JComponent implements ActionListener {
      */
     public static List<Map.Entry<String, Integer>> sortMap(Map<String, Integer> map) {
         List<Map.Entry<String, Integer>> list = new ArrayList<>(map.entrySet());
-        list.sort(Map.Entry.comparingByKey());
+//        list.sort(Map.Entry.comparingByKey()); // Was there a reason that this was changed to comparingByKey(), that I am missing?
+        list.sort(Map.Entry.comparingByValue());
         return list;
     }
 
@@ -470,7 +471,9 @@ public class ScrubBarGUI extends JComponent implements ActionListener {
         } else if (e.getSource().equals(nextCountButton)) {
             nextCount();
         } else if (e.getSource().equals(syncButton)) {
-            new SyncTimeGUI(parent, syncListener, pageTabCounts);
+            if (isReady) {
+                new SyncTimeGUI(parent, syncListener, pageTabCounts);
+            }
         }
         int val = botSlider.getValue();
         footballFieldPanel.setCurrentCount(val);

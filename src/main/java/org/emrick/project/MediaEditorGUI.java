@@ -99,20 +99,21 @@ public class MediaEditorGUI implements ImportListener, ScrubBarListener, SyncLis
         gson = builder.create();
 
         // Autosave and system message things
-        clearSysMsg.setRepeats(false);
-        clearSysMsg.start();
-
-        // test autosave stuff
-        Timer t = new Timer(60 * 1000, e -> {
-            System.out.println("autosaving...");
-            writeSysMsg("Autosaving...");
-
-            autosaveProject();
-
-            writeSysMsg("Autosaved.");
-        });
-        t.setRepeats(true);
-        t.start();
+        // TODO: Uncomment the below. Temporarily commented -- like a snail is slowing eating away my disk space
+//        clearSysMsg.setRepeats(false);
+//        clearSysMsg.start();
+//
+//        // test autosave stuff
+//        Timer t = new Timer(60 * 1000, e -> {
+//            System.out.println("autosaving...");
+//            writeSysMsg("Autosaving...");
+//
+//            autosaveProject();
+//
+//            writeSysMsg("Autosaved.");
+//        });
+//        t.setRepeats(true);
+//        t.start();
 
         // playback timer
         playbackTimer = new Timer(0, e -> {
@@ -134,7 +135,7 @@ public class MediaEditorGUI implements ImportListener, ScrubBarListener, SyncLis
 
             // TODO: repaint everything relevant (field, timer, etc)
         });
-        t.setRepeats(true);
+//        t.setRepeats(true); // TODO: Uncomment this line ?
 
         // Change Font Size for Menu and MenuIem
         Font f = new Font("FlatLaf.style", Font.PLAIN, 16);
