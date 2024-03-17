@@ -20,6 +20,7 @@ import com.formdev.flatlaf.FlatLightLaf;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.List;
+import java.util.function.ToDoubleBiFunction;
 import java.util.stream.Collectors;
 import com.google.gson.Gson;
 import org.emrick.project.serde.ColorAdapter;
@@ -593,6 +594,10 @@ public class MediaEditorGUI implements ImportListener, ScrubBarListener, SyncLis
         predefinedLightItem.addActionListener(e -> showPredefinedEffects(frame));
         lightMenuPopup.add(predefinedLightItem);
 
+        JMenuItem timeWeatherItem = new JMenuItem("Time & Weather Effects");
+        timeWeatherItem.addActionListener(e -> showTimeWeatherDialog(frame));
+        lightMenuPopup.add(timeWeatherItem);
+
         JMenuItem chooseRGBItem = new JMenuItem("Choose Light Effect by RGB Values");
         lightMenuPopup.add(chooseRGBItem);
 
@@ -637,6 +642,75 @@ public class MediaEditorGUI implements ImportListener, ScrubBarListener, SyncLis
         frame.setLocationRelativeTo(null);
         frame.setVisible(true);
         frame.setTitle("Emrick Designer");
+    }
+    private void showTimeWeatherDialog(Frame parent) {
+        JDialog dialog = new JDialog(parent, "Time & Weather Effects", true);
+        SpinnerDateModel model = new SpinnerDateModel();
+        JSpinner timeSpinner = new JSpinner(model);
+
+        // Create a spinner for time input
+        JSpinner.DateEditor timeEditor = new JSpinner.DateEditor(timeSpinner, "HH:mm");
+        timeSpinner.setEditor(timeEditor);
+        timeSpinner.setValue(new Date()); // will only show the current time
+
+        JComboBox<String> weatherComboBox = new JComboBox<>(new String[]{"Clear", "Cloudy", "Rainy", "Snowy"});
+
+        JButton confirmButton = new JButton("Apply");
+        confirmButton.addActionListener(e -> {
+            Date time = (Date) timeSpinner.getValue();
+            String weather = (String) weatherComboBox.getSelectedItem();
+            int transparency = calculateTransparency(time, weather);
+            // Now apply the transparency to your color
+
+            //TODO
+            //apply to every dots
+            dialog.dispose();
+        });
+
+        dialog.setLayout(new GridLayout(0, 1));
+        dialog.add(new JLabel("Time:"));
+        dialog.add(timeSpinner);
+        dialog.add(new JLabel("Select Weather Condition:"));
+        dialog.add(weatherComboBox);
+        dialog.add(confirmButton);
+
+        dialog.pack();
+        dialog.setLocationRelativeTo(parent);
+        dialog.setVisible(true);
+    }
+
+    private int calculateTransparency(Date time, String weather) {
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTime(time);
+        int hour = calendar.get(Calendar.HOUR_OF_DAY);
+        int transparency;
+
+        if (hour >= 6 && hour < 12) { // Morning
+            transparency = 50;
+        } else if (hour >= 12 && hour < 18) { // Afternoon
+            transparency = 150;
+        } else { // Evening and Night
+            transparency = 100;
+        }
+
+        switch (weather) {
+            case "Clear":
+                transparency -= 30;
+                break;
+            case "Cloudy":
+                transparency += 20;
+                break;
+            case "Rainy":
+                transparency += 40;
+            case "Snowy":
+                transparency += 150;
+                break;
+        }
+
+        transparency = Math.min(Math.max(transparency, 0), 255);
+
+        System.out.println("transparency: " + transparency);
+        return transparency;
     }
 
     private void showPredefinedEffects(Frame parent) {
