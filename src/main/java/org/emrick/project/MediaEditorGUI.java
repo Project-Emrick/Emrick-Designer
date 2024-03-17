@@ -6,6 +6,7 @@ import com.google.gson.JsonSyntaxException;
 import org.emrick.project.audio.AudioPlayer;
 
 import javax.swing.*;
+import javax.swing.event.ChangeListener;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.filechooser.FileNameExtensionFilter;
@@ -46,12 +47,10 @@ public class MediaEditorGUI implements ImportListener, ScrubBarListener, SyncLis
     //  May want to abstract this away into some DrillPlayer class in the future
     private AudioPlayer audioPlayer;
 
-    private Effect effect;
     private Color chosenColor;
     private JPanel colorDisplayPanel;
 
     // dots
-    private List<Coordinate> dotCoordinates = new ArrayList<>();
     private JLabel sysMsg = new JLabel("Welcome to Emrick Designer!", SwingConstants.RIGHT);
     private Timer clearSysMsg = new Timer(5000, e -> {
         sysMsg.setText("");
@@ -598,10 +597,6 @@ public class MediaEditorGUI implements ImportListener, ScrubBarListener, SyncLis
         timeWeatherItem.addActionListener(e -> showTimeWeatherDialog(frame));
         lightMenuPopup.add(timeWeatherItem);
 
-        JMenuItem chooseRGBItem = new JMenuItem("Choose Light Effect by RGB Values");
-        lightMenuPopup.add(chooseRGBItem);
-
-        chooseRGBItem.addActionListener(e -> chooseRGB(frame));
 
         // Button that triggers the popup menu
         JButton lightButton = new JButton("Light Options");
@@ -648,7 +643,6 @@ public class MediaEditorGUI implements ImportListener, ScrubBarListener, SyncLis
         SpinnerDateModel model = new SpinnerDateModel();
         JSpinner timeSpinner = new JSpinner(model);
 
-        // Create a spinner for time input
         JSpinner.DateEditor timeEditor = new JSpinner.DateEditor(timeSpinner, "HH:mm");
         timeSpinner.setEditor(timeEditor);
         timeSpinner.setValue(new Date()); // will only show the current time
@@ -660,10 +654,19 @@ public class MediaEditorGUI implements ImportListener, ScrubBarListener, SyncLis
             Date time = (Date) timeSpinner.getValue();
             String weather = (String) weatherComboBox.getSelectedItem();
             int transparency = calculateTransparency(time, weather);
-            // Now apply the transparency to your color
-
-            //TODO
-            //apply to every dots
+            Drill drill = footballFieldPanel.drill;
+            for (int i = 0; i < drill.coordinates.size(); i++) {
+                Coordinate c = drill.coordinates.get(i);
+                // Original color
+                Color originalColor = c.getColor();
+                Color colorWithNewTransparency = new Color(
+                        originalColor.getRed(),
+                        originalColor.getGreen(),
+                        originalColor.getBlue(),
+                        transparency
+                );
+                c.setColor(colorWithNewTransparency);
+            }
             dialog.dispose();
         });
 
@@ -673,26 +676,22 @@ public class MediaEditorGUI implements ImportListener, ScrubBarListener, SyncLis
         dialog.add(new JLabel("Select Weather Condition:"));
         dialog.add(weatherComboBox);
         dialog.add(confirmButton);
-
         dialog.pack();
         dialog.setLocationRelativeTo(parent);
         dialog.setVisible(true);
     }
-
     private int calculateTransparency(Date time, String weather) {
         Calendar calendar = Calendar.getInstance();
         calendar.setTime(time);
         int hour = calendar.get(Calendar.HOUR_OF_DAY);
         int transparency;
-
         if (hour >= 6 && hour < 12) { // Morning
             transparency = 50;
         } else if (hour >= 12 && hour < 18) { // Afternoon
             transparency = 150;
-        } else { // Evening and Night
+        } else { // Evening
             transparency = 100;
         }
-
         switch (weather) {
             case "Clear":
                 transparency -= 30;
@@ -706,70 +705,18 @@ public class MediaEditorGUI implements ImportListener, ScrubBarListener, SyncLis
                 transparency += 150;
                 break;
         }
-
         transparency = Math.min(Math.max(transparency, 0), 255);
-
-        System.out.println("transparency: " + transparency);
         return transparency;
     }
 
     private void showPredefinedEffects(Frame parent) {
-        // Example in showPredefinedEffects method
         Color selectedColor = JColorChooser.showDialog(parent, "Choose a Color", chosenColor);
         if (selectedColor != null) {
             chosenColor = selectedColor;
-            colorDisplayPanel.setBackground(chosenColor); // Update the color display panel
-            colorDisplayPanel.repaint(); // Repaint to reflect changes
+            colorDisplayPanel.setBackground(chosenColor);
+            colorDisplayPanel.repaint();
         }
     }
-
-    private void chooseRGB(Frame parent) {
-        JTextField fieldR = new JTextField(5);
-        JTextField fieldG = new JTextField(5);
-        JTextField fieldB = new JTextField(5);
-
-        JPanel panel = new JPanel();
-        panel.add(new JLabel("Red:"));
-        panel.add(fieldR);
-        panel.add(Box.createHorizontalStrut(15));
-        panel.add(new JLabel("Green:"));
-        panel.add(fieldG);
-        panel.add(Box.createHorizontalStrut(15));
-        panel.add(new JLabel("Blue:"));
-        panel.add(fieldB);
-
-        int result = JOptionPane.showConfirmDialog(parent, panel,
-                "Enter RGB values", JOptionPane.OK_CANCEL_OPTION);
-        if (result == JOptionPane.OK_OPTION) {
-            int r = parseColorValue(fieldR.getText());
-            int g = parseColorValue(fieldG.getText());
-            int b = parseColorValue(fieldB.getText());
-
-            if (r == -1 || g == -1 || b == -1) {
-                JOptionPane.showMessageDialog(parent,
-                        "Invalid input. Please enter values between 0 and 255.");
-                return;
-            }
-
-            // Now you have r, g, b values, you can use them to set the color
-            Color selectedColor = new Color(r, g, b);
-            colorDisplayPanel.setBackground(selectedColor); // Update the color display panel
-            colorDisplayPanel.repaint(); // Repaint to reflect changes
-        }
-    }
-
-    private int parseColorValue(String value) {
-        try {
-            int intValue = Integer.parseInt(value.trim());
-            if (intValue >= 0 && intValue <= 255) {
-                return intValue;
-            }
-        } catch (NumberFormatException e) {
-            // The input was not an integer
-        }
-        return -1; // Return -1 if the input was invalid
-    }
-
     public void clearDotsFromField() {
         footballFieldPanel.clearDots();
     }
@@ -781,8 +728,6 @@ public class MediaEditorGUI implements ImportListener, ScrubBarListener, SyncLis
     public double getFieldWidth() {
         return footballFieldPanel.getFieldWidth();
     }
-
-
 
     public void loadDemoDrillObj(){
         clearDotsFromField();
@@ -815,12 +760,6 @@ public class MediaEditorGUI implements ImportListener, ScrubBarListener, SyncLis
         } catch (IOException e) {
             e.printStackTrace();
         }
-    }
-
-    public void ChangeColor(List<Coordinate> dots, List<String> selectIds,Color newColor){
-        Effect effect = new Effect();
-        effect.changeSelectedDotsColor(dots, newColor, footballFieldPanel);
-        footballFieldPanel.repaint();
     }
 
     private void openProjectDialog() {
