@@ -654,9 +654,19 @@ public class MediaEditorGUI implements ImportListener, ScrubBarListener, SyncLis
             Date time = (Date) timeSpinner.getValue();
             String weather = (String) weatherComboBox.getSelectedItem();
             int transparency = calculateTransparency(time, weather);
-
-            //TODO
-            //apply to every dots
+            Drill drill = footballFieldPanel.drill;
+            for (int i = 0; i < drill.coordinates.size(); i++) {
+                Coordinate c = drill.coordinates.get(i);
+                // Original color
+                Color originalColor = c.getColor();
+                Color colorWithNewTransparency = new Color(
+                        originalColor.getRed(),
+                        originalColor.getGreen(),
+                        originalColor.getBlue(),
+                        transparency
+                );
+                c.setColor(colorWithNewTransparency);
+            }
             dialog.dispose();
         });
 
@@ -665,7 +675,7 @@ public class MediaEditorGUI implements ImportListener, ScrubBarListener, SyncLis
         dialog.add(timeSpinner);
         dialog.add(new JLabel("Select Weather Condition:"));
         dialog.add(weatherComboBox);
-
+        dialog.add(confirmButton);
         dialog.pack();
         dialog.setLocationRelativeTo(parent);
         dialog.setVisible(true);
@@ -675,7 +685,6 @@ public class MediaEditorGUI implements ImportListener, ScrubBarListener, SyncLis
         calendar.setTime(time);
         int hour = calendar.get(Calendar.HOUR_OF_DAY);
         int transparency;
-
         if (hour >= 6 && hour < 12) { // Morning
             transparency = 50;
         } else if (hour >= 12 && hour < 18) { // Afternoon
@@ -683,7 +692,6 @@ public class MediaEditorGUI implements ImportListener, ScrubBarListener, SyncLis
         } else { // Evening
             transparency = 100;
         }
-
         switch (weather) {
             case "Clear":
                 transparency -= 30;
@@ -697,10 +705,7 @@ public class MediaEditorGUI implements ImportListener, ScrubBarListener, SyncLis
                 transparency += 150;
                 break;
         }
-
         transparency = Math.min(Math.max(transparency, 0), 255);
-
-        System.out.println("transparency: " + transparency);
         return transparency;
     }
 
@@ -723,8 +728,6 @@ public class MediaEditorGUI implements ImportListener, ScrubBarListener, SyncLis
     public double getFieldWidth() {
         return footballFieldPanel.getFieldWidth();
     }
-
-
 
     public void loadDemoDrillObj(){
         clearDotsFromField();
