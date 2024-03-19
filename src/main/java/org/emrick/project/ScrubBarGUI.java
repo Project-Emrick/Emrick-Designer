@@ -195,13 +195,18 @@ public class ScrubBarGUI extends JComponent implements ActionListener {
                 footballFieldPanel.setCurrentSetStartCount(currSetStartCount);
                 botSlider.setMaximum(currSetEndCount);
                 botSlider.setValue(currSetStartCount);
+
+                scrubBarListener.onScrub();
             }
         });
+
         botSlider.addChangeListener(new ChangeListener() {
             @Override
             public void stateChanged(ChangeEvent e) {
                 int val = ((JSlider)e.getSource()).getValue();
                 footballFieldPanel.setCurrentCount(val);
+
+                scrubBarListener.onScrub();
             }
         });
 
@@ -523,6 +528,14 @@ public class ScrubBarGUI extends JComponent implements ActionListener {
 
     public boolean isAtLastSet() {
         return topSlider.getValue() == topSlider.getMaximum();
+    }
+
+    public boolean isAtStartOfSet() {
+        return botSlider.getValue() == botSlider.getMinimum();
+    }
+
+    public boolean isAtFirstSet() {
+        return topSlider.getValue() == topSlider.getMinimum();
     }
 
     public int getCurrSetDuration() {
