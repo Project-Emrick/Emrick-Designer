@@ -59,6 +59,8 @@ public class MediaEditorGUI implements ImportListener, ScrubBarListener, SyncLis
     // Time keeping
     // TODO: save this
     private ArrayList<SyncTimeGUI.Pair> timeSync = null;
+    private boolean useStartDelay; // If we are at the first count of the first set, useStartDelay = true
+    private int startDelay; // in seconds. Drills might not start immediately, therefore use this.
     private Timer playbackTimer = null;
 
     // JSON serde
@@ -104,12 +106,13 @@ public class MediaEditorGUI implements ImportListener, ScrubBarListener, SyncLis
 
         // test autosave stuff
         Timer t = new Timer(60 * 1000, e -> {
-            System.out.println("autosaving...");
-            writeSysMsg("Autosaving...");
+            // FIXME: Temporarily commented auto-save feature -- like a snail is slowing eating away my disk space
 
-            autosaveProject();
+//            System.out.println("autosaving...");
+//            writeSysMsg("Autosaving...");
 
-            writeSysMsg("Autosaved.");
+//            autosaveProject();
+//            writeSysMsg("Autosaved.");
         });
         t.setRepeats(true);
         t.start();
@@ -120,13 +123,30 @@ public class MediaEditorGUI implements ImportListener, ScrubBarListener, SyncLis
                 // TODO: throw an error, we shouldn't be able to be here!
                 return;
             }
+
+            // Start delay
+            if (useStartDelay) {
+                useStartDelay = false; // prevent infinite delay
+
+                // System.out.println("Attempting to delay drill start.");
+                playbackTimer.stop();
+                Timer delayTimer = new Timer(startDelay * 1000, e2 -> {
+                    playbackTimer.start();
+                });
+                delayTimer.setRepeats(false);
+                delayTimer.start();
+                return;
+            }
+
             scrubBarGUI.nextCount();
+
             if (scrubBarGUI.isAtLastSet() && scrubBarGUI.isAtEndOfSet()) {
                 playbackTimer.stop();
                 // TODO: stop music
                 scrubBarGUI.setIsPlayingPlay();
                 return;
-            } else if (scrubBarGUI.isAtEndOfSet()) {
+            }
+            else if (scrubBarGUI.isAtEndOfSet()) {
                 scrubBarGUI.nextSet();
             }
 
@@ -134,7 +154,6 @@ public class MediaEditorGUI implements ImportListener, ScrubBarListener, SyncLis
 
             // TODO: repaint everything relevant (field, timer, etc)
         });
-        t.setRepeats(true);
 
         // Change Font Size for Menu and MenuIem
         Font f = new Font("FlatLaf.style", Font.PLAIN, 16);
@@ -155,6 +174,9 @@ public class MediaEditorGUI implements ImportListener, ScrubBarListener, SyncLis
 
         // Scrub Bar
         scrubBarGUI = new ScrubBarGUI(frame, this, this, footballFieldPanel);
+
+        // Scrub bar cursor starts on first count of drill by default
+        useStartDelay = true;
 
         createAndShowGUI();
     }
@@ -202,7 +224,6 @@ public class MediaEditorGUI implements ImportListener, ScrubBarListener, SyncLis
     }
 
     private void rebuildPageTabCounts() {
-        // TODO: Q: Any way to get the Page Tabs w/ their respective counts?
         Map<String, Integer> pageTabCounts = new HashMap<>();
         int startCount = 0;
         for (Set s : footballFieldPanel.drill.sets) {
@@ -215,11 +236,13 @@ public class MediaEditorGUI implements ImportListener, ScrubBarListener, SyncLis
     }
 
     @Override
-    public void onSync(ArrayList<SyncTimeGUI.Pair> times) {
+    public void onSync(ArrayList<SyncTimeGUI.Pair> times, int startDelay) {
         // we're treating the integers as duration. this may not be a great idea for the future.
         timeSync = times;
-        System.out.println(times);
+        // System.out.println(times);
         System.out.println("got times");
+
+        this.startDelay = startDelay;
     }
 
 
@@ -257,6 +280,11 @@ public class MediaEditorGUI implements ImportListener, ScrubBarListener, SyncLis
         playbackTimer.stop();
 
         return true;
+    }
+
+    @Override
+    public void onScrub() {
+        useStartDelay = scrubBarGUI.isAtFirstSet() && scrubBarGUI.isAtStartOfSet();
     }
 
 
@@ -365,7 +393,7 @@ public class MediaEditorGUI implements ImportListener, ScrubBarListener, SyncLis
             SelectFileGUI selectFileGUI = new SelectFileGUI(frame, this);
             selectFileGUI.show();
 
-            System.out.println("Should have loaded the field by now");
+//            System.out.println("Should have loaded the field by now");
         });
 
         // TODO: make sfg not local, have it load the project after import finishes
@@ -883,6 +911,6 @@ public class MediaEditorGUI implements ImportListener, ScrubBarListener, SyncLis
     private void setPlaybackTimerTime() {
         float setSyncDuration = timeSync.get(scrubBarGUI.getCurrentSetIndex()).getValue();
         float setDuration = scrubBarGUI.getCurrSetDuration();
-        playbackTimer.setDelay( (int)(setSyncDuration / setDuration * 1000) );
+        playbackTimer.setDelay( Math.round(setSyncDuration / setDuration * 1000) );
     }
 }

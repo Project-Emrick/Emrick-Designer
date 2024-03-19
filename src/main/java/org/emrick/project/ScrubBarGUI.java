@@ -195,13 +195,18 @@ public class ScrubBarGUI extends JComponent implements ActionListener {
                 footballFieldPanel.setCurrentSetStartCount(currSetStartCount);
                 botSlider.setMaximum(currSetEndCount);
                 botSlider.setValue(currSetStartCount);
+
+                scrubBarListener.onScrub();
             }
         });
+
         botSlider.addChangeListener(new ChangeListener() {
             @Override
             public void stateChanged(ChangeEvent e) {
                 int val = ((JSlider)e.getSource()).getValue();
                 footballFieldPanel.setCurrentCount(val);
+
+                scrubBarListener.onScrub();
             }
         });
 
@@ -234,7 +239,8 @@ public class ScrubBarGUI extends JComponent implements ActionListener {
      */
     public static List<Map.Entry<String, Integer>> sortMap(Map<String, Integer> map) {
         List<Map.Entry<String, Integer>> list = new ArrayList<>(map.entrySet());
-        list.sort(Map.Entry.comparingByKey());
+//        list.sort(Map.Entry.comparingByKey()); // Was there a reason that this was changed to comparingByKey(), that I am missing?
+        list.sort(Map.Entry.comparingByValue());
         return list;
     }
 
@@ -470,7 +476,9 @@ public class ScrubBarGUI extends JComponent implements ActionListener {
         } else if (e.getSource().equals(nextCountButton)) {
             nextCount();
         } else if (e.getSource().equals(syncButton)) {
-            new SyncTimeGUI(parent, syncListener, pageTabCounts);
+            if (isReady) {
+                new SyncTimeGUI(parent, syncListener, pageTabCounts);
+            }
         }
         int val = botSlider.getValue();
         footballFieldPanel.setCurrentCount(val);
@@ -520,6 +528,14 @@ public class ScrubBarGUI extends JComponent implements ActionListener {
 
     public boolean isAtLastSet() {
         return topSlider.getValue() == topSlider.getMaximum();
+    }
+
+    public boolean isAtStartOfSet() {
+        return botSlider.getValue() == botSlider.getMinimum();
+    }
+
+    public boolean isAtFirstSet() {
+        return topSlider.getValue() == topSlider.getMinimum();
     }
 
     public int getCurrSetDuration() {
