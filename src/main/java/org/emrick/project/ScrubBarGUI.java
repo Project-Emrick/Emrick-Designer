@@ -45,16 +45,15 @@ public class ScrubBarGUI extends JComponent implements ActionListener {
     private JButton prevCountButton;
     private JButton nextCountButton;
 
-    // Toggles / Checkboxes
+    // Additional settings
+    JComboBox<String> playbackSpeedsBox;
     private JCheckBox audioCheckbox;
-    private JCheckBox fastPlayCheckbox;
-    private JCheckBox fullPlayCheckbox;
 
     // Time-Sync GUI
     private SyncTimeGUI syncTimeGUI;
 
     // Page Tabs / Counts
-    private Map<String, Integer> pageTabCounts; // [pageTab]:[count] e.g., k:"2A", v:30
+    private Map<String, Integer> pageTab2Count; // [pageTab]:[count] e.g., k:"2A", v:30
     private int lastCount;
     private int currSetStartCount;
     private int currSetEndCount;
@@ -70,8 +69,8 @@ public class ScrubBarGUI extends JComponent implements ActionListener {
         this.parent = parent;
 
         // Placeholder. E.g., When Emrick Designer is first opened, no project is loaded.
-        this.pageTabCounts = new HashMap<>();
-        this.pageTabCounts.put("1", 0);
+        this.pageTab2Count = new HashMap<>();
+        this.pageTab2Count.put("1", 0);
 
         updateLastCount();
         updateCurrSetCounts("1");
@@ -93,7 +92,7 @@ public class ScrubBarGUI extends JComponent implements ActionListener {
 
     public void updatePageTabCounts(Map<String, Integer> pageTabCounts) {
 
-        this.pageTabCounts = pageTabCounts;
+        this.pageTab2Count = pageTabCounts;
 
         // Because SyncTimeGUI depends on pageTabCounts, update it as well
 //        syncTimeGUI = new SyncTimeGUI(pageTabCounts);
@@ -114,7 +113,7 @@ public class ScrubBarGUI extends JComponent implements ActionListener {
     }
 
     /**
-     * Upon receiving new data for pageTabCount, call this method to update the Scrub Bar.
+     * Upon receiving new pageTab2Count data, call this method to update the Scrub Bar.
      */
     private void reinitialize() {
         updateLastCount();
@@ -133,7 +132,7 @@ public class ScrubBarGUI extends JComponent implements ActionListener {
      */
     private void updateLastCount() {
         this.lastCount = Collections.max(
-                pageTabCounts.entrySet(),
+                pageTab2Count.entrySet(),
                 Map.Entry.comparingByValue()
         ).getValue();
     }
@@ -159,7 +158,7 @@ public class ScrubBarGUI extends JComponent implements ActionListener {
         JPanel sliderPanel = new JPanel(new GridLayout(2, 1));
 
         // Slider for navigating different sets
-        topSlider = new JSlider(JSlider.HORIZONTAL,0, pageTabCounts.size() - 1, 0);
+        topSlider = new JSlider(JSlider.HORIZONTAL,0, pageTab2Count.size() - 1, 0);
         Hashtable<Integer, JLabel> labelTable = buildLabelTable();
         topSlider.setLabelTable(labelTable);
         topSlider.setMinorTickSpacing(1);
@@ -220,7 +219,7 @@ public class ScrubBarGUI extends JComponent implements ActionListener {
 
         Hashtable<Integer, JLabel> labelTable = new Hashtable<>();
 
-        List<Map.Entry<String, Integer>> list = sortMap(pageTabCounts);
+        List<Map.Entry<String, Integer>> list = sortMap(pageTab2Count);
 
         int val = 0;
         for (Map.Entry<String, Integer> entry : list) {
@@ -251,16 +250,19 @@ public class ScrubBarGUI extends JComponent implements ActionListener {
 
         // Scrub-bar Toolbar Buttons
 
+        // Sync
         syncButton = new JButton();
         syncButton.setIcon(scaleImageIcon(new ImageIcon(PATH_SYNC_ICON)));
         syncButton.setToolTipText("Sync audio timing");
         syncButton.addActionListener(this);
 
+        // Previous Set
         prevSetButton = new JButton();
         prevSetButton.setIcon(scaleImageIcon(new ImageIcon(PATH_PREV_SET_ICON)));
         prevSetButton.setToolTipText("Previous set");
         prevSetButton.addActionListener(this);
 
+        // Next Set
         nextSetButton = new JButton();
         nextSetButton.setIcon(scaleImageIcon(new ImageIcon(PATH_NEXT_SET_ICON)));
         nextSetButton.setToolTipText("Next set");
@@ -272,16 +274,19 @@ public class ScrubBarGUI extends JComponent implements ActionListener {
 
         JPanel midToolBarPanel = new JPanel(new GridLayout(1,3));
 
+        // Play or Pause
         playPauseButton = new JButton();
         playPauseButton.setIcon(scaleImageIcon(new ImageIcon(PATH_PLAY_ICON)));
         playPauseButton.setToolTipText("Play/Pause playback");
         playPauseButton.addActionListener(this);
 
+        // Previous Count
         prevCountButton = new JButton();
         prevCountButton.setIcon(scaleImageIcon(new ImageIcon(PATH_PREV_COUNT_ICON)));
         prevCountButton.setToolTipText("Previous count");
         prevCountButton.addActionListener(this);
 
+        // Next Count
         nextCountButton = new JButton();
         nextCountButton.setIcon(scaleImageIcon(new ImageIcon(PATH_NEXT_COUNT_ICON)));
         nextCountButton.setToolTipText("Next count");
@@ -293,7 +298,7 @@ public class ScrubBarGUI extends JComponent implements ActionListener {
 
         JPanel botToolBarPanel = new JPanel(new GridLayout(1,3));
 
-        // Audio toggle
+        // Audio
         this.audioCheckbox = new JCheckBox();
         this.audioCheckbox.setToolTipText("Toggle audio on/off");
         JLabel audioLabel = new JLabel();
@@ -302,30 +307,17 @@ public class ScrubBarGUI extends JComponent implements ActionListener {
         audioPanel.add(this.audioCheckbox);
         audioPanel.add(audioLabel);
 
-        // Fast playback toggle
-        this.fastPlayCheckbox = new JCheckBox();
-        this.fastPlayCheckbox.setToolTipText("Toggle fast playback on/off");
-        JLabel fastPlayLabel = new JLabel();
-        fastPlayLabel.setIcon(scaleImageIcon(new ImageIcon(PATH_FAST_PLAY_ICON)));
-        JPanel fastPlayPanel = new JPanel(new FlowLayout());
-        fastPlayPanel.add(this.fastPlayCheckbox);
-        fastPlayPanel.add(fastPlayLabel);
+        // Speed
+        String[] playbackSpeeds = { "0.5", "Normal", "1.5", "2.0", "4.0" };
+        playbackSpeedsBox = new JComboBox<>(playbackSpeeds);
+        playbackSpeedsBox.setToolTipText("Select playback speed");
+        playbackSpeedsBox.setSelectedIndex(1);
+        playbackSpeedsBox.addActionListener(this);
+        JPanel playbackSpeedsPanel = new JPanel();
+        playbackSpeedsPanel.add(playbackSpeedsBox);
 
-        // Full playback toggle
-        this.fullPlayCheckbox = new JCheckBox();
-        this.fullPlayCheckbox.setToolTipText("Toggle full playback on/off");
-        JLabel fullPlayLabel = new JLabel();
-        fullPlayLabel.setIcon(scaleImageIcon(new ImageIcon(PATH_FULL_PLAY_ICON)));
-        JPanel fullPlayPanel = new JPanel(new FlowLayout());
-        fullPlayPanel.add(this.fullPlayCheckbox);
-        fullPlayPanel.add(fullPlayLabel);
-
-        // Playback should always be done with synced times, because lighting effect params involve timing.
-        //  Therefore, no option to disable synced time, for now...
-
+        botToolBarPanel.add(playbackSpeedsPanel);
         botToolBarPanel.add(audioPanel);
-        botToolBarPanel.add(fastPlayPanel);
-        botToolBarPanel.add(fullPlayPanel);
 
         toolBarPanel.add(topToolBarPanel);
         toolBarPanel.add(midToolBarPanel);
@@ -367,14 +359,6 @@ public class ScrubBarGUI extends JComponent implements ActionListener {
         return audioCheckbox;
     }
 
-    public JCheckBox getFastPlayCheckbox() {
-        return fastPlayCheckbox;
-    }
-
-    public JCheckBox getFullPlayCheckbox() {
-        return fullPlayCheckbox;
-    }
-
     /**
      * Call this method to update currSetBeginCount and currSetEndCount, which are important
      * for displaying Count values on the bottom Scrub Bar.
@@ -391,7 +375,7 @@ public class ScrubBarGUI extends JComponent implements ActionListener {
      */
     private void updateCurrSetCounts(String set) {
 
-        currSetStartCount = pageTabCounts.get(set);
+        currSetStartCount = pageTab2Count.get(set);
 
         // There is no further page tab
         if (currSetStartCount == lastCount) {
@@ -419,8 +403,8 @@ public class ScrubBarGUI extends JComponent implements ActionListener {
                 // Consider existence of next sub-set (e.g., if "2A", consider "2B")
                 subSetChar += 1;
 
-                if (pageTabCounts.get(Integer.toString(setNum) + subSetChar) != null) {
-                    currSetEndCount = pageTabCounts.get(Integer.toString(setNum) + subSetChar);
+                if (pageTab2Count.get(Integer.toString(setNum) + subSetChar) != null) {
+                    currSetEndCount = pageTab2Count.get(Integer.toString(setNum) + subSetChar);
                     printSetStartEndCounts(set);
                     return;
                 }
@@ -428,15 +412,15 @@ public class ScrubBarGUI extends JComponent implements ActionListener {
 
             // There is NO character
             else {
-                if (pageTabCounts.get(setNum + "A") != null) {
-                    currSetEndCount = pageTabCounts.get(setNum + "A");
+                if (pageTab2Count.get(setNum + "A") != null) {
+                    currSetEndCount = pageTab2Count.get(setNum + "A");
                     printSetStartEndCounts(set);
                     return;
                 }
             }
         }
 
-        currSetEndCount = pageTabCounts.get(Integer.toString(setNum + 1));
+        currSetEndCount = pageTab2Count.get(Integer.toString(setNum + 1));
         printSetStartEndCounts(set);
     }
 
@@ -467,19 +451,34 @@ public class ScrubBarGUI extends JComponent implements ActionListener {
                     isPlaying = true;
                 }
             }
-        } else if (e.getSource().equals(prevSetButton)) {
+        }
+        else if (e.getSource().equals(prevSetButton)) {
             prevSet();
-        } else if (e.getSource().equals(nextSetButton)) {
+        }
+        else if (e.getSource().equals(nextSetButton)) {
             nextSet();
-        } else if (e.getSource().equals(prevCountButton)) {
+        }
+        else if (e.getSource().equals(prevCountButton)) {
             prevCount();
-        } else if (e.getSource().equals(nextCountButton)) {
+        }
+        else if (e.getSource().equals(nextCountButton)) {
             nextCount();
-        } else if (e.getSource().equals(syncButton)) {
+        }
+        else if (e.getSource().equals(syncButton)) {
             if (isReady) {
-                new SyncTimeGUI(parent, syncListener, pageTabCounts);
+                new SyncTimeGUI(parent, syncListener, pageTab2Count);
             }
         }
+        else if (e.getSource().equals(playbackSpeedsBox)) {
+            String selectedItem = (String) playbackSpeedsBox.getSelectedItem();
+            assert selectedItem != null;
+            if (selectedItem.equals("Normal")) {
+                selectedItem = "1.0";
+            }
+            float playbackSpeed = Float.parseFloat(selectedItem);
+            scrubBarListener.onSpeedChange(playbackSpeed);
+        }
+
         int val = botSlider.getValue();
         footballFieldPanel.setCurrentCount(val);
     }

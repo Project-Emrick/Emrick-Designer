@@ -60,7 +60,8 @@ public class MediaEditorGUI implements ImportListener, ScrubBarListener, SyncLis
     // TODO: save this
     private ArrayList<SyncTimeGUI.Pair> timeSync = null;
     private boolean useStartDelay; // If we are at the first count of the first set, useStartDelay = true
-    private int startDelay; // in seconds. Drills might not start immediately, therefore use this.
+    private float startDelay; // Drills might not start immediately, therefore use this. Unit: seconds.
+    private float playbackSpeed = 1; // The selected playback speed. For example "0.5", "1.0", "1.5". Use as a multiplier
     private Timer playbackTimer = null;
 
     // JSON serde
@@ -130,7 +131,8 @@ public class MediaEditorGUI implements ImportListener, ScrubBarListener, SyncLis
 
                 // System.out.println("Attempting to delay drill start.");
                 playbackTimer.stop();
-                Timer delayTimer = new Timer(startDelay * 1000, e2 -> {
+                int startDelayMs = (int) (startDelay * 1000);
+                Timer delayTimer = new Timer(startDelayMs, e2 -> {
                     playbackTimer.start();
                 });
                 delayTimer.setRepeats(false);
@@ -236,7 +238,7 @@ public class MediaEditorGUI implements ImportListener, ScrubBarListener, SyncLis
     }
 
     @Override
-    public void onSync(ArrayList<SyncTimeGUI.Pair> times, int startDelay) {
+    public void onSync(ArrayList<SyncTimeGUI.Pair> times, float startDelay) {
         // we're treating the integers as duration. this may not be a great idea for the future.
         timeSync = times;
         // System.out.println(times);
@@ -285,6 +287,12 @@ public class MediaEditorGUI implements ImportListener, ScrubBarListener, SyncLis
     @Override
     public void onScrub() {
         useStartDelay = scrubBarGUI.isAtFirstSet() && scrubBarGUI.isAtStartOfSet();
+    }
+
+    @Override
+    public void onSpeedChange(float playbackSpeed) {
+        System.out.println("MediaEditorGUI: playbackSpeed = " + playbackSpeed);
+        this.playbackSpeed = playbackSpeed;
     }
 
 
@@ -911,6 +919,6 @@ public class MediaEditorGUI implements ImportListener, ScrubBarListener, SyncLis
     private void setPlaybackTimerTime() {
         float setSyncDuration = timeSync.get(scrubBarGUI.getCurrentSetIndex()).getValue();
         float setDuration = scrubBarGUI.getCurrSetDuration();
-        playbackTimer.setDelay( Math.round(setSyncDuration / setDuration * 1000) );
+        playbackTimer.setDelay( Math.round(setSyncDuration / setDuration * 1000 / playbackSpeed) );
     }
 }

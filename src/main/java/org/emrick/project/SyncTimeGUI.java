@@ -13,7 +13,7 @@ public class SyncTimeGUI implements ActionListener {
     private static final String PATH_INSTR_IMAGE = "./src/main/resources/images/sync_time_instr.jpg";
     private static final String START_TIMESTAMP_INSTRUCTION = "Provide a start delay in seconds (optional):";
     private static final String BPM_INSTRUCTION = "<html><p>" +
-            "Please enter the BPM (beats-per-minute) for each set. Example: '105'. " +
+            "Please enter the BPM (beats-per-minute) for each set. Example: '105' or '105.5'. " +
             "If the BPM is consistent, you may enter it for Set 1 alone." +
             "<br><br>" +
             "</p></html>";
@@ -32,8 +32,7 @@ public class SyncTimeGUI implements ActionListener {
             "</p></html>";
 
     // Page Tab / Count / Times
-    private Map<String, Integer> set2Count; // [Set PageTab]:[count] e.g., k:"2A", v:30 , From ScrubBarGUI
-    private Map<String, Integer> set2Time; // [Set PageTab]:[time] e.g., k:"2A", v:21 , time (sec) since start
+    private final Map<String, Integer> set2Count; // [Set PageTab]:[count] e.g., k:"2A", v:30 , From ScrubBarGUI
     private ArrayList<Map.Entry<String, JTextField>> set2TimestampField;
     private ArrayList<Map.Entry<String, JTextField>> set2DurationField;
     private ArrayList<Map.Entry<String, JTextField>> set2BpmField;
@@ -41,16 +40,16 @@ public class SyncTimeGUI implements ActionListener {
     private JTextField startDelayFieldBpm;
 
     // Tabbed Panes
-    private JTabbedPane tabbedPane;
-    private JPanel bpmPanel;
-    private JPanel timestampPanel;
-    private JPanel durationPanel;
+    private final JTabbedPane tabbedPane;
+    private final JPanel bpmPanel;
+    private final JPanel timestampPanel;
+    private final JPanel durationPanel;
 
-    private JDialog dialogWindow;
-    private JButton cancelButton;
-    private JButton syncButton;
+    private final JDialog dialogWindow;
+    private final JButton cancelButton;
+    private final JButton syncButton;
 
-    private SyncListener syncListener;
+    private final SyncListener syncListener;
 
     public SyncTimeGUI(JFrame parent, SyncListener syncListener, Map<String, Integer> set2Count) {
         this.set2Count = set2Count;
@@ -318,7 +317,7 @@ public class SyncTimeGUI implements ActionListener {
             ArrayList<Pair> times = new ArrayList<>();
 
             boolean isSuccess = false;
-            int startDelay = 0;
+            float startDelay = 0;
             if (tabbedPane.getSelectedComponent().equals(durationPanel)) {
                 isSuccess = syncByDuration(times);
                 startDelay = handleStartDelayInput(startDelayFieldDuration);
@@ -340,23 +339,19 @@ public class SyncTimeGUI implements ActionListener {
         }
     }
 
-    private int handleStartDelayInput(JTextField textField) {
+    private float handleStartDelayInput(JTextField textField) {
 
-        // If user enters a valid start delay
-        int startDelay = -1;
-        if (textField.getText().matches("\\d+")) {
-            startDelay = Integer.parseInt(textField.getText());
+        // If user enters a valid start delay (delay value in seconds)
+        float startDelay = 0;
+        if (!textField.getText().isEmpty()){
+            try {
+                startDelay = Float.parseFloat(textField.getText());
+            } catch (NumberFormatException e) {
+                JOptionPane.showMessageDialog(dialogWindow, "The provided start delay is invalid.",
+                        "Start Delay Error", JOptionPane.ERROR_MESSAGE);
+                return -1;
+            }
         }
-        // User entered a startDelay, but it is invalid
-        else if (!textField.getText().isEmpty()){
-            JOptionPane.showMessageDialog(dialogWindow, "The provided start delay is invalid.",
-                    "Start Delay Error", JOptionPane.ERROR_MESSAGE);
-        }
-        // Default the startDelay to 0
-        else if (textField.getText().isEmpty()) {
-            startDelay = 0;
-        }
-
         return startDelay;
     }
 
@@ -406,7 +401,13 @@ public class SyncTimeGUI implements ActionListener {
         for (Map.Entry<String, JTextField> bpmField : set2BpmField) {
             String fieldText = bpmField.getValue().getText();
             boolean isEmpty = fieldText.isEmpty();
-            boolean isGoodFormat = fieldText.matches("\\d+") && !fieldText.equals("0");
+            boolean isGoodFormat = true;
+            try {
+                Float.parseFloat(fieldText);
+            } catch (NumberFormatException e) {
+                isGoodFormat = false;
+            }
+
             String set = bpmField.getKey();
 
             // BPM should always be entered for set 1
@@ -423,7 +424,8 @@ public class SyncTimeGUI implements ActionListener {
             }
         }
 
-        int bpm = Integer.parseInt(set2BpmField.get(0).getValue().getText());
+        // Let BPM be a float. Not all songs fall on an integral value BPM
+        float bpm = Float.parseFloat(set2BpmField.get(0).getValue().getText());
         if (bpm == 0) {
             JOptionPane.showMessageDialog(dialogWindow, "BPM cannot be 0",
                     "BPM Sync Error", JOptionPane.ERROR_MESSAGE);
@@ -435,7 +437,13 @@ public class SyncTimeGUI implements ActionListener {
             for (Map.Entry<String, JTextField> bpmField : set2BpmField) {
                 String fieldText = bpmField.getValue().getText();
                 boolean isEmpty = fieldText.isEmpty();
-                boolean isGoodFormat = fieldText.matches("\\d+") && !fieldText.equals("0");
+                boolean isGoodFormat = true;
+                try {
+                    Float.parseFloat(fieldText);
+                } catch (NumberFormatException e) {
+                    isGoodFormat = false;
+                }
+
                 String set = bpmField.getKey();
 
                 // BPM input is not valid
@@ -467,12 +475,12 @@ public class SyncTimeGUI implements ActionListener {
             Map.Entry<String, JTextField> bpmField = set2BpmField.get(i);
             String set = bpmField.getKey();
             if (!isConsistent) {
-                bpm = Integer.parseInt(bpmField.getValue().getText());
+                bpm = Float.parseFloat(bpmField.getValue().getText());
             }
 
             // Calculate duration of set (in seconds) using counts and bpm
             //  Example: [ 16 ticks / 1 set ] * [ 1 min / 138 ticks ] * [ 60 sec / 1 min ] = 6.96 seconds
-            float time = (float) counts / (float) bpm * 60;
+            float time = counts / bpm * 60;
 
             times.add(new Pair(set, time));
         }
@@ -483,7 +491,7 @@ public class SyncTimeGUI implements ActionListener {
             System.out.println("Set = " + pair.getKey() + " | Time = " + pair.getValue());
             totalDuration += pair.getValue();
         }
-        System.out.println("totalDuration = " + totalDuration);
+        System.out.println("totalDuration = " + totalDuration + " seconds, not including start delay time.");
 
         return true;
     }
@@ -525,7 +533,7 @@ public class SyncTimeGUI implements ActionListener {
 
                 SyncListener dummySyncListener = new SyncListener() {
                     @Override
-                    public void onSync(ArrayList<Pair> times, int startDelay) {
+                    public void onSync(ArrayList<Pair> times, float startDelay) {
                         System.out.println("dummy onSync() called.");
                     }
                 };
