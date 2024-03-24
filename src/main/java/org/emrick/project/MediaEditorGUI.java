@@ -1,33 +1,21 @@
 package org.emrick.project;
 
-import com.google.gson.GsonBuilder;
-import com.google.gson.JsonIOException;
-import com.google.gson.JsonSyntaxException;
-import org.emrick.project.audio.AudioPlayer;
+import com.formdev.flatlaf.*;
+import com.google.gson.*;
+import org.emrick.project.audio.*;
+import org.emrick.project.serde.*;
 
+import javax.swing.Timer;
 import javax.swing.*;
-import javax.swing.event.ChangeListener;
-import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
-import javax.swing.filechooser.FileNameExtensionFilter;
+import javax.swing.event.*;
+import javax.swing.filechooser.*;
 import java.awt.*;
 import java.awt.event.*;
-import java.awt.geom.Point2D;
+import java.awt.geom.*;
 import java.io.*;
-import java.nio.file.Path;
+import java.nio.file.*;
 import java.util.*;
-import javax.swing.Timer;
-import com.formdev.flatlaf.FlatLightLaf;
-import java.nio.file.Files;
-import java.nio.file.Paths;
-import java.util.List;
-import java.util.function.ToDoubleBiFunction;
-import java.util.stream.Collectors;
-import com.google.gson.Gson;
-import org.emrick.project.serde.ColorAdapter;
-import org.emrick.project.serde.PairAdapter;
-import org.emrick.project.serde.Point2DAdapter;
-import org.emrick.project.serde.ProjectFile;
+import java.util.stream.*;
 
 public class MediaEditorGUI implements ImportListener, ScrubBarListener, SyncListener {
 
@@ -35,61 +23,35 @@ public class MediaEditorGUI implements ImportListener, ScrubBarListener, SyncLis
     public static final String FILE_MENU_NEW_PROJECT = "New Project";
     public static final String FILE_MENU_OPEN_PROJECT = "Open Project";
     public static final String FILE_MENU_SAVE = "Save Project";
-
+    private final ColorChangeCaretaker colorChangeCaretaker = new ColorChangeCaretaker();
     // UI Components of MediaEditorGUI
     private JFrame frame;
     private JPanel mainContentPanel;
     private FootballFieldPanel footballFieldPanel;
     private JPanel scrubBarPanel; // Refers directly to panel of ScrubBarGUI. Reduces UI refreshing issues.
     private ScrubBarGUI scrubBarGUI; // Refers to ScrubBarGUI instance, with functionality
-
     // Audio Components
     //  May want to abstract this away into some DrillPlayer class in the future
     private AudioPlayer audioPlayer;
-
     private Color chosenColor;
     private JPanel colorDisplayPanel;
-
     // dots
     private JLabel sysMsg = new JLabel("Welcome to Emrick Designer!", SwingConstants.RIGHT);
     private Timer clearSysMsg = new Timer(5000, e -> {
         sysMsg.setText("");
     });
-
     // Time keeping
     // TODO: save this
     private ArrayList<SyncTimeGUI.Pair> timeSync = null;
     private boolean useStartDelay; // If we are at the first count of the first set, useStartDelay = true
     private int startDelay; // in seconds. Drills might not start immediately, therefore use this.
     private Timer playbackTimer = null;
-
     // JSON serde
     private Gson gson;
-
     // Project info
     private File archivePath = null;
     private File drillPath = null;
     private Path userHome = Paths.get(System.getProperty("user.home"), ".emrick");
-
-    public static void main(String[] args) {
-        // setup sysmsg
-
-        try {
-            UIManager.setLookAndFeel( new FlatLightLaf() );
-        } catch( Exception ex ) {
-            System.err.println( "Failed to initialize LaF" );
-        }
-
-        // Run this program on the Event Dispatch Thread (EDT)
-        EventQueue.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-                MediaEditorGUI mediaEditorGUI = new MediaEditorGUI();
-//                mediaEditorGUI.createAndShowGUI();
-            }
-        });
-    }
-
 
     public MediaEditorGUI() {
         // serde setup
@@ -145,8 +107,7 @@ public class MediaEditorGUI implements ImportListener, ScrubBarListener, SyncLis
                 // TODO: stop music
                 scrubBarGUI.setIsPlayingPlay();
                 return;
-            }
-            else if (scrubBarGUI.isAtEndOfSet()) {
+            } else if (scrubBarGUI.isAtEndOfSet()) {
                 scrubBarGUI.nextSet();
             }
 
@@ -181,132 +142,13 @@ public class MediaEditorGUI implements ImportListener, ScrubBarListener, SyncLis
         createAndShowGUI();
     }
 
-
     // Importing Listeners
     //  If you are not familiar with this, please check out how to use listener interfaces in Java
 
-    @Override
-    public void onFileSelect(File archivePath, File drillPath) {
-        this.archivePath = archivePath;
-        this.drillPath = drillPath;
-    }
-
-    @Override
-    public void onImport() {
-        scrubBarGUI.setReady(true);
-    }
-
-    @Override
-    public void onFloorCoverImport(Image image) {
-        footballFieldPanel.setFloorCoverImage(image);
-        footballFieldPanel.repaint();
-    }
-
-    @Override
-    public void onSurfaceImport(Image image) {
-        footballFieldPanel.setSurfaceImage(image);
-        footballFieldPanel.repaint();
-    }
-
-    @Override
-    public void onAudioImport(File audioFile) {
-
-        // Play or pause audio through the AudioPlayer service class
-        audioPlayer = new AudioPlayer(audioFile);
-    }
-
-    @Override
-    public void onDrillImport(String drill) {
-        String text = DrillParser.extractText(drill);
-        footballFieldPanel.drill = DrillParser.parseWholeDrill(text);
-        footballFieldPanel.addSetToField(footballFieldPanel.drill.sets.get(0));
-        rebuildPageTabCounts();
-    }
-
-    private void rebuildPageTabCounts() {
-        Map<String, Integer> pageTabCounts = new HashMap<>();
-        int startCount = 0;
-        for (Set s : footballFieldPanel.drill.sets) {
-            startCount += s.duration;
-            pageTabCounts.put(s.label, startCount);
-        }
-
-        scrubBarGUI.updatePageTabCounts(pageTabCounts);
-        buildScrubBarPanel();
-    }
-
-    @Override
-    public void onSync(ArrayList<SyncTimeGUI.Pair> times, int startDelay) {
-        // we're treating the integers as duration. this may not be a great idea for the future.
-        timeSync = times;
-        // System.out.println(times);
-        System.out.println("got times");
-
-        this.startDelay = startDelay;
-    }
-
-
-    // ScrubBar Listeners
-
-    @Override
-    public boolean onPlay() {
-        if (timeSync == null) {
-            JOptionPane.showMessageDialog(frame, "Cannot play without syncing time!", "Playback Error", JOptionPane.ERROR_MESSAGE);
-            return false;
-        }
-
-        if (audioPlayer != null && scrubBarGUI.getAudioCheckbox().isSelected()) {
-            // TODO: get audio to correct position
-            audioPlayer.playAudio();
-        }
-
-        setPlaybackTimerTime();
-        playbackTimer.start();
-
-        return true;
-    }
-
-    @Override
-    public boolean onPause() {
-        if (timeSync == null) {
-            JOptionPane.showMessageDialog(frame, "Cannot play without syncing time!", "Playback Error", JOptionPane.ERROR_MESSAGE);
-            return false;
-        }
-
-        if (audioPlayer != null) {
-            audioPlayer.pauseAudio();
-        }
-
-        playbackTimer.stop();
-
-        return true;
-    }
-
-    @Override
-    public void onScrub() {
-        useStartDelay = scrubBarGUI.isAtFirstSet() && scrubBarGUI.isAtStartOfSet();
-    }
-
-
-    /**
-     * Loads the ScrubBarGUI Panel if it has not been created, or refreshes it if it already exists.
-     */
-    private void buildScrubBarPanel() {
-
-        // Remove the existing scrubBarPanel
-        if (scrubBarPanel != null) {
-            mainContentPanel.remove(scrubBarPanel);
-        }
-
-        scrubBarPanel = scrubBarGUI.getScrubBarPanel();
-        scrubBarPanel.setBorder(BorderFactory.createTitledBorder("Scrub Bar"));
-        scrubBarPanel.setPreferredSize(new Dimension(650, 120));
-
-        mainContentPanel.add(scrubBarPanel, BorderLayout.SOUTH);
-
-        // IMPORTANT
-        mainContentPanel.revalidate();
-        mainContentPanel.repaint();
+    private void setPlaybackTimerTime() {
+        float setSyncDuration = timeSync.get(scrubBarGUI.getCurrentSetIndex()).getValue();
+        float setDuration = scrubBarGUI.getCurrSetDuration();
+        playbackTimer.setDelay(Math.round(setSyncDuration / setDuration * 1000));
     }
 
     private void createAndShowGUI() {
@@ -362,11 +204,13 @@ public class MediaEditorGUI implements ImportListener, ScrubBarListener, SyncLis
         applyButton.addActionListener(e -> {
             Color newColor = chosenColor;
             for (Performer performer : footballFieldPanel.selectedPerformers.values()) {
-                performer.getCoordinateFromSet(footballFieldPanel.getCurrentSet().label).setColor(newColor);
+                Coordinate coordinate = performer.getCoordinateFromSet(footballFieldPanel.getCurrentSet().label);
+                Color oldColor = coordinate.getColor();
+                coordinate.setColor(newColor);
+                colorChangeCaretaker.addMemento(new ColorChangeMemento(coordinate, newColor, oldColor));
             }
             footballFieldPanel.repaint();
         });
-
 
         colorDisplayPanel.add(applyButton);
         effectViewPanel.add(colorDisplayPanel, BorderLayout.SOUTH);
@@ -428,7 +272,7 @@ public class MediaEditorGUI implements ImportListener, ScrubBarListener, SyncLis
             JFileChooser fileChooser = new JFileChooser();
             fileChooser.setDialogTitle("Export Project");
             if (fileChooser.showSaveDialog(fileMenu) == JFileChooser.APPROVE_OPTION) {
-                System.out.println("Exporting file `"+fileChooser.getSelectedFile().getAbsolutePath()+"`.");
+                System.out.println("Exporting file `" + fileChooser.getSelectedFile().getAbsolutePath() + "`.");
             }
         });
 
@@ -436,17 +280,42 @@ public class MediaEditorGUI implements ImportListener, ScrubBarListener, SyncLis
 
         // Demos
         JMenuItem displayCircleDrill = new JMenuItem("Load Demo Drill Object");
+        displayCircleDrill.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_L,
+                                                             Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx()));
         fileMenu.add(displayCircleDrill);
         displayCircleDrill.addActionListener(e -> loadDemoDrillObj());
 
         JMenuItem displayTestDrill = new JMenuItem("Load Test Drill Object");
+        displayTestDrill.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_K,
+                                                             Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx()));
         fileMenu.add(displayTestDrill);
         displayTestDrill.addActionListener(e -> loadTestDrillObj());
 
         // Edit menu
         JMenu editMenu = new JMenu("Edit");
         menuBar.add(editMenu);
+
+        JMenuItem undoColorsItem = new JMenuItem("Undo");
+        undoColorsItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_Z,
+                                                             Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx()));
+        undoColorsItem.addActionListener(e -> {
+            undoColorChange();
+            footballFieldPanel.repaint();
+        });
+        editMenu.add(undoColorsItem);
+
+        JMenuItem redoColorsItem = new JMenuItem("Redo");
+        redoColorsItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_Y,
+                                                             Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx()));
+        redoColorsItem.addActionListener(e -> {
+            redoColorChange();
+            footballFieldPanel.repaint();
+        });
+        editMenu.add(redoColorsItem);
+
         JMenuItem resetColorsItem = new JMenuItem("Reset all effects");
+        resetColorsItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_R,
+                                                             Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx()));
         editMenu.add(resetColorsItem);
         resetColorsItem.addActionListener(e -> {
             if (archivePath == null || drillPath == null) {
@@ -463,7 +332,7 @@ public class MediaEditorGUI implements ImportListener, ScrubBarListener, SyncLis
 
             for (int i = 0; i < drill.performers.size(); i++) {
                 Performer p = drill.performers.get(i);
-                p.setColor(new Color(0, 0,0));
+                p.setColor(new Color(0, 0, 0));
                 for (int j = 0; j < p.getCoordinates().size(); j++) {
                     Coordinate c = p.getCoordinates().get(j);
                     c.setColor(new Color(0, 0, 0));
@@ -498,9 +367,16 @@ public class MediaEditorGUI implements ImportListener, ScrubBarListener, SyncLis
             int option = 1;
             while (option > 0) {
                 if (option == 1) {
-                    option = JOptionPane.showConfirmDialog(null, "Is (" + port + ") the correct port for the transmitter?", "Run Show", JOptionPane.YES_NO_OPTION);
+                    option = JOptionPane.showConfirmDialog(null,
+                                                           "Is (" + port + ") the correct port for the transmitter?",
+                                                           "Run Show",
+                                                           JOptionPane.YES_NO_OPTION);
                 } else if (option == 2) {
-                    option = JOptionPane.showConfirmDialog(null, "Port invalid: Make sure you have the right port and that it is not already in use then try again.", "Run show: ERROR", JOptionPane.OK_CANCEL_OPTION);
+                    option = JOptionPane.showConfirmDialog(null,
+                                                           "Port invalid: Make sure you have the right port and that "
+                                                           + "it is not already in use then try again.",
+                                                           "Run show: ERROR",
+                                                           JOptionPane.OK_CANCEL_OPTION);
                     if (option == 2) {
                         option = -1;
                         return;
@@ -527,7 +403,7 @@ public class MediaEditorGUI implements ImportListener, ScrubBarListener, SyncLis
             }
             JFrame flowFrame = new JFrame("Emrick Designer - Flow Viewer");
             flowFrame.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
-            flowFrame.setSize(1200,800);
+            flowFrame.setSize(1200, 800);
             flowFrame.setVisible(true);
             // TODO - When we add RF triggers, swap the list of sets to a list of triggers
             String[][] sets = new String[footballFieldPanel.drill.sets.size()][5];
@@ -569,9 +445,16 @@ public class MediaEditorGUI implements ImportListener, ScrubBarListener, SyncLis
             int option = 1;
             while (option > 0) {
                 if (option == 1) {
-                    option = JOptionPane.showConfirmDialog(null, "Is (" + port + ") the correct port for the transmitter?", "Run Show", JOptionPane.YES_NO_OPTION);
+                    option = JOptionPane.showConfirmDialog(null,
+                                                           "Is (" + port + ") the correct port for the transmitter?",
+                                                           "Run Show",
+                                                           JOptionPane.YES_NO_OPTION);
                 } else if (option == 2) {
-                    option = JOptionPane.showConfirmDialog(null, "Port invalid: Make sure you have the right port and that it is not already in use then try again.", "Run show: ERROR", JOptionPane.OK_CANCEL_OPTION);
+                    option = JOptionPane.showConfirmDialog(null,
+                                                           "Port invalid: Make sure you have the right port and that "
+                                                           + "it is not already in use then try again.",
+                                                           "Run show: ERROR",
+                                                           JOptionPane.OK_CANCEL_OPTION);
                     if (option == 2) {
                         option = -1;
                     } else if (option == 0) {
@@ -609,11 +492,9 @@ public class MediaEditorGUI implements ImportListener, ScrubBarListener, SyncLis
         helpMenu.add(submitIssueItem);
         submitIssueItem.addActionListener(e -> JOptionPane.showMessageDialog(frame, "You clicked: Submit an Issue"));
 
-
         // System message
         menuBar.add(Box.createHorizontalGlue());
         menuBar.add(sysMsg);
-
 
         //Light menu. and adjust its menu location
         JPopupMenu lightMenuPopup = new JPopupMenu();
@@ -624,7 +505,6 @@ public class MediaEditorGUI implements ImportListener, ScrubBarListener, SyncLis
         JMenuItem timeWeatherItem = new JMenuItem("Time & Weather Effects");
         timeWeatherItem.addActionListener(e -> showTimeWeatherDialog(frame));
         lightMenuPopup.add(timeWeatherItem);
-
 
         // Button that triggers the popup menu
         JButton lightButton = new JButton("Light Options");
@@ -643,7 +523,10 @@ public class MediaEditorGUI implements ImportListener, ScrubBarListener, SyncLis
             @Override
             public void windowClosing(WindowEvent e) {
                 if (archivePath != null && drillPath != null) {
-                    int resp = JOptionPane.showConfirmDialog(frame, "Would you like to save before quitting?", "Save and Quit?", JOptionPane.YES_NO_CANCEL_OPTION);
+                    int resp = JOptionPane.showConfirmDialog(frame,
+                                                             "Would you like to save before quitting?",
+                                                             "Save and Quit?",
+                                                             JOptionPane.YES_NO_CANCEL_OPTION);
                     if (resp == JOptionPane.CANCEL_OPTION) {
                         System.out.println("User cancelled exit.");
                         return;
@@ -666,6 +549,122 @@ public class MediaEditorGUI implements ImportListener, ScrubBarListener, SyncLis
         frame.setVisible(true);
         frame.setTitle("Emrick Designer");
     }
+
+    /**
+     * Loads the ScrubBarGUI Panel if it has not been created, or refreshes it if it already exists.
+     */
+    private void buildScrubBarPanel() {
+
+        // Remove the existing scrubBarPanel
+        if (scrubBarPanel != null) {
+            mainContentPanel.remove(scrubBarPanel);
+        }
+
+        scrubBarPanel = scrubBarGUI.getScrubBarPanel();
+        scrubBarPanel.setBorder(BorderFactory.createTitledBorder("Scrub Bar"));
+        scrubBarPanel.setPreferredSize(new Dimension(650, 120));
+
+        mainContentPanel.add(scrubBarPanel, BorderLayout.SOUTH);
+
+        // IMPORTANT
+        mainContentPanel.revalidate();
+        mainContentPanel.repaint();
+    }
+
+    private void openProjectDialog() {
+        System.out.println("Opening project...");
+        JFileChooser fileChooser = new JFileChooser();
+        fileChooser.setDialogTitle("Open Project");
+        fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
+        fileChooser.setAcceptAllFileFilterUsed(false);
+        fileChooser.addChoosableFileFilter(new FileNameExtensionFilter("Emrick Project Files (emrick, json)",
+                                                                       "emrick",
+                                                                       "json"));
+
+        if (fileChooser.showOpenDialog(null) == JFileChooser.APPROVE_OPTION) {
+            System.out.println("Opening file `" + fileChooser.getSelectedFile().getAbsolutePath() + "`.");
+            loadProject(fileChooser.getSelectedFile());
+        }
+    }
+
+    private void saveProjectDialog() {
+        if (archivePath == null || drillPath == null) {
+            System.out.println("Nothing to save.");
+            writeSysMsg("Nothing to save!");
+            return;
+        }
+
+        System.out.println("Saving project...");
+        JFileChooser fileChooser = new JFileChooser();
+        fileChooser.setDialogTitle("Save Project");
+        fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
+        fileChooser.setAcceptAllFileFilterUsed(false);
+        fileChooser.addChoosableFileFilter(new FileNameExtensionFilter("Emrick Project Files (emrick, json)",
+                                                                       "emrick",
+                                                                       "json"));
+
+        if (fileChooser.showSaveDialog(null) == JFileChooser.APPROVE_OPTION) {
+            System.out.println("Saving file `" + fileChooser.getSelectedFile().getAbsolutePath() + "`.");
+            saveProject(fileChooser.getSelectedFile(), archivePath, drillPath);
+        }
+    }
+
+    public void loadDemoDrillObj() {
+        clearDotsFromField();
+        String filePath = "./src/test/java/org/emrick/project/ExpectedPDFOutput.txt";
+        try {
+            String DrillString = Files.lines(Paths.get(filePath)).collect(Collectors.joining(System.lineSeparator()));
+            //System.out.println("Got drill string");
+            //System.out.println(DrillString);
+            DrillParser parse1 = new DrillParser();
+            Drill drillby = parse1.parseWholeDrill(DrillString);
+            footballFieldPanel.drill = drillby;
+            footballFieldPanel.addSetToField(drillby.sets.get(0));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void loadTestDrillObj() {
+        clearDotsFromField();
+        String filePath = "./src/test/java/org/emrick/project/testDrillParsed.txt";
+        try {
+            String DrillString = Files.lines(Paths.get(filePath)).collect(Collectors.joining(System.lineSeparator()));
+            DrillParser parse1 = new DrillParser();
+            Drill drilltest = parse1.parseWholeDrill(DrillString);
+            footballFieldPanel.drill = drilltest;
+            footballFieldPanel.addSetToField(drilltest.sets.get(0));
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void undoColorChange() {
+        ColorChangeMemento memento = colorChangeCaretaker.undo();
+        if (memento != null) {
+            memento.getCoordinate().setColor(memento.getOldColor());
+        }
+    }
+
+    private void redoColorChange() {
+        ColorChangeMemento memento = colorChangeCaretaker.redo();
+        if (memento != null) {
+            memento.getCoordinate().setColor(memento.getNewColor());
+        }
+    }
+
+    private void showPredefinedEffects(Frame parent) {
+        Color selectedColor = JColorChooser.showDialog(parent, "Choose a Color", chosenColor);
+        if (selectedColor != null) {
+            chosenColor = selectedColor;
+            colorDisplayPanel.setBackground(chosenColor);
+            colorDisplayPanel.repaint();
+        }
+    }
+
+    // ScrubBar Listeners
+
     private void showTimeWeatherDialog(Frame parent) {
         JDialog dialog = new JDialog(parent, "Time & Weather Effects", true);
         SpinnerDateModel model = new SpinnerDateModel();
@@ -687,12 +686,10 @@ public class MediaEditorGUI implements ImportListener, ScrubBarListener, SyncLis
                 Coordinate c = drill.coordinates.get(i);
                 // Original color
                 Color originalColor = c.getColor();
-                Color colorWithNewTransparency = new Color(
-                        originalColor.getRed(),
-                        originalColor.getGreen(),
-                        originalColor.getBlue(),
-                        transparency
-                );
+                Color colorWithNewTransparency = new Color(originalColor.getRed(),
+                                                           originalColor.getGreen(),
+                                                           originalColor.getBlue(),
+                                                           transparency);
                 c.setColor(colorWithNewTransparency);
             }
             dialog.dispose();
@@ -707,173 +704,6 @@ public class MediaEditorGUI implements ImportListener, ScrubBarListener, SyncLis
         dialog.pack();
         dialog.setLocationRelativeTo(parent);
         dialog.setVisible(true);
-    }
-    private int calculateTransparency(Date time, String weather) {
-        Calendar calendar = Calendar.getInstance();
-        calendar.setTime(time);
-        int hour = calendar.get(Calendar.HOUR_OF_DAY);
-        int transparency;
-        if (hour >= 6 && hour < 12) { // Morning
-            transparency = 50;
-        } else if (hour >= 12 && hour < 18) { // Afternoon
-            transparency = 150;
-        } else { // Evening
-            transparency = 100;
-        }
-        switch (weather) {
-            case "Clear":
-                transparency -= 30;
-                break;
-            case "Cloudy":
-                transparency += 20;
-                break;
-            case "Rainy":
-                transparency += 40;
-            case "Snowy":
-                transparency += 150;
-                break;
-        }
-        transparency = Math.min(Math.max(transparency, 0), 255);
-        return transparency;
-    }
-
-    private void showPredefinedEffects(Frame parent) {
-        Color selectedColor = JColorChooser.showDialog(parent, "Choose a Color", chosenColor);
-        if (selectedColor != null) {
-            chosenColor = selectedColor;
-            colorDisplayPanel.setBackground(chosenColor);
-            colorDisplayPanel.repaint();
-        }
-    }
-    public void clearDotsFromField() {
-        footballFieldPanel.clearDots();
-    }
-
-    public double getFieldHeight() {
-        return footballFieldPanel.getFieldHeight();
-    }
-
-    public double getFieldWidth() {
-        return footballFieldPanel.getFieldWidth();
-    }
-
-    public void loadDemoDrillObj(){
-        clearDotsFromField();
-        String filePath = "./src/test/java/org/emrick/project/ExpectedPDFOutput.txt";
-        try {
-            String DrillString = Files.lines(Paths.get(filePath))
-                    .collect(Collectors.joining(System.lineSeparator()));
-            //System.out.println("Got drill string");
-            //System.out.println(DrillString);
-            DrillParser parse1 = new DrillParser();
-            Drill drillby = parse1.parseWholeDrill(DrillString);
-            footballFieldPanel.drill = drillby;
-            footballFieldPanel.addSetToField(drillby.sets.get(0));
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
-    public void loadTestDrillObj(){
-        clearDotsFromField();
-        String filePath = "./src/test/java/org/emrick/project/testDrillParsed.txt";
-        try {
-            String DrillString = Files.lines(Paths.get(filePath))
-                    .collect(Collectors.joining(System.lineSeparator()));
-            DrillParser parse1 = new DrillParser();
-            Drill drilltest = parse1.parseWholeDrill(DrillString);
-            footballFieldPanel.drill = drilltest;
-            footballFieldPanel.addSetToField(drilltest.sets.get(0));
-
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
-    private void openProjectDialog() {
-        System.out.println("Opening project...");
-        JFileChooser fileChooser = new JFileChooser();
-        fileChooser.setDialogTitle("Open Project");
-        fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
-        fileChooser.setAcceptAllFileFilterUsed(false);
-        fileChooser.addChoosableFileFilter(new FileNameExtensionFilter("Emrick Project Files (emrick, json)", "emrick", "json"));
-
-        if (fileChooser.showOpenDialog(null) == JFileChooser.APPROVE_OPTION) {
-            System.out.println("Opening file `"+fileChooser.getSelectedFile().getAbsolutePath()+"`.");
-            loadProject(fileChooser.getSelectedFile());
-        }
-    }
-
-    private void saveProjectDialog() {
-        if (archivePath == null || drillPath == null) {
-            System.out.println("Nothing to save.");
-            writeSysMsg("Nothing to save!");
-            return;
-        }
-
-        System.out.println("Saving project...");
-        JFileChooser fileChooser = new JFileChooser();
-        fileChooser.setDialogTitle("Save Project");
-        fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
-        fileChooser.setAcceptAllFileFilterUsed(false);
-        fileChooser.addChoosableFileFilter(new FileNameExtensionFilter("Emrick Project Files (emrick, json)", "emrick", "json"));
-
-        if (fileChooser.showSaveDialog(null) == JFileChooser.APPROVE_OPTION) {
-            System.out.println("Saving file `"+fileChooser.getSelectedFile().getAbsolutePath()+"`.");
-            saveProject(fileChooser.getSelectedFile(), archivePath, drillPath);
-        }
-    }
-
-    private void autosaveProject() {
-        // we don't have a project open, nothing to save
-        if (archivePath == null || drillPath == null) {
-            return;
-        }
-
-        long time = System.currentTimeMillis() / 1000L;
-        Path dir = Paths.get(userHome.toString(), String.valueOf(time));
-        Path jsonDir = Paths.get(dir.toString(), "backup.json");
-        Path archiveDir = Paths.get(dir.toString(), archivePath.getName());
-        Path drillDir = Paths.get(dir.toString(), drillPath.getName());
-        File backupDir = new File(dir.toUri());
-        if (!backupDir.mkdirs()) {
-            // TODO: handle error from the backup failing
-            return;
-        }
-
-        try {
-            Files.copy(archivePath.toPath(), archiveDir);
-            Files.copy(drillPath.toPath(), drillDir);
-        } catch (IOException e) {
-            // TODO: handle error from the backup failing
-            System.out.println(e.getMessage());
-            return;
-        }
-
-        saveProject(jsonDir.toFile(), archiveDir.toFile(), drillDir.toFile());
-        writeSysMsg("Autosaved project to `" + jsonDir + "`.");
-    }
-
-    public void saveProject(File path, File archivePath, File drillPath) {
-        String relArchive = path.getParentFile().toURI().relativize(archivePath.toURI()).getPath();
-        String relDrill = path.getParentFile().toURI().relativize(drillPath.toURI()).getPath();
-
-        ProjectFile pf = new ProjectFile(footballFieldPanel.drill, relArchive, relDrill, timeSync);
-        String g = gson.toJson(pf);
-
-        System.out.println("saving to `" + path + "`");
-//        System.out.println(g);
-
-        try {
-            FileWriter w = new FileWriter(path);
-            w.write(g);
-            w.close();
-        } catch (IOException e) {
-            writeSysMsg("Failed to save to `" + path + "`.");
-            throw new RuntimeException(e);
-        }
-
-        writeSysMsg("Saved project to `" + path + "`.");
     }
 
     public void loadProject(File path) {
@@ -908,9 +738,220 @@ public class MediaEditorGUI implements ImportListener, ScrubBarListener, SyncLis
         clearSysMsg.start();
     }
 
-    private void setPlaybackTimerTime() {
-        float setSyncDuration = timeSync.get(scrubBarGUI.getCurrentSetIndex()).getValue();
-        float setDuration = scrubBarGUI.getCurrSetDuration();
-        playbackTimer.setDelay( Math.round(setSyncDuration / setDuration * 1000) );
+    public void saveProject(File path, File archivePath, File drillPath) {
+        String relArchive = path.getParentFile().toURI().relativize(archivePath.toURI()).getPath();
+        String relDrill = path.getParentFile().toURI().relativize(drillPath.toURI()).getPath();
+
+        ProjectFile pf = new ProjectFile(footballFieldPanel.drill, relArchive, relDrill, timeSync);
+        String g = gson.toJson(pf);
+
+        System.out.println("saving to `" + path + "`");
+//        System.out.println(g);
+
+        try {
+            FileWriter w = new FileWriter(path);
+            w.write(g);
+            w.close();
+        } catch (IOException e) {
+            writeSysMsg("Failed to save to `" + path + "`.");
+            throw new RuntimeException(e);
+        }
+
+        writeSysMsg("Saved project to `" + path + "`.");
+    }
+
+    public void clearDotsFromField() {
+        footballFieldPanel.clearDots();
+    }
+
+    private int calculateTransparency(Date time, String weather) {
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTime(time);
+        int hour = calendar.get(Calendar.HOUR_OF_DAY);
+        int transparency;
+        if (hour >= 6 && hour < 12) { // Morning
+            transparency = 50;
+        } else if (hour >= 12 && hour < 18) { // Afternoon
+            transparency = 150;
+        } else { // Evening
+            transparency = 100;
+        }
+        switch (weather) {
+            case "Clear":
+                transparency -= 30;
+                break;
+            case "Cloudy":
+                transparency += 20;
+                break;
+            case "Rainy":
+                transparency += 40;
+            case "Snowy":
+                transparency += 150;
+                break;
+        }
+        transparency = Math.min(Math.max(transparency, 0), 255);
+        return transparency;
+    }
+
+    public static void main(String[] args) {
+        // setup sysmsg
+
+        try {
+            UIManager.setLookAndFeel(new FlatLightLaf());
+        } catch (Exception ex) {
+            System.err.println("Failed to initialize LaF");
+        }
+
+        // Run this program on the Event Dispatch Thread (EDT)
+        EventQueue.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+                MediaEditorGUI mediaEditorGUI = new MediaEditorGUI();
+//                mediaEditorGUI.createAndShowGUI();
+            }
+        });
+    }
+
+    @Override
+    public void onImport() {
+        scrubBarGUI.setReady(true);
+    }
+
+    @Override
+    public void onFileSelect(File archivePath, File drillPath) {
+        this.archivePath = archivePath;
+        this.drillPath = drillPath;
+    }
+
+    @Override
+    public void onFloorCoverImport(Image image) {
+        footballFieldPanel.setFloorCoverImage(image);
+        footballFieldPanel.repaint();
+    }
+
+    @Override
+    public void onSurfaceImport(Image image) {
+        footballFieldPanel.setSurfaceImage(image);
+        footballFieldPanel.repaint();
+    }
+
+    @Override
+    public void onAudioImport(File audioFile) {
+
+        // Play or pause audio through the AudioPlayer service class
+        audioPlayer = new AudioPlayer(audioFile);
+    }
+
+    @Override
+    public void onDrillImport(String drill) {
+        String text = DrillParser.extractText(drill);
+        footballFieldPanel.drill = DrillParser.parseWholeDrill(text);
+        footballFieldPanel.addSetToField(footballFieldPanel.drill.sets.get(0));
+        rebuildPageTabCounts();
+    }
+
+    private void rebuildPageTabCounts() {
+        Map<String, Integer> pageTabCounts = new HashMap<>();
+        int startCount = 0;
+        for (Set s : footballFieldPanel.drill.sets) {
+            startCount += s.duration;
+            pageTabCounts.put(s.label, startCount);
+        }
+
+        scrubBarGUI.updatePageTabCounts(pageTabCounts);
+        buildScrubBarPanel();
+    }
+
+    @Override
+    public void onSync(ArrayList<SyncTimeGUI.Pair> times, int startDelay) {
+        // we're treating the integers as duration. this may not be a great idea for the future.
+        timeSync = times;
+        // System.out.println(times);
+        System.out.println("got times");
+
+        this.startDelay = startDelay;
+    }
+
+    @Override
+    public boolean onPlay() {
+        if (timeSync == null) {
+            JOptionPane.showMessageDialog(frame,
+                                          "Cannot play without syncing time!",
+                                          "Playback Error",
+                                          JOptionPane.ERROR_MESSAGE);
+            return false;
+        }
+
+        if (audioPlayer != null && scrubBarGUI.getAudioCheckbox().isSelected()) {
+            // TODO: get audio to correct position
+            audioPlayer.playAudio();
+        }
+
+        setPlaybackTimerTime();
+        playbackTimer.start();
+
+        return true;
+    }
+
+    @Override
+    public boolean onPause() {
+        if (timeSync == null) {
+            JOptionPane.showMessageDialog(frame,
+                                          "Cannot play without syncing time!",
+                                          "Playback Error",
+                                          JOptionPane.ERROR_MESSAGE);
+            return false;
+        }
+
+        if (audioPlayer != null) {
+            audioPlayer.pauseAudio();
+        }
+
+        playbackTimer.stop();
+
+        return true;
+    }
+
+    @Override
+    public void onScrub() {
+        useStartDelay = scrubBarGUI.isAtFirstSet() && scrubBarGUI.isAtStartOfSet();
+    }
+
+    public double getFieldHeight() {
+        return footballFieldPanel.getFieldHeight();
+    }
+
+    public double getFieldWidth() {
+        return footballFieldPanel.getFieldWidth();
+    }
+
+    private void autosaveProject() {
+        // we don't have a project open, nothing to save
+        if (archivePath == null || drillPath == null) {
+            return;
+        }
+
+        long time = System.currentTimeMillis() / 1000L;
+        Path dir = Paths.get(userHome.toString(), String.valueOf(time));
+        Path jsonDir = Paths.get(dir.toString(), "backup.json");
+        Path archiveDir = Paths.get(dir.toString(), archivePath.getName());
+        Path drillDir = Paths.get(dir.toString(), drillPath.getName());
+        File backupDir = new File(dir.toUri());
+        if (!backupDir.mkdirs()) {
+            // TODO: handle error from the backup failing
+            return;
+        }
+
+        try {
+            Files.copy(archivePath.toPath(), archiveDir);
+            Files.copy(drillPath.toPath(), drillDir);
+        } catch (IOException e) {
+            // TODO: handle error from the backup failing
+            System.out.println(e.getMessage());
+            return;
+        }
+
+        saveProject(jsonDir.toFile(), archiveDir.toFile(), drillDir.toFile());
+        writeSysMsg("Autosaved project to `" + jsonDir + "`.");
     }
 }
