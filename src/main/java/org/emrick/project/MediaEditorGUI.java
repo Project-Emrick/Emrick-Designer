@@ -56,8 +56,9 @@ public class MediaEditorGUI implements ImportListener, ScrubBarListener, SyncLis
         sysMsg.setText("");
     });
 
-    // Time keeping
+    // Time
     // TODO: save this
+    private TimeManager timeManager;
     private ArrayList<SyncTimeGUI.Pair> timeSync = null;
     private boolean useStartDelay; // If we are at the first count of the first set, useStartDelay = true
     private float startDelay; // Drills might not start immediately, therefore use this. Unit: seconds.
@@ -226,25 +227,33 @@ public class MediaEditorGUI implements ImportListener, ScrubBarListener, SyncLis
     }
 
     private void rebuildPageTabCounts() {
-        Map<String, Integer> pageTabCounts = new HashMap<>();
+        Map<String, Integer> pageTab2Count = new HashMap<>();
         int startCount = 0;
         for (Set s : footballFieldPanel.drill.sets) {
             startCount += s.duration;
-            pageTabCounts.put(s.label, startCount);
+            pageTab2Count.put(s.label, startCount);
         }
 
-        scrubBarGUI.updatePageTabCounts(pageTabCounts);
+        scrubBarGUI.updatePageTabCounts(pageTab2Count);
         buildScrubBarPanel();
     }
 
     @Override
     public void onSync(ArrayList<SyncTimeGUI.Pair> times, float startDelay) {
-        // we're treating the integers as duration. this may not be a great idea for the future.
-        timeSync = times;
-        // System.out.println(times);
+        this.timeSync = times;
         System.out.println("got times");
 
         this.startDelay = startDelay;
+
+        // Recalculate set to count map (pageTab2Count) to initialize timeManager
+        Map<String, Integer> pageTab2Count = new HashMap<>();
+        int startCount = 0;
+        for (Set s : footballFieldPanel.drill.sets) {
+            startCount += s.duration;
+            pageTab2Count.put(s.label, startCount);
+        }
+
+        timeManager = new TimeManager(pageTab2Count, this.timeSync, this.startDelay);
     }
 
 
@@ -285,8 +294,13 @@ public class MediaEditorGUI implements ImportListener, ScrubBarListener, SyncLis
     }
 
     @Override
-    public void onScrub() {
+    public long onScrub() {
         useStartDelay = scrubBarGUI.isAtFirstSet() && scrubBarGUI.isAtStartOfSet();
+
+        if (timeManager != null) {
+            return timeManager.getCount2MSec().get(footballFieldPanel.getCurrentCount());
+        }
+        return 0;
     }
 
     @Override
@@ -335,7 +349,7 @@ public class MediaEditorGUI implements ImportListener, ScrubBarListener, SyncLis
         mainContentPanel = new JPanel();
         mainContentPanel.setLayout(new BorderLayout());
 
-        footballFieldPanel.setBorder(BorderFactory.createTitledBorder("Main View"));
+        // footballFieldPanel.setBorder(BorderFactory.createTitledBorder("Main View"));
         mainContentPanel.add(footballFieldPanel, BorderLayout.CENTER);
 
         // Scrub Bar Panel
@@ -757,12 +771,8 @@ public class MediaEditorGUI implements ImportListener, ScrubBarListener, SyncLis
         footballFieldPanel.clearDots();
     }
 
-    public double getFieldHeight() {
-        return footballFieldPanel.getFieldHeight();
-    }
-
-    public double getFieldWidth() {
-        return footballFieldPanel.getFieldWidth();
+    public TimeManager getTimeManager() {
+        return timeManager;
     }
 
     public void loadDemoDrillObj(){

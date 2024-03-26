@@ -3,6 +3,6 @@ package org.emrick.project;
 public interface ScrubBarListener {
     boolean onPlay();
     boolean onPause();
-    void onScrub();
+    long onScrub();
     void onSpeedChange(float playbackSpeed);
 }

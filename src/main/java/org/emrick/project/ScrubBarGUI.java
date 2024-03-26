@@ -25,9 +25,12 @@ public class ScrubBarGUI extends JComponent implements ActionListener {
     private static final String PATH_FAST_PLAY_ICON = "./src/main/resources/images/scrub/fast_play_flaticon.png";
     private static final String PATH_FULL_PLAY_ICON = "./src/main/resources/images/scrub/double_arrow_flaticon.png";
 
+    // Swing
     private JPanel scrubBarPanel;
+    private final JFrame parent;
 
-    private JFrame parent;
+    // Status
+    private long currTimeMSec;
 
     // Scrub Bars / Sliders
     private JSlider topSlider;
@@ -49,21 +52,18 @@ public class ScrubBarGUI extends JComponent implements ActionListener {
     JComboBox<String> playbackSpeedsBox;
     private JCheckBox audioCheckbox;
 
-    // Time-Sync GUI
-    private SyncTimeGUI syncTimeGUI;
-
     // Page Tabs / Counts
     private Map<String, Integer> pageTab2Count; // [pageTab]:[count] e.g., k:"2A", v:30
     private int lastCount;
     private int currSetStartCount;
     private int currSetEndCount;
-    private FootballFieldPanel footballFieldPanel;
+    private final FootballFieldPanel footballFieldPanel;
 
     // Listener
     private final ScrubBarListener scrubBarListener;
     private final SyncListener syncListener;
-    private ImageIcon PLAY_ICON;
-    private ImageIcon PAUSE_ICON;
+    private final ImageIcon PLAY_ICON;
+    private final ImageIcon PAUSE_ICON;
 
     public ScrubBarGUI(JFrame parent, ScrubBarListener scrubBarListener, SyncListener syncListener, FootballFieldPanel footballFieldPanel) {
         this.parent = parent;
@@ -74,8 +74,6 @@ public class ScrubBarGUI extends JComponent implements ActionListener {
 
         updateLastCount();
         updateCurrSetCounts("1");
-
-        this.syncTimeGUI = null;
 
         this.scrubBarListener = scrubBarListener;
         this.syncListener = syncListener;
@@ -148,10 +146,12 @@ public class ScrubBarGUI extends JComponent implements ActionListener {
 
         // Status Panel.
         // TODO: Add more info (like start/end times?)
-        JPanel statusPanel = new JPanel(new GridLayout(2, 1));
+        JPanel statusPanel = new JPanel(new GridLayout(3, 1));
         statusPanel.setPreferredSize(new Dimension(100, 1));
-        JLabel statusLabel = new JLabel("Set : 0", JLabel.CENTER);
+        JLabel statusLabel = new JLabel("Set: 0", JLabel.CENTER);
+        JLabel timeLabel = new JLabel("0:00:000", JLabel.CENTER);
         statusPanel.add(statusLabel);
+        statusPanel.add(timeLabel);
 
         scrubBarPanel.add(statusPanel, BorderLayout.EAST);
 
@@ -180,7 +180,7 @@ public class ScrubBarGUI extends JComponent implements ActionListener {
                 // Status label
                 int val = ((JSlider)e.getSource()).getValue();
                 String set = labelTable.get(val).getText();
-                statusLabel.setText("Set : " + set);
+                statusLabel.setText("Set: " + set);
 
                 updateCurrSetCounts(set);
                 for (Set s : footballFieldPanel.drill.sets) {
@@ -205,7 +205,13 @@ public class ScrubBarGUI extends JComponent implements ActionListener {
                 int val = ((JSlider)e.getSource()).getValue();
                 footballFieldPanel.setCurrentCount(val);
 
-                scrubBarListener.onScrub();
+                long currTimeMSec = scrubBarListener.onScrub();
+
+                // Convert milliseconds to minutes and seconds
+                long minutes = java.util.concurrent.TimeUnit.MILLISECONDS.toMinutes(currTimeMSec);
+                long seconds = java.util.concurrent.TimeUnit.MILLISECONDS.toSeconds(currTimeMSec) % 60;
+                long milliseconds = currTimeMSec % 1000;
+                timeLabel.setText(String.format("%d:%02d:%03d", minutes, seconds, milliseconds));
             }
         });
 
