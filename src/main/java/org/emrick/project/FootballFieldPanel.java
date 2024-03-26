@@ -21,6 +21,10 @@ public class FootballFieldPanel extends JPanel {
     // Loading field decor.
     private BufferedImage surfaceImage;
     private BufferedImage floorCoverImage;
+
+    private boolean showSurfaceImage = true;
+    private boolean showFloorCoverImage = true;
+
     private boolean ctrlHeld = false;
     private Set currentSet;
     private int currentCount = 0;
@@ -146,12 +150,12 @@ public class FootballFieldPanel extends JPanel {
         super.paintComponent(g);
 
         // Draw the surface image
-        if (surfaceImage != null) {
+        if (surfaceImage != null && showSurfaceImage) {
             drawBetterImage(g, surfaceImage);
         }
 
         // Draw the floorCover image on top
-        if (floorCoverImage != null) {
+        if (floorCoverImage != null && showFloorCoverImage) {
             drawBetterImage(g, floorCoverImage);
         }
 //        for (Performer p : drill.performers) { // Replace 'performers' with your actual collection of performers.
@@ -287,5 +291,21 @@ public class FootballFieldPanel extends JPanel {
     }
     public void setCurrentSet(Set currentSet) {
         this.currentSet = currentSet;
+    }
+
+    public void setShowSurfaceImage(boolean showSurfaceImage) {
+        this.showSurfaceImage = showSurfaceImage;
+    }
+
+    public boolean getShowSurfaceImage() {
+        return showSurfaceImage;
+    }
+
+    public void setShowFloorCoverImage(boolean showFloorCoverImage) {
+        this.showFloorCoverImage = showFloorCoverImage;
+    }
+
+    public boolean getShowFloorCoverImage() {
+        return showFloorCoverImage;
     }
 }
