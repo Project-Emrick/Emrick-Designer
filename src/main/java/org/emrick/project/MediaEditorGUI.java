@@ -343,6 +343,28 @@ public class MediaEditorGUI implements ImportListener, ScrubBarListener, SyncLis
             footballFieldPanel.repaint();
         });
 
+        // View menu
+        JMenu viewMenu = new JMenu("View");
+        menuBar.add(viewMenu);
+        JCheckBoxMenuItem toggleFloorCoverImage = new JCheckBoxMenuItem("Show Floor Cover Image");
+        toggleFloorCoverImage.setState(true);
+        toggleFloorCoverImage.addActionListener(e -> {
+//            System.out.println("floor cover");
+//            toggleFloorCoverImage.setSelected(!toggleFloorCoverImage.isSelected());
+            footballFieldPanel.setShowFloorCoverImage(!footballFieldPanel.getShowFloorCoverImage());
+            footballFieldPanel.repaint();
+        });
+        viewMenu.add(toggleFloorCoverImage);
+        JCheckBoxMenuItem toggleSurfaceImage = new JCheckBoxMenuItem("Show Surface Image");
+        toggleSurfaceImage.setState(true);
+        toggleSurfaceImage.addActionListener(e -> {
+//            System.out.println("surface");
+//            toggleSurfaceImage.setSelected(!toggleSurfaceImage.isSelected());
+            footballFieldPanel.setShowSurfaceImage(!footballFieldPanel.getShowSurfaceImage());
+            footballFieldPanel.repaint();
+        });
+        viewMenu.add(toggleSurfaceImage);
+
         // Run menu
         JMenu runMenu = new JMenu("Run");
         menuBar.add(runMenu);
