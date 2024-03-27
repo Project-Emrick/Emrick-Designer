@@ -9,6 +9,7 @@ public class Performer {
     private String symbol;
     private int label;
     private ArrayList<Coordinate> coordinates;
+    private ArrayList<Effect> effects;
     public Point2D currentLocation;
 
     public Performer() {
@@ -17,6 +18,7 @@ public class Performer {
         coordinates = new ArrayList<>();
         currentLocation = new Point2D.Double(0,0);
         this.color = Color.BLACK;
+        this.effects = new ArrayList<>();
     }
     public Performer(String symbol, int label) {
         this.color = Color.BLACK;
@@ -24,6 +26,7 @@ public class Performer {
         this.label = label;
         coordinates = new ArrayList<>();
         currentLocation = new Point2D.Double(0,0);
+        this.effects = new ArrayList<>();
     }
 
     public String getSymbol() {
@@ -69,6 +72,10 @@ public class Performer {
             }
         }
         return null;
+    }
+
+    public ArrayList<Effect> getEffects() {
+        return effects;
     }
 
     public void setCoordinates(ArrayList<Coordinate> coordinates) {
