@@ -343,6 +343,19 @@ public class MediaEditorGUI implements ImportListener, ScrubBarListener, SyncLis
             footballFieldPanel.repaint();
         });
 
+        JMenuItem selectByCrit = new JMenuItem("Select by criteria");
+        selectByCrit.addActionListener(e -> {
+            System.out.println("selecting by criteria...");
+            FilterSelect filterSelect = new FilterSelect(frame);
+            filterSelect.show();
+
+            if (archivePath == null || drillPath == null) {
+                System.out.println("no project loaded");
+                return;
+            }
+        });
+        editMenu.add(selectByCrit);
+
         // View menu
         JMenu viewMenu = new JMenu("View");
         menuBar.add(viewMenu);
