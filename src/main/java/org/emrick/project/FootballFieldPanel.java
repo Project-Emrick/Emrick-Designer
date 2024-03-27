@@ -31,21 +31,36 @@ public class FootballFieldPanel extends JPanel {
     private int currentSetStartCount = 0;
     private SerialTransmitter serialTransmitter;
 
-    public FootballFieldPanel() {
+    // Effects utility
+    private final FootballFieldListener footballFieldListener;
+    private EffectManager effectManager;
+
+    public FootballFieldPanel(FootballFieldListener footballFieldListener) {
 //        setPreferredSize(new Dimension(fieldWidth + 2*margin, fieldHeight + 2*margin)); // Set preferred size for the drawing area
         setMinimumSize(new Dimension(1042, 548));
         drill = new Drill();
         selectedPerformers = new HashMap<>();
         this.addMouseListener(new MouseInput());
         colorChosen = Color.BLACK;
+        this.footballFieldListener = footballFieldListener;
     }
 
-    public FootballFieldPanel(Color colorChosen) {
+    public FootballFieldPanel(Color colorChosen, FootballFieldListener footballFieldListener) {
         this.colorChosen = colorChosen;
         setMinimumSize(new Dimension(1042, 548));
         drill = new Drill();
         selectedPerformers = new HashMap<>();
         this.addMouseListener(new MouseInput());
+        this.footballFieldListener = footballFieldListener;
+    }
+
+    /**
+     * @param effectManager Utility class that handles many functionalities regarding effects. Note that EffectManager
+     *                      has a reference to FootballFieldPanel. They are closely related and tightly coupled, but
+     *                      this introduces a circular dependency. May want to somehow refactor in the future.
+     */
+    public void setEffectManager(EffectManager effectManager) {
+        this.effectManager = effectManager;
     }
 
     public void addSetToField(Set set) {
@@ -158,15 +173,9 @@ public class FootballFieldPanel extends JPanel {
         if (floorCoverImage != null && showFloorCoverImage) {
             drawBetterImage(g, floorCoverImage);
         }
-//        for (Performer p : drill.performers) { // Replace 'performers' with your actual collection of performers.
-//            g.setColor(p.getColor()); // This will use the color stored in the performer.
-//            // Paint the performer
-//        }
 
         // Draw performers with their colors
         for (Performer p : drill.performers) {
-            g.setColor(p.getColor()); // This will use the color stored in the performer.
-
             Coordinate c1 = p.getCoordinateFromSet(currentSet.label);
             if (currentSet.index < drill.sets.size() - 1) {
                 Coordinate c2 = p.getCoordinateFromSet(drill.sets.get(currentSet.index + 1).label);
@@ -185,7 +194,18 @@ public class FootballFieldPanel extends JPanel {
 //            if (selectedPerformers.containsKey(p.getSymbol() + p.getLabel())) {
 //                g.setColor(selectedPerformers.get(p.getSymbol() + p.getLabel()).getColor());
 //            }
-            g.setColor(c1.getColor());
+
+            g.setColor(c1.getColor()); // Default is coordinate color. Remove this?
+            if (effectManager != null) {
+                Effect currentEffect = effectManager.getEffect(p);
+
+                // No effect is present at the current count
+                if (currentEffect == null) {
+                    g.setColor(Color.BLACK);
+                } else {
+                    g.setColor(currentEffect.getStartColor()); // TODO eventually: Calculate phase of color shift from effect
+                }
+            }
 
             g.fillRect((int)x-6,(int)y-6,6,12);
             g.fillRect((int)x,(int)y-6,6,12);
@@ -199,6 +219,7 @@ public class FootballFieldPanel extends JPanel {
             g.drawLine((int)x,(int)y-5,(int)x,(int)y+6);
         }
     }
+
     public void setColorChosen(Color color) {
         this.colorChosen = color;
     }
@@ -254,19 +275,26 @@ public class FootballFieldPanel extends JPanel {
                 double py = p.currentLocation.getY();
                 if (mx >= px - 7 && mx <= px + 7 && my >= py - 7 && my <= py + 7) {
                     if (e.isControlDown()) {
-
                         String key = p.getSymbol() + p.getLabel();
+
                         if (selectedPerformers.containsKey(key)) {
                             selectedPerformers.remove(key); // Deselect if already selected
-                        } else {
-                            selectedPerformers.put(key, p); // Select if not already selected
+                            footballFieldListener.onPerformerDeselect();
                         }
-                    } else {
+                        else {
+                            selectedPerformers.put(key, p); // Select if not already selected
+                            footballFieldListener.onPerformerSelect();
+                        }
+                    }
+                    else {
                         if (selectedPerformers.containsKey(p.getSymbol() + p.getLabel())) {
                             selectedPerformers.clear();
-                        } else {
+                            footballFieldListener.onPerformerDeselect();
+                        }
+                        else {
                             selectedPerformers.clear();
                             selectedPerformers.put(p.getSymbol() + p.getLabel(), p);
+                            footballFieldListener.onPerformerSelect();
                         }
                     }
                     repaint();
