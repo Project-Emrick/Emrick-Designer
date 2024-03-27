@@ -901,6 +901,8 @@ public class MediaEditorGUI implements ImportListener, ScrubBarListener, SyncLis
         this.timeManager = new TimeManager(pageTab2Count, this.timeSync, this.startDelay);
         this.effectManager = new EffectManager(this.footballFieldPanel, this.timeManager);
         this.footballFieldPanel.setEffectManager(this.effectManager);
+
+        updateEffectViewPanel();
     }
 
     ////////////////////////// Scrub Bar Listeners //////////////////////////
@@ -955,18 +957,22 @@ public class MediaEditorGUI implements ImportListener, ScrubBarListener, SyncLis
     ////////////////////////// Effect Listeners //////////////////////////
 
     @Override
-    public void onCreateEffect() {
-
+    public void onCreateEffect(Effect effect) {
+        this.effectManager.addEffectToSelected(effect);
+        this.footballFieldPanel.repaint();
     }
 
     @Override
-    public void onUpdateEffect() {
-
+    public void onUpdateEffect(Effect oldEffect, Effect newEffect) {
+        this.effectManager.replaceEffectForSelected(oldEffect, newEffect);
+        this.footballFieldPanel.repaint();
     }
 
     @Override
-    public void onDeleteEffect() {
-
+    public void onDeleteEffect(Effect effect) {
+        this.effectManager.removeEffectFromSelected(effect);
+        this.footballFieldPanel.repaint();
+        updateEffectViewPanel();
     }
 
     ////////////////////////// Football Field Listeners //////////////////////////
@@ -990,10 +996,10 @@ public class MediaEditorGUI implements ImportListener, ScrubBarListener, SyncLis
         }
         if (this.footballFieldPanel.selectedPerformers.size() != 1) return;
 
-        // At this point, we know there is only one performer selected. The EffectGUI is for that single performer.
+        // Here, we know there's only one performer selected. The EffectGUI is for that single performer.
         this.currentEffect = this.effectManager.getEffectFromSelected();
         long currentMSec = this.timeManager.getCount2MSec().get(this.footballFieldPanel.getCurrentCount());
-        this.effectGUI = new EffectGUI(this.currentEffect, currentMSec);
+        this.effectGUI = new EffectGUI(this.currentEffect, currentMSec, this);
         this.effectViewPanel.add(this.effectGUI.getEffectPanel());
         this.effectViewPanel.revalidate();
         this.effectViewPanel.repaint();

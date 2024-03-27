@@ -58,12 +58,14 @@ public class EffectManager {
     }
 
     public void addEffect(Effect effect, Performer performer) {
-        if (isValid(effect, performer)) {
+        if (!isValid(effect, performer)) {
             JOptionPane.showMessageDialog(null,
-                    "Effect could not be applied! Check for possible set run-off or overlap with other effects.",
+                    "Effect could not be applied. Please check for possible set run-off or overlap with other effects.",
                     "Effect Error", JOptionPane.ERROR_MESSAGE);
             return;
         }
+        JOptionPane.showMessageDialog(null, "Effect created successfully.",
+                "Success", JOptionPane.INFORMATION_MESSAGE);
         performer.getEffects().add(effect);
     }
 
@@ -74,6 +76,8 @@ public class EffectManager {
     }
 
     public void removeEffect(Effect effect, Performer performer) {
+        JOptionPane.showMessageDialog(null, "Effect deleted successfully.",
+                "Success", JOptionPane.INFORMATION_MESSAGE);
         performer.getEffects().remove(effect);
     }
 
@@ -107,6 +111,8 @@ public class EffectManager {
         if (!isValid(newEffect, performer)) {
             performer.getEffects().add(oldEffect); // Put it back
         }
+        JOptionPane.showMessageDialog(null, "Effect updated successfully.",
+                "Success", JOptionPane.INFORMATION_MESSAGE);
         performer.getEffects().add(newEffect);
     }
 

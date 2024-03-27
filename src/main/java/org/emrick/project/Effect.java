@@ -37,6 +37,12 @@ public class Effect implements Cloneable {
         this.INSTANT_COLOR = INSTANT_COLOR;
 
         this.startTimeMSec = startTimeMSec;
+        calculateEndTimeMSec();
+    }
+
+    public void calculateEndTimeMSec() {
+
+        // endTimeMSec depends on startTimeMSec, delay, duration, timeout, and bitflags
         this.endTimeMSec = startTimeMSec;
         if (DO_DELAY) this.endTimeMSec += delay.toMillis();
         if (TIME_GRADIENT) this.endTimeMSec += duration.toMillis();
@@ -47,16 +53,8 @@ public class Effect implements Cloneable {
         return startTimeMSec;
     }
 
-    public void setStartTimeMSec(long startTimeMSec) {
-        this.startTimeMSec = startTimeMSec;
-    }
-
     public long getEndTimeMSec() {
         return endTimeMSec;
-    }
-
-    public void setEndTimeMSec(long endTimeMSec) {
-        this.endTimeMSec = endTimeMSec;
     }
 
     public Color getStartColor() {
@@ -81,6 +79,7 @@ public class Effect implements Cloneable {
 
     public void setDelay(Duration delay) {
         this.delay = delay;
+        calculateEndTimeMSec();
     }
 
     public Duration getDuration() {
@@ -89,6 +88,7 @@ public class Effect implements Cloneable {
 
     public void setDuration(Duration duration) {
         this.duration = duration;
+        calculateEndTimeMSec();
     }
 
     public Duration getTimeout() {
@@ -97,6 +97,7 @@ public class Effect implements Cloneable {
 
     public void setTimeout(Duration timeout) {
         this.timeout = timeout;
+        calculateEndTimeMSec();
     }
 
     public boolean isTIME_GRADIENT() {
@@ -105,6 +106,7 @@ public class Effect implements Cloneable {
 
     public void setTIME_GRADIENT(boolean TIME_GRADIENT) {
         this.TIME_GRADIENT = TIME_GRADIENT;
+        calculateEndTimeMSec();
     }
 
     public boolean isSET_TIMEOUT() {
@@ -113,6 +115,7 @@ public class Effect implements Cloneable {
 
     public void setSET_TIMEOUT(boolean SET_TIMEOUT) {
         this.SET_TIMEOUT = SET_TIMEOUT;
+        calculateEndTimeMSec();
     }
 
     public boolean isDO_DELAY() {
@@ -121,6 +124,7 @@ public class Effect implements Cloneable {
 
     public void setDO_DELAY(boolean DO_DELAY) {
         this.DO_DELAY = DO_DELAY;
+        calculateEndTimeMSec();
     }
 
     public boolean isINSTANT_COLOR() {
