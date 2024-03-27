@@ -7,13 +7,16 @@ import javax.swing.event.DocumentListener;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
 import java.time.Duration;
 
 public class EffectGUI implements ActionListener {
 
     JPanel effectPanel;
     Effect effect;
-    Effect effectCopy;
+    Effect effectMod;
+    EffectListener effectListener;
 
     // Status
     boolean isNewEffect;
@@ -32,21 +35,22 @@ public class EffectGUI implements ActionListener {
     JTextField delayField = new JTextField(10);
     JTextField durationField = new JTextField(10);
     JTextField timeoutField = new JTextField(10);
-    JCheckBox TIME_GRADIENTBox = new JCheckBox("TIME_GRADIENT", true);
-    JCheckBox SET_TIMEOUTBox = new JCheckBox("SET_TIMEOUT", true);
-    JCheckBox DO_DELAYBox = new JCheckBox("DO_DELAY", true);
-    JCheckBox INSTANT_COLORBox = new JCheckBox("INSTANT_COLOR", true);
+    JCheckBox TIME_GRADIENTBox = new JCheckBox("TIME_GRADIENT");
+    JCheckBox SET_TIMEOUTBox = new JCheckBox("SET_TIMEOUT");
+    JCheckBox DO_DELAYBox = new JCheckBox("DO_DELAY");
+    JCheckBox INSTANT_COLORBox = new JCheckBox("INSTANT_COLOR");
 
     JButton applyBtn = new JButton("REPLACE THIS TEXT WITH UPDATE OR CREATE EFFECT TEXT");
     JButton deleteBtn = new JButton("Delete effect");
 
     /**
-     * @param effect The current effect, if it exists. Null if it doesn't exist.
+     * @param effect The current effect, as it exists. Passed in null if it doesn't exist.
      * @param startTime In the case that no effect exists for the performer at the given time, we still need the current
      *                 time for gui display.
      */
-    public EffectGUI(Effect effect, long startTime) {
+    public EffectGUI(Effect effect, long startTime, EffectListener effectListener) {
         this.effect = effect;
+        this.effectListener = effectListener;
 
         if (this.effect == null) {
             this.isNewEffect = true;
@@ -54,7 +58,6 @@ public class EffectGUI implements ActionListener {
             // Set up dummy effect with default values for user to customize
             Color startColor = new Color(0, 0, 0);
             Color endColor = new Color(0, 0, 0);
-
             Duration delay = Duration.ofSeconds(0).plusMillis(0);
             Duration duration = Duration.ofSeconds(0).plusMillis(0);
             Duration timeout = Duration.ofSeconds(0).plusMillis(0);
@@ -69,7 +72,7 @@ public class EffectGUI implements ActionListener {
                     TIME_GRADIENT, SET_TIMEOUT, DO_DELAY, INSTANT_COLOR);
         }
 
-        this.effectCopy = this.effect.clone(); // Changes made in GUI are not applied to original effect object
+        this.effectMod = this.effect.clone(); // Changes made in GUI are not applied to original effect object
         setupGUI();
     }
 
@@ -91,9 +94,20 @@ public class EffectGUI implements ActionListener {
 
         // Checkbox customization
         TIME_GRADIENTBox.setHorizontalTextPosition(SwingConstants.LEFT);
+        TIME_GRADIENTBox.addItemListener(getCheckBoxItemListener());
+        TIME_GRADIENTBox.setToolTipText("Enable/disable duration");
         SET_TIMEOUTBox.setHorizontalTextPosition(SwingConstants.LEFT);
+        SET_TIMEOUTBox.addItemListener(getCheckBoxItemListener());
+        SET_TIMEOUTBox.setToolTipText("Enable/disable timeout");
         DO_DELAYBox.setHorizontalTextPosition(SwingConstants.LEFT);
+        DO_DELAYBox.addItemListener(getCheckBoxItemListener());
+        DO_DELAYBox.setToolTipText("Enable/disable delay");
         INSTANT_COLORBox.setHorizontalTextPosition(SwingConstants.LEFT);
+        INSTANT_COLORBox.addItemListener(getCheckBoxItemListener());
+        INSTANT_COLORBox.setToolTipText("Tells the lights to change to the start color before the delay is executed if there is a delay.");
+
+        applyBtn.addActionListener(this);
+        deleteBtn.addActionListener(this);
 
         Border innerBorder = BorderFactory.createTitledBorder("Effect");
         Border outerBorder = BorderFactory.createEmptyBorder(5,5,5,5);
@@ -271,7 +285,7 @@ public class EffectGUI implements ActionListener {
         this.effectPanel.add(applyBtn, gc);
 
         // If effect exists, load pattern on gui
-        loadEffectToGUI(this.effectCopy);
+        loadEffectToGUI(this.effectMod);
     }
 
     private void loadEffectToGUI(Effect effect) {
@@ -288,10 +302,10 @@ public class EffectGUI implements ActionListener {
         durationField.setText(durationStr);
         timeoutField.setText(timeoutStr);
 
-        TIME_GRADIENTBox = new JCheckBox("TIME_GRADIENT", effect.isTIME_GRADIENT());
-        SET_TIMEOUTBox = new JCheckBox("SET_TIMEOUT", effect.isSET_TIMEOUT());
-        DO_DELAYBox = new JCheckBox("DO_DELAY", effect.isDO_DELAY());
-        INSTANT_COLORBox = new JCheckBox("INSTANT_COLOR", effect.isINSTANT_COLOR());
+        TIME_GRADIENTBox.setSelected(effect.isTIME_GRADIENT());
+        SET_TIMEOUTBox.setSelected(effect.isSET_TIMEOUT());
+        DO_DELAYBox.setSelected(effect.isDO_DELAY());
+        INSTANT_COLORBox.setSelected(effect.isINSTANT_COLOR());
 
         // Calculate start time label
         long minutesStart = java.util.concurrent.TimeUnit.MILLISECONDS.toMinutes(effect.getStartTimeMSec());
@@ -318,21 +332,47 @@ public class EffectGUI implements ActionListener {
         return effectPanel;
     }
 
+    private void applyToEffectMod() {
+
+        // Start and end color are applied automatically to effectCopy
+        Duration delay = Duration.ofNanos((long) (Double.parseDouble(delayField.getText()) * 1_000_000_000L));
+        Duration duration = Duration.ofNanos((long) (Double.parseDouble(durationField.getText()) * 1_000_000_000L));
+        Duration timeout = Duration.ofNanos((long) (Double.parseDouble(timeoutField.getText()) * 1_000_000_000L));
+        this.effectMod.setDelay(delay);
+        this.effectMod.setDuration(duration);
+        this.effectMod.setTimeout(timeout);
+
+        this.effectMod.setTIME_GRADIENT(this.TIME_GRADIENTBox.isSelected());
+        this.effectMod.setSET_TIMEOUT(this.SET_TIMEOUTBox.isSelected());
+        this.effectMod.setDO_DELAY(this.DO_DELAYBox.isSelected());
+        this.effectMod.setINSTANT_COLOR(this.INSTANT_COLORBox.isSelected());
+    }
+
     @Override
     public void actionPerformed(ActionEvent e) {
-        if (e.getSource().equals(startColorBtn)) {
-            Color selectedColor = JColorChooser.showDialog(this.effectPanel, "Choose Start Color", this.effectCopy.getStartColor());
+        if (e.getSource().equals(this.startColorBtn)) {
+            Color selectedColor = JColorChooser.showDialog(this.effectPanel, "Choose Start Color", this.effectMod.getStartColor());
             if (selectedColor != null) {
-                this.effectCopy.setStartColor(selectedColor);
+                this.effectMod.setStartColor(selectedColor);
                 this.startColorBtn.setBackground(selectedColor);
             }
         }
-        else if (e.getSource().equals(endColorBtn)) {
-            Color selectedColor = JColorChooser.showDialog(this.effectPanel, "Choose End Color", this.effectCopy.getEndColor());
+        else if (e.getSource().equals(this.endColorBtn)) {
+            Color selectedColor = JColorChooser.showDialog(this.effectPanel, "Choose End Color", this.effectMod.getEndColor());
             if (selectedColor != null) {
-                this.effectCopy.setEndColor(selectedColor);
+                this.effectMod.setEndColor(selectedColor);
                 this.endColorBtn.setBackground(selectedColor);
             }
+        }
+        else if (e.getSource().equals(this.applyBtn)) {
+            applyToEffectMod();
+            if (this.isNewEffect)
+                effectListener.onCreateEffect(this.effectMod);
+            else
+                effectListener.onUpdateEffect(this.effect, this.effectMod);
+        }
+        else if (e.getSource().equals(this.deleteBtn)) {
+            effectListener.onDeleteEffect(this.effect); // Delete target is the original
         }
     }
 
@@ -353,32 +393,51 @@ public class EffectGUI implements ActionListener {
             public void changedUpdate(DocumentEvent e) {}
 
             private void documentChanged() {
-
-                // Calculate the new end time, live gui update
-                long newEndTime = effectCopy.getStartTimeMSec();
-
-                long delayMSec;
-                long durationMSec;
-                long timeoutMSec;
-                try {
-                    delayMSec = (long) (Float.parseFloat(delayField.getText()) * 1000);
-                    durationMSec = (long) (Float.parseFloat(durationField.getText()) * 1000);
-                    timeoutMSec = (long) (Float.parseFloat(timeoutField.getText()) * 1000);
-                } catch (NumberFormatException nfe) {
-                    // System.out.println("Live End Time Calculation: Number Format Exception.");
-                    return;
-                }
-
-                if (DO_DELAYBox.isSelected()) newEndTime += delayMSec;
-                if (TIME_GRADIENTBox.isSelected()) newEndTime += durationMSec;
-                if (SET_TIMEOUTBox.isSelected()) newEndTime += timeoutMSec;
-
-                long minutesEnd = java.util.concurrent.TimeUnit.MILLISECONDS.toMinutes(newEndTime);
-                long secondsEnd = java.util.concurrent.TimeUnit.MILLISECONDS.toSeconds(newEndTime) % 60;
-                long millisecondsEnd = newEndTime % 1000;
-                endTimeLabel.setText(String.format("End: %d:%02d:%03d", minutesEnd, secondsEnd, millisecondsEnd));
+                liveUpdateEndTime();
             }
         };
+    }
+
+    private ItemListener getCheckBoxItemListener() {
+        return new ItemListener() {
+            @Override
+            public void itemStateChanged(ItemEvent e) {
+                liveUpdateEndTime();
+            }
+        };
+    }
+
+    private void liveUpdateEndTime() {
+
+        // Calculate the new end time, live gui update
+        long newEndTime = effectMod.getStartTimeMSec();
+
+        long delayMSec;
+        long durationMSec;
+        long timeoutMSec;
+        try {
+            delayMSec = (long) (Float.parseFloat(delayField.getText()) * 1000);
+            durationMSec = (long) (Float.parseFloat(durationField.getText()) * 1000);
+            timeoutMSec = (long) (Float.parseFloat(timeoutField.getText()) * 1000);
+        } catch (NumberFormatException nfe) {
+            // System.out.println("Live End Time Calculation: Number Format Exception.");
+            return;
+        }
+
+        if (DO_DELAYBox.isSelected()) {
+            newEndTime += delayMSec;
+        }
+        if (TIME_GRADIENTBox.isSelected()) {
+            newEndTime += durationMSec;
+        }
+        if (SET_TIMEOUTBox.isSelected()) {
+            newEndTime += timeoutMSec;
+        }
+
+        long minutesEnd = java.util.concurrent.TimeUnit.MILLISECONDS.toMinutes(newEndTime);
+        long secondsEnd = java.util.concurrent.TimeUnit.MILLISECONDS.toSeconds(newEndTime) % 60;
+        long millisecondsEnd = newEndTime % 1000;
+        endTimeLabel.setText(String.format("End: %d:%02d:%03d", minutesEnd, secondsEnd, millisecondsEnd));
     }
 
     public static void main(String[] args) {
@@ -405,7 +464,24 @@ public class EffectGUI implements ActionListener {
                 startColor, endColor, delay, duration, timeout,
                 TIME_GRADIENT, SET_TIMEOUT, DO_DELAY, INSTANT_COLOR);
 
-        EffectGUI effectGUI = new EffectGUI(effect, startTimeMSec);
+        EffectListener el = new EffectListener() {
+            @Override
+            public void onCreateEffect(Effect effect) {
+                System.out.println("onCreateEffect()");
+            }
+
+            @Override
+            public void onUpdateEffect(Effect oldEffect, Effect newEffect) {
+                System.out.println("onUpdateEffect");
+            }
+
+            @Override
+            public void onDeleteEffect(Effect effect) {
+                System.out.println("onDeleteEffect");
+            }
+        };
+
+        EffectGUI effectGUI = new EffectGUI(null, startTimeMSec, el);
         frame.add(effectGUI.getEffectPanel());
 
         frame.setVisible(true);
