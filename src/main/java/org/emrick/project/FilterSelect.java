@@ -3,6 +3,7 @@ package org.emrick.project;
 import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
+import java.util.HashSet;
 
 public class FilterSelect {
 
@@ -11,14 +12,12 @@ public class FilterSelect {
 //    private final JTextField selectSymbolButton;
     private final ArrayList<JComboBox> selectLabelComboBoxes;
     private final ArrayList<JComboBox> selectSymbolComboBoxes;
-    private final JButton cancelButton;
-    private final JButton selectButton;
 
-    public FilterSelect(JFrame parent) {
+    public FilterSelect(JFrame parent, HashSet<Integer> labels, HashSet<String> symbols) {
         this.frame = new JDialog(parent, true);
         this.frame.setTitle("Select by criteria");
         this.frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-        this.frame.setSize(300, 200);
+        this.frame.setSize(300, 400);
         this.frame.setLocationRelativeTo(null); // center on screen
         this.frame.setResizable(false); // resize window option
 
@@ -33,8 +32,17 @@ public class FilterSelect {
         JPanel labelPanel = new JPanel();
         JLabel selectLabelLabel = new JLabel("Select by Label");
         JButton selectLabelAddButton = new JButton("+");
+        JPanel labelEntryPanel = new JPanel();
+        labelEntryPanel.setLayout(new BoxLayout(labelEntryPanel, BoxLayout.Y_AXIS));
         selectLabelAddButton.addActionListener(e -> {
-            System.out.println("adding new label to check");
+            JComboBox<Integer> c = new JComboBox<>();
+            for (Integer l : labels) {
+                c.addItem(l);
+            }
+            labelEntryPanel.add(c);
+            selectLabelComboBoxes.add(c);
+            panel.revalidate();
+            panel.repaint();
         });
         labelPanel.add(selectLabelLabel);
         labelPanel.add(selectLabelAddButton);
@@ -43,20 +51,38 @@ public class FilterSelect {
         JPanel symbolPanel = new JPanel();
         JLabel selectSymbolLabel = new JLabel("Select by Symbol");
         JButton selectSymbolAddButton = new JButton("+");
+        JPanel symbolEntryPanel = new JPanel();
+        symbolEntryPanel.setLayout(new BoxLayout(symbolEntryPanel, BoxLayout.Y_AXIS));
         selectSymbolAddButton.addActionListener(e -> {
-            System.out.println("adding new symbol to check");
+            JComboBox<String> c = new JComboBox<>();
+            for (String s : symbols) {
+                c.addItem(s);
+            }
+            symbolEntryPanel.add(c);
+            selectSymbolComboBoxes.add(c);
+            panel.revalidate();
+            panel.repaint();
         });
         symbolPanel.add(selectSymbolLabel);
         symbolPanel.add(selectSymbolAddButton);
 
         panel.add(labelPanel);
+        panel.add(labelEntryPanel);
         panel.add(Box.createRigidArea(new Dimension(0,10)));
         panel.add(symbolPanel);
+        panel.add(symbolEntryPanel);
         panel.add(Box.createRigidArea(new Dimension(0,10)));
 
         // Cancel/Import buttons
-        this.cancelButton = new JButton("Cancel");
-        this.selectButton = new JButton("Select");
+        JButton cancelButton = new JButton("Cancel");
+        cancelButton.addActionListener(e -> frame.dispose());
+        JButton selectButton = new JButton("Select");
+        selectButton.addActionListener(e -> {
+            System.out.println("selecting!");
+            // TODO: send data to main
+            // TODO: dispose
+//            frame.dispose();
+        });
 
         JPanel buttonPane = new JPanel();
         buttonPane.setLayout(new BoxLayout(buttonPane, BoxLayout.LINE_AXIS));
