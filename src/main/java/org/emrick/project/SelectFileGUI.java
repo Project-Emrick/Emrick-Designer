@@ -15,13 +15,16 @@ import java.util.Optional;
  */
 public class SelectFileGUI implements ActionListener {
 
+    // Temporary
+    private final boolean IS_DEBUG = true;
+
     private final ImportListener importListener;
     // Parent frame
-    private final JDialog frame;
+    private final JDialog dialogWindow;
 
     // Paths to selected files
-    private File coordsFilePath;
-    private File archiveFilePath;
+    private File coordsFile;
+    private File archiveFile;
 
     // Upload File Buttons
     private final JButton ulCoordsButton;
@@ -48,15 +51,15 @@ public class SelectFileGUI implements ActionListener {
         this.importListener = importListener;
         importArchive = new ImportArchive(importListener);
 
-        coordsFilePath = null;
-        archiveFilePath = null;
+        coordsFile = null;
+        archiveFile = null;
 
-        frame = new JDialog(parent, true);
-        frame.setTitle("New Project - Import");
-        frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-        frame.setSize(400, 300);
-        frame.setLocationRelativeTo(null); // center on screen
-        frame.setResizable(false); // resize window option
+        dialogWindow = new JDialog(parent, true);
+        dialogWindow.setTitle("New Project - Import");
+        dialogWindow.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+        dialogWindow.setSize(400, 300);
+        dialogWindow.setLocationRelativeTo(null); // center on screen
+        dialogWindow.setResizable(false); // resize window option
 
         JLabel titleLabel = new JLabel("New Project - Import");
         titleLabel.setFont(new Font("Arial", Font.BOLD, 14));
@@ -110,11 +113,10 @@ public class SelectFileGUI implements ActionListener {
         buttonPane.add(Box.createRigidArea(new Dimension(10, 0)));
         buttonPane.add(importButton);
 
-        frame.add(titleLabel, BorderLayout.NORTH);
-        frame.add(ulPanel, BorderLayout.CENTER);
-        frame.add(buttonPane, BorderLayout.SOUTH);
+        dialogWindow.add(titleLabel, BorderLayout.NORTH);
+        dialogWindow.add(ulPanel, BorderLayout.CENTER);
+        dialogWindow.add(buttonPane, BorderLayout.SOUTH);
         // frame.pack(); // Constricts window size with just enough room for components
-
 
         // Action Listeners
 
@@ -122,10 +124,17 @@ public class SelectFileGUI implements ActionListener {
         ulArchiveButton.addActionListener(this);
         importButton.addActionListener(this);
         cancelButton.addActionListener(this);
-    }
 
-    public void show() {
-        frame.setVisible(true);
+        // Fast Import for Debugging
+        if (IS_DEBUG) {
+
+            // FIXME: Turn IS_DEBUG to false or replace these paths with your paths
+            autoImport(
+                    "D:\\DrillExample_NoMergeSubsetCounts.pdf",
+                    "D:\\Purdue23-1-1aint_no_mountain_high_enough.3dz"
+            );
+        }
+        else dialogWindow.setVisible(true);
     }
 
     /**
@@ -153,7 +162,7 @@ public class SelectFileGUI implements ActionListener {
                     File selectedFile = fileChooser.getSelectedFile();
                     System.out.println("Coordinates | Selected file: " + selectedFile.getAbsoluteFile());
                     ulCoordsFilename.setText(selectedFile.getName());
-                    coordsFilePath = selectedFile;
+                    coordsFile = selectedFile;
                 }
             }
 
@@ -166,26 +175,26 @@ public class SelectFileGUI implements ActionListener {
                     File selectedFile = fileChooser.getSelectedFile();
                     System.out.println("Archive     | Selected file: " + selectedFile.getAbsoluteFile());
                     ulArchiveFilename.setText(selectedFile.getName());
-                    archiveFilePath = selectedFile;
+                    archiveFile = selectedFile;
                 }
             }
 
             // Cancel
             else if (sourceButton.equals(cancelButton)) {
-                frame.dispose();
+                dialogWindow.dispose();
             }
 
             // Import selected files
             else if (sourceButton.equals(importButton)) {
-                if (coordsFilePath == null) {
-                    JOptionPane.showMessageDialog(frame,
+                if (coordsFile == null) {
+                    JOptionPane.showMessageDialog(dialogWindow,
                             "Please select the coordinates (.pdf) file.",
                             "Upload Error",
                             JOptionPane.ERROR_MESSAGE);
                     return;
                 }
-                else if (archiveFilePath == null) {
-                    JOptionPane.showMessageDialog(frame,
+                else if (archiveFile == null) {
+                    JOptionPane.showMessageDialog(dialogWindow,
                             "Please select the Pyware archive (.3dz) file.",
                             "Upload Error",
                             JOptionPane.ERROR_MESSAGE);
@@ -196,13 +205,19 @@ public class SelectFileGUI implements ActionListener {
 
                 // TODO: Import Coordinates Pdf and Pyware Archive
 
-                importListener.onFileSelect(archiveFilePath, coordsFilePath);
-                importArchive.fullImport(archiveFilePath.getAbsolutePath(), coordsFilePath.getAbsolutePath());
+                importListener.onFileSelect(archiveFile, coordsFile);
+                importArchive.fullImport(archiveFile.getAbsolutePath(), coordsFile.getAbsolutePath());
 
-                frame.dispose();
+                dialogWindow.dispose();
             }
 
         }
+    }
+
+    private void autoImport(String coordsFilePath, String archiveFilePath) {
+        this.coordsFile = new File(coordsFilePath);
+        this.archiveFile = new File(archiveFilePath);
+        this.importButton.doClick();
     }
 
     private static JFileChooser getFileChooser(String x, String suffix) {

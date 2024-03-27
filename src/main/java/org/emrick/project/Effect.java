@@ -2,8 +2,9 @@ package org.emrick.project;
 
 import java.awt.*;
 import java.time.Duration;
+import java.util.Objects;
 
-public class Effect {
+public class Effect implements Cloneable {
 
     // Application
     long startTimeMSec; // Based on position of scrub bar cursor when user first creates the effect
@@ -128,6 +129,34 @@ public class Effect {
 
     public void setINSTANT_COLOR(boolean INSTANT_COLOR) {
         this.INSTANT_COLOR = INSTANT_COLOR;
+    }
+
+    @Override
+    public Effect clone() {
+        try {
+            // Color and Duration are immutable, so a shallow copy will work
+            return (Effect) super.clone();
+        } catch (CloneNotSupportedException e) {
+            throw new AssertionError();
+        }
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Effect effect = (Effect) o;
+        return startTimeMSec == effect.startTimeMSec &&
+                endTimeMSec == effect.endTimeMSec &&
+                TIME_GRADIENT == effect.TIME_GRADIENT &&
+                SET_TIMEOUT == effect.SET_TIMEOUT &&
+                DO_DELAY == effect.DO_DELAY &&
+                INSTANT_COLOR == effect.INSTANT_COLOR &&
+                Objects.equals(startColor, effect.startColor) &&
+                Objects.equals(endColor, effect.endColor) &&
+                Objects.equals(delay, effect.delay) &&
+                Objects.equals(duration, effect.duration) &&
+                Objects.equals(timeout, effect.timeout);
     }
 
 }

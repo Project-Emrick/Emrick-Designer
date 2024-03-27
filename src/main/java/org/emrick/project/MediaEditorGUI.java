@@ -29,7 +29,7 @@ import org.emrick.project.serde.PairAdapter;
 import org.emrick.project.serde.Point2DAdapter;
 import org.emrick.project.serde.ProjectFile;
 
-public class MediaEditorGUI implements ImportListener, ScrubBarListener, SyncListener {
+public class MediaEditorGUI implements ImportListener, ScrubBarListener, SyncListener, FootballFieldListener, EffectListener {
 
     // String definitions
     public static final String FILE_MENU_NEW_PROJECT = "New Project";
@@ -37,11 +37,12 @@ public class MediaEditorGUI implements ImportListener, ScrubBarListener, SyncLis
     public static final String FILE_MENU_SAVE = "Save Project";
 
     // UI Components of MediaEditorGUI
-    private JFrame frame;
+    private final JFrame frame;
     private JPanel mainContentPanel;
-    private FootballFieldPanel footballFieldPanel;
+    private final FootballFieldPanel footballFieldPanel;
     private JPanel scrubBarPanel; // Refers directly to panel of ScrubBarGUI. Reduces UI refreshing issues.
     private ScrubBarGUI scrubBarGUI; // Refers to ScrubBarGUI instance, with functionality
+    private JPanel effectViewPanel;
 
     // Audio Components
     //  May want to abstract this away into some DrillPlayer class in the future
@@ -51,10 +52,16 @@ public class MediaEditorGUI implements ImportListener, ScrubBarListener, SyncLis
     private JPanel colorDisplayPanel;
 
     // dots
-    private JLabel sysMsg = new JLabel("Welcome to Emrick Designer!", SwingConstants.RIGHT);
-    private Timer clearSysMsg = new Timer(5000, e -> {
+    private final JLabel sysMsg = new JLabel("Welcome to Emrick Designer!", SwingConstants.RIGHT);
+    private final Timer clearSysMsg = new Timer(5000, e -> {
         sysMsg.setText("");
     });
+
+    // Effect
+    private EffectManager effectManager;
+    private EffectGUI effectGUI;
+    private Effect currentEffect;
+    private Effect copiedEffect;
 
     // Time
     // TODO: save this
@@ -66,12 +73,12 @@ public class MediaEditorGUI implements ImportListener, ScrubBarListener, SyncLis
     private Timer playbackTimer = null;
 
     // JSON serde
-    private Gson gson;
+    private final Gson gson;
 
     // Project info
     private File archivePath = null;
     private File drillPath = null;
-    private Path userHome = Paths.get(System.getProperty("user.home"), ".emrick");
+    private final Path userHome = Paths.get(System.getProperty("user.home"), ".emrick");
 
     public static void main(String[] args) {
         // setup sysmsg
@@ -86,12 +93,10 @@ public class MediaEditorGUI implements ImportListener, ScrubBarListener, SyncLis
         EventQueue.invokeLater(new Runnable() {
             @Override
             public void run() {
-                MediaEditorGUI mediaEditorGUI = new MediaEditorGUI();
-//                mediaEditorGUI.createAndShowGUI();
+                new MediaEditorGUI();
             }
         });
     }
-
 
     public MediaEditorGUI() {
         // serde setup
@@ -166,7 +171,7 @@ public class MediaEditorGUI implements ImportListener, ScrubBarListener, SyncLis
         UIManager.put("RadioButtonMenuItem.font", f);
 
         // Field
-        footballFieldPanel = new FootballFieldPanel();
+        footballFieldPanel = new FootballFieldPanel(this);
         footballFieldPanel.setBackground(Color.lightGray); // temp. Visual indicator for unfilled space
         JScrollPane fieldScrollPane = new JScrollPane(footballFieldPanel);
         fieldScrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
@@ -184,9 +189,7 @@ public class MediaEditorGUI implements ImportListener, ScrubBarListener, SyncLis
         createAndShowGUI();
     }
 
-
-    // Importing Listeners
-    //  If you are not familiar with this, please check out how to use listener interfaces in Java
+    ////////////////////////// Importing Listeners //////////////////////////
 
     @Override
     public void onFileSelect(File archivePath, File drillPath) {
@@ -238,6 +241,9 @@ public class MediaEditorGUI implements ImportListener, ScrubBarListener, SyncLis
         buildScrubBarPanel();
     }
 
+
+    ////////////////////////// Sync Listeners //////////////////////////
+
     @Override
     public void onSync(ArrayList<SyncTimeGUI.Pair> times, float startDelay) {
         this.timeSync = times;
@@ -254,10 +260,12 @@ public class MediaEditorGUI implements ImportListener, ScrubBarListener, SyncLis
         }
 
         timeManager = new TimeManager(pageTab2Count, this.timeSync, this.startDelay);
+        footballFieldPanel.setEffectManager(effectManager);
+        effectManager = new EffectManager(footballFieldPanel, timeManager);
     }
 
 
-    // ScrubBar Listeners
+    ////////////////////////// Scrub Bar Listeners //////////////////////////
 
     @Override
     public boolean onPlay() {
@@ -297,9 +305,10 @@ public class MediaEditorGUI implements ImportListener, ScrubBarListener, SyncLis
     public long onScrub() {
         useStartDelay = scrubBarGUI.isAtFirstSet() && scrubBarGUI.isAtStartOfSet();
 
-        if (timeManager != null) {
+        updateEffectViewPanel();
+
+        if (timeManager != null)
             return timeManager.getCount2MSec().get(footballFieldPanel.getCurrentCount());
-        }
         return 0;
     }
 
@@ -307,6 +316,58 @@ public class MediaEditorGUI implements ImportListener, ScrubBarListener, SyncLis
     public void onSpeedChange(float playbackSpeed) {
         System.out.println("MediaEditorGUI: playbackSpeed = " + playbackSpeed);
         this.playbackSpeed = playbackSpeed;
+    }
+
+
+    ////////////////////////// Effect Listeners //////////////////////////
+
+    @Override
+    public void onCreateEffect() {
+
+    }
+
+    @Override
+    public void onUpdateEffect() {
+
+    }
+
+    @Override
+    public void onDeleteEffect() {
+
+    }
+
+
+    ////////////////////////// Football Field Listeners //////////////////////////
+
+    @Override
+    public void onPerformerSelect() {
+        updateEffectViewPanel();
+    }
+
+    private void updateEffectViewPanel() {
+        if (this.effectManager == null) return;
+        if (this.effectGUI != null) {
+            this.effectViewPanel.remove(this.effectGUI.getEffectPanel());
+            this.effectViewPanel.revalidate();
+            this.effectViewPanel.repaint();
+            if (this.footballFieldPanel.selectedPerformers.size() != 1) {
+                return;
+            }
+        }
+        this.currentEffect = this.effectManager.getEffectFromSelected();
+        long currentMSec = this.timeManager.getCount2MSec().get(this.footballFieldPanel.getCurrentCount());
+        this.effectGUI = new EffectGUI(this.currentEffect, currentMSec);
+        this.effectViewPanel.add(this.effectGUI.getEffectPanel());
+        this.effectViewPanel.revalidate();
+        this.effectViewPanel.repaint();
+    }
+
+    @Override
+    public void onPerformerDeselect() {
+        if (this.effectManager == null || this.effectGUI == null) return;
+        this.effectViewPanel.remove(this.effectGUI.getEffectPanel());
+        this.effectViewPanel.revalidate();
+        this.effectViewPanel.repaint();
     }
 
 
@@ -338,9 +399,8 @@ public class MediaEditorGUI implements ImportListener, ScrubBarListener, SyncLis
         JMenuBar menuBar = new JMenuBar();
 
 
-        /*
-            Panels
-         */
+        ////////////////////////// Panels //////////////////////////
+
         JPanel topPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
 
         frame.add(topPanel, BorderLayout.NORTH);
@@ -364,7 +424,7 @@ public class MediaEditorGUI implements ImportListener, ScrubBarListener, SyncLis
         frame.add(timelinePanel, BorderLayout.SOUTH);
 
         // Effect View panel
-        JPanel effectViewPanel = new JPanel();
+        effectViewPanel = new JPanel();
         effectViewPanel.setLayout(new BorderLayout());
         effectViewPanel.setPreferredSize(new Dimension(300, frame.getHeight()));
         effectViewPanel.setBorder(BorderFactory.createTitledBorder("Effect View"));
@@ -389,13 +449,10 @@ public class MediaEditorGUI implements ImportListener, ScrubBarListener, SyncLis
             footballFieldPanel.repaint();
         });
 
-
         colorDisplayPanel.add(applyButton);
         effectViewPanel.add(colorDisplayPanel, BorderLayout.SOUTH);
 
-        /*
-            Menus
-         */
+        ////////////////////////// Menu //////////////////////////
 
         // File menu
         JMenu fileMenu = new JMenu("File");
@@ -405,17 +462,9 @@ public class MediaEditorGUI implements ImportListener, ScrubBarListener, SyncLis
         JMenuItem importItem = new JMenuItem(FILE_MENU_NEW_PROJECT);
         importItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_N, ActionEvent.CTRL_MASK));
         fileMenu.add(importItem);
-//        importItem.addActionListener(this);
         importItem.addActionListener(e -> {
             System.out.println("New Project...");
-
-            // Important: ImportListener allows import services (e.g., SelectFileGUI > ImportArchive) to call update
-            //  methods belonging to the current class (MediaEditorGUI).
-
-            SelectFileGUI selectFileGUI = new SelectFileGUI(frame, this);
-            selectFileGUI.show();
-
-//            System.out.println("Should have loaded the field by now");
+            new SelectFileGUI(frame, this);
         });
 
         // TODO: make sfg not local, have it load the project after import finishes
@@ -931,4 +980,5 @@ public class MediaEditorGUI implements ImportListener, ScrubBarListener, SyncLis
         float setDuration = scrubBarGUI.getCurrSetDuration();
         playbackTimer.setDelay( Math.round(setSyncDuration / setDuration * 1000 / playbackSpeed) );
     }
+
 }

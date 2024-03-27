@@ -7,12 +7,16 @@ import java.util.Map;
 
 public class TimeManager {
 
-    private HashMap<Integer, Long> count2MSec; // Maps each tick to the number of milliseconds it takes to get there
+    private HashMap<Integer, Long> count2MSec;                      // Count : The milliseconds it takes to get there
 
     // Additional
-    private ArrayList<Map.Entry<String, Integer>> set2NumCounts;
+    private final Map<String, Integer> set2Count;                   // Set : The count it begins on
+    private ArrayList<Map.Entry<String, Integer>> set2CountSorted;  // Set : The count it begins on
+    private ArrayList<Map.Entry<String, Integer>> set2NumCounts;    // Set : The number of counts in the set
+    private ArrayList<Map.Entry<String, Long>> set2MSec;            // Set : The milliseconds it takes to get there
 
     public TimeManager(Map<String, Integer> set2Count, ArrayList<SyncTimeGUI.Pair> timeSync, float startDelay) {
+        this.set2Count = set2Count;
         buildCount2MSec(set2Count, timeSync, startDelay);
     }
 
@@ -27,7 +31,7 @@ public class TimeManager {
         count2MSec = new HashMap<>();
 
         // Get a mapping of set to number of counts in the set, which is more helpful
-        ArrayList<Map.Entry<String, Integer>> set2CountSorted = (ArrayList<Map.Entry<String, Integer>>) ScrubBarGUI.sortMap(set2Count);
+        set2CountSorted = (ArrayList<Map.Entry<String, Integer>>) ScrubBarGUI.sortMap(set2Count);
 
         set2NumCounts = new ArrayList<>();
         for (int i = 0; i < set2CountSorted.size() - 1; i++) {
@@ -61,10 +65,36 @@ public class TimeManager {
                 }
             }
         }
+
+        // Build additional attributes for utility
+        buildSet2MSec(set2CountSorted, count2MSec);
+    }
+
+    private void buildSet2MSec(ArrayList<Map.Entry<String, Integer>> set2CountSorted, HashMap<Integer, Long> count2MSec) {
+        set2MSec = new ArrayList<>();
+        for (Map.Entry<String, Integer> entry : set2CountSorted) {
+            set2MSec.add(new AbstractMap.SimpleEntry<>(entry.getKey(), count2MSec.get(entry.getValue())));
+        }
     }
 
     public HashMap<Integer, Long> getCount2MSec() {
         return count2MSec;
+    }
+
+    public Map<String, Integer> getSet2Count() {
+        return set2Count;
+    }
+
+    public ArrayList<Map.Entry<String, Integer>> getSet2NumCounts() {
+        return set2NumCounts;
+    }
+
+    public ArrayList<Map.Entry<String, Integer>> getSet2CountSorted() {
+        return set2CountSorted;
+    }
+
+    public ArrayList<Map.Entry<String, Long>> getSet2MSec() {
+        return set2MSec;
     }
 
     public static void main(String[] args) {
