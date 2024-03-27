@@ -21,6 +21,10 @@ public class FootballFieldPanel extends JPanel {
     // Loading field decor.
     private BufferedImage surfaceImage;
     private BufferedImage floorCoverImage;
+
+    private boolean showSurfaceImage = true;
+    private boolean showFloorCoverImage = true;
+
     private boolean ctrlHeld = false;
     private Set currentSet;
     private int currentCount = 0;
@@ -161,12 +165,12 @@ public class FootballFieldPanel extends JPanel {
         super.paintComponent(g);
 
         // Draw the surface image
-        if (surfaceImage != null) {
+        if (surfaceImage != null && showSurfaceImage) {
             drawBetterImage(g, surfaceImage);
         }
 
         // Draw the floorCover image on top
-        if (floorCoverImage != null) {
+        if (floorCoverImage != null && showFloorCoverImage) {
             drawBetterImage(g, floorCoverImage);
         }
 
@@ -198,9 +202,9 @@ public class FootballFieldPanel extends JPanel {
                 // No effect is present at the current count
                 if (currentEffect == null) {
                     g.setColor(Color.BLACK);
-                    return;
+                } else {
+                    g.setColor(currentEffect.getStartColor()); // TODO eventually: Calculate phase of color shift from effect
                 }
-                g.setColor(currentEffect.getStartColor()); // TODO eventually: Calculate phase of color shift from effect
             }
 
             g.fillRect((int)x-6,(int)y-6,6,12);
@@ -315,5 +319,21 @@ public class FootballFieldPanel extends JPanel {
     }
     public void setCurrentSet(Set currentSet) {
         this.currentSet = currentSet;
+    }
+
+    public void setShowSurfaceImage(boolean showSurfaceImage) {
+        this.showSurfaceImage = showSurfaceImage;
+    }
+
+    public boolean getShowSurfaceImage() {
+        return showSurfaceImage;
+    }
+
+    public void setShowFloorCoverImage(boolean showFloorCoverImage) {
+        this.showFloorCoverImage = showFloorCoverImage;
+    }
+
+    public boolean getShowFloorCoverImage() {
+        return showFloorCoverImage;
     }
 }
