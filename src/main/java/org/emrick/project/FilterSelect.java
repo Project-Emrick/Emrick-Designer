@@ -10,10 +10,10 @@ public class FilterSelect {
     private final JDialog frame;
 //    private final JTextField selectLabelButton;
 //    private final JTextField selectSymbolButton;
-    private final ArrayList<JComboBox> selectLabelComboBoxes;
-    private final ArrayList<JComboBox> selectSymbolComboBoxes;
+    private final ArrayList<JComboBox<Integer>> selectLabelComboBoxes;
+    private final ArrayList<JComboBox<String>> selectSymbolComboBoxes;
 
-    public FilterSelect(JFrame parent, HashSet<Integer> labels, HashSet<String> symbols) {
+    public FilterSelect(JFrame parent, SelectListener listener, HashSet<Integer> labels, HashSet<String> symbols) {
         this.frame = new JDialog(parent, true);
         this.frame.setTitle("Select by criteria");
         this.frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
@@ -78,10 +78,19 @@ public class FilterSelect {
         cancelButton.addActionListener(e -> frame.dispose());
         JButton selectButton = new JButton("Select");
         selectButton.addActionListener(e -> {
-            System.out.println("selecting!");
-            // TODO: send data to main
-            // TODO: dispose
-//            frame.dispose();
+            HashSet<Integer> selectedLabels = new HashSet<>();
+            HashSet<String> selectedSymbols = new HashSet<>();
+
+            for (JComboBox<Integer> c : this.selectLabelComboBoxes) {
+                selectedLabels.add((Integer) c.getSelectedItem());
+            }
+            for (JComboBox<String> c : this.selectSymbolComboBoxes) {
+                selectedSymbols.add((String) c.getSelectedItem());
+            }
+
+            listener.onMultiSelect(selectedLabels, selectedSymbols);
+
+            frame.dispose();
         });
 
         JPanel buttonPane = new JPanel();

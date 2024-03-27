@@ -17,7 +17,7 @@ import java.nio.file.*;
 import java.util.*;
 import java.util.stream.*;
 
-public class MediaEditorGUI implements ImportListener, ScrubBarListener, SyncListener {
+public class MediaEditorGUI implements ImportListener, ScrubBarListener, SyncListener, SelectListener {
 
     // String definitions
     public static final String FILE_MENU_NEW_PROJECT = "New Project";
@@ -239,16 +239,16 @@ public class MediaEditorGUI implements ImportListener, ScrubBarListener, SyncLis
 
 //            System.out.println("Should have loaded the field by now");
         });
-
-        // TODO: make sfg not local, have it load the project after import finishes
-
-        // Open Emrick Project
-        // https://www.codejava.net/java-se/swing/add-file-filter-for-jfilechooser-dialog
-        JMenuItem openItem = new JMenuItem(FILE_MENU_OPEN_PROJECT);
-        openItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_O, ActionEvent.CTRL_MASK));
-        fileMenu.add(openItem);
-        openItem.addActionListener(e -> {
-            openProjectDialog();
+// TODO: select stuff
+        // TODO: make sfg not local, have it load the project after import finishes// TODO: select stuff
+// TODO: select stuff
+        // Open Emrick Project// TODO: select stuff
+        // https://www.codejava.net/java-se/swing/add-file-filter-for-jfilechooser-dialog// TODO: select stuff
+        JMenuItem openItem = new JMenuItem(FILE_MENU_OPEN_PROJECT);// TODO: select stuff
+        openItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_O, ActionEvent.CTRL_MASK));// TODO: select stuff
+        fileMenu.add(openItem);// TODO: select stuff
+        openItem.addActionListener(e -> {// TODO: select stuff
+            openProjectDialog();// TODO: select stuff
         });
 
         fileMenu.addSeparator();
@@ -357,7 +357,7 @@ public class MediaEditorGUI implements ImportListener, ScrubBarListener, SyncLis
                 symbols.add(p.getSymbol());
             }
             System.out.println("selecting by criteria...");
-            FilterSelect filterSelect = new FilterSelect(frame, labels, symbols);
+            FilterSelect filterSelect = new FilterSelect(frame, this, labels, symbols);
             filterSelect.show();
         });
         editMenu.add(selectByCrit);
@@ -368,8 +368,6 @@ public class MediaEditorGUI implements ImportListener, ScrubBarListener, SyncLis
         JCheckBoxMenuItem toggleFloorCoverImage = new JCheckBoxMenuItem("Show Floor Cover Image");
         toggleFloorCoverImage.setState(true);
         toggleFloorCoverImage.addActionListener(e -> {
-//            System.out.println("floor cover");
-//            toggleFloorCoverImage.setSelected(!toggleFloorCoverImage.isSelected());
             footballFieldPanel.setShowFloorCoverImage(!footballFieldPanel.getShowFloorCoverImage());
             footballFieldPanel.repaint();
         });
@@ -377,8 +375,6 @@ public class MediaEditorGUI implements ImportListener, ScrubBarListener, SyncLis
         JCheckBoxMenuItem toggleSurfaceImage = new JCheckBoxMenuItem("Show Surface Image");
         toggleSurfaceImage.setState(true);
         toggleSurfaceImage.addActionListener(e -> {
-//            System.out.println("surface");
-//            toggleSurfaceImage.setSelected(!toggleSurfaceImage.isSelected());
             footballFieldPanel.setShowSurfaceImage(!footballFieldPanel.getShowSurfaceImage());
             footballFieldPanel.repaint();
         });
@@ -994,5 +990,18 @@ public class MediaEditorGUI implements ImportListener, ScrubBarListener, SyncLis
 
         saveProject(jsonDir.toFile(), archiveDir.toFile(), drillDir.toFile());
         writeSysMsg("Autosaved project to `" + jsonDir + "`.");
+    }
+
+    @Override
+    public void onMultiSelect(HashSet<Integer> labels, HashSet<String> symbols) {
+        // TODO: select stuff
+//        footballFieldPanel.selectedPerformers
+        for (Performer p : footballFieldPanel.drill.performers) {
+            if (labels.contains(p.getLabel()) || symbols.contains(p.getSymbol())) {
+                String key = p.getSymbol() + p.getLabel();
+                footballFieldPanel.selectedPerformers.put(key, p);
+            }
+        }
+        footballFieldPanel.repaint();
     }
 }
