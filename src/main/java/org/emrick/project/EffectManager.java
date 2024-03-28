@@ -1,11 +1,13 @@
 package org.emrick.project;
 
+import org.emrick.project.actions.*;
+
 import javax.swing.*;
-import java.util.ArrayList;
-import java.util.Map;
+import java.util.*;
 
 public class EffectManager {
-
+    private final Stack<UndoableAction> undoStack = new Stack<>();
+    private final Stack<UndoableAction> redoStack = new Stack<>();
     FootballFieldPanel footballFieldPanel; // For easy access to selection info and performers
     TimeManager timeManager; // Same TimeManager object as in MediaEditorGUI
 
@@ -64,10 +66,28 @@ public class EffectManager {
             return false;
         }
         showAddEffectSuccessDialog();
-        performer.getEffects().add(effect);
+        //performer.getEffects().add(effect);
+        UndoableAction createEffectAction = new CreateEffectAction(effect, performer);
+        createEffectAction.execute();
+        undoStack.push(createEffectAction);
+        redoStack.clear();
         return true;
     }
+    public void undo() {
+        if (!undoStack.isEmpty()) {
+            UndoableAction action = undoStack.pop();
+            action.undo();
+            redoStack.push(action);
+        }
+    }
 
+    public void redo() {
+        if (!redoStack.isEmpty()) {
+            UndoableAction action = redoStack.pop();
+            action.redo();
+            undoStack.push(action);
+        }
+    }
     public boolean addEffectToSelectedPerformer(Effect effect) {
         Performer performer = getSelectedPerformer();
         if (performer == null) return false;
@@ -77,19 +97,34 @@ public class EffectManager {
     public boolean addEffectToSelectedPerformers(Effect effect) {
         if (effect == null) return false;
 
-        ArrayList<Performer> performers = getSelectedPerformers();
+        ArrayList<Performer> selectedPerformers = getSelectedPerformers();
 
         // Verify ability to add the effect to all selected performers. Avoid adding for some then error-ing out
-        for (Performer performer : performers) {
+        for (Performer performer : selectedPerformers) {
             if (!isValid(effect, performer)) {
                 showAddEffectErrorDialog(performer);
                 return false;
             }
         }
-        for (Performer performer : performers) {
-            performer.getEffects().add(effect);
-        }
+        addEffect(effect, selectedPerformers);
+//        for (Performer performer : selectedPerformers) {
+//            //performer.getEffects().add(effect);
+//            addEffect(effect, performer);
+//        }
         return true;
+    }
+
+    private void addEffect(Effect effect, List<Performer> performers) {
+//        if (!isValid(effect, performer)) {
+//            showAddEffectErrorDialog(performer);
+//            return false;
+//        }
+        showAddEffectSuccessDialog();
+        //performer.getEffects().add(effect);
+        UndoableAction createEffectAction = new CreateEffectsAction(effect, performers);
+        createEffectAction.execute();
+        undoStack.push(createEffectAction);
+        redoStack.clear();
     }
 
     private void showAddEffectErrorDialog(Performer performer) {
@@ -107,7 +142,11 @@ public class EffectManager {
     public void removeEffect(Effect effect, Performer performer) {
         JOptionPane.showMessageDialog(null, "Effect removed successfully.",
                 "Remove Effect: Success", JOptionPane.INFORMATION_MESSAGE);
-        performer.getEffects().remove(effect);
+        //performer.getEffects().remove(effect);
+        UndoableAction removeEffectAction = new RemoveEffectAction(effect, performer);
+        removeEffectAction.execute();
+        undoStack.push(removeEffectAction);
+        redoStack.clear();
     }
 
     public void removeEffectFromSelectedPerformer(Effect effect) {
@@ -152,16 +191,20 @@ public class EffectManager {
      * @param performer The associated performer.
      */
     public void replaceEffect(Effect oldEffect, Effect newEffect, Performer performer) {
-        performer.getEffects().remove(oldEffect);
+        //performer.getEffects().remove(oldEffect);
 
         // Check that replacement with new effect is still valid
         if (!isValid(newEffect, performer)) {
             showAddEffectErrorDialog(performer);
-            performer.getEffects().add(oldEffect); // Put it back
+            //performer.getEffects().add(oldEffect); // Put it back
             return;
         }
         showAddEffectSuccessDialog();
-        performer.getEffects().add(newEffect);
+        //performer.getEffects().add(newEffect);
+        UndoableAction replaceEffectAction = new ReplaceEffectAction(oldEffect, newEffect, performer);
+        replaceEffectAction.execute();
+        undoStack.push(replaceEffectAction);
+        redoStack.clear();
     }
 
     public void replaceEffectForSelectedPerformer(Effect oldEffect, Effect newEffect) {
