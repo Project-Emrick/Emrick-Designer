@@ -821,8 +821,6 @@ public class MediaEditorGUI implements ImportListener, ScrubBarListener, SyncLis
             Path fullArchive = Paths.get(path.getParentFile().getPath(), pf.archivePath);
             Path fullDrill = Paths.get(path.getParentFile().getPath(), pf.drillPath);
 
-            timeSync = pf.timeSync;
-
             archivePath = fullArchive.toFile();
             drillPath = fullDrill.toFile();
 
@@ -832,6 +830,13 @@ public class MediaEditorGUI implements ImportListener, ScrubBarListener, SyncLis
 //            rebuildPageTabCounts();
 //            scrubBarGUI.setReady(true);
             footballFieldPanel.repaint();
+
+            if (pf.timeSync != null && pf.startDelay != null) {
+                timeSync = pf.timeSync;
+                startDelay = pf.startDelay;
+                setupEffectView();
+            }
+
         } catch (JsonIOException | JsonSyntaxException | FileNotFoundException e) {
             writeSysMsg("Failed to open to `" + path + "`.");
             throw new RuntimeException(e);
@@ -848,7 +853,7 @@ public class MediaEditorGUI implements ImportListener, ScrubBarListener, SyncLis
         String relArchive = path.getParentFile().toURI().relativize(archivePath.toURI()).getPath();
         String relDrill = path.getParentFile().toURI().relativize(drillPath.toURI()).getPath();
 
-        ProjectFile pf = new ProjectFile(footballFieldPanel.drill, relArchive, relDrill, timeSync);
+        ProjectFile pf = new ProjectFile(footballFieldPanel.drill, relArchive, relDrill, timeSync, startDelay);
         String g = gson.toJson(pf);
 
         System.out.println("saving to `" + path + "`");
@@ -972,11 +977,14 @@ public class MediaEditorGUI implements ImportListener, ScrubBarListener, SyncLis
 
     @Override
     public void onSync(ArrayList<SyncTimeGUI.Pair> times, float startDelay) {
-        this.timeSync = times;
         System.out.println("MediaEditorGUI: Got Synced Times");
-
+        this.timeSync = times;
         this.startDelay = startDelay;
 
+        setupEffectView();
+    }
+
+    private void setupEffectView() {
         // Recalculate set to count map (pageTab2Count) to initialize timeManager
         Map<String, Integer> pageTab2Count = new HashMap<>();
         int startCount = 0;
