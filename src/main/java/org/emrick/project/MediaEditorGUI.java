@@ -299,7 +299,8 @@ public class MediaEditorGUI implements ImportListener, ScrubBarListener, SyncLis
         undoColorsItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_Z,
                                                              Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx()));
         undoColorsItem.addActionListener(e -> {
-            undoColorChange();
+            //undoColorChange();
+            effectManager.undo();
             footballFieldPanel.repaint();
         });
         editMenu.add(undoColorsItem);
@@ -308,7 +309,8 @@ public class MediaEditorGUI implements ImportListener, ScrubBarListener, SyncLis
         redoColorsItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_Y,
                                                              Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx()));
         redoColorsItem.addActionListener(e -> {
-            redoColorChange();
+            //redoColorChange();
+            effectManager.redo();
             footballFieldPanel.repaint();
         });
         editMenu.add(redoColorsItem);
