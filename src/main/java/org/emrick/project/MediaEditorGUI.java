@@ -14,6 +14,7 @@ import java.awt.event.*;
 import java.awt.geom.*;
 import java.io.*;
 import java.nio.file.*;
+import java.time.Duration;
 import java.util.*;
 import java.util.stream.*;
 
@@ -71,6 +72,7 @@ public class MediaEditorGUI implements ImportListener, ScrubBarListener, SyncLis
         builder.registerTypeAdapter(Color.class, new ColorAdapter());
         builder.registerTypeAdapter(Point2D.class, new Point2DAdapter());
         builder.registerTypeAdapter(SyncTimeGUI.Pair.class, new PairAdapter());
+        builder.registerTypeAdapter(Duration.class, new DurationAdapter());
         builder.serializeNulls();
         gson = builder.create();
 
