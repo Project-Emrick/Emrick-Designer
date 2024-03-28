@@ -12,7 +12,7 @@ public class PairAdapter extends TypeAdapter<SyncTimeGUI.Pair> {
     @Override
     public SyncTimeGUI.Pair read(JsonReader reader) throws IOException {
         String k = null;
-        Integer v = null;
+        Double v = null;
         String fieldname = null;
         if (reader.peek().equals(JsonToken.NULL)) {
             reader.nextNull();
@@ -30,7 +30,7 @@ public class PairAdapter extends TypeAdapter<SyncTimeGUI.Pair> {
             if ("k".equals(fieldname)) {
                 k = reader.nextString();
             } else if ("v".equals(fieldname)) {
-                v = reader.nextInt();
+                v = reader.nextDouble();
             }
         }
         reader.endObject();
@@ -39,7 +39,7 @@ public class PairAdapter extends TypeAdapter<SyncTimeGUI.Pair> {
             throw new IOException("failed to get component for map entry");
         }
 
-        return new SyncTimeGUI.Pair(k, v);
+        return new SyncTimeGUI.Pair(k, v.floatValue());
     }
 
     @Override

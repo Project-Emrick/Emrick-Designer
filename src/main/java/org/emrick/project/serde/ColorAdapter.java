@@ -39,8 +39,14 @@ public class ColorAdapter extends TypeAdapter<Color> {
         }
         reader.endObject();
 
-        if (r == null || g == null || b == null || a == null) {
-            throw new IOException("failed to get component for color");
+        if (r == null) {
+            throw new IOException("failed to get red component for color");
+        } else if (g == null) {
+            throw new IOException("failed to get green component for color");
+        } else if (b == null) {
+            throw new IOException("failed to get blue component for color");
+        } else if (a == null) {
+            throw new IOException("failed to get alpha component for color");
         }
 
         return new Color(r, g, b, a);
