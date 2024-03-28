@@ -113,4 +113,8 @@ public class Performer {
         return out;
     }
 
+    public String getIdentifier() {
+        return getSymbol() + getLabel();
+    }
+
 }

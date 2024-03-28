@@ -43,6 +43,11 @@ public class EffectGUI implements ActionListener {
     JButton applyBtn = new JButton("REPLACE THIS TEXT WITH UPDATE OR CREATE EFFECT TEXT");
     JButton deleteBtn = new JButton("Delete effect");
 
+    // Strings
+    public static String noProjectSyncMsg = "<html><body style='text-align: center;'>Load a time-synced Emrick project to get started using effects.</body></html>";
+    public static String noPerformerMsg = "<html><body style='text-align: center;'>Select one or more performers to modify their effects.</body></html>";
+    public static String noCommonEffectMsg = "<html><body style='text-align: center;'>No common effect found among selected performers.</body></html>";
+
     /**
      * @param effect The current effect, as it exists. Passed in null if it doesn't exist.
      * @param startTime In the case that no effect exists for the performer at the given time, we still need the current
@@ -74,6 +79,39 @@ public class EffectGUI implements ActionListener {
 
         this.effectMod = this.effect.clone(); // Changes made in GUI are not applied to original effect object
         setupGUI();
+    }
+
+    /**
+     * This alternative constructor can deliver a placeholder panel with instructions about working with effects. You
+     * can call this when the program is first started and the project isn't loaded or synced.
+     */
+    public EffectGUI(String placeholderText) {
+        this.effectPanel = new JPanel();
+
+        Border innerBorder = BorderFactory.createTitledBorder("Effect");
+        Border outerBorder = BorderFactory.createEmptyBorder(5,5,5,5);
+        Border innerBorder2 = BorderFactory.createEmptyBorder(20,20,20,20);
+        Border outerBorder2 = BorderFactory.createCompoundBorder(outerBorder, innerBorder);
+
+        this.effectPanel.setBorder(BorderFactory.createCompoundBorder(outerBorder2, innerBorder2));
+
+        this.effectPanel.setLayout(new GridBagLayout());
+
+        JLabel placeholderLabel = new JLabel(placeholderText);
+        placeholderLabel.setHorizontalAlignment(JLabel.CENTER);
+
+        GridBagConstraints gc = new GridBagConstraints();
+
+        //////////////// 0th Row ////////////////
+
+        gc.weightx = 1;
+        gc.weighty = 1;
+
+        gc.gridx = 0;
+        gc.gridy = 0;
+        gc.fill = GridBagConstraints.HORIZONTAL;
+        gc.anchor = GridBagConstraints.CENTER;
+        this.effectPanel.add(placeholderLabel, gc);
     }
 
     private void setupGUI() {
@@ -482,6 +520,7 @@ public class EffectGUI implements ActionListener {
         };
 
         EffectGUI effectGUI = new EffectGUI(null, startTimeMSec, el);
+        effectGUI = new EffectGUI(EffectGUI.noCommonEffectMsg);
         frame.add(effectGUI.getEffectPanel());
 
         frame.setVisible(true);

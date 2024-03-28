@@ -21,7 +21,7 @@ public class FootballFieldPanel extends JPanel {
     // Loading field decor.
     private BufferedImage surfaceImage;
     private BufferedImage floorCoverImage;
-
+    private final BufferedImage dummyImage = new BufferedImage(2196, 1157, BufferedImage.TYPE_INT_ARGB);
     private boolean showSurfaceImage = true;
     private boolean showFloorCoverImage = true;
 
@@ -177,6 +177,10 @@ public class FootballFieldPanel extends JPanel {
         // Draw the floorCover image on top
         if (floorCoverImage != null && showFloorCoverImage) {
             drawBetterImage(g, floorCoverImage);
+        }
+
+        if (!showFloorCoverImage && !showSurfaceImage) {
+            drawBetterImage(g, dummyImage); // For accurate plotting, need some image reference
         }
 
         // Draw performers with their colors
@@ -343,5 +347,9 @@ public class FootballFieldPanel extends JPanel {
 
     public boolean getShowFloorCoverImage() {
         return showFloorCoverImage;
+    }
+
+    public int getNumSelectedPerformers() {
+        return this.selectedPerformers.size();
     }
 }

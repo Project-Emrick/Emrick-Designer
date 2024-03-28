@@ -33,6 +33,7 @@ public class EffectManager {
      * @return True if valid, false if invalid.
      */
     public boolean isValid(Effect effect, Performer performer) {
+        if (effect == null) return false;
 
         // The effect should not overlap with another effect on the given performer
         long startMSec = effect.getStartTimeMSec();
@@ -57,27 +58,55 @@ public class EffectManager {
         return startTimeSet.equals(endTimeSet);
     }
 
-    public void addEffect(Effect effect, Performer performer) {
+    public boolean addEffect(Effect effect, Performer performer) {
         if (!isValid(effect, performer)) {
-            JOptionPane.showMessageDialog(null,
-                    "Effect could not be applied. Please check for possible set run-off or overlap with other effects.",
-                    "Effect Error", JOptionPane.ERROR_MESSAGE);
-            return;
+            showAddEffectErrorDialog(performer);
+            return false;
         }
-        JOptionPane.showMessageDialog(null, "Effect created successfully.",
-                "Success", JOptionPane.INFORMATION_MESSAGE);
+        showAddEffectSuccessDialog();
         performer.getEffects().add(effect);
+        return true;
     }
 
-    public void addEffectToSelectedPerformer(Effect effect) {
+    public boolean addEffectToSelectedPerformer(Effect effect) {
         Performer performer = getSelectedPerformer();
-        if (performer == null) return;
-        addEffect(effect, performer);
+        if (performer == null) return false;
+        return addEffect(effect, performer);
+    }
+
+    public boolean addEffectToSelectedPerformers(Effect effect) {
+        if (effect == null) return false;
+
+        ArrayList<Performer> performers = getSelectedPerformers();
+
+        // Verify ability to add the effect to all selected performers. Avoid adding for some then error-ing out
+        for (Performer performer : performers) {
+            if (!isValid(effect, performer)) {
+                showAddEffectErrorDialog(performer);
+                return false;
+            }
+        }
+        for (Performer performer : performers) {
+            performer.getEffects().add(effect);
+        }
+        return true;
+    }
+
+    private void showAddEffectErrorDialog(Performer performer) {
+        JOptionPane.showMessageDialog(null,
+                "Effect could not be applied to performer " + performer.getIdentifier() +
+                        ". Please check for possible set run-off or overlap with the performer's other effects.",
+                "Apply Effect: Error", JOptionPane.ERROR_MESSAGE);
+    }
+
+    private void showAddEffectSuccessDialog() {
+        JOptionPane.showMessageDialog(null, "Effect applied successfully.",
+                "Apply Effect: Success", JOptionPane.INFORMATION_MESSAGE);
     }
 
     public void removeEffect(Effect effect, Performer performer) {
-        JOptionPane.showMessageDialog(null, "Effect deleted successfully.",
-                "Success", JOptionPane.INFORMATION_MESSAGE);
+        JOptionPane.showMessageDialog(null, "Effect removed successfully.",
+                "Remove Effect: Success", JOptionPane.INFORMATION_MESSAGE);
         performer.getEffects().remove(effect);
     }
 
@@ -127,10 +156,11 @@ public class EffectManager {
 
         // Check that replacement with new effect is still valid
         if (!isValid(newEffect, performer)) {
+            showAddEffectErrorDialog(performer);
             performer.getEffects().add(oldEffect); // Put it back
+            return;
         }
-        JOptionPane.showMessageDialog(null, "Effect updated successfully.",
-                "Success", JOptionPane.INFORMATION_MESSAGE);
+        showAddEffectSuccessDialog();
         performer.getEffects().add(newEffect);
     }
 

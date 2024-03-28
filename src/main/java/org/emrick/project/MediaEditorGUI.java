@@ -17,7 +17,7 @@ import java.nio.file.*;
 import java.util.*;
 import java.util.stream.*;
 
-public class MediaEditorGUI implements ImportListener, ScrubBarListener, SyncListener, FootballFieldListener, EffectListener {
+public class MediaEditorGUI implements ImportListener, ScrubBarListener, SyncListener, FootballFieldListener, EffectListener, SelectListener {
 
     // String definitions
     public static final String FILE_MENU_NEW_PROJECT = "New Project";
@@ -130,7 +130,7 @@ public class MediaEditorGUI implements ImportListener, ScrubBarListener, SyncLis
         });
 
         // Change Font Size for Menu and MenuIem
-        Font f = new Font("FlatLaf.style", Font.PLAIN, 16);
+        Font f = new Font("FlatLaf.style", Font.PLAIN, 14);
         UIManager.put("Menu.font", f);
         UIManager.put("MenuItem.font", f);
         UIManager.put("CheckBoxMenuItem.font", f);
@@ -192,10 +192,12 @@ public class MediaEditorGUI implements ImportListener, ScrubBarListener, SyncLis
         frame.add(timelinePanel, BorderLayout.SOUTH);
 
         // Effect View panel
+        effectGUI = new EffectGUI(EffectGUI.noProjectSyncMsg);
         effectViewPanel = new JPanel();
         effectViewPanel.setLayout(new BorderLayout());
         effectViewPanel.setPreferredSize(new Dimension(300, frame.getHeight()));
         effectViewPanel.setBorder(BorderFactory.createTitledBorder("Effect View"));
+        effectViewPanel.add(effectGUI.getEffectPanel());
         frame.add(effectViewPanel, BorderLayout.EAST);
 
         // Initialize the color display panel with a default color or make it transparent initially
@@ -237,16 +239,16 @@ public class MediaEditorGUI implements ImportListener, ScrubBarListener, SyncLis
             System.out.println("New Project...");
             new SelectFileGUI(frame, this);
         });
-
-        // TODO: make sfg not local, have it load the project after import finishes
-
-        // Open Emrick Project
-        // https://www.codejava.net/java-se/swing/add-file-filter-for-jfilechooser-dialog
-        JMenuItem openItem = new JMenuItem(FILE_MENU_OPEN_PROJECT);
-        openItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_O, ActionEvent.CTRL_MASK));
-        fileMenu.add(openItem);
-        openItem.addActionListener(e -> {
-            openProjectDialog();
+// TODO: select stuff
+        // TODO: make sfg not local, have it load the project after import finishes// TODO: select stuff
+// TODO: select stuff
+        // Open Emrick Project// TODO: select stuff
+        // https://www.codejava.net/java-se/swing/add-file-filter-for-jfilechooser-dialog// TODO: select stuff
+        JMenuItem openItem = new JMenuItem(FILE_MENU_OPEN_PROJECT);// TODO: select stuff
+        openItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_O, ActionEvent.CTRL_MASK));// TODO: select stuff
+        fileMenu.add(openItem);// TODO: select stuff
+        openItem.addActionListener(e -> {// TODO: select stuff
+            openProjectDialog();// TODO: select stuff
         });
 
         fileMenu.addSeparator();
@@ -355,14 +357,62 @@ public class MediaEditorGUI implements ImportListener, ScrubBarListener, SyncLis
             this.footballFieldPanel.repaint();
         });
 
+        editMenu.addSeparator();
+
+        JMenuItem copyCurrentEffect = new JMenuItem("Copy Effect");
+        copyCurrentEffect.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_C,
+                Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx()));
+        copyCurrentEffect.addActionListener(e -> {
+            if (this.effectManager == null) return;
+            if (this.currentEffect == null) {
+                JOptionPane.showMessageDialog(frame, "No effect to copy.",
+                        "Copy Effect: Warning", JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+            JOptionPane.showMessageDialog(frame, "Effect copied.",
+                    "Copy Effect: Success", JOptionPane.INFORMATION_MESSAGE);
+            this.copiedEffect = this.currentEffect;
+        });
+        editMenu.add(copyCurrentEffect);
+
+        JMenuItem pasteCopiedEffect = new JMenuItem("Paste Effect");
+        pasteCopiedEffect.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_V,
+                Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx()));
+        pasteCopiedEffect.addActionListener(e -> {
+            if (this.effectManager == null) return;
+            boolean success = this.effectManager.addEffectToSelectedPerformers(this.copiedEffect);
+            if (success) updateEffectViewPanel();
+            this.footballFieldPanel.repaint();
+        });
+        editMenu.add(pasteCopiedEffect);
+
+        editMenu.addSeparator();
+
+        JMenuItem selectByCrit = new JMenuItem("Select by Criteria");
+        selectByCrit.addActionListener(e -> {
+            if (archivePath == null || drillPath == null) {
+                System.out.println("no project loaded");
+                return;
+            }
+
+            HashSet<Integer> labels = new HashSet<>();
+            HashSet<String> symbols = new HashSet<>();
+            for (Performer p : footballFieldPanel.drill.performers) {
+                labels.add(p.getLabel());
+                symbols.add(p.getSymbol());
+            }
+            System.out.println("selecting by criteria...");
+            FilterSelect filterSelect = new FilterSelect(frame, this, labels, symbols);
+            filterSelect.show();
+        });
+        editMenu.add(selectByCrit);
+
         // View menu
         JMenu viewMenu = new JMenu("View");
         menuBar.add(viewMenu);
         JCheckBoxMenuItem toggleFloorCoverImage = new JCheckBoxMenuItem("Show Floor Cover Image");
         toggleFloorCoverImage.setState(true);
         toggleFloorCoverImage.addActionListener(e -> {
-//            System.out.println("floor cover");
-//            toggleFloorCoverImage.setSelected(!toggleFloorCoverImage.isSelected());
             footballFieldPanel.setShowFloorCoverImage(!footballFieldPanel.getShowFloorCoverImage());
             footballFieldPanel.repaint();
         });
@@ -370,8 +420,6 @@ public class MediaEditorGUI implements ImportListener, ScrubBarListener, SyncLis
         JCheckBoxMenuItem toggleSurfaceImage = new JCheckBoxMenuItem("Show Surface Image");
         toggleSurfaceImage.setState(true);
         toggleSurfaceImage.addActionListener(e -> {
-//            System.out.println("surface");
-//            toggleSurfaceImage.setSelected(!toggleSurfaceImage.isSelected());
             footballFieldPanel.setShowSurfaceImage(!footballFieldPanel.getShowSurfaceImage());
             footballFieldPanel.repaint();
         });
@@ -458,10 +506,17 @@ public class MediaEditorGUI implements ImportListener, ScrubBarListener, SyncLis
             table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
             ListSelectionModel lsm = table.getSelectionModel();
             lsm.addListSelectionListener(new ListSelectionListener() {
+                int last = -1;
                 @Override
                 public void valueChanged(ListSelectionEvent e) {
                     if (e.getValueIsAdjusting()) {
-                        st.writeSet(e.getLastIndex());
+                        if (e.getFirstIndex() == last) {
+                            st.writeSet(e.getLastIndex());
+                            last = e.getLastIndex();
+                        } else {
+                            st.writeSet(e.getFirstIndex());
+                            last = e.getFirstIndex();
+                        }
                         // without a connected transmitter, above line will fail
                         // for debug, comment out above line and uncomment line below
                         //System.out.println(e.getLastIndex());
@@ -969,7 +1024,8 @@ public class MediaEditorGUI implements ImportListener, ScrubBarListener, SyncLis
     public long onScrub() {
         useStartDelay = scrubBarGUI.isAtFirstSet() && scrubBarGUI.isAtStartOfSet();
 
-        updateEffectViewPanel();
+        if (this.footballFieldPanel.getNumSelectedPerformers() > 0)
+            updateEffectViewPanel();
 
         if (timeManager != null)
             return timeManager.getCount2MSec().get(footballFieldPanel.getCurrentCount());
@@ -986,14 +1042,16 @@ public class MediaEditorGUI implements ImportListener, ScrubBarListener, SyncLis
 
     @Override
     public void onCreateEffect(Effect effect) {
-        this.effectManager.addEffectToSelectedPerformer(effect);
+        boolean successful = this.effectManager.addEffectToSelectedPerformer(effect);
         this.footballFieldPanel.repaint();
+        if (successful) updateEffectViewPanel();
     }
 
     @Override
     public void onUpdateEffect(Effect oldEffect, Effect newEffect) {
         this.effectManager.replaceEffectForSelectedPerformer(oldEffect, newEffect);
         this.footballFieldPanel.repaint();
+        updateEffectViewPanel();
     }
 
     @Override
@@ -1017,17 +1075,27 @@ public class MediaEditorGUI implements ImportListener, ScrubBarListener, SyncLis
 
     private void updateEffectViewPanel() {
         if (this.effectManager == null) return;
-        if (this.effectGUI != null) {
-            this.effectViewPanel.remove(this.effectGUI.getEffectPanel());
-            this.effectViewPanel.revalidate();
-            this.effectViewPanel.repaint();
-        }
-        if (this.footballFieldPanel.selectedPerformers.size() != 1) return;
 
-        // Here, we know there's only one performer selected. The EffectGUI is for that single performer.
+        this.effectViewPanel.remove(this.effectGUI.getEffectPanel());
+        this.effectViewPanel.revalidate();
+        this.effectViewPanel.repaint();
+
+        // TODO: Eventually, for multiple selected performers, also check if not all selected performers share the same effect
+        if (this.footballFieldPanel.selectedPerformers.size() != 1) {
+            this.currentEffect = null;
+
+            this.effectGUI = new EffectGUI(EffectGUI.noPerformerMsg);
+
+            this.effectViewPanel.add(this.effectGUI.getEffectPanel());
+
+            return;
+        }
+
+        // FIXME: Here, we know there's only one performer selected. The EffectGUI is for that single performer.
         this.currentEffect = this.effectManager.getEffectFromSelectedPerformer();
         long currentMSec = this.timeManager.getCount2MSec().get(this.footballFieldPanel.getCurrentCount());
         this.effectGUI = new EffectGUI(this.currentEffect, currentMSec, this);
+
         this.effectViewPanel.add(this.effectGUI.getEffectPanel());
         this.effectViewPanel.revalidate();
         this.effectViewPanel.repaint();
@@ -1061,5 +1129,18 @@ public class MediaEditorGUI implements ImportListener, ScrubBarListener, SyncLis
 
         saveProject(jsonDir.toFile(), archiveDir.toFile(), drillDir.toFile());
         writeSysMsg("Autosaved project to `" + jsonDir + "`.");
+    }
+
+    @Override
+    public void onMultiSelect(HashSet<Integer> labels, HashSet<String> symbols) {
+        // TODO: select stuff
+//        footballFieldPanel.selectedPerformers
+        for (Performer p : footballFieldPanel.drill.performers) {
+            if (labels.contains(p.getLabel()) || symbols.contains(p.getSymbol())) {
+                String key = p.getSymbol() + p.getLabel();
+                footballFieldPanel.selectedPerformers.put(key, p);
+            }
+        }
+        footballFieldPanel.repaint();
     }
 }
