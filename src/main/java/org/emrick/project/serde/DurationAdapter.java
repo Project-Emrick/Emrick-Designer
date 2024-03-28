@@ -27,7 +27,7 @@ public class DurationAdapter extends TypeAdapter<Duration> {
 
     @Override
     public Duration read(JsonReader reader) throws IOException {
-        int d = 0;
+        Integer d = null;
         String fieldname = null;
         if (reader.peek().equals(JsonToken.NULL)) {
             reader.nextNull();
@@ -48,8 +48,8 @@ public class DurationAdapter extends TypeAdapter<Duration> {
         }
         reader.endObject();
 
-        if (d == 0) {
-            throw new IOException("failed to get component for color");
+        if (d == null) {
+            throw new IOException("failed to get d component for duration");
         }
 
         return Duration.ofSeconds(0).plusMillis(d);
