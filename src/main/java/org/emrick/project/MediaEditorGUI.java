@@ -461,10 +461,17 @@ public class MediaEditorGUI implements ImportListener, ScrubBarListener, SyncLis
             table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
             ListSelectionModel lsm = table.getSelectionModel();
             lsm.addListSelectionListener(new ListSelectionListener() {
+                int last = -1;
                 @Override
                 public void valueChanged(ListSelectionEvent e) {
                     if (e.getValueIsAdjusting()) {
-                        st.writeSet(e.getLastIndex());
+                        if (e.getFirstIndex() == last) {
+                            st.writeSet(e.getLastIndex());
+                            last = e.getLastIndex();
+                        } else {
+                            st.writeSet(e.getFirstIndex());
+                            last = e.getFirstIndex();
+                        }
                         // without a connected transmitter, above line will fail
                         // for debug, comment out above line and uncomment line below
                         //System.out.println(e.getLastIndex());
