@@ -73,6 +73,7 @@ public class EffectManager {
         redoStack.clear();
         return true;
     }
+
     public void undo() {
         if (!undoStack.isEmpty()) {
             UndoableAction action = undoStack.pop();
@@ -88,6 +89,7 @@ public class EffectManager {
             undoStack.push(action);
         }
     }
+
     public boolean addEffectToSelectedPerformer(Effect effect) {
         Performer performer = getSelectedPerformer();
         if (performer == null) return false;
@@ -107,23 +109,15 @@ public class EffectManager {
             }
         }
         addEffect(effect, selectedPerformers);
-//        for (Performer performer : selectedPerformers) {
-//            //performer.getEffects().add(effect);
-//            addEffect(effect, performer);
-//        }
         return true;
     }
 
     private void addEffect(Effect effect, List<Performer> performers) {
-//        if (!isValid(effect, performer)) {
-//            showAddEffectErrorDialog(performer);
-//            return false;
-//        }
         showAddEffectSuccessDialog();
         //performer.getEffects().add(effect);
-        UndoableAction createEffectAction = new CreateEffectsAction(effect, performers);
-        createEffectAction.execute();
-        undoStack.push(createEffectAction);
+        UndoableAction createEffectsAction = new CreateEffectsAction(effect, performers);
+        createEffectsAction.execute();
+        undoStack.push(createEffectsAction);
         redoStack.clear();
     }
 
@@ -139,9 +133,13 @@ public class EffectManager {
                 "Apply Effect: Success", JOptionPane.INFORMATION_MESSAGE);
     }
 
-    public void removeEffect(Effect effect, Performer performer) {
+    private void showRemoveEffectSuccessDialog() {
         JOptionPane.showMessageDialog(null, "Effect removed successfully.",
                 "Remove Effect: Success", JOptionPane.INFORMATION_MESSAGE);
+    }
+
+    public void removeEffect(Effect effect, Performer performer) {
+        showRemoveEffectSuccessDialog();
         //performer.getEffects().remove(effect);
         UndoableAction removeEffectAction = new RemoveEffectAction(effect, performer);
         removeEffectAction.execute();
@@ -183,6 +181,8 @@ public class EffectManager {
         }
     }
 
+    // TODO: Create RemoveEffectsAction class (plural)
+
     /**
      * Pseudo-update functionality for effects. Instead of updating the same object, just replace it with an updated version.
      * For now, when an effect is updated, the start time should not change. This is handled implicitly by EffectGUI.
@@ -190,28 +190,32 @@ public class EffectManager {
      * @param newEffect The effect that replaces.
      * @param performer The associated performer.
      */
-    public void replaceEffect(Effect oldEffect, Effect newEffect, Performer performer) {
-        //performer.getEffects().remove(oldEffect);
+    public boolean replaceEffect(Effect oldEffect, Effect newEffect, Performer performer) {
+        performer.getEffects().remove(oldEffect);
 
         // Check that replacement with new effect is still valid
         if (!isValid(newEffect, performer)) {
             showAddEffectErrorDialog(performer);
-            //performer.getEffects().add(oldEffect); // Put it back
-            return;
+            performer.getEffects().add(oldEffect); // Put it back
+            return false;
         }
-        showAddEffectSuccessDialog();
+        performer.getEffects().add(oldEffect); // Put it back
         //performer.getEffects().add(newEffect);
         UndoableAction replaceEffectAction = new ReplaceEffectAction(oldEffect, newEffect, performer);
         replaceEffectAction.execute();
         undoStack.push(replaceEffectAction);
         redoStack.clear();
+        return true;
     }
 
     public void replaceEffectForSelectedPerformer(Effect oldEffect, Effect newEffect) {
         Performer performer = getSelectedPerformer();
         if (performer == null) return;
-        replaceEffect(oldEffect, newEffect, performer);
+        boolean successful = replaceEffect(oldEffect, newEffect, performer);
+        if (successful) showAddEffectSuccessDialog();
     }
+
+    // TODO: Create ReplaceEffectsAction class (plural)
 
     /**
      * Get the effect based on current count as specified by attribute of FootballFieldPanel.
