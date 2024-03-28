@@ -130,7 +130,7 @@ public class MediaEditorGUI implements ImportListener, ScrubBarListener, SyncLis
         });
 
         // Change Font Size for Menu and MenuIem
-        Font f = new Font("FlatLaf.style", Font.PLAIN, 16);
+        Font f = new Font("FlatLaf.style", Font.PLAIN, 14);
         UIManager.put("Menu.font", f);
         UIManager.put("MenuItem.font", f);
         UIManager.put("CheckBoxMenuItem.font", f);
@@ -192,10 +192,12 @@ public class MediaEditorGUI implements ImportListener, ScrubBarListener, SyncLis
         frame.add(timelinePanel, BorderLayout.SOUTH);
 
         // Effect View panel
+        effectGUI = new EffectGUI(EffectGUI.noProjectSyncMsg);
         effectViewPanel = new JPanel();
         effectViewPanel.setLayout(new BorderLayout());
         effectViewPanel.setPreferredSize(new Dimension(300, frame.getHeight()));
         effectViewPanel.setBorder(BorderFactory.createTitledBorder("Effect View"));
+        effectViewPanel.add(effectGUI.getEffectPanel());
         frame.add(effectViewPanel, BorderLayout.EAST);
 
         // Initialize the color display panel with a default color or make it transparent initially
@@ -313,11 +315,13 @@ public class MediaEditorGUI implements ImportListener, ScrubBarListener, SyncLis
 
         editMenu.addSeparator();
 
-        JMenuItem resetColorsItem = new JMenuItem("Reset all effects");
-        resetColorsItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_R,
-                                                             Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx()));
-        editMenu.add(resetColorsItem);
-        resetColorsItem.addActionListener(e -> {
+        JMenuItem removeEffectsForAll = new JMenuItem("Reset All Performers");
+        editMenu.add(removeEffectsForAll);
+        removeEffectsForAll.addActionListener(e -> {
+            if (this.effectManager == null) return;
+            this.effectManager.removeAllEffectsFromAllPerformers();
+
+            // TODO: Below is deprecated. Schedule for removal.
             if (archivePath == null || drillPath == null) {
                 System.out.println("no project loaded");
                 return;
@@ -343,7 +347,48 @@ public class MediaEditorGUI implements ImportListener, ScrubBarListener, SyncLis
             footballFieldPanel.repaint();
         });
 
-        JMenuItem selectByCrit = new JMenuItem("Select by criteria");
+        JMenuItem removeEffectsForSelected = new JMenuItem("Reset Selected Performers");
+        removeEffectsForSelected.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_R,
+                Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx()));
+        editMenu.add(removeEffectsForSelected);
+        removeEffectsForSelected.addActionListener(e -> {
+            if (this.effectManager == null) return;
+            this.effectManager.removeAllEffectsFromSelectedPerformers();
+            this.footballFieldPanel.repaint();
+        });
+
+        editMenu.addSeparator();
+
+        JMenuItem copyCurrentEffect = new JMenuItem("Copy Effect");
+        copyCurrentEffect.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_C,
+                Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx()));
+        copyCurrentEffect.addActionListener(e -> {
+            if (this.effectManager == null) return;
+            if (this.currentEffect == null) {
+                JOptionPane.showMessageDialog(frame, "No effect to copy.",
+                        "Copy Effect: Warning", JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+            JOptionPane.showMessageDialog(frame, "Effect copied.",
+                    "Copy Effect: Success", JOptionPane.INFORMATION_MESSAGE);
+            this.copiedEffect = this.currentEffect;
+        });
+        editMenu.add(copyCurrentEffect);
+
+        JMenuItem pasteCopiedEffect = new JMenuItem("Paste Effect");
+        pasteCopiedEffect.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_V,
+                Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx()));
+        pasteCopiedEffect.addActionListener(e -> {
+            if (this.effectManager == null) return;
+            boolean success = this.effectManager.addEffectToSelectedPerformers(this.copiedEffect);
+            if (success) updateEffectViewPanel();
+            this.footballFieldPanel.repaint();
+        });
+        editMenu.add(pasteCopiedEffect);
+
+        editMenu.addSeparator();
+
+        JMenuItem selectByCrit = new JMenuItem("Select by Criteria");
         selectByCrit.addActionListener(e -> {
             if (archivePath == null || drillPath == null) {
                 System.out.println("no project loaded");
@@ -528,11 +573,11 @@ public class MediaEditorGUI implements ImportListener, ScrubBarListener, SyncLis
         // Help menu
         JMenu helpMenu = new JMenu("Help");
         menuBar.add(helpMenu);
-        JMenuItem viewDocItem = new JMenuItem("View document (open Github Wiki Page)");
+        JMenuItem viewDocItem = new JMenuItem("View Document (Github Wiki)");
         helpMenu.add(viewDocItem);
         viewDocItem.addActionListener(e -> JOptionPane.showMessageDialog(frame, "You clicked: View document"));
 
-        JMenuItem submitIssueItem = new JMenuItem("Submit an Issue (open Github Issues page)");
+        JMenuItem submitIssueItem = new JMenuItem("Submit Issue (Github Issues)");
         helpMenu.add(submitIssueItem);
         submitIssueItem.addActionListener(e -> JOptionPane.showMessageDialog(frame, "You clicked: Submit an Issue"));
 
@@ -710,7 +755,7 @@ public class MediaEditorGUI implements ImportListener, ScrubBarListener, SyncLis
     // ScrubBar Listeners
 
     private void showTimeWeatherDialog(Frame parent) {
-        JDialog dialog = new JDialog(parent, "Time & Weather Effects", true);
+        JDialog dialog = new JDialog(parent, "Time & Weather", true);
         SpinnerDateModel model = new SpinnerDateModel();
         JSpinner timeSpinner = new JSpinner(model);
 
@@ -725,26 +770,39 @@ public class MediaEditorGUI implements ImportListener, ScrubBarListener, SyncLis
             Date time = (Date) timeSpinner.getValue();
             String weather = (String) weatherComboBox.getSelectedItem();
             int transparency = calculateTransparency(time, weather);
+            footballFieldPanel.setEffectTransparency(transparency); // Added
+
+            // TODO: Deprecated, scheduled for removal: manage colors via Coordinate class
             Drill drill = footballFieldPanel.drill;
             for (int i = 0; i < drill.coordinates.size(); i++) {
                 Coordinate c = drill.coordinates.get(i);
-                // Original color
                 Color originalColor = c.getColor();
-                Color colorWithNewTransparency = new Color(originalColor.getRed(),
-                                                           originalColor.getGreen(),
-                                                           originalColor.getBlue(),
-                                                           transparency);
+                Color colorWithNewTransparency = new Color(originalColor.getRed(), originalColor.getGreen(), originalColor.getBlue(), transparency);
                 c.setColor(colorWithNewTransparency);
             }
+            footballFieldPanel.repaint();
             dialog.dispose();
         });
 
-        dialog.setLayout(new GridLayout(0, 1));
-        dialog.add(new JLabel("Time:"));
-        dialog.add(timeSpinner);
-        dialog.add(new JLabel("Select Weather Condition:"));
-        dialog.add(weatherComboBox);
-        dialog.add(confirmButton);
+        JButton resetButton = new JButton("Reset");
+        resetButton.addActionListener(e -> {
+            footballFieldPanel.setEffectTransparency(255);
+            footballFieldPanel.repaint();
+            dialog.dispose();
+        });
+
+        JPanel timeWeatherPanel = new JPanel(new GridLayout(0,1,0,1));
+        timeWeatherPanel.setBorder(BorderFactory.createEmptyBorder(5,5,5,5));
+
+        timeWeatherPanel.add(new JLabel("Select Time:"));
+        timeWeatherPanel.add(timeSpinner);
+        timeWeatherPanel.add(new JLabel("Select Weather Condition:"));
+        timeWeatherPanel.add(weatherComboBox);
+        timeWeatherPanel.add(new JPanel());
+        timeWeatherPanel.add(resetButton);
+        timeWeatherPanel.add(confirmButton);
+
+        dialog.add(timeWeatherPanel);
         dialog.pack();
         dialog.setLocationRelativeTo(parent);
         dialog.setVisible(true);
@@ -813,6 +871,7 @@ public class MediaEditorGUI implements ImportListener, ScrubBarListener, SyncLis
         calendar.setTime(time);
         int hour = calendar.get(Calendar.HOUR_OF_DAY);
         int transparency;
+
         if (hour >= 6 && hour < 12) { // Morning
             transparency = 50;
         } else if (hour >= 12 && hour < 18) { // Afternoon
@@ -820,6 +879,7 @@ public class MediaEditorGUI implements ImportListener, ScrubBarListener, SyncLis
         } else { // Evening
             transparency = 100;
         }
+
         switch (weather) {
             case "Clear":
                 transparency -= 30;
@@ -829,11 +889,12 @@ public class MediaEditorGUI implements ImportListener, ScrubBarListener, SyncLis
                 break;
             case "Rainy":
                 transparency += 40;
+                break;
             case "Snowy":
                 transparency += 150;
                 break;
         }
-        transparency = Math.min(Math.max(transparency, 0), 255);
+        transparency = Math.min(transparency, 255);
         return transparency;
     }
 
@@ -963,7 +1024,8 @@ public class MediaEditorGUI implements ImportListener, ScrubBarListener, SyncLis
     public long onScrub() {
         useStartDelay = scrubBarGUI.isAtFirstSet() && scrubBarGUI.isAtStartOfSet();
 
-        updateEffectViewPanel();
+        if (this.footballFieldPanel.getNumSelectedPerformers() > 0)
+            updateEffectViewPanel();
 
         if (timeManager != null)
             return timeManager.getCount2MSec().get(footballFieldPanel.getCurrentCount());
@@ -980,19 +1042,21 @@ public class MediaEditorGUI implements ImportListener, ScrubBarListener, SyncLis
 
     @Override
     public void onCreateEffect(Effect effect) {
-        this.effectManager.addEffectToSelected(effect);
+        boolean successful = this.effectManager.addEffectToSelectedPerformer(effect);
         this.footballFieldPanel.repaint();
+        if (successful) updateEffectViewPanel();
     }
 
     @Override
     public void onUpdateEffect(Effect oldEffect, Effect newEffect) {
-        this.effectManager.replaceEffectForSelected(oldEffect, newEffect);
+        this.effectManager.replaceEffectForSelectedPerformer(oldEffect, newEffect);
         this.footballFieldPanel.repaint();
+        updateEffectViewPanel();
     }
 
     @Override
     public void onDeleteEffect(Effect effect) {
-        this.effectManager.removeEffectFromSelected(effect);
+        this.effectManager.removeEffectFromSelectedPerformer(effect);
         this.footballFieldPanel.repaint();
         updateEffectViewPanel();
     }
@@ -1011,17 +1075,27 @@ public class MediaEditorGUI implements ImportListener, ScrubBarListener, SyncLis
 
     private void updateEffectViewPanel() {
         if (this.effectManager == null) return;
-        if (this.effectGUI != null) {
-            this.effectViewPanel.remove(this.effectGUI.getEffectPanel());
-            this.effectViewPanel.revalidate();
-            this.effectViewPanel.repaint();
-        }
-        if (this.footballFieldPanel.selectedPerformers.size() != 1) return;
 
-        // Here, we know there's only one performer selected. The EffectGUI is for that single performer.
-        this.currentEffect = this.effectManager.getEffectFromSelected();
+        this.effectViewPanel.remove(this.effectGUI.getEffectPanel());
+        this.effectViewPanel.revalidate();
+        this.effectViewPanel.repaint();
+
+        // TODO: Eventually, for multiple selected performers, also check if not all selected performers share the same effect
+        if (this.footballFieldPanel.selectedPerformers.size() != 1) {
+            this.currentEffect = null;
+
+            this.effectGUI = new EffectGUI(EffectGUI.noPerformerMsg);
+
+            this.effectViewPanel.add(this.effectGUI.getEffectPanel());
+
+            return;
+        }
+
+        // FIXME: Here, we know there's only one performer selected. The EffectGUI is for that single performer.
+        this.currentEffect = this.effectManager.getEffectFromSelectedPerformer();
         long currentMSec = this.timeManager.getCount2MSec().get(this.footballFieldPanel.getCurrentCount());
         this.effectGUI = new EffectGUI(this.currentEffect, currentMSec, this);
+
         this.effectViewPanel.add(this.effectGUI.getEffectPanel());
         this.effectViewPanel.revalidate();
         this.effectViewPanel.repaint();

@@ -19,7 +19,7 @@ public class EffectManager {
      * @param effect The effect to check.
      * @return True if valid, false if invalid.
      */
-    public boolean isValidForSelected(Effect effect) {
+    public boolean isValidForSelectedPerformer(Effect effect) {
         Performer performer = getSelectedPerformer();
         if (performer == null) return false;
         return isValid(effect, performer);
@@ -33,6 +33,7 @@ public class EffectManager {
      * @return True if valid, false if invalid.
      */
     public boolean isValid(Effect effect, Performer performer) {
+        if (effect == null) return false;
 
         // The effect should not overlap with another effect on the given performer
         long startMSec = effect.getStartTimeMSec();
@@ -57,31 +58,59 @@ public class EffectManager {
         return startTimeSet.equals(endTimeSet);
     }
 
-    public void addEffect(Effect effect, Performer performer) {
+    public boolean addEffect(Effect effect, Performer performer) {
         if (!isValid(effect, performer)) {
-            JOptionPane.showMessageDialog(null,
-                    "Effect could not be applied. Please check for possible set run-off or overlap with other effects.",
-                    "Effect Error", JOptionPane.ERROR_MESSAGE);
-            return;
+            showAddEffectErrorDialog(performer);
+            return false;
         }
-        JOptionPane.showMessageDialog(null, "Effect created successfully.",
-                "Success", JOptionPane.INFORMATION_MESSAGE);
+        showAddEffectSuccessDialog();
         performer.getEffects().add(effect);
+        return true;
     }
 
-    public void addEffectToSelected(Effect effect) {
+    public boolean addEffectToSelectedPerformer(Effect effect) {
         Performer performer = getSelectedPerformer();
-        if (performer == null) return;
-        addEffect(effect, performer);
+        if (performer == null) return false;
+        return addEffect(effect, performer);
+    }
+
+    public boolean addEffectToSelectedPerformers(Effect effect) {
+        if (effect == null) return false;
+
+        ArrayList<Performer> performers = getSelectedPerformers();
+
+        // Verify ability to add the effect to all selected performers. Avoid adding for some then error-ing out
+        for (Performer performer : performers) {
+            if (!isValid(effect, performer)) {
+                showAddEffectErrorDialog(performer);
+                return false;
+            }
+        }
+        for (Performer performer : performers) {
+            performer.getEffects().add(effect);
+        }
+        return true;
+    }
+
+    private void showAddEffectErrorDialog(Performer performer) {
+        JOptionPane.showMessageDialog(null,
+                "Effect could not be applied to performer " + performer.getIdentifier() +
+                        ". Please check for possible set run-off or overlap with the performer's other effects.",
+                "Apply Effect: Error", JOptionPane.ERROR_MESSAGE);
+    }
+
+    private void showAddEffectSuccessDialog() {
+        JOptionPane.showMessageDialog(null, "Effect applied successfully.",
+                "Apply Effect: Success", JOptionPane.INFORMATION_MESSAGE);
     }
 
     public void removeEffect(Effect effect, Performer performer) {
-        JOptionPane.showMessageDialog(null, "Effect deleted successfully.",
-                "Success", JOptionPane.INFORMATION_MESSAGE);
+        JOptionPane.showMessageDialog(null, "Effect removed successfully.",
+                "Remove Effect: Success", JOptionPane.INFORMATION_MESSAGE);
         performer.getEffects().remove(effect);
     }
 
-    public void removeEffectFromSelected(Effect effect) {
+    public void removeEffectFromSelectedPerformer(Effect effect) {
         Performer performer = getSelectedPerformer();
         if (performer == null) return;
         removeEffect(effect, performer);
@@ -91,10 +120,28 @@ public class EffectManager {
         performer.getEffects().clear();
     }
 
-    public void removeAllEffectsFromSelected() {
+    /**
+     * The difference between removeAllEffectsFromSelectedPerformer() and removeAllEffectsFromSelectedPerformers() is
+     * that the former only works if there is exactly one performer selected. The latter works for any number of
+     * selected performers. Use based on desired behavior.
+     */
+    public void removeAllEffectsFromSelectedPerformer() {
         Performer performer = getSelectedPerformer();
         if (performer == null) return;
         removeAllEffects(performer);
+    }
+
+    public void removeAllEffectsFromSelectedPerformers() {
+        ArrayList<Performer> selectedPerformers = getSelectedPerformers();
+        for (Performer performer : selectedPerformers) {
+            removeAllEffects(performer);
+        }
+    }
+
+    public void removeAllEffectsFromAllPerformers() {
+        for (Performer performer : this.footballFieldPanel.drill.performers) {
+            removeAllEffects(performer);
+        }
     }
 
     /**
@@ -109,14 +156,15 @@ public class EffectManager {
 
         // Check that replacement with new effect is still valid
         if (!isValid(newEffect, performer)) {
+            showAddEffectErrorDialog(performer);
             performer.getEffects().add(oldEffect); // Put it back
+            return;
         }
-        JOptionPane.showMessageDialog(null, "Effect updated successfully.",
-                "Success", JOptionPane.INFORMATION_MESSAGE);
+        showAddEffectSuccessDialog();
         performer.getEffects().add(newEffect);
     }
 
-    public void replaceEffectForSelected(Effect oldEffect, Effect newEffect) {
+    public void replaceEffectForSelectedPerformer(Effect oldEffect, Effect newEffect) {
         Performer performer = getSelectedPerformer();
         if (performer == null) return;
         replaceEffect(oldEffect, newEffect, performer);
@@ -139,7 +187,7 @@ public class EffectManager {
         return null;
     }
 
-    public Effect getEffectFromSelected() {
+    public Effect getEffectFromSelectedPerformer() {
         Performer performer = getSelectedPerformer();
         if (performer == null) return null;
         return getEffect(performer);
@@ -157,6 +205,18 @@ public class EffectManager {
             return entry.getValue();
         }
         return null;
+    }
+
+    private ArrayList<Performer> getSelectedPerformers() {
+        ArrayList<Performer> selectedPerformers = new ArrayList<>();
+        if (footballFieldPanel.selectedPerformers.isEmpty()) {
+            return selectedPerformers;
+        }
+
+        for (Map.Entry<String, Performer> entry : footballFieldPanel.selectedPerformers.entrySet()) {
+            selectedPerformers.add(entry.getValue());
+        }
+        return selectedPerformers;
     }
 
 }
