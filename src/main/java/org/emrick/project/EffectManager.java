@@ -19,7 +19,7 @@ public class EffectManager {
      * @param effect The effect to check.
      * @return True if valid, false if invalid.
      */
-    public boolean isValidForSelected(Effect effect) {
+    public boolean isValidForSelectedPerformer(Effect effect) {
         Performer performer = getSelectedPerformer();
         if (performer == null) return false;
         return isValid(effect, performer);
@@ -69,7 +69,7 @@ public class EffectManager {
         performer.getEffects().add(effect);
     }
 
-    public void addEffectToSelected(Effect effect) {
+    public void addEffectToSelectedPerformer(Effect effect) {
         Performer performer = getSelectedPerformer();
         if (performer == null) return;
         addEffect(effect, performer);
@@ -81,7 +81,7 @@ public class EffectManager {
         performer.getEffects().remove(effect);
     }
 
-    public void removeEffectFromSelected(Effect effect) {
+    public void removeEffectFromSelectedPerformer(Effect effect) {
         Performer performer = getSelectedPerformer();
         if (performer == null) return;
         removeEffect(effect, performer);
@@ -91,10 +91,28 @@ public class EffectManager {
         performer.getEffects().clear();
     }
 
-    public void removeAllEffectsFromSelected() {
+    /**
+     * The difference between removeAllEffectsFromSelectedPerformer() and removeAllEffectsFromSelectedPerformers() is
+     * that the former only works if there is exactly one performer selected. The latter works for any number of
+     * selected performers. Use based on desired behavior.
+     */
+    public void removeAllEffectsFromSelectedPerformer() {
         Performer performer = getSelectedPerformer();
         if (performer == null) return;
         removeAllEffects(performer);
+    }
+
+    public void removeAllEffectsFromSelectedPerformers() {
+        ArrayList<Performer> selectedPerformers = getSelectedPerformers();
+        for (Performer performer : selectedPerformers) {
+            removeAllEffects(performer);
+        }
+    }
+
+    public void removeAllEffectsFromAllPerformers() {
+        for (Performer performer : this.footballFieldPanel.drill.performers) {
+            removeAllEffects(performer);
+        }
     }
 
     /**
@@ -116,7 +134,7 @@ public class EffectManager {
         performer.getEffects().add(newEffect);
     }
 
-    public void replaceEffectForSelected(Effect oldEffect, Effect newEffect) {
+    public void replaceEffectForSelectedPerformer(Effect oldEffect, Effect newEffect) {
         Performer performer = getSelectedPerformer();
         if (performer == null) return;
         replaceEffect(oldEffect, newEffect, performer);
@@ -139,7 +157,7 @@ public class EffectManager {
         return null;
     }
 
-    public Effect getEffectFromSelected() {
+    public Effect getEffectFromSelectedPerformer() {
         Performer performer = getSelectedPerformer();
         if (performer == null) return null;
         return getEffect(performer);
@@ -157,6 +175,18 @@ public class EffectManager {
             return entry.getValue();
         }
         return null;
+    }
+
+    private ArrayList<Performer> getSelectedPerformers() {
+        ArrayList<Performer> selectedPerformers = new ArrayList<>();
+        if (footballFieldPanel.selectedPerformers.isEmpty()) {
+            return selectedPerformers;
+        }
+
+        for (Map.Entry<String, Performer> entry : footballFieldPanel.selectedPerformers.entrySet()) {
+            selectedPerformers.add(entry.getValue());
+        }
+        return selectedPerformers;
     }
 
 }

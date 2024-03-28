@@ -34,6 +34,7 @@ public class FootballFieldPanel extends JPanel {
     // Effects utility
     private final FootballFieldListener footballFieldListener;
     private EffectManager effectManager;
+    private int effectTransparency = 255;
 
     public FootballFieldPanel(FootballFieldListener footballFieldListener) {
 //        setPreferredSize(new Dimension(fieldWidth + 2*margin, fieldHeight + 2*margin)); // Set preferred size for the drawing area
@@ -61,6 +62,10 @@ public class FootballFieldPanel extends JPanel {
      */
     public void setEffectManager(EffectManager effectManager) {
         this.effectManager = effectManager;
+    }
+
+    public void setEffectTransparency(int effectTransparency) {
+        this.effectTransparency = effectTransparency;
     }
 
     public void addSetToField(Set set) {
@@ -183,7 +188,8 @@ public class FootballFieldPanel extends JPanel {
                     p.currentLocation = dotToPoint(c1.x, c1.y);
                 } else {
                     int duration = drill.sets.get(currentSet.index + 1).duration;
-                    p.currentLocation = dotToPoint((c2.x - c1.x) * (double) (currentCount - currentSetStartCount) / duration + c1.x, (c2.y - c1.y) * (double) (currentCount - currentSetStartCount) / duration + c1.y);
+                    p.currentLocation = dotToPoint((c2.x - c1.x) * (double) (currentCount - currentSetStartCount) /
+                            duration + c1.x, (c2.y - c1.y) * (double) (currentCount - currentSetStartCount) / duration + c1.y);
                 }
             } else {
                 p.currentLocation = dotToPoint(c1.x, c1.y);
@@ -201,9 +207,11 @@ public class FootballFieldPanel extends JPanel {
 
                 // No effect is present at the current count
                 if (currentEffect == null) {
-                    g.setColor(Color.BLACK);
+                    g.setColor(new Color(0,0,0, effectTransparency));
                 } else {
-                    g.setColor(currentEffect.getStartColor()); // TODO eventually: Calculate phase of color shift from effect
+                    Color effectColor = currentEffect.getStartColor(); // TODO eventually: Calculate phase of color shift from effect
+                    Color displayColor = new Color(effectColor.getRed(), effectColor.getGreen(), effectColor.getBlue(), effectTransparency);
+                    g.setColor(displayColor);
                 }
             }
 
