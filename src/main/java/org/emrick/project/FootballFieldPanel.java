@@ -165,6 +165,70 @@ public class FootballFieldPanel extends JPanel {
 //        }
 //    }
 
+    protected Color calculateColor(Effect e) {
+        long currMS = effectManager.timeManager.getCount2MSec().get(currentCount);
+        if (e.DO_DELAY) {
+            if (e.startTimeMSec + e.delay.toMillis() > currMS) {
+                if (e.INSTANT_COLOR) {
+                    return e.startColor;
+                } else {
+                    return Color.black;
+                }
+            }
+        }
+        if (e.TIME_GRADIENT) {
+            if (e.startTimeMSec + e.delay.toMillis() + e.duration.toMillis() > currMS) {
+                long startGradient = e.startTimeMSec + e.delay.toMillis();
+                float shiftProgress = (float) (currMS - startGradient) / (float) e.duration.toMillis();
+                float[] hsvs = new float[3];
+                Color.RGBtoHSB(e.startColor.getRed(), e.startColor.getGreen(), e.startColor.getBlue(), hsvs);
+                hsvs[0] *= 360;
+                float startHue = hsvs[0];
+                float[] hsve = new float[3];
+                Color.RGBtoHSB(e.endColor.getRed(), e.endColor.getGreen(), e.endColor.getBlue(), hsve);
+                hsve[0] *= 360;
+                float endHue = hsve[0];
+                boolean clockwise = true;
+                if (endHue > startHue) {
+                    if (endHue - startHue > 180) {
+                        clockwise = false;
+                    }
+                } else {
+                    if (startHue - endHue < 180) {
+                        clockwise = false;
+                    }
+                }
+                float h,s,v;
+                if (clockwise) {
+                    if (hsve[0] >= hsvs[0]) {
+                        h = ((hsve[0] - hsvs[0]) * shiftProgress + hsvs[0]) % 360;
+                    } else {
+                        h = ((hsve[0] + 360 - hsvs[0]) * shiftProgress + hsvs[0]) % 360;
+                    }
+                    s = (hsve[1] - hsvs[1]) * shiftProgress + hsvs[1];
+                    v = (hsve[2] - hsvs[2]) * shiftProgress + hsvs[2];
+                } else {
+                    if (hsve[0] <= hsvs[0]) {
+                        h = ((hsvs[0] - (hsve[0] - hsvs[0]) * shiftProgress)) % 360;
+                    } else {
+                        h = (hsvs[0] + 360 - (hsvs[0] + 360 - hsve[0]) * shiftProgress) % 360;
+                    }
+                    s = (hsve[1] - hsvs[1]) * shiftProgress + hsvs[1];
+                    v = (hsve[2] - hsvs[2]) * shiftProgress + hsvs[2];
+                }
+                System.out.println(h + ", " + s + ", " + v + ", " + shiftProgress);
+                h /= 360;
+                return new Color(Color.HSBtoRGB(h,s,v));
+            }
+        }
+        if (e.SET_TIMEOUT) {
+            if (e.startTimeMSec + e.delay.toMillis() + e.duration.toMillis() + e.timeout.toMillis() > currMS) {
+                return e.endColor;
+            }
+        }
+        return Color.black;
+    }
+
     @Override
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
@@ -213,7 +277,8 @@ public class FootballFieldPanel extends JPanel {
                 if (currentEffect == null) {
                     g.setColor(new Color(0,0,0, effectTransparency));
                 } else {
-                    Color effectColor = currentEffect.getStartColor(); // TODO eventually: Calculate phase of color shift from effect
+                    Color effectColor = calculateColor(currentEffect); // TODO eventually: Calculate phase of color shift from effect
+                    //System.out.println(effectColor);
                     Color displayColor = new Color(effectColor.getRed(), effectColor.getGreen(), effectColor.getBlue(), effectTransparency);
                     g.setColor(displayColor);
                 }
