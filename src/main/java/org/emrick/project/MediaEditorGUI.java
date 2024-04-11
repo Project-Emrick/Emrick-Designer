@@ -7,6 +7,7 @@ import org.emrick.project.serde.*;
 
 import javax.swing.Timer;
 import javax.swing.*;
+import javax.swing.border.Border;
 import javax.swing.event.*;
 import javax.swing.filechooser.*;
 import java.awt.*;
@@ -18,7 +19,7 @@ import java.time.Duration;
 import java.util.*;
 import java.util.stream.*;
 
-public class MediaEditorGUI implements ImportListener, ScrubBarListener, SyncListener, FootballFieldListener, EffectListener, SelectListener {
+public class MediaEditorGUI extends Component implements ImportListener, ScrubBarListener, SyncListener, FootballFieldListener, EffectListener, SelectListener {
 
     // String definitions
     public static final String FILE_MENU_NEW_PROJECT = "New Project";
@@ -65,6 +66,17 @@ public class MediaEditorGUI implements ImportListener, ScrubBarListener, SyncLis
     private File archivePath = null;
     private File drillPath = null;
     private final Path userHome = Paths.get(System.getProperty("user.home"), ".emrick");
+
+    private final String[] tutorialMessages = {
+            "<html>Welcome to Media Editor!<br>Click 'File' to open or create new project.<br></html>",
+            "Modify Each player over Main Panel",
+            "<html>Use the Scrub Bar to manipulate your project. <br> You can change to the drill you wanted or change the speed there <br></html> ",
+            "<html>On the right side,<br> there are many effects that can apply to each performers.<br></html>",
+            "Use the 'Help' menu for detailed documentation."
+    };
+
+    public int currentTutorialIndex = 0;
+    private Border originalBorder;  // To store the original border of the highlighted component
 
     public MediaEditorGUI() {
         // serde setup
@@ -163,7 +175,7 @@ public class MediaEditorGUI implements ImportListener, ScrubBarListener, SyncLis
         playbackTimer.setDelay(Math.round(setSyncDuration / setDuration * 1000 / playbackSpeed));
     }
 
-    private void createAndShowGUI() {
+    public void createAndShowGUI() {
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.setSize(1200, 600);
 
@@ -584,6 +596,72 @@ public class MediaEditorGUI implements ImportListener, ScrubBarListener, SyncLis
         JMenuItem submitIssueItem = new JMenuItem("Submit Issue (Github Issues)");
         helpMenu.add(submitIssueItem);
         submitIssueItem.addActionListener(e -> JOptionPane.showMessageDialog(frame, "You clicked: Submit an Issue"));
+
+
+        /*
+            Tutorial
+         */
+        JMenuItem tutorialButton = new JMenuItem("Tutorial");
+        helpMenu.add(tutorialButton);
+        tutorialButton.addActionListener(new ActionListener() {
+
+            public void actionPerformed(ActionEvent e) {
+                currentTutorialIndex = 0;
+                if (currentTutorialIndex < tutorialMessages.length) {
+
+                    // OPen or Create project
+                    if (currentTutorialIndex == 0) {
+                        System.out.println("first one\n");
+                        fileMenu.setBorder(BorderFactory.createLineBorder(Color.RED, 2));
+                        Timer timer = new Timer(1000, new ActionListener() {
+                            public void actionPerformed(ActionEvent e) {
+                                fileMenu.setBorder(BorderFactory.createLineBorder(Color.BLACK, 0));
+                            }
+                        });
+                        timer.setRepeats(false);
+                        timer.start();
+//                        displayNonModalTip(tutorialMessages[currentTutorialIndex]);
+                    }
+                    displayNonModalTip(tutorialMessages[currentTutorialIndex]);
+
+                    // 1
+//                    if (currentTutorialIndex == 1) {
+//                        System.out.println("second\n");
+//                        displayNonModalTip(tutorialMessages[currentTutorialIndex]);
+//
+//                    }
+//                    System.out.println(currentTutorialIndex);
+                }
+
+            }
+//            private void displayNonModalTip(String message) {
+//                JWindow tipWindow = new JWindow(frame);
+//                JPanel contentPane = new JPanel(new BorderLayout());
+//                contentPane.setBorder(BorderFactory.createLineBorder(Color.BLACK, 2));
+//                contentPane.add(new JLabel(message, SwingConstants.CENTER), BorderLayout.CENTER);
+//
+//                JPanel buttonPanel = new JPanel();
+//                JButton nextButton = new JButton("Next");
+//                JButton closeButton = new JButton("Close");
+//
+//                buttonPanel.add(closeButton);
+//                buttonPanel.add(nextButton);
+//                contentPane.add(buttonPanel, BorderLayout.SOUTH);
+//                nextButton.addActionListener(new ActionListener() {
+//                    public void actionPerformed(ActionEvent e) {
+//                        tipWindow.dispose();
+//                    }
+//                });
+//                closeButton.addActionListener(e -> tipWindow.dispose());
+//
+//                tipWindow.setContentPane(contentPane);
+//                tipWindow.setSize(400, 100);
+//                tipWindow.setLocation(frame.getLocationOnScreen().x + (frame.getWidth() - tipWindow.getWidth()) / 2,
+//                        frame.getLocationOnScreen().y + (frame.getHeight() - tipWindow.getHeight()) / 2);
+//                tipWindow.setVisible(true);
+//
+//            }
+        });
 
         // System message
         menuBar.add(Box.createHorizontalGlue());
@@ -1155,4 +1233,95 @@ public class MediaEditorGUI implements ImportListener, ScrubBarListener, SyncLis
         }
         footballFieldPanel.repaint();
     }
+
+    /*
+        tutorial
+     */
+
+    private void displayNonModalTip(String message) {
+        JWindow tipWindow = new JWindow(frame);
+        JPanel contentPane = new JPanel(new BorderLayout());
+        contentPane.setBorder(BorderFactory.createLineBorder(Color.BLACK, 2));
+        contentPane.add(new JLabel(message, SwingConstants.CENTER), BorderLayout.CENTER);
+
+        JPanel buttonPanel = new JPanel();
+        JButton nextButton = new JButton("Next");
+        JButton closeButton = new JButton("Close");
+
+        buttonPanel.add(closeButton);
+        buttonPanel.add(nextButton);
+        contentPane.add(buttonPanel, BorderLayout.SOUTH);
+
+        nextButton.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                tipWindow.dispose();
+                currentTutorialIndex++;
+                if (currentTutorialIndex < tutorialMessages.length) {
+                    // Effect Panel
+                    if(currentTutorialIndex == 3){
+                        effectViewPanel.setBorder(BorderFactory.createLineBorder(Color.RED, 2));
+                        Timer timer = new Timer(1000, new ActionListener() {
+                            public void actionPerformed(ActionEvent e) {
+                                effectViewPanel.setBorder(BorderFactory.createLineBorder(Color.BLACK, 0));
+                            }
+                        });
+                        timer.setRepeats(false);
+                        timer.start();
+                        displayNonModalTip(tutorialMessages[currentTutorialIndex]);
+                    }
+                    // Scrub Bar
+                    else if (currentTutorialIndex == 2) {
+                        scrubBarPanel.setBorder(BorderFactory.createLineBorder(Color.RED, 2));
+                        Timer timer = new Timer(1000, new ActionListener() {
+                            public void actionPerformed(ActionEvent e) {
+                                if (scrubBarPanel != null) {
+                                    mainContentPanel.remove(scrubBarPanel);
+                                }
+                                scrubBarPanel = scrubBarGUI.getScrubBarPanel();
+                                scrubBarPanel.setBorder(BorderFactory.createTitledBorder("Scrub Bar"));
+                                scrubBarPanel.setPreferredSize(new Dimension(650, 120));
+
+                                mainContentPanel.add(scrubBarPanel, BorderLayout.SOUTH);
+
+                                mainContentPanel.revalidate();
+                                mainContentPanel.repaint();
+                            }
+                        });
+                        timer.setRepeats(false);
+                        timer.start();
+                        displayNonModalTip(tutorialMessages[currentTutorialIndex]);
+                    }
+                    // main Content
+                    else if (currentTutorialIndex == 1) {
+                        mainContentPanel.setBorder(BorderFactory.createLineBorder(Color.RED, 2));
+                        Timer timer = new Timer(1000, new ActionListener() {
+                            public void actionPerformed(ActionEvent e) {
+                                mainContentPanel.setBorder(BorderFactory.createLineBorder(Color.BLACK, 0));
+                            }
+                        });
+                        timer.setRepeats(false);
+                        timer.start();
+                        displayNonModalTip(tutorialMessages[currentTutorialIndex]);
+                    }
+                    //
+                    else{
+                        displayNonModalTip(tutorialMessages[currentTutorialIndex]);
+                    }
+                }
+            }
+        });
+
+        closeButton.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                // Restore the original border
+                tipWindow.dispose();
+            }
+        });
+        tipWindow.setContentPane(contentPane);
+        tipWindow.setSize(400, 100);
+        tipWindow.setLocation(frame.getLocationOnScreen().x + (frame.getWidth() - tipWindow.getWidth()) / 2,
+                frame.getLocationOnScreen().y + (frame.getHeight() - tipWindow.getHeight()) / 2);
+        tipWindow.setVisible(true);
+    }
+
 }
