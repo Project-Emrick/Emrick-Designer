@@ -10,6 +10,9 @@ import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.event.*;
 import javax.swing.filechooser.*;
+import javax.swing.text.AttributeSet;
+import javax.swing.text.BadLocationException;
+import javax.swing.text.PlainDocument;
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.geom.*;
@@ -18,6 +21,9 @@ import java.nio.file.*;
 import java.time.Duration;
 import java.util.*;
 import java.util.stream.*;
+import com.itextpdf.text.Document;
+import com.itextpdf.text.Paragraph;
+import com.itextpdf.text.pdf.PdfWriter;
 
 public class MediaEditorGUI extends Component implements ImportListener, ScrubBarListener, SyncListener, FootballFieldListener, EffectListener, SelectListener {
 
@@ -677,6 +683,11 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         timeWeatherItem.addActionListener(e -> showTimeWeatherDialog(frame));
         lightMenuPopup.add(timeWeatherItem);
 
+
+        JMenuItem lightDescription = new JMenuItem("Light Description");
+        lightDescription.addActionListener(e->showlightDescription(frame));
+        lightMenuPopup.add(lightDescription);
+
         // Button that triggers the popup menu
         JButton lightButton = new JButton("Light Options");
         lightButton.addActionListener(new ActionListener() {
@@ -831,6 +842,107 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             chosenColor = selectedColor;
             colorDisplayPanel.setBackground(chosenColor);
             colorDisplayPanel.repaint();
+        }
+    }
+
+    private void showlightDescription(Frame parentFrame){
+        JDialog dialog = new JDialog(parentFrame, "Light Description", true);
+        dialog.getContentPane().setBackground(Color.WHITE);
+
+        JPanel contentPanel = new JPanel(new BorderLayout(10, 10));
+        contentPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        contentPanel.setBackground(Color.WHITE);
+
+        JTextArea textArea = new JTextArea(10, 20); // Adjust the size as needed
+        textArea.setLineWrap(true);
+        textArea.setWrapStyleWord(true);
+        JScrollPane scrollPane = new JScrollPane(textArea);
+        scrollPane.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(new Color(221, 221, 221)), // Outer border color
+                BorderFactory.createEmptyBorder(5, 5, 5, 5))); // Inner padding
+
+        textArea.setDocument(new LimitedDocument(5000));
+        JLabel charCountLabel = new JLabel("5000 characters remaining");
+        updateCharCountLabel(charCountLabel, textArea.getText().length(), 5000);
+
+        textArea.getDocument().addDocumentListener(new DocumentListener() {
+            public void insertUpdate(DocumentEvent e) {
+                updateCharCountLabel(charCountLabel, textArea.getText().length(), 5000);
+            }
+
+            public void removeUpdate(DocumentEvent e) {
+                updateCharCountLabel(charCountLabel, textArea.getText().length(), 5000);
+            }
+
+            public void changedUpdate(DocumentEvent e) {
+                updateCharCountLabel(charCountLabel, textArea.getText().length(), 5000);
+            }
+        });
+
+        JButton exportButton = new JButton("Export to PDF");
+        exportButton.setFocusPainted(false);
+        exportButton.setBackground(new Color(32, 136, 203)); // Button background color
+        exportButton.setForeground(Color.WHITE); // Button text color
+
+        contentPanel.add(scrollPane, BorderLayout.CENTER); // Add scroll pane to the center
+        contentPanel.add(charCountLabel, BorderLayout.NORTH); // Add character count label at the top
+        contentPanel.add(exportButton, BorderLayout.SOUTH);
+
+        dialog.setContentPane(contentPanel);
+
+        dialog.setLayout(new BorderLayout());
+        dialog.add(scrollPane, BorderLayout.CENTER);
+        dialog.add(charCountLabel, BorderLayout.NORTH);
+        dialog.add(exportButton, BorderLayout.PAGE_END);
+
+        dialog.setSize(350, 250);
+        dialog.setResizable(false);
+
+        dialog.setLocationRelativeTo(parentFrame);
+
+        exportButton.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                exportToPDF(textArea.getText());
+                dialog.dispose();
+            }
+        });
+
+        dialog.setVisible(true);
+    }
+
+    private void updateCharCountLabel(JLabel label, int currentLength, int maxChars) {
+        label.setText((maxChars - currentLength) + " characters remaining");
+    }
+    public class LimitedDocument extends PlainDocument {
+        private final int limit;
+
+        public LimitedDocument(int limit) {
+            this.limit = limit;
+        }
+
+        public void insertString(int offset, String str, AttributeSet attr) throws BadLocationException {
+            if (str == null) return;
+
+            if ((getLength() + str.length()) <= limit) {
+                super.insertString(offset, str, attr);
+            }
+        }
+    }
+    private void exportToPDF(String textContent) {
+        if (textContent.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "The text area cannot be empty.", "Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        Document document = new Document();
+        try {
+            PdfWriter.getInstance(document, new FileOutputStream("LightDescription.pdf"));
+            document.open();
+            document.add(new Paragraph(textContent));
+            document.close();
+            JOptionPane.showMessageDialog(this, "PDF exported successfully!", "Success", JOptionPane.INFORMATION_MESSAGE);
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(this, "Could not create PDF: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
         }
     }
 
