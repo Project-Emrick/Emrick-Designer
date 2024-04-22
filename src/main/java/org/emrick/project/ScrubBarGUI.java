@@ -65,6 +65,10 @@ public class ScrubBarGUI extends JComponent implements ActionListener {
     private final ImageIcon PLAY_ICON;
     private final ImageIcon PAUSE_ICON;
 
+    private double fps = 60;
+    private double time = 0;
+    private ArrayList<SyncTimeGUI.Pair> timeSync = null;
+
     public ScrubBarGUI(JFrame parent, ScrubBarListener scrubBarListener, SyncListener syncListener, FootballFieldPanel footballFieldPanel) {
         this.parent = parent;
 
@@ -149,9 +153,14 @@ public class ScrubBarGUI extends JComponent implements ActionListener {
         JPanel statusPanel = new JPanel(new GridLayout(3, 1));
         statusPanel.setPreferredSize(new Dimension(100, 1));
         JLabel statusLabel = new JLabel("Set: 0", JLabel.CENTER);
-        JLabel timeLabel = new JLabel("0:00:000", JLabel.CENTER);
+        JLabel timeLabel = new JLabel("0:00.000", JLabel.CENTER);
+        JComboBox<Double> fpsChanger = new JComboBox<>(new Double[]{60.0, 30.0, 15.0});
+        fpsChanger.addActionListener(e -> {
+            this.fps = (double) fpsChanger.getSelectedItem();
+        });
         statusPanel.add(statusLabel);
         statusPanel.add(timeLabel);
+        statusPanel.add(fpsChanger);
 
         scrubBarPanel.add(statusPanel, BorderLayout.EAST);
 
@@ -199,19 +208,30 @@ public class ScrubBarGUI extends JComponent implements ActionListener {
             }
         });
 
-        botSlider.addChangeListener(new ChangeListener() {
-            @Override
-            public void stateChanged(ChangeEvent e) {
-                int val = ((JSlider)e.getSource()).getValue();
-                footballFieldPanel.setCurrentCount(val);
+        botSlider.addChangeListener(e -> {
+            int val = ((JSlider)e.getSource()).getValue();
+            footballFieldPanel.setCurrentCount(val);
 
-                long currTimeMSec = scrubBarListener.onScrub();
+            long currTimeMSec = scrubBarListener.onScrub();
 
-                // Convert milliseconds to minutes and seconds
-                long minutes = java.util.concurrent.TimeUnit.MILLISECONDS.toMinutes(currTimeMSec);
-                long seconds = java.util.concurrent.TimeUnit.MILLISECONDS.toSeconds(currTimeMSec) % 60;
-                long milliseconds = currTimeMSec % 1000;
-                timeLabel.setText(String.format("%d:%02d:%03d", minutes, seconds, milliseconds));
+            // Convert milliseconds to minutes and seconds
+            long minutes = java.util.concurrent.TimeUnit.MILLISECONDS.toMinutes(currTimeMSec);
+            long seconds = java.util.concurrent.TimeUnit.MILLISECONDS.toSeconds(currTimeMSec) % 60;
+            long milliseconds = currTimeMSec % 1000;
+            timeLabel.setText(String.format("%d:%02d.%03d", minutes, seconds, milliseconds));
+
+            if (!isPlaying && timeSync != null) {
+                float setSyncDuration = timeSync.get(this.getCurrentSetIndex()).getValue();
+                float setDuration = this.getCurrSetDuration(); // in counts
+                time = (float) (val - botSlider.getMinimum()) / setDuration * setSyncDuration;
+                double ratio = time / setSyncDuration;
+                footballFieldPanel.setCurrentSetRatio(Math.min(ratio, 1));
+                footballFieldPanel.repaint();
+            } else if (!isPlaying) {
+                float setDuration = this.getCurrSetDuration(); // in counts
+                double ratio = (float) (val - botSlider.getMinimum()) / setDuration;
+                footballFieldPanel.setCurrentSetRatio(Math.min(ratio, 1));
+                footballFieldPanel.repaint();
             }
         });
 
@@ -219,6 +239,35 @@ public class ScrubBarGUI extends JComponent implements ActionListener {
         sliderPanel.add(botSlider);
 
         scrubBarPanel.add(sliderPanel, BorderLayout.CENTER);
+    }
+
+    public boolean nextStep(double playbackSpeed) {
+        double step = (1 / fps) / playbackSpeed;
+
+        time += step;
+
+        float setSyncDuration = timeSync.get(this.getCurrentSetIndex()).getValue();
+        float setDuration = this.getCurrSetDuration(); // in counts
+
+        double ratio = time / setSyncDuration;
+        double setCount = ratio * setDuration;
+        botSlider.setValue(botSlider.getMinimum() + (int) Math.round(setCount));
+
+        footballFieldPanel.setCurrentSetRatio(Math.min(ratio, 1));
+        footballFieldPanel.repaint();
+
+        if (ratio >= 1) {
+            time -= setSyncDuration;
+            this.nextSet();
+        }
+
+        if (this.isAtLastSet() && this.isAtEndOfSet()) {
+            this.setIsPlayingPlay();
+            System.out.println("we've stopped!");
+            return true;
+        }
+
+        return false;
     }
 
     private Hashtable<Integer, JLabel> buildLabelTable() {
@@ -493,10 +542,16 @@ public class ScrubBarGUI extends JComponent implements ActionListener {
     public void setIsPlayingPause() {
         playPauseButton.setIcon(PAUSE_ICON);
         isPlaying = true;
+
+//        time = scrubBarListener.onScrub() / 1000.0;
+        System.out.println(scrubBarListener.onScrub() / 1000.0);
     }
     public void setIsPlayingPlay() {
         playPauseButton.setIcon(PLAY_ICON);
         isPlaying = false;
+
+        time = scrubBarListener.onScrub() / 1000.0;
+        System.out.println(scrubBarListener.onScrub() / 1000.0);
     }
 
     public void prevSet() {
@@ -513,6 +568,10 @@ public class ScrubBarGUI extends JComponent implements ActionListener {
 
     public void nextCount() {
         botSlider.setValue(botSlider.getValue() + 1);
+    }
+
+    public double getFps() {
+        return fps;
     }
 
     public int getCurrentSetIndex() {
@@ -545,6 +604,10 @@ public class ScrubBarGUI extends JComponent implements ActionListener {
 
     public int getCurrSetDuration() {
         return botSlider.getMaximum() - botSlider.getMinimum(); // gets duration in counts
+    }
+
+    public void setTimeSync(ArrayList<SyncTimeGUI.Pair> timeSync) {
+        this.timeSync = timeSync;
     }
 
     // For testing

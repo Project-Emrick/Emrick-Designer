@@ -133,20 +133,23 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                 return;
             }
 
-            scrubBarGUI.nextCount();
-
-            if (scrubBarGUI.isAtLastSet() && scrubBarGUI.isAtEndOfSet()) {
+            if (scrubBarGUI.nextStep(playbackSpeed)) {
                 playbackTimer.stop();
-                // TODO: stop music
                 scrubBarGUI.setIsPlayingPlay();
-                return;
-            } else if (scrubBarGUI.isAtEndOfSet()) {
-                scrubBarGUI.nextSet();
             }
 
-            setPlaybackTimerTime();
+//            scrubBarGUI.nextCount();
+//
+//            if (scrubBarGUI.isAtLastSet() && scrubBarGUI.isAtEndOfSet()) {
+//                playbackTimer.stop();
+//                // TODO: stop music
+//                scrubBarGUI.setIsPlayingPlay();
+//                return;
+//            } else if (scrubBarGUI.isAtEndOfSet()) {
+//                scrubBarGUI.nextSet();
+//            }
 
-            // TODO: repaint everything relevant (field, timer, etc)
+//            setPlaybackTimerTime();
         });
 
         // Change Font Size for Menu and MenuIem
@@ -176,9 +179,10 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
     }
 
     private void setPlaybackTimerTime() {
-        float setSyncDuration = timeSync.get(scrubBarGUI.getCurrentSetIndex()).getValue();
-        float setDuration = scrubBarGUI.getCurrSetDuration();
-        playbackTimer.setDelay(Math.round(setSyncDuration / setDuration * 1000 / playbackSpeed));
+//        float setSyncDuration = timeSync.get(scrubBarGUI.getCurrentSetIndex()).getValue();
+//        float setDuration = scrubBarGUI.getCurrSetDuration();
+//        playbackTimer.setDelay(Math.round(setSyncDuration / setDuration * 1000 / playbackSpeed));
+        playbackTimer.setDelay((int) (1 / scrubBarGUI.getFps() * 1000.0 / playbackSpeed));
     }
 
     public void createAndShowGUI() {
@@ -1024,6 +1028,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             if (pf.timeSync != null && pf.startDelay != null) {
                 timeSync = pf.timeSync;
                 startDelay = pf.startDelay;
+                scrubBarGUI.setTimeSync(timeSync);
                 setupEffectView();
             }
 
@@ -1169,6 +1174,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
     public void onSync(ArrayList<SyncTimeGUI.Pair> times, float startDelay) {
         System.out.println("MediaEditorGUI: Got Synced Times");
         this.timeSync = times;
+        scrubBarGUI.setTimeSync(timeSync);
         this.startDelay = startDelay;
 
         setupEffectView();
@@ -1231,6 +1237,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
 
         if (timeManager != null)
             return timeManager.getCount2MSec().get(footballFieldPanel.getCurrentCount());
+
         return 0;
     }
 
