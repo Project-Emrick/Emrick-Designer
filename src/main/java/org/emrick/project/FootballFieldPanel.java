@@ -27,6 +27,7 @@ public class FootballFieldPanel extends JPanel {
 
     private boolean ctrlHeld = false;
     private Set currentSet;
+    private double currentSetRatio = 0.0;
     private int currentCount = 0;
     private int currentSetStartCount = 0;
     private SerialTransmitter serialTransmitter;
@@ -252,12 +253,14 @@ public class FootballFieldPanel extends JPanel {
             Coordinate c1 = p.getCoordinateFromSet(currentSet.label);
             if (currentSet.index < drill.sets.size() - 1) {
                 Coordinate c2 = p.getCoordinateFromSet(drill.sets.get(currentSet.index + 1).label);
-                if (c1.x == c2.x && c1.y == c2.y || currentCount == currentSetStartCount) {
+                if (c1.x == c2.x && c1.y == c2.y) {
                     p.currentLocation = dotToPoint(c1.x, c1.y);
                 } else {
                     int duration = drill.sets.get(currentSet.index + 1).duration;
-                    p.currentLocation = dotToPoint((c2.x - c1.x) * (double) (currentCount - currentSetStartCount) /
-                            duration + c1.x, (c2.y - c1.y) * (double) (currentCount - currentSetStartCount) / duration + c1.y);
+                    p.currentLocation = dotToPoint(
+                            (c2.x - c1.x) * currentSetRatio + c1.x,
+                            (c2.y - c1.y) * currentSetRatio + c1.y
+                    );
                 }
             } else {
                 p.currentLocation = dotToPoint(c1.x, c1.y);
@@ -396,6 +399,10 @@ public class FootballFieldPanel extends JPanel {
     }
     public void setCurrentSet(Set currentSet) {
         this.currentSet = currentSet;
+    }
+
+    public void setCurrentSetRatio(double currentSetRatio) {
+        this.currentSetRatio = currentSetRatio;
     }
 
     public void setShowSurfaceImage(boolean showSurfaceImage) {
