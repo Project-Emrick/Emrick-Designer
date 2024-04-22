@@ -7,8 +7,9 @@ import java.awt.event.MouseEvent;
 import java.awt.geom.Point2D;
 import java.awt.image.BufferedImage;
 import java.util.HashMap;
+import java.util.Map;
 
-public class FootballFieldPanel extends JPanel {
+public class FootballFieldPanel extends JPanel implements RepaintListener {
     public Drill drill;
     public HashMap<String,Performer> selectedPerformers;
     private double fieldWidth = 720; // Width of the football field
@@ -42,18 +43,15 @@ public class FootballFieldPanel extends JPanel {
         setMinimumSize(new Dimension(1042, 548));
         drill = new Drill();
         selectedPerformers = new HashMap<>();
-        this.addMouseListener(new MouseInput());
+        this.addMouseMotionListener(new MouseInput(this));
+        this.addMouseListener(new MouseInput(this));
         colorChosen = Color.BLACK;
         this.footballFieldListener = footballFieldListener;
     }
 
     public FootballFieldPanel(Color colorChosen, FootballFieldListener footballFieldListener) {
+        this(footballFieldListener);
         this.colorChosen = colorChosen;
-        setMinimumSize(new Dimension(1042, 548));
-        drill = new Drill();
-        selectedPerformers = new HashMap<>();
-        this.addMouseListener(new MouseInput());
-        this.footballFieldListener = footballFieldListener;
     }
 
     /**
@@ -217,7 +215,7 @@ public class FootballFieldPanel extends JPanel {
                     s = (hsve[1] - hsvs[1]) * shiftProgress + hsvs[1];
                     v = (hsve[2] - hsvs[2]) * shiftProgress + hsvs[2];
                 }
-                System.out.println(h + ", " + s + ", " + v + ", " + shiftProgress);
+//                System.out.println(h + ", " + s + ", " + v + ", " + shiftProgress);
                 h /= 360;
                 return new Color(Color.HSBtoRGB(h,s,v));
             }
@@ -298,6 +296,15 @@ public class FootballFieldPanel extends JPanel {
             g.drawRect((int)x-6,(int)y-6,12,12);
             g.drawLine((int)x,(int)y-5,(int)x,(int)y+6);
         }
+
+        if (selecting) {
+            int w = Math.abs(selectStartX - selectEndX);
+            int h = Math.abs(selectStartY - selectEndY);
+            int x = Math.min(selectStartX, selectEndX);
+            int y = Math.min(selectEndY, selectStartY);
+            g.setColor(new Color(0, 100, 100, 100));
+            g.fillRect(x, y, w, h);
+        }
     }
 
     public void setColorChosen(Color color) {
@@ -343,20 +350,67 @@ public class FootballFieldPanel extends JPanel {
         return surfaceImage;
     }
 
+    // this is a sin, but it is my sin - LHD
+    private boolean selecting = false;
+    private int selectStartX = 0;
+    private int selectStartY = 0;
+    private int selectEndX = 0;
+    private int selectEndY = 0;
+
+    @Override
+    public void onRepaintCall() {
+        repaint();
+    }
+
     private class MouseInput implements MouseInputListener {
+
+        private final RepaintListener repaintListener;
+        public MouseInput(RepaintListener repaintListener) {
+            this.repaintListener = repaintListener;
+        }
 
         @Override
         public void mouseClicked(MouseEvent e) {
-            int mx = e.getX();
-            int my = e.getY();
+        }
+        @Override
+        public void mousePressed(MouseEvent e) {
+            selecting = true;
+            selectStartX = e.getX();
+            selectStartY = e.getY();
+        }
+        @Override
+        public void mouseReleased(MouseEvent e) {
+            selecting = false;
+            selectEndX = e.getX();
+            selectEndY = e.getY();
+
+            // TODO: select all boxes inside box
+
+            int axmin = Math.min(selectStartX, selectEndX);
+            int aymin = Math.min(selectStartY, selectEndY);
+            int axmax = Math.max(selectStartX, selectEndX);
+            int aymax = Math.max(selectStartY, selectEndY);
+
+            boolean isControlDown = e.isControlDown();
+            if (!isControlDown) {
+                selectedPerformers.clear();
+                footballFieldListener.onPerformerDeselect();
+            }
 
             for (Performer p : drill.performers) {
                 double px = p.currentLocation.getX();
                 double py = p.currentLocation.getY();
-                if (mx >= px - 7 && mx <= px + 7 && my >= py - 7 && my <= py + 7) {
-                    if (e.isControlDown()) {
-                        String key = p.getSymbol() + p.getLabel();
 
+                int bxmin = (int) (px - 7);
+                int bymin = (int) (py - 7);
+                int bxmax = (int) (px + 7);
+                int bymax = (int) (py + 7);
+
+                boolean intersecting = AABB(axmin, aymin, axmax, aymax, bxmin, bymin, bxmax, bymax);
+
+                if (intersecting) {
+                    String key = p.getSymbol() + p.getLabel();
+                    if (isControlDown) {
                         if (selectedPerformers.containsKey(key)) {
                             selectedPerformers.remove(key); // Deselect if already selected
                             footballFieldListener.onPerformerDeselect();
@@ -365,37 +419,38 @@ public class FootballFieldPanel extends JPanel {
                             selectedPerformers.put(key, p); // Select if not already selected
                             footballFieldListener.onPerformerSelect();
                         }
+                    } else {
+                        selectedPerformers.put(key, p);
+                        footballFieldListener.onPerformerSelect();
                     }
-                    else {
-                        if (selectedPerformers.containsKey(p.getSymbol() + p.getLabel())) {
-                            selectedPerformers.clear();
-                            footballFieldListener.onPerformerDeselect();
-                        }
-                        else {
-                            selectedPerformers.clear();
-                            selectedPerformers.put(p.getSymbol() + p.getLabel(), p);
-                            footballFieldListener.onPerformerSelect();
-                        }
-                    }
-                    repaint();
-                    break;
                 }
             }
+
+            this.repaintListener.onRepaintCall();
         }
 
-
-        @Override
-        public void mousePressed(MouseEvent e) {}
-        @Override
-        public void mouseReleased(MouseEvent e) {}
         @Override
         public void mouseEntered(MouseEvent e) {}
         @Override
         public void mouseExited(MouseEvent e) {}
         @Override
-        public void mouseDragged(MouseEvent e) {}
+        public void mouseDragged(MouseEvent e) {
+            selectEndX = e.getX();
+            selectEndY = e.getY();
+
+            this.repaintListener.onRepaintCall();
+        }
         @Override
         public void mouseMoved(MouseEvent e) {}
+
+        private static boolean AABB(
+                int axmin, int aymin, int axmax, int aymax,
+                int bxmin, int bymin, int bxmax, int bymax
+        ) {
+            int[] A = {axmin, aymin, axmax, aymax};
+            int[] B = {bxmin, bymin, bxmax, bymax};
+            return !(A[0] >= B[2] || A[2] <= B[0] || A[1] >= B[3] || A[3] <= B[1]);
+        }
     }
     public void setCurrentSet(Set currentSet) {
         this.currentSet = currentSet;
