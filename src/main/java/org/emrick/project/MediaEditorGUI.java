@@ -10,6 +10,9 @@ import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.event.*;
 import javax.swing.filechooser.*;
+import javax.swing.text.AttributeSet;
+import javax.swing.text.BadLocationException;
+import javax.swing.text.PlainDocument;
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.geom.*;
@@ -18,8 +21,12 @@ import java.nio.file.*;
 import java.time.Duration;
 import java.util.*;
 import java.util.stream.*;
+import com.itextpdf.text.Document;
+import com.itextpdf.text.Paragraph;
+import com.itextpdf.text.pdf.PdfWriter;
 
-public class MediaEditorGUI extends Component implements ImportListener, ScrubBarListener, SyncListener, FootballFieldListener, EffectListener, SelectListener {
+public class MediaEditorGUI extends Component implements ImportListener, ScrubBarListener, SyncListener,
+        FootballFieldListener, EffectListener, SelectListener {
 
     // String definitions
     public static final String FILE_MENU_NEW_PROJECT = "New Project";
@@ -127,20 +134,26 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                 return;
             }
 
-            scrubBarGUI.nextCount();
+            if (scrubBarGUI.isUseFps()) {
+                if (scrubBarGUI.nextStep(playbackSpeed)) {
+                    // Reached the end
+                    playbackTimer.stop();
+                    scrubBarGUI.setIsPlayingPlay();
+                }
+            } else {
+                scrubBarGUI.nextCount();
 
-            if (scrubBarGUI.isAtLastSet() && scrubBarGUI.isAtEndOfSet()) {
-                playbackTimer.stop();
-                // TODO: stop music
-                scrubBarGUI.setIsPlayingPlay();
-                return;
-            } else if (scrubBarGUI.isAtEndOfSet()) {
-                scrubBarGUI.nextSet();
+                if (scrubBarGUI.isAtLastSet() && scrubBarGUI.isAtEndOfSet()) {
+                    // Reached the end
+                    playbackTimer.stop();
+                    audioPlayer.pauseAudio();
+                    scrubBarGUI.setIsPlayingPlay();
+                    return;
+                } else if (scrubBarGUI.isAtEndOfSet()) {
+                    scrubBarGUI.nextSet();
+                }
+                setPlaybackTimerTimeByCounts();
             }
-
-            setPlaybackTimerTime();
-
-            // TODO: repaint everything relevant (field, timer, etc)
         });
 
         // Change Font Size for Menu and MenuIem
@@ -169,7 +182,12 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         createAndShowGUI();
     }
 
-    private void setPlaybackTimerTime() {
+    private void setPlaybackTimerTimeByFps() {
+        scrubBarGUI.setPlaybackTime();
+        playbackTimer.setDelay((int) (1 / scrubBarGUI.getFps() * 1000.0 / playbackSpeed));
+    }
+
+    private void setPlaybackTimerTimeByCounts() {
         float setSyncDuration = timeSync.get(scrubBarGUI.getCurrentSetIndex()).getValue();
         float setDuration = scrubBarGUI.getCurrSetDuration();
         playbackTimer.setDelay(Math.round(setSyncDuration / setDuration * 1000 / playbackSpeed));
@@ -718,6 +736,11 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         timeWeatherItem.addActionListener(e -> showTimeWeatherDialog(frame));
         lightMenuPopup.add(timeWeatherItem);
 
+
+        JMenuItem lightDescription = new JMenuItem("Light Description");
+        lightDescription.addActionListener(e->showlightDescription(frame));
+        lightMenuPopup.add(lightDescription);
+
         // Button that triggers the popup menu
         JButton lightButton = new JButton("Light Options");
         lightButton.addActionListener(new ActionListener() {
@@ -875,6 +898,107 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         }
     }
 
+    private void showlightDescription(Frame parentFrame){
+        JDialog dialog = new JDialog(parentFrame, "Light Description", true);
+        dialog.getContentPane().setBackground(Color.WHITE);
+
+        JPanel contentPanel = new JPanel(new BorderLayout(10, 10));
+        contentPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        contentPanel.setBackground(Color.WHITE);
+
+        JTextArea textArea = new JTextArea(10, 20); // Adjust the size as needed
+        textArea.setLineWrap(true);
+        textArea.setWrapStyleWord(true);
+        JScrollPane scrollPane = new JScrollPane(textArea);
+        scrollPane.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(new Color(221, 221, 221)), // Outer border color
+                BorderFactory.createEmptyBorder(5, 5, 5, 5))); // Inner padding
+
+        textArea.setDocument(new LimitedDocument(5000));
+        JLabel charCountLabel = new JLabel("5000 characters remaining");
+        updateCharCountLabel(charCountLabel, textArea.getText().length(), 5000);
+
+        textArea.getDocument().addDocumentListener(new DocumentListener() {
+            public void insertUpdate(DocumentEvent e) {
+                updateCharCountLabel(charCountLabel, textArea.getText().length(), 5000);
+            }
+
+            public void removeUpdate(DocumentEvent e) {
+                updateCharCountLabel(charCountLabel, textArea.getText().length(), 5000);
+            }
+
+            public void changedUpdate(DocumentEvent e) {
+                updateCharCountLabel(charCountLabel, textArea.getText().length(), 5000);
+            }
+        });
+
+        JButton exportButton = new JButton("Export to PDF");
+        exportButton.setFocusPainted(false);
+        exportButton.setBackground(new Color(32, 136, 203)); // Button background color
+        exportButton.setForeground(Color.WHITE); // Button text color
+
+        contentPanel.add(scrollPane, BorderLayout.CENTER); // Add scroll pane to the center
+        contentPanel.add(charCountLabel, BorderLayout.NORTH); // Add character count label at the top
+        contentPanel.add(exportButton, BorderLayout.SOUTH);
+
+        dialog.setContentPane(contentPanel);
+
+        dialog.setLayout(new BorderLayout());
+        dialog.add(scrollPane, BorderLayout.CENTER);
+        dialog.add(charCountLabel, BorderLayout.NORTH);
+        dialog.add(exportButton, BorderLayout.PAGE_END);
+
+        dialog.setSize(350, 250);
+        dialog.setResizable(false);
+
+        dialog.setLocationRelativeTo(parentFrame);
+
+        exportButton.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                exportToPDF(textArea.getText());
+                dialog.dispose();
+            }
+        });
+
+        dialog.setVisible(true);
+    }
+
+    private void updateCharCountLabel(JLabel label, int currentLength, int maxChars) {
+        label.setText((maxChars - currentLength) + " characters remaining");
+    }
+    public class LimitedDocument extends PlainDocument {
+        private final int limit;
+
+        public LimitedDocument(int limit) {
+            this.limit = limit;
+        }
+
+        public void insertString(int offset, String str, AttributeSet attr) throws BadLocationException {
+            if (str == null) return;
+
+            if ((getLength() + str.length()) <= limit) {
+                super.insertString(offset, str, attr);
+            }
+        }
+    }
+    private void exportToPDF(String textContent) {
+        if (textContent.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "The text area cannot be empty.", "Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        Document document = new Document();
+        try {
+            PdfWriter.getInstance(document, new FileOutputStream("LightDescription.pdf"));
+            document.open();
+            document.add(new Paragraph(textContent));
+            document.close();
+            JOptionPane.showMessageDialog(this, "PDF exported successfully!", "Success", JOptionPane.INFORMATION_MESSAGE);
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(this, "Could not create PDF: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
     // ScrubBar Listeners
 
     private void showTimeWeatherDialog(Frame parent) {
@@ -953,6 +1077,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             if (pf.timeSync != null && pf.startDelay != null) {
                 timeSync = pf.timeSync;
                 startDelay = pf.startDelay;
+                scrubBarGUI.setTimeSync(timeSync);
                 setupEffectView();
             }
 
@@ -1067,8 +1192,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
 
     @Override
     public void onAudioImport(File audioFile) {
-
-        // Play or pause audio through the AudioPlayer service class
+        // Playing or pausing audio is done through the AudioPlayer service class
         audioPlayer = new AudioPlayer(audioFile);
     }
 
@@ -1098,6 +1222,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
     public void onSync(ArrayList<SyncTimeGUI.Pair> times, float startDelay) {
         System.out.println("MediaEditorGUI: Got Synced Times");
         this.timeSync = times;
+        scrubBarGUI.setTimeSync(timeSync);
         this.startDelay = startDelay;
 
         setupEffectView();
@@ -1129,10 +1254,15 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             return false;
         }
         if (audioPlayer != null && scrubBarGUI.getAudioCheckbox().isSelected()) {
-            // TODO: get audio to correct position
-            audioPlayer.playAudio();
+            playAudioFromCorrectPosition();
         }
-        setPlaybackTimerTime();
+        if (scrubBarGUI.isUseFps()) {
+            setPlaybackTimerTimeByFps();
+            footballFieldPanel.setUseFps(true);
+        } else {
+            setPlaybackTimerTimeByCounts();
+            footballFieldPanel.setUseFps(false);
+        }
         playbackTimer.start();
         return true;
     }
@@ -1153,19 +1283,48 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
 
     @Override
     public long onScrub() {
+        // If time cursor is at start of first set, arm the start-delay
         useStartDelay = scrubBarGUI.isAtFirstSet() && scrubBarGUI.isAtStartOfSet();
-
-        if (this.footballFieldPanel.getNumSelectedPerformers() > 0)
+        if (this.footballFieldPanel.getNumSelectedPerformers() > 0) {
             updateEffectViewPanel();
-
-        if (timeManager != null)
+        }
+        if (scrubBarGUI.isPlaying() && scrubBarGUI.isCanSeekAudio()) {
+            System.out.println("Called onScrub() -> Seeking audio...");
+            playAudioFromCorrectPosition();
+            // During playback, don't repeatedly seek audio while program controls the scrub bar
+            scrubBarGUI.setCanSeekAudio(false);
+        }
+        if (timeManager != null) {
             return timeManager.getCount2MSec().get(footballFieldPanel.getCurrentCount());
+        }
         return 0;
+    }
+
+    private void playAudioFromCorrectPosition() {
+        // Get audio to correct position before playing
+        if (!scrubBarGUI.getAudioCheckbox().isSelected()) {
+            audioPlayer.pauseAudio();
+            return;
+        }
+        long timestampMillis = timeManager.getCount2MSec().get(footballFieldPanel.getCurrentCount());
+        if (useStartDelay) {
+            timestampMillis -= (long) (startDelay * 1000);
+        }
+        audioPlayer.pauseAudio();
+        audioPlayer.playAudio(timestampMillis);
     }
 
     @Override
     public void onSpeedChange(float playbackSpeed) {
         System.out.println("MediaEditorGUI: playbackSpeed = " + playbackSpeed);
+        // If playback speed is not normal, don't play the audio (simple solution)
+        if (playbackSpeed != 1) {
+            scrubBarGUI.getAudioCheckbox().setSelected(false);
+            scrubBarGUI.getAudioCheckbox().setEnabled(false);
+            if (audioPlayer != null) audioPlayer.pauseAudio();
+        } else {
+            scrubBarGUI.getAudioCheckbox().setEnabled(true);
+        }
         this.playbackSpeed = playbackSpeed;
     }
 
@@ -1254,7 +1413,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             Files.copy(drillPath.toPath(), drillDir);
         } catch (IOException e) {
             // TODO: handle error from the backup failing
-            System.out.println(e.getMessage());
+            System.out.println("MediaEditorGUI autosaveProject(): " + e.getMessage());
             return;
         }
 

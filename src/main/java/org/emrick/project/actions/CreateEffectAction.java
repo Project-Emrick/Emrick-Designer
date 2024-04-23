@@ -24,8 +24,8 @@ public class CreateEffectAction implements UndoableAction {
 
     @Override
     public void redo() {
-        if (!performer.getEffects().contains(effect)) {
-            execute();
-        }
+//        if (!performer.getEffects().contains(effect)) { // Do we need this check?
+        execute();
+//        }
     }
 }
