@@ -65,10 +65,14 @@ public class ScrubBarGUI extends JComponent implements ActionListener {
     private final ImageIcon PLAY_ICON;
     private final ImageIcon PAUSE_ICON;
 
+    // Frame rate
     private double fps = 60;
     private double time = 0;
     private boolean useFps = false;
     private ArrayList<SyncTimeGUI.Pair> timeSync = null;
+
+    // Audio
+    private boolean canSeekAudio = false;
 
     public ScrubBarGUI(JFrame parent, ScrubBarListener scrubBarListener, SyncListener syncListener, FootballFieldPanel footballFieldPanel) {
         this.parent = parent;
@@ -373,6 +377,7 @@ public class ScrubBarGUI extends JComponent implements ActionListener {
 
         // Audio
         this.audioCheckbox = new JCheckBox();
+//        this.audioCheckbox.setSelected(true);
         this.audioCheckbox.setToolTipText("Toggle audio on/off");
         JLabel audioLabel = new JLabel();
         audioLabel.setIcon(scaleImageIcon(new ImageIcon(PATH_AUDIO_ICON)));
@@ -508,6 +513,18 @@ public class ScrubBarGUI extends JComponent implements ActionListener {
 //        System.out.println("currSetEndCount = " + currSetEndCount);
     }
 
+    public void setCanSeekAudio(boolean canSeekAudio) {
+        this.canSeekAudio = canSeekAudio;
+    }
+
+    public boolean isCanSeekAudio() {
+        return canSeekAudio;
+    }
+
+    public boolean isPlaying() {
+        return isPlaying;
+    }
+
     @Override
     public void actionPerformed(ActionEvent e) {
 
@@ -530,15 +547,19 @@ public class ScrubBarGUI extends JComponent implements ActionListener {
             }
         }
         else if (e.getSource().equals(prevSetButton)) {
+            this.canSeekAudio = true;
             prevSet();
         }
         else if (e.getSource().equals(nextSetButton)) {
+            this.canSeekAudio = true;
             nextSet();
         }
         else if (e.getSource().equals(prevCountButton)) {
+            this.canSeekAudio = true;
             prevCount();
         }
         else if (e.getSource().equals(nextCountButton)) {
+            this.canSeekAudio = true;
             nextCount();
         }
         else if (e.getSource().equals(syncButton)) {
@@ -566,14 +587,14 @@ public class ScrubBarGUI extends JComponent implements ActionListener {
         isPlaying = true;
 
 //        time = scrubBarListener.onScrub() / 1000.0;
-        System.out.println(scrubBarListener.onScrub() / 1000.0);
+        System.out.println("ScrubBarGUI: isPlaying = " + isPlaying + ", time = " + scrubBarListener.onScrub() / 1000.0);
     }
     public void setIsPlayingPlay() {
         playPauseButton.setIcon(PLAY_ICON);
         isPlaying = false;
 
         time = scrubBarListener.onScrub() / 1000.0;
-        System.out.println(scrubBarListener.onScrub() / 1000.0);
+        System.out.println("ScrubBarGUI: isPlaying = " + isPlaying + ", time = " + scrubBarListener.onScrub() / 1000.0);
     }
 
     public void prevSet() {
