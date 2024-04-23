@@ -182,6 +182,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
 //        float setSyncDuration = timeSync.get(scrubBarGUI.getCurrentSetIndex()).getValue();
 //        float setDuration = scrubBarGUI.getCurrSetDuration();
 //        playbackTimer.setDelay(Math.round(setSyncDuration / setDuration * 1000 / playbackSpeed));
+        scrubBarGUI.setPlaybackTime();
         playbackTimer.setDelay((int) (1 / scrubBarGUI.getFps() * 1000.0 / playbackSpeed));
     }
 

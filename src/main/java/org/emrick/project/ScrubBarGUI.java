@@ -220,25 +220,29 @@ public class ScrubBarGUI extends JComponent implements ActionListener {
             long milliseconds = currTimeMSec % 1000;
             timeLabel.setText(String.format("%d:%02d.%03d", minutes, seconds, milliseconds));
 
-            if (!isPlaying && timeSync != null) {
-                float setSyncDuration = timeSync.get(this.getCurrentSetIndex()).getValue();
-                float setDuration = this.getCurrSetDuration(); // in counts
-                time = (float) (val - botSlider.getMinimum()) / setDuration * setSyncDuration;
-                double ratio = time / setSyncDuration;
-                footballFieldPanel.setCurrentSetRatio(Math.min(ratio, 1));
-                footballFieldPanel.repaint();
-            } else if (!isPlaying) {
-                float setDuration = this.getCurrSetDuration(); // in counts
-                double ratio = (float) (val - botSlider.getMinimum()) / setDuration;
-                footballFieldPanel.setCurrentSetRatio(Math.min(ratio, 1));
-                footballFieldPanel.repaint();
-            }
+            setPlaybackTime();
         });
 
         sliderPanel.add(topSlider);
         sliderPanel.add(botSlider);
 
         scrubBarPanel.add(sliderPanel, BorderLayout.CENTER);
+    }
+
+    public void setPlaybackTime() {
+        if (!isPlaying && timeSync != null) {
+            float setSyncDuration = timeSync.get(this.getCurrentSetIndex()).getValue();
+            float setDuration = this.getCurrSetDuration(); // in counts
+            time = (float) (botSlider.getValue() - botSlider.getMinimum()) / setDuration * setSyncDuration;
+            double ratio = time / setSyncDuration;
+            footballFieldPanel.setCurrentSetRatio(Math.min(ratio, 1));
+            footballFieldPanel.repaint();
+        } else if (!isPlaying) {
+            float setDuration = this.getCurrSetDuration(); // in counts
+            double ratio = (float) (botSlider.getValue() - botSlider.getMinimum()) / setDuration;
+            footballFieldPanel.setCurrentSetRatio(Math.min(ratio, 1));
+            footballFieldPanel.repaint();
+        }
     }
 
     public boolean nextStep(double playbackSpeed) {
