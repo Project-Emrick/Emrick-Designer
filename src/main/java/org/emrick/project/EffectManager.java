@@ -60,20 +60,6 @@ public class EffectManager {
         return startTimeSet.equals(endTimeSet);
     }
 
-    public boolean addEffect(Effect effect, Performer performer) {
-        if (!isValid(effect, performer)) {
-            showAddEffectErrorDialog(performer);
-            return false;
-        }
-        showAddEffectSuccessDialog();
-        //performer.getEffects().add(effect);
-        UndoableAction createEffectAction = new CreateEffectAction(effect, performer);
-        createEffectAction.execute();
-        undoStack.push(createEffectAction);
-        redoStack.clear();
-        return true;
-    }
-
     public void undo() {
         if (!undoStack.isEmpty()) {
             UndoableAction action = undoStack.pop();
@@ -90,18 +76,50 @@ public class EffectManager {
         }
     }
 
+    public boolean addEffect(Effect effect, Performer performer) {
+        if (!isValid(effect, performer)) {
+            showAddEffectErrorDialog(performer);
+            return false;
+        }
+        UndoableAction createEffectAction = new CreateEffectAction(effect, performer);
+        createEffectAction.execute();
+        undoStack.push(createEffectAction);
+        redoStack.clear();
+        return true;
+    }
+
+    private void addEffect(Effect effect, List<Performer> performers) {
+        showAddEffectSuccessDialog();
+        UndoableAction createEffectsAction = new CreateEffectsAction(effect, performers);
+        createEffectsAction.execute();
+        undoStack.push(createEffectsAction);
+        redoStack.clear();
+    }
+
+    /**
+     * Initial idea was that an effect can only be created for one (selected) performer at a time.
+     * addEffectToSelectedPerformer accomplishes exactly this. May become deprecated soon.
+     * @param effect The effect to add to the currently selected performer.
+     * @return true if added successfully, false otherwise.
+     */
     public boolean addEffectToSelectedPerformer(Effect effect) {
         Performer performer = getSelectedPerformer();
-        if (performer == null) return false;
-        return addEffect(effect, performer);
+        if (performer == null)
+            return false;
+
+        boolean successful = addEffect(effect, performer);
+        if (successful)
+            showAddEffectSuccessDialog();
+        return successful;
     }
 
     public boolean addEffectToSelectedPerformers(Effect effect) {
-        if (effect == null) return false;
+        if (effect == null)
+            return false;
 
         ArrayList<Performer> selectedPerformers = getSelectedPerformers();
 
-        // Verify ability to add the effect to all selected performers. Avoid adding for some then error-ing out
+        // Verify ability to add the effect to all selected performers, to avoid adding for some then error-ing out.
         for (Performer performer : selectedPerformers) {
             if (!isValid(effect, performer)) {
                 showAddEffectErrorDialog(performer);
@@ -110,15 +128,6 @@ public class EffectManager {
         }
         addEffect(effect, selectedPerformers);
         return true;
-    }
-
-    private void addEffect(Effect effect, List<Performer> performers) {
-        showAddEffectSuccessDialog();
-        //performer.getEffects().add(effect);
-        UndoableAction createEffectsAction = new CreateEffectsAction(effect, performers);
-        createEffectsAction.execute();
-        undoStack.push(createEffectsAction);
-        redoStack.clear();
     }
 
     private void showAddEffectErrorDialog(Performer performer) {
@@ -139,8 +148,7 @@ public class EffectManager {
     }
 
     public void removeEffect(Effect effect, Performer performer) {
-        showRemoveEffectSuccessDialog();
-        //performer.getEffects().remove(effect);
+        showRemoveEffectSuccessDialog(); // An effect should always be removable
         UndoableAction removeEffectAction = new RemoveEffectAction(effect, performer);
         removeEffectAction.execute();
         undoStack.push(removeEffectAction);
@@ -180,8 +188,6 @@ public class EffectManager {
             removeAllEffects(performer);
         }
     }
-
-    // TODO: Create RemoveEffectsAction class (plural)
 
     /**
      * Pseudo-update functionality for effects. Instead of updating the same object, just replace it with an updated version.
