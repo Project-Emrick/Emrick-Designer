@@ -133,23 +133,24 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                 return;
             }
 
-            if (scrubBarGUI.nextStep(playbackSpeed)) {
-                playbackTimer.stop();
-                scrubBarGUI.setIsPlayingPlay();
+            if (scrubBarGUI.isUseFps()) {
+                if (scrubBarGUI.nextStep(playbackSpeed)) {
+                    playbackTimer.stop();
+                    scrubBarGUI.setIsPlayingPlay();
+                }
+            } else {
+                scrubBarGUI.nextCount();
+
+                if (scrubBarGUI.isAtLastSet() && scrubBarGUI.isAtEndOfSet()) {
+                    playbackTimer.stop();
+                    // TODO: stop music
+                    scrubBarGUI.setIsPlayingPlay();
+                    return;
+                } else if (scrubBarGUI.isAtEndOfSet()) {
+                    scrubBarGUI.nextSet();
+                }
+                setPlaybackTimerTimeByCounts();
             }
-
-//            scrubBarGUI.nextCount();
-//
-//            if (scrubBarGUI.isAtLastSet() && scrubBarGUI.isAtEndOfSet()) {
-//                playbackTimer.stop();
-//                // TODO: stop music
-//                scrubBarGUI.setIsPlayingPlay();
-//                return;
-//            } else if (scrubBarGUI.isAtEndOfSet()) {
-//                scrubBarGUI.nextSet();
-//            }
-
-//            setPlaybackTimerTime();
         });
 
         // Change Font Size for Menu and MenuIem
@@ -178,12 +179,15 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         createAndShowGUI();
     }
 
-    private void setPlaybackTimerTime() {
-//        float setSyncDuration = timeSync.get(scrubBarGUI.getCurrentSetIndex()).getValue();
-//        float setDuration = scrubBarGUI.getCurrSetDuration();
-//        playbackTimer.setDelay(Math.round(setSyncDuration / setDuration * 1000 / playbackSpeed));
+    private void setPlaybackTimerTimeByFps() {
         scrubBarGUI.setPlaybackTime();
         playbackTimer.setDelay((int) (1 / scrubBarGUI.getFps() * 1000.0 / playbackSpeed));
+    }
+
+    private void setPlaybackTimerTimeByCounts() {
+        float setSyncDuration = timeSync.get(scrubBarGUI.getCurrentSetIndex()).getValue();
+        float setDuration = scrubBarGUI.getCurrSetDuration();
+        playbackTimer.setDelay(Math.round(setSyncDuration / setDuration * 1000 / playbackSpeed));
     }
 
     public void createAndShowGUI() {
@@ -1210,7 +1214,13 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             // TODO: get audio to correct position
             audioPlayer.playAudio();
         }
-        setPlaybackTimerTime();
+        if (scrubBarGUI.isUseFps()) {
+            setPlaybackTimerTimeByFps();
+            footballFieldPanel.setUseFps(true);
+        } else {
+            setPlaybackTimerTimeByCounts();
+            footballFieldPanel.setUseFps(false);
+        }
         playbackTimer.start();
         return true;
     }
