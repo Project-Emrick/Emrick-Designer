@@ -67,6 +67,7 @@ public class ScrubBarGUI extends JComponent implements ActionListener {
 
     private double fps = 60;
     private double time = 0;
+    private boolean useFps = false;
     private ArrayList<SyncTimeGUI.Pair> timeSync = null;
 
     public ScrubBarGUI(JFrame parent, ScrubBarListener scrubBarListener, SyncListener syncListener, FootballFieldPanel footballFieldPanel) {
@@ -150,14 +151,27 @@ public class ScrubBarGUI extends JComponent implements ActionListener {
 
         // Status Panel.
         // TODO: Add more info (like start/end times?)
-        JPanel statusPanel = new JPanel(new GridLayout(3, 1));
+        JPanel statusPanel = new JPanel(new GridLayout(4, 1));
         statusPanel.setPreferredSize(new Dimension(100, 1));
         JLabel statusLabel = new JLabel("Set: 0", JLabel.CENTER);
         JLabel timeLabel = new JLabel("0:00.000", JLabel.CENTER);
-        JComboBox<Double> fpsChanger = new JComboBox<>(new Double[]{60.0, 30.0, 15.0});
+
+        String[] playbackFps = { "Count", "60 fps", "30 fps", "15 fps" };
+//        Double[] playbackFps = {60.0, 30.0, 15.0};
+        JComboBox<String> fpsChanger = new JComboBox<>(playbackFps);
         fpsChanger.addActionListener(e -> {
-            this.fps = (double) fpsChanger.getSelectedItem();
+            // Added: give user ability to not use FPS option
+            String selected = (String) fpsChanger.getSelectedItem();
+            assert(selected != null);
+            if (selected.equals("Count")) {
+                useFps = false;
+                return;
+            }
+            useFps = true;
+            String selectedFps = selected.split(" ")[0];
+            this.fps = Double.parseDouble(selectedFps);
         });
+
         statusPanel.add(statusLabel);
         statusPanel.add(timeLabel);
         statusPanel.add(fpsChanger);
@@ -416,6 +430,10 @@ public class ScrubBarGUI extends JComponent implements ActionListener {
 
     public JCheckBox getAudioCheckbox() {
         return audioCheckbox;
+    }
+
+    public boolean isUseFps() {
+        return useFps;
     }
 
     /**
