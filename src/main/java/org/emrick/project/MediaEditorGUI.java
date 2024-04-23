@@ -448,6 +448,8 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         runMenu.add(runShowItem);
         JMenuItem flowViewerItem = new JMenuItem("Run Show via Flow View");
         runMenu.add(flowViewerItem);
+        JMenuItem programItem = new JMenuItem("Enter Programming Mode");
+        runMenu.add(programItem);
         JMenuItem stopShowItem = new JMenuItem("Stop show");
         stopShowItem.addActionListener(e -> {
             footballFieldPanel.setSerialTransmitter(null);
@@ -459,6 +461,45 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                 runMenu.add(flowViewerItem);
             }
         });
+        programItem.addActionListener(e -> {
+            SerialTransmitter st = new SerialTransmitter();
+            String port = st.getSerialPort().getDescriptivePortName();
+            int option = 1;
+            while (option > 0) {
+                if (option == 1) {
+                    option = JOptionPane.showConfirmDialog(null,
+                            "Is (" + port + ") the correct port for the transmitter?",
+                            "Run Show",
+                            JOptionPane.YES_NO_OPTION);
+                } else if (option == 2) {
+                    option = JOptionPane.showConfirmDialog(null,
+                            "Port invalid: Make sure you have the right port and that "
+                                    + "it is not already in use then try again.",
+                            "Run show: ERROR",
+                            JOptionPane.OK_CANCEL_OPTION);
+                    if (option == 2) {
+                        option = -1;
+                        return;
+                    } else if (option == 0) {
+                        option = 1;
+                    }
+                }
+                if (option == 1) {
+                    port = JOptionPane.showInputDialog("Enter COM port (example: COM7): ");
+                    if (port != null) {
+                        if (!st.setSerialPort(port)) {
+                            option = 2;
+                        } else {
+                            port = st.getSerialPort().getDescriptivePortName();
+                        }
+                    } else {
+                        option = -1;
+                        return;
+                    }
+                }
+            }
+            st.writeToSerialPort("p");
+        });
         flowViewerItem.addActionListener(e -> {
             SerialTransmitter st = new SerialTransmitter();
             String port = st.getSerialPort().getDescriptivePortName();
@@ -466,15 +507,15 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             while (option > 0) {
                 if (option == 1) {
                     option = JOptionPane.showConfirmDialog(null,
-                                                           "Is (" + port + ") the correct port for the transmitter?",
-                                                           "Run Show",
-                                                           JOptionPane.YES_NO_OPTION);
+                            "Is (" + port + ") the correct port for the transmitter?",
+                            "Run Show",
+                            JOptionPane.YES_NO_OPTION);
                 } else if (option == 2) {
                     option = JOptionPane.showConfirmDialog(null,
-                                                           "Port invalid: Make sure you have the right port and that "
-                                                           + "it is not already in use then try again.",
-                                                           "Run show: ERROR",
-                                                           JOptionPane.OK_CANCEL_OPTION);
+                            "Port invalid: Make sure you have the right port and that "
+                                    + "it is not already in use then try again.",
+                            "Run show: ERROR",
+                            JOptionPane.OK_CANCEL_OPTION);
                     if (option == 2) {
                         option = -1;
                         return;
@@ -551,15 +592,15 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             while (option > 0) {
                 if (option == 1) {
                     option = JOptionPane.showConfirmDialog(null,
-                                                           "Is (" + port + ") the correct port for the transmitter?",
-                                                           "Run Show",
-                                                           JOptionPane.YES_NO_OPTION);
+                            "Is (" + port + ") the correct port for the transmitter?",
+                            "Run Show",
+                            JOptionPane.YES_NO_OPTION);
                 } else if (option == 2) {
                     option = JOptionPane.showConfirmDialog(null,
-                                                           "Port invalid: Make sure you have the right port and that "
-                                                           + "it is not already in use then try again.",
-                                                           "Run show: ERROR",
-                                                           JOptionPane.OK_CANCEL_OPTION);
+                            "Port invalid: Make sure you have the right port and that "
+                                    + "it is not already in use then try again.",
+                            "Run show: ERROR",
+                            JOptionPane.OK_CANCEL_OPTION);
                     if (option == 2) {
                         option = -1;
                     } else if (option == 0) {
