@@ -231,12 +231,7 @@ public class ScrubBarGUI extends JComponent implements ActionListener {
             footballFieldPanel.setCurrentCount(val);
 
             long currTimeMSec = scrubBarListener.onScrub();
-
-            // Convert milliseconds to minutes and seconds
-            long minutes = java.util.concurrent.TimeUnit.MILLISECONDS.toMinutes(currTimeMSec);
-            long seconds = java.util.concurrent.TimeUnit.MILLISECONDS.toSeconds(currTimeMSec) % 60;
-            long milliseconds = currTimeMSec % 1000;
-            timeLabel.setText(String.format("%d:%02d.%03d", minutes, seconds, milliseconds));
+            timeLabel.setText(TimeManager.getFormattedTime(currTimeMSec));
 
             setPlaybackTime();
         });
@@ -513,14 +508,6 @@ public class ScrubBarGUI extends JComponent implements ActionListener {
 //        System.out.println("currSetEndCount = " + currSetEndCount);
     }
 
-    public void setCanSeekAudio(boolean canSeekAudio) {
-        this.canSeekAudio = canSeekAudio;
-    }
-
-    public boolean isCanSeekAudio() {
-        return canSeekAudio;
-    }
-
     public boolean isPlaying() {
         return isPlaying;
     }
@@ -547,19 +534,15 @@ public class ScrubBarGUI extends JComponent implements ActionListener {
             }
         }
         else if (e.getSource().equals(prevSetButton)) {
-            this.canSeekAudio = true;
             prevSet();
         }
         else if (e.getSource().equals(nextSetButton)) {
-            this.canSeekAudio = true;
             nextSet();
         }
         else if (e.getSource().equals(prevCountButton)) {
-            this.canSeekAudio = true;
             prevCount();
         }
         else if (e.getSource().equals(nextCountButton)) {
-            this.canSeekAudio = true;
             nextCount();
         }
         else if (e.getSource().equals(syncButton)) {

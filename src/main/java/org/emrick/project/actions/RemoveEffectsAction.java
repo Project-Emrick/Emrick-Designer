@@ -1,6 +1,6 @@
 package org.emrick.project.actions;
 
-import org.emrick.project.Effect;
+import org.emrick.project.effect.Effect;
 import org.emrick.project.Performer;
 
 import java.util.List;

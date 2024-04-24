@@ -1,6 +1,7 @@
 package org.emrick.project.actions;
 
 import org.emrick.project.*;
+import org.emrick.project.effect.Effect;
 
 import java.util.*;
 

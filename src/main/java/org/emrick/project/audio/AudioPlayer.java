@@ -96,7 +96,6 @@ public class AudioPlayer extends Thread {
 
     public void playAudio() {
         if (sequencer != null) {
-            //  For seeking, consider sequencer.setTickPosition(tick); or sequencer.setMicrosecondPosition(microseconds);
             sequencer.start();
         }
         else if (clip != null) {

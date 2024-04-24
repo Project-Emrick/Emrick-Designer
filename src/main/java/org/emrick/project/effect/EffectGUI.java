@@ -1,4 +1,4 @@
-package org.emrick.project;
+package org.emrick.project.effect;
 
 import javax.swing.*;
 import javax.swing.border.Border;

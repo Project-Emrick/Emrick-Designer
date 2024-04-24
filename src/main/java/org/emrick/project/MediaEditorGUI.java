@@ -3,6 +3,7 @@ package org.emrick.project;
 import com.formdev.flatlaf.*;
 import com.google.gson.*;
 import org.emrick.project.audio.*;
+import org.emrick.project.effect.*;
 import org.emrick.project.serde.*;
 
 import javax.swing.Timer;
@@ -26,7 +27,7 @@ import com.itextpdf.text.Paragraph;
 import com.itextpdf.text.pdf.PdfWriter;
 
 public class MediaEditorGUI extends Component implements ImportListener, ScrubBarListener, SyncListener,
-        FootballFieldListener, EffectListener, SelectListener {
+        FootballFieldListener, EffectListener, SelectListener, RFTriggerListener {
 
     // String definitions
     public static final String FILE_MENU_NEW_PROJECT = "New Project";
@@ -44,8 +45,8 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
     // Audio Components
     //  May want to abstract this away into some DrillPlayer class in the future
     private AudioPlayer audioPlayer;
-    private Color chosenColor;
-    private JPanel colorDisplayPanel;
+    private boolean canSeekAudio = true;
+
     // dots
     private final JLabel sysMsg = new JLabel("Welcome to Emrick Designer!", SwingConstants.RIGHT);
     private final Timer clearSysMsg = new Timer(5000, e -> {
@@ -57,6 +58,10 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
     private EffectGUI effectGUI;
     private Effect currentEffect;
     private Effect copiedEffect;
+
+    // RF Trigger
+    private RFTriggerGUI rfTriggerGUI;
+    private HashMap<Integer, RFTrigger> count2RFTrigger;
 
     // Time keeping
     // TODO: save this
@@ -134,6 +139,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                 return;
             }
 
+            canSeekAudio = false;
             if (scrubBarGUI.isUseFps()) {
                 if (scrubBarGUI.nextStep(playbackSpeed)) {
                     // Reached the end
@@ -148,12 +154,14 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                     playbackTimer.stop();
                     audioPlayer.pauseAudio();
                     scrubBarGUI.setIsPlayingPlay();
+                    canSeekAudio = true;
                     return;
                 } else if (scrubBarGUI.isAtEndOfSet()) {
                     scrubBarGUI.nextSet();
                 }
                 setPlaybackTimerTimeByCounts();
             }
+            canSeekAudio = true;
         });
 
         // Change Font Size for Menu and MenuIem
@@ -218,44 +226,21 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         frame.add(mainContentPanel, BorderLayout.CENTER);
 
         // Timeline panel
-        JPanel timelinePanel = new JPanel();
+        JPanel timelinePanel = new JPanel(new FlowLayout());
         timelinePanel.setBorder(BorderFactory.createTitledBorder("Timeline"));
-        timelinePanel.setPreferredSize(new Dimension(frame.getWidth(), 100));
+        timelinePanel.setPreferredSize(new Dimension(frame.getWidth(), 120));
         frame.add(timelinePanel, BorderLayout.SOUTH);
 
         // Effect View panel
         effectGUI = new EffectGUI(EffectGUI.noProjectSyncMsg);
+        rfTriggerGUI = new RFTriggerGUI(RFTriggerGUI.noProjectSyncMsg);
         effectViewPanel = new JPanel();
         effectViewPanel.setLayout(new BorderLayout());
         effectViewPanel.setPreferredSize(new Dimension(300, frame.getHeight()));
         effectViewPanel.setBorder(BorderFactory.createTitledBorder("Effect View"));
         effectViewPanel.add(effectGUI.getEffectPanel());
+        effectViewPanel.add(rfTriggerGUI.getRfTriggerPanel(), BorderLayout.SOUTH);
         frame.add(effectViewPanel, BorderLayout.EAST);
-
-        // Initialize the color display panel with a default color or make it transparent initially
-        colorDisplayPanel = new JPanel();
-        colorDisplayPanel.setBackground(Color.LIGHT_GRAY); // Default color
-        colorDisplayPanel.setPreferredSize(new Dimension(50, 40)); // Adjust size as needed
-        JLabel colorLabel = new JLabel("Selected Color");
-        colorDisplayPanel.add(colorLabel, BorderLayout.WEST);
-        // Add the color display panel to the Effect View panel
-        colorDisplayPanel.setLayout(new BoxLayout(colorDisplayPanel, BoxLayout.Y_AXIS));
-
-        // Create the "Apply" button
-        JButton applyButton = new JButton("Apply");
-        applyButton.addActionListener(e -> {
-            Color newColor = chosenColor;
-            for (Performer performer : footballFieldPanel.selectedPerformers.values()) {
-                Coordinate coordinate = performer.getCoordinateFromSet(footballFieldPanel.getCurrentSet().label);
-                Color oldColor = coordinate.getColor();
-                coordinate.setColor(newColor);
-                colorChangeCaretaker.addMemento(new ColorChangeMemento(coordinate, newColor, oldColor));
-            }
-            footballFieldPanel.repaint();
-        });
-
-        colorDisplayPanel.add(applyButton);
-        effectViewPanel.add(colorDisplayPanel, BorderLayout.SOUTH);
 
         ////////////////////////// Menu //////////////////////////
 
@@ -728,14 +713,10 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
 
         //Light menu. and adjust its menu location
         JPopupMenu lightMenuPopup = new JPopupMenu();
-        JMenuItem predefinedLightItem = new JMenuItem("Predefined Light Effect");
-        predefinedLightItem.addActionListener(e -> showPredefinedEffects(frame));
-        lightMenuPopup.add(predefinedLightItem);
 
         JMenuItem timeWeatherItem = new JMenuItem("Time & Weather Effects");
         timeWeatherItem.addActionListener(e -> showTimeWeatherDialog(frame));
         lightMenuPopup.add(timeWeatherItem);
-
 
         JMenuItem lightDescription = new JMenuItem("Light Description");
         lightDescription.addActionListener(e->showlightDescription(frame));
@@ -889,15 +870,6 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         }
     }
 
-    private void showPredefinedEffects(Frame parent) {
-        Color selectedColor = JColorChooser.showDialog(parent, "Choose a Color", chosenColor);
-        if (selectedColor != null) {
-            chosenColor = selectedColor;
-            colorDisplayPanel.setBackground(chosenColor);
-            colorDisplayPanel.repaint();
-        }
-    }
-
     private void showlightDescription(Frame parentFrame){
         JDialog dialog = new JDialog(parentFrame, "Light Description", true);
         dialog.getContentPane().setBackground(Color.WHITE);
@@ -966,6 +938,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
     private void updateCharCountLabel(JLabel label, int currentLength, int maxChars) {
         label.setText((maxChars - currentLength) + " characters remaining");
     }
+
     public class LimitedDocument extends PlainDocument {
         private final int limit;
 
@@ -1221,14 +1194,18 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
     @Override
     public void onSync(ArrayList<SyncTimeGUI.Pair> times, float startDelay) {
         System.out.println("MediaEditorGUI: Got Synced Times");
+
         this.timeSync = times;
-        scrubBarGUI.setTimeSync(timeSync);
         this.startDelay = startDelay;
+
+        scrubBarGUI.setTimeSync(timeSync);
+        count2RFTrigger = new HashMap<>();
 
         setupEffectView();
     }
 
     private void setupEffectView() {
+
         // Recalculate set to count map (pageTab2Count) to initialize timeManager
         Map<String, Integer> pageTab2Count = new HashMap<>();
         int startCount = 0;
@@ -1287,12 +1264,14 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         useStartDelay = scrubBarGUI.isAtFirstSet() && scrubBarGUI.isAtStartOfSet();
         if (this.footballFieldPanel.getNumSelectedPerformers() > 0) {
             updateEffectViewPanel();
+        } else if (count2RFTrigger != null) {
+            updateRFTriggerPanel();
         }
-        if (scrubBarGUI.isPlaying() && scrubBarGUI.isCanSeekAudio()) {
+        if (scrubBarGUI.isPlaying() && canSeekAudio) {
             System.out.println("Called onScrub() -> Seeking audio...");
             playAudioFromCorrectPosition();
             // During playback, don't repeatedly seek audio while program controls the scrub bar
-            scrubBarGUI.setCanSeekAudio(false);
+            canSeekAudio = false;
         }
         if (timeManager != null) {
             return timeManager.getCount2MSec().get(footballFieldPanel.getCurrentCount());
@@ -1363,32 +1342,69 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         updateEffectViewPanel();
     }
 
+    ////////////////////////// RF Trigger Listeners //////////////////////////
+
+    @Override
+    public void onCreateRFTrigger(RFTrigger rfTrigger) {
+        count2RFTrigger.put(footballFieldPanel.getCurrentCount(), rfTrigger);
+        updateEffectViewPanel();
+    }
+
+    @Override
+    public void onDeleteRFTrigger(int count) {
+        count2RFTrigger.remove(count);
+        updateEffectViewPanel();
+    }
+
+    ////////////////////////// Effect Listeners //////////////////////////
+
     private void updateEffectViewPanel() {
-        if (this.effectManager == null) return;
 
-        this.effectViewPanel.remove(this.effectGUI.getEffectPanel());
-        this.effectViewPanel.revalidate();
-        this.effectViewPanel.repaint();
+        // No point in updating effect view if can't use effects
+        if (effectManager == null) return;
 
+        // Remove existing effect data
+        effectViewPanel.remove(effectGUI.getEffectPanel());
+        effectViewPanel.revalidate();
+        effectViewPanel.repaint();
+
+        // Updating EffectView panel subsumes updating RF Trigger panel
+        updateRFTriggerPanel();
+
+        // Effects
         // TODO: Eventually, for multiple selected performers, also check if not all selected performers share the same effect
-        if (this.footballFieldPanel.selectedPerformers.size() != 1) {
-            this.currentEffect = null;
-
-            this.effectGUI = new EffectGUI(EffectGUI.noPerformerMsg);
-
-            this.effectViewPanel.add(this.effectGUI.getEffectPanel());
+        if (footballFieldPanel.selectedPerformers.size() != 1) {
+            // Eventually should be able to work with multiple performers at a time
+            currentEffect = null;
+            effectGUI = new EffectGUI(EffectGUI.noPerformerMsg);
+            effectViewPanel.add(effectGUI.getEffectPanel(), BorderLayout.CENTER);
 
             return;
         }
 
-        // FIXME: Here, we know there's only one performer selected. The EffectGUI is for that single performer.
-        this.currentEffect = this.effectManager.getEffectFromSelectedPerformer();
-        long currentMSec = this.timeManager.getCount2MSec().get(this.footballFieldPanel.getCurrentCount());
-        this.effectGUI = new EffectGUI(this.currentEffect, currentMSec, this);
+        // FIXME: Here, we know there's only one performer selected. The EffectGUI is for that single performer, for now
+        currentEffect = effectManager.getEffectFromSelectedPerformer();
+        long currentMSec = timeManager.getCount2MSec().get(footballFieldPanel.getCurrentCount());
+        effectGUI = new EffectGUI(currentEffect, currentMSec, this);
 
-        this.effectViewPanel.add(this.effectGUI.getEffectPanel());
-        this.effectViewPanel.revalidate();
-        this.effectViewPanel.repaint();
+        // Add updated data for effect view
+        effectViewPanel.add(effectGUI.getEffectPanel(), BorderLayout.CENTER);
+        effectViewPanel.revalidate();
+        effectViewPanel.repaint();
+    }
+
+    private void updateRFTriggerPanel() {
+        effectViewPanel.remove(rfTriggerGUI.getRfTriggerPanel());
+        effectViewPanel.revalidate();
+        effectViewPanel.repaint();
+
+        int currentCount = footballFieldPanel.getCurrentCount();
+        RFTrigger currentRFTrigger = count2RFTrigger.get(currentCount);
+        rfTriggerGUI = new RFTriggerGUI(currentCount, currentRFTrigger, this);
+
+        effectViewPanel.add(rfTriggerGUI.getRfTriggerPanel(), BorderLayout.SOUTH);
+        effectViewPanel.revalidate();
+        effectViewPanel.repaint();
     }
 
     private void autosaveProject() {

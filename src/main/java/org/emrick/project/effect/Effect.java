@@ -1,4 +1,4 @@
-package org.emrick.project;
+package org.emrick.project.effect;
 
 import java.awt.*;
 import java.time.Duration;
@@ -7,21 +7,21 @@ import java.util.Objects;
 public class Effect implements Cloneable {
 
     // Application
-    long startTimeMSec; // Based on position of scrub bar cursor when user first creates the effect
-    long endTimeMSec; // Calculated from start time, delay, duration, and timeout
+    private long startTimeMSec; // Based on position of scrub bar cursor when user first creates the effect
+    private long endTimeMSec; // Calculated from start time, delay, duration, and timeout
 
     // Main Parameters
-    Color startColor;
-    Color endColor;
-    Duration delay;
-    Duration duration;
-    Duration timeout;
+    private Color startColor;
+    private Color endColor;
+    private Duration delay;
+    private Duration duration;
+    private Duration timeout;
 
     // Bitflags
-    boolean TIME_GRADIENT;
-    boolean SET_TIMEOUT;
-    boolean DO_DELAY;
-    boolean INSTANT_COLOR;
+    private boolean TIME_GRADIENT;
+    private boolean SET_TIMEOUT;
+    private boolean DO_DELAY;
+    private boolean INSTANT_COLOR;
 
     public Effect(long startTimeMSec,
                   Color startColor, Color endColor, Duration delay, Duration duration, Duration timeout,
