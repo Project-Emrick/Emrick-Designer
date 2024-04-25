@@ -13,21 +13,12 @@ public class EffectManager {
     private final Stack<UndoableAction> redoStack = new Stack<>();
     private FootballFieldPanel footballFieldPanel; // For easy access to selection info and performers
     private TimeManager timeManager; // Same TimeManager object as in MediaEditorGUI
+    private HashMap<Integer, RFTrigger> count2RFTrigger; // Please keep EffectManager updated
 
-    public EffectManager(FootballFieldPanel footballFieldPanel, TimeManager timeManager) {
+    public EffectManager(FootballFieldPanel footballFieldPanel, TimeManager timeManager, HashMap<Integer, RFTrigger> count2RFTrigger) {
         this.footballFieldPanel = footballFieldPanel;
         this.timeManager = timeManager;
-    }
-
-    /**
-     * Calls isValid for the currently selected performer.
-     * @param effect The effect to check.
-     * @return True if valid, false if invalid.
-     */
-    public boolean isValidForSelectedPerformer(Effect effect) {
-        Performer performer = getSelectedPerformer();
-        if (performer == null) return false;
-        return isValid(effect, performer);
+        this.count2RFTrigger = count2RFTrigger;
     }
 
     /**
@@ -50,18 +41,51 @@ public class EffectManager {
             return false;
         }
 
-        // The effect's start and end times should not be in different sets (update: can be in different sets, can't be
-        //  overrun an RF trigger though
-        String startTimeSet = "0";
-        String endTimeSet = "0";
-        for (Map.Entry<String, Long> entry : timeManager.getSet2MSec()) {
-            String set = entry.getKey();
-            long setMSec = entry.getValue();
-
-            if (startMSec >= setMSec) startTimeSet = set;
-            if (endMSec >= setMSec) endTimeSet = set;
+        // Update: can be in different sets, can't overrun an RF trigger (although effects can start or end on triggers)
+        for (Map.Entry<Integer, RFTrigger> entry : count2RFTrigger.entrySet()) {
+            long tsMSec = timeManager.getCount2MSec().get(entry.getKey());
+            if (effect.getStartTimeMSec() < tsMSec && tsMSec < effect.getEndTimeMSec()) {
+                return false;
+            }
         }
-        return startTimeSet.equals(endTimeSet);
+        return true;
+
+//        // The effect's start and end times should not be in different sets
+//        String startTimeSet = "0";
+//        String endTimeSet = "0";
+//        for (Map.Entry<String, Long> entry : timeManager.getSet2MSec()) {
+//            String set = entry.getKey();
+//            long setMSec = entry.getValue();
+//
+//            if (startMSec >= setMSec) startTimeSet = set;
+//            if (endMSec >= setMSec) endTimeSet = set;
+//        }
+//        return startTimeSet.equals(endTimeSet);
+    }
+
+    /**
+     * Checks if an RF trigger can be validly created. The RF trigger should not be placed where an effect over-runs it
+     * (i.e., where it is in the middle of an effect). However, it can be placed where an effect begins or ends.
+     * Timestamps (mSec) are checked for validation.
+     * @param rfTrigger The RF trigger to be validated.
+     */
+    public boolean isValid(RFTrigger rfTrigger) {
+        if (rfTrigger == null) {
+            return false;
+        }
+        // Get timestamp in milliseconds for where the RF trigger is to be placed
+        long tsMSec = timeManager.getCount2MSec().get(rfTrigger.getCount());
+
+        for (Performer performer : footballFieldPanel.drill.performers) {
+            for (Effect effect : performer.getEffects()) {
+                if (effect.getEndTimeMSec() <= tsMSec || tsMSec <= effect.getStartTimeMSec()) {
+                    continue;
+                }
+                showAddRFTriggerErrorDialog(performer);
+                return false;
+            }
+        }
+        return true;
     }
 
     public void undo() {
@@ -134,10 +158,16 @@ public class EffectManager {
         return true;
     }
 
+    private void showAddRFTriggerErrorDialog(Performer performer) {
+        JOptionPane.showMessageDialog(null,
+                "RF trigger could not be added. Please check for collision with effect(s) on performer " + performer.getIdentifier() + ".",
+                "Create RF Trigger: Error", JOptionPane.ERROR_MESSAGE);
+    }
+
     private void showAddEffectErrorDialog(Performer performer) {
         JOptionPane.showMessageDialog(null,
                 "Effect could not be applied to performer " + performer.getIdentifier() +
-                        ". Please check for possible set run-off or overlap with the performer's other effects.",
+                        ". Please check for possible collision with an RF trigger or the performer's other effects.",
                 "Apply Effect: Error", JOptionPane.ERROR_MESSAGE);
     }
 
@@ -282,5 +312,9 @@ public class EffectManager {
 
     public TimeManager getTimeManager() {
         return timeManager;
+    }
+
+    public void setCount2RFTrigger(HashMap<Integer, RFTrigger> count2RFTrigger) {
+        this.count2RFTrigger = count2RFTrigger;
     }
 }

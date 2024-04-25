@@ -60,6 +60,8 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
     private JPanel scrubBarPanel; // Refers directly to panel of ScrubBarGUI. Reduces UI refreshing issues.
     private ScrubBarGUI scrubBarGUI; // Refers to ScrubBarGUI instance, with functionality
     private JPanel effectViewPanel;
+    private JPanel timelinePanel;
+    private TimelineGUI timelineGUI;
 
     // Audio Components
     //  May want to abstract this away into some DrillPlayer class in the future
@@ -226,7 +228,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         frame.add(mainContentPanel, BorderLayout.CENTER);
 
         // Timeline panel
-        JPanel timelinePanel = new JPanel(new FlowLayout());
+        timelinePanel = new JPanel(new BorderLayout());
         timelinePanel.setBorder(BorderFactory.createTitledBorder("Timeline"));
         timelinePanel.setPreferredSize(new Dimension(frame.getWidth(), 120));
         frame.add(timelinePanel, BorderLayout.SOUTH);
@@ -760,7 +762,6 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         menuBar.add(loginItem);
 
         JMenuItem signIn = new JMenuItem("Sign In");
-        signIn.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_N, ActionEvent.CTRL_MASK));
         signIn.addActionListener(e -> {
             System.out.println("Signing in...");
             new UserAuthGUI(frame, this); // This assumes UserAuthGUI sets itself visible
@@ -1276,6 +1277,9 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
 
         scrubBarGUI.updatePageTabCounts(pageTabCounts);
         buildScrubBarPanel();
+
+        // At the point of import process, the project is ready to sync
+        scrubBarGUI.getSyncButton().doClick();
     }
 
     ////////////////////////// Sync Listeners //////////////////////////
@@ -1304,7 +1308,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         }
         // Initialize important state member variables
         this.timeManager = new TimeManager(pageTab2Count, this.timeSync, this.startDelay);
-        this.effectManager = new EffectManager(this.footballFieldPanel, this.timeManager);
+        this.effectManager = new EffectManager(this.footballFieldPanel, this.timeManager, this.count2RFTrigger);
         this.footballFieldPanel.setEffectManager(this.effectManager);
 
         updateEffectViewPanel();
@@ -1378,7 +1382,8 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         }
         int currentCount = footballFieldPanel.getCurrentCount();
         RFTrigger currentRFTrigger = count2RFTrigger.get(currentCount);
-        rfTriggerGUI = new RFTriggerGUI(currentCount, currentRFTrigger, this);
+        rfTriggerGUI = new RFTriggerGUI(
+                currentCount, timeManager.getCount2MSec().get(currentCount), currentRFTrigger, this);
 
         effectViewPanel.add(rfTriggerGUI.getCreateDeleteBtn(), BorderLayout.SOUTH);
         effectViewPanel.revalidate();
@@ -1424,7 +1429,10 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
     public void onCreateEffect(Effect effect) {
         boolean successful = this.effectManager.addEffectToSelectedPerformer(effect);
         this.footballFieldPanel.repaint();
-        if (successful) updateEffectViewPanel();
+        if (successful) {
+            updateEffectViewPanel();
+            updateTimelinePanel();
+        }
     }
 
     @Override
@@ -1432,6 +1440,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         this.effectManager.replaceEffectForSelectedPerformer(oldEffect, newEffect);
         this.footballFieldPanel.repaint();
         updateEffectViewPanel();
+        updateTimelinePanel();
     }
 
     @Override
@@ -1439,6 +1448,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         this.effectManager.removeEffectFromSelectedPerformer(effect);
         this.footballFieldPanel.repaint();
         updateEffectViewPanel();
+        updateTimelinePanel();
     }
 
     ////////////////////////// Football Field Listeners //////////////////////////
@@ -1446,25 +1456,38 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
     @Override
     public void onPerformerSelect() {
         updateEffectViewPanel();
+        updateTimelinePanel();
     }
 
     @Override
     public void onPerformerDeselect() {
         updateEffectViewPanel();
+        updateTimelinePanel();
     }
 
     ////////////////////////// RF Trigger Listeners //////////////////////////
 
     @Override
     public void onCreateRFTrigger(RFTrigger rfTrigger) {
+        if (!effectManager.isValid(rfTrigger)) {
+            return;
+        }
         count2RFTrigger.put(footballFieldPanel.getCurrentCount(), rfTrigger);
         updateRFTriggerButton();
+        updateTimelinePanel();
+        JOptionPane.showMessageDialog(null,
+                "RF trigger created successfully at count " + footballFieldPanel.getCurrentCount(),
+                "RF Trigger Create: Success", JOptionPane.INFORMATION_MESSAGE);
     }
 
     @Override
     public void onDeleteRFTrigger(int count) {
         count2RFTrigger.remove(count);
         updateRFTriggerButton();
+        JOptionPane.showMessageDialog(null,
+                "RF trigger at count " + count + " deleted successfully", "RF Trigger Delete: Success",
+                JOptionPane.INFORMATION_MESSAGE);
+        updateTimelinePanel();
     }
 
     ////////////////////////// Effect Listeners //////////////////////////
@@ -1499,6 +1522,31 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         effectViewPanel.add(effectGUI.getEffectPanel(), BorderLayout.CENTER);
         effectViewPanel.revalidate();
         effectViewPanel.repaint();
+    }
+
+    private void updateTimelinePanel() {
+
+        // No point in updating timeline if project has not been synced
+        if (timeManager == null) return;
+
+        // Remove existing timeline data if it exists
+        if (timelineGUI != null) {
+            timelinePanel.remove(timelineGUI.getTimelineScrollPane());
+            timelinePanel.revalidate();
+            timelinePanel.repaint();
+        }
+
+        // Get effects of selected performers, if applicable, else will be null
+        HashSet<Effect> effectsSet = new HashSet<>();
+        for (Map.Entry<String, Performer> selected : footballFieldPanel.selectedPerformers.entrySet()) {
+            effectsSet.addAll(selected.getValue().getEffects());
+        }
+        ArrayList<Effect> effectsList = new ArrayList<>(effectsSet);
+        timelineGUI = new TimelineGUI(effectsList, count2RFTrigger);
+
+        timelinePanel.add(timelineGUI.getTimelineScrollPane());
+        timelinePanel.revalidate();
+        timelinePanel.repaint();
     }
 
     private void autosaveProject() {

@@ -633,6 +633,10 @@ public class ScrubBarGUI extends JComponent implements ActionListener {
         this.timeSync = timeSync;
     }
 
+    public JButton getSyncButton() {
+        return syncButton;
+    }
+
     // For testing
 //    public static void main(String[] args) {
 //
