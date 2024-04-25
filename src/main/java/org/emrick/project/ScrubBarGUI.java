@@ -577,6 +577,10 @@ public class ScrubBarGUI extends JComponent implements ActionListener {
         System.out.println("ScrubBarGUI: isPlaying = " + isPlaying + ", time = " + scrubBarListener.onScrub() / 1000.0);
     }
 
+    public double getTime() {
+        return time;
+    }
+
     public void prevSet() {
         topSlider.setValue(topSlider.getValue() - 1);
     }

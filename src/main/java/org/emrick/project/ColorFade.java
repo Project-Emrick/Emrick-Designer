@@ -1,7 +1,8 @@
 package org.emrick.project;
 
+import org.emrick.project.effect.GeneratedEffect;
+
 import java.awt.*;
-import java.util.ArrayList;
 
 public class ColorFade extends GeneratedEffect {
     public Color startColor;

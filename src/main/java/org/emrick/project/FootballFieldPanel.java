@@ -146,31 +146,6 @@ public class FootballFieldPanel extends JPanel implements RepaintListener {
         return fieldHeight;
     }
 
-//    @Override
-//    protected void paintComponent(Graphics g) {
-//        super.paintComponent(g);
-//
-//        // Draw the football field background
-//        g.setColor(new Color(92,255,103));
-//        g.fillRect(margin, margin, fieldWidth, fieldHeight); // Use margin for x and y start
-//
-//        // Adjust line and shape drawing to account for the margin
-//        g.setColor(Color.WHITE);
-//        g.drawRect(margin, margin, fieldWidth, fieldHeight);
-//        g.drawLine(fieldWidth / 2 + margin, margin, fieldWidth / 2 + margin, fieldHeight + margin);
-//        g.drawOval((fieldWidth / 2 - fieldHeight / 10) + margin, (fieldHeight / 2 - fieldHeight / 10) + margin, fieldHeight / 5, fieldHeight / 5);
-//        g.drawRect(margin, (fieldHeight / 2 - fieldHeight / 4) + margin, fieldWidth / 10, fieldHeight / 2);
-//        g.drawRect(fieldWidth - (fieldWidth / 10) + margin, (fieldHeight / 2 - fieldHeight / 4) + margin, fieldWidth / 10, fieldHeight / 2);
-//
-    // Adjust dot drawing to account for the margin
-//        g.setColor(Color.RED);
-//        for (Point dot : dotCoordinates) {
-//            double adjustedX = Math.min(dot.x, fieldWidth + margin - 5); // Adjust for margin
-//            int adjustedY = Math.min(dot.y, fieldHeight + margin - 5); // Adjust for margin
-//            g.fillOval(adjustedX - 5, adjustedY - 5, 10, 10);
-//        }
-//    }
-
     protected Color calculateColor(Effect e) {
         long currMS = effectManager.getTimeManager().getCount2MSec().get(currentCount);
         if (e.isDO_DELAY()) {
@@ -242,20 +217,6 @@ public class FootballFieldPanel extends JPanel implements RepaintListener {
         // Case: User is not using FPS playback mode
         if (!useFps) currentSetRatio = 1;
 
-        // Draw the surface image
-        if (surfaceImage != null && showSurfaceImage) {
-            drawBetterImage(g, surfaceImage);
-        }
-
-        // Draw the floorCover image on top
-        if (floorCoverImage != null && showFloorCoverImage) {
-            drawBetterImage(g, floorCoverImage);
-        }
-
-        if (!showFloorCoverImage && !showSurfaceImage) {
-            drawBetterImage(g, dummyImage); // For accurate plotting, need some image reference
-        }
-
         // Draw performers with their colors
         for (Performer p : drill.performers) {
             Coordinate c1 = p.getCoordinateFromSet(currentSet.label);
@@ -320,6 +281,7 @@ public class FootballFieldPanel extends JPanel implements RepaintListener {
             g.setColor(new Color(0, 100, 100, 100));
             g.fillRect(x, y, w, h);
         }
+        footballFieldListener.onFinishRepaint();
     }
 
     public void setColorChosen(Color color) {
@@ -493,5 +455,21 @@ public class FootballFieldPanel extends JPanel implements RepaintListener {
 
     public int getNumSelectedPerformers() {
         return this.selectedPerformers.size();
+    }
+
+    public void setFieldWidth(double fieldWidth) {
+        this.fieldWidth = fieldWidth;
+    }
+
+    public void setFieldHeight(double fieldHeight) {
+        this.fieldHeight = fieldHeight;
+    }
+
+    public Point getFrontSideline50() {
+        return frontSideline50;
+    }
+
+    public void setFrontSideline50(Point frontSideline50) {
+        this.frontSideline50 = frontSideline50;
     }
 }

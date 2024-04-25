@@ -20,6 +20,7 @@ import java.awt.Image;
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.geom.*;
+import java.awt.image.BufferedImage;
 import java.io.*;
 import java.nio.file.*;
 import java.time.*;
@@ -38,7 +39,10 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
 
     // UI Components of MediaEditorGUI
     private final JFrame frame;
+    private JPanel mainContentPanel;
+    private final JPanel footballField;
     private final FootballFieldPanel footballFieldPanel;
+    private final FootballFieldBackground footballFieldBackground;
     // dots
     private final JLabel sysMsg = new JLabel("Welcome to Emrick Designer!", SwingConstants.RIGHT);
     private final Timer clearSysMsg = new Timer(5000, e -> {
@@ -56,7 +60,6 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             "Use the 'Help' menu for detailed documentation."
     };
     public int currentTutorialIndex = 0;
-    private JPanel mainContentPanel;
     private JPanel scrubBarPanel; // Refers directly to panel of ScrubBarGUI. Reduces UI refreshing issues.
     private ScrubBarGUI scrubBarGUI; // Refers to ScrubBarGUI instance, with functionality
     private JPanel effectViewPanel;
@@ -87,6 +90,9 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
     private float playbackSpeed = 1;
     // The selected playback speed. For example "0.5", "1.0", "1.5". Use as a multiplier
     private Timer playbackTimer = null;
+    private long frameStartTime;
+    private long playbackStartMS;
+    private int timeAdjustment = 0;
     // Project info
     private File archivePath = null;
     private File drillPath = null;
@@ -121,6 +127,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         t.start();
 
         // playback timer
+        playbackStartMS = 0;
         playbackTimer = new Timer(0, e -> {
             if (scrubBarGUI == null || playbackTimer == null) {
                 // TODO: throw an error, we shouldn't be able to be here!
@@ -144,11 +151,13 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
 
             canSeekAudio = false;
             if (scrubBarGUI.isUseFps()) {
+                frameStartTime = System.currentTimeMillis();
                 if (scrubBarGUI.nextStep(playbackSpeed)) {
                     // Reached the end
                     playbackTimer.stop();
                     scrubBarGUI.setIsPlayingPlay();
                 }
+                setPlaybackTimerTimeByFps();
             } else {
                 scrubBarGUI.nextCount();
 
@@ -176,10 +185,13 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
 
         // Field
         footballFieldPanel = new FootballFieldPanel(this);
-        footballFieldPanel.setBackground(Color.lightGray); // temp. Visual indicator for unfilled space
+        footballFieldPanel.setOpaque(false);
+        //footballFieldPanel.setBackground(Color.lightGray); // temp. Visual indicator for unfilled space
         JScrollPane fieldScrollPane = new JScrollPane(footballFieldPanel);
         fieldScrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
         fieldScrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
+        footballFieldBackground = new FootballFieldBackground(this);
+        footballField = new JPanel();
 
         // Main frame
         frame = new JFrame("Emrick Designer");
@@ -220,7 +232,12 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         mainContentPanel.setLayout(new BorderLayout());
 
         // footballFieldPanel.setBorder(BorderFactory.createTitledBorder("Main View"));
-        mainContentPanel.add(footballFieldPanel, BorderLayout.CENTER);
+        footballField.setLayout(new OverlayLayout(footballField));
+        footballField.add(footballFieldPanel, BorderLayout.CENTER);
+        footballField.add(footballFieldBackground, BorderLayout.CENTER);
+        mainContentPanel.add(footballField, BorderLayout.CENTER);
+//        mainContentPanel.add(footballFieldBackground, BorderLayout.CENTER);
+//        mainContentPanel.add(footballFieldPanel, BorderLayout.CENTER);
 
         // Scrub Bar Panel
         buildScrubBarPanel();
@@ -1244,13 +1261,17 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
 
     @Override
     public void onFloorCoverImport(Image image) {
+        footballFieldBackground.setFloorCoverImage((BufferedImage) image);
         footballFieldPanel.setFloorCoverImage(image);
+        footballFieldBackground.repaint();
         footballFieldPanel.repaint();
     }
 
     @Override
     public void onSurfaceImport(Image image) {
+        footballFieldBackground.setSurfaceImage((BufferedImage) image);
         footballFieldPanel.setSurfaceImage(image);
+        footballFieldBackground.repaint();
         footballFieldPanel.repaint();
     }
 
@@ -1331,6 +1352,8 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         if (scrubBarGUI.isUseFps()) {
             setPlaybackTimerTimeByFps();
             footballFieldPanel.setUseFps(true);
+            playbackStartMS = System.currentTimeMillis() - timeManager.getCount2MSec().get(footballFieldPanel.getCurrentCount());
+            System.out.println("Start time: " + timeManager.getCount2MSec().get(footballFieldPanel.getCurrentCount()));
         } else {
             setPlaybackTimerTimeByCounts();
             footballFieldPanel.setUseFps(false);
@@ -1492,6 +1515,36 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
     }
 
     ////////////////////////// Effect Listeners //////////////////////////
+
+    @Override
+    public void onResizeBackground() {
+        footballFieldPanel.setFieldHeight(footballFieldBackground.getFieldHeight());
+        footballFieldPanel.setFieldWidth(footballFieldBackground.getFieldWidth());
+        footballFieldPanel.setFrontSideline50(footballFieldBackground.getFrontSideline50());
+        footballFieldPanel.repaint();
+    }
+
+    @Override
+    public void onFinishRepaint() {
+        if (scrubBarGUI.isPlaying() && scrubBarGUI.isUseFps()) {
+
+            try {
+                double currTime;
+                if (footballFieldPanel.getCurrentSet().index > 0) {
+                    currTime = scrubBarGUI.getTime() * 1000 + timeManager.getSet2MSec().get(footballFieldPanel.getCurrentSet().index).getValue();
+                } else {
+                    currTime = scrubBarGUI.getTime() * 1000;
+                }
+                double timeDiff = System.currentTimeMillis() - playbackStartMS - currTime;
+                playbackTimer.setDelay(playbackTimer.getDelay() - (int) timeDiff);
+            }
+            catch (IllegalArgumentException iae) {
+                if (frameStartTime != 0) {
+                    playbackTimer.setDelay(0);
+                }
+            }
+        }
+    }
 
     private void updateEffectViewPanel() {
 

@@ -1,4 +1,6 @@
-package org.emrick.project;
+package org.emrick.project.effect;
+
+import org.emrick.project.Performer;
 
 import java.util.ArrayList;
 
