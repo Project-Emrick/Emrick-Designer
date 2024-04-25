@@ -1,7 +1,9 @@
-package org.emrick.project;
+package org.emrick.project.effect;
 
 import com.google.gson.*;
 import com.google.gson.reflect.*;
+import org.emrick.project.EffectsGroup;
+import org.emrick.project.Performer;
 
 import javax.swing.*;
 import javax.swing.border.*;

@@ -1,5 +1,8 @@
-package org.emrick.project;
+package org.emrick.project.effect;
 
+import org.emrick.project.FootballFieldPanel;
+import org.emrick.project.Performer;
+import org.emrick.project.TimeManager;
 import org.emrick.project.actions.*;
 
 import javax.swing.*;
@@ -8,8 +11,8 @@ import java.util.*;
 public class EffectManager {
     private final Stack<UndoableAction> undoStack = new Stack<>();
     private final Stack<UndoableAction> redoStack = new Stack<>();
-    FootballFieldPanel footballFieldPanel; // For easy access to selection info and performers
-    TimeManager timeManager; // Same TimeManager object as in MediaEditorGUI
+    private FootballFieldPanel footballFieldPanel; // For easy access to selection info and performers
+    private TimeManager timeManager; // Same TimeManager object as in MediaEditorGUI
 
     public EffectManager(FootballFieldPanel footballFieldPanel, TimeManager timeManager) {
         this.footballFieldPanel = footballFieldPanel;
@@ -47,7 +50,8 @@ public class EffectManager {
             return false;
         }
 
-        // The effect's start and end times should not be in different sets
+        // The effect's start and end times should not be in different sets (update: can be in different sets, can't be
+        //  overrun an RF trigger though
         String startTimeSet = "0";
         String endTimeSet = "0";
         for (Map.Entry<String, Long> entry : timeManager.getSet2MSec()) {
@@ -272,4 +276,11 @@ public class EffectManager {
         return selectedPerformers;
     }
 
+    public FootballFieldPanel getFootballFieldPanel() {
+        return footballFieldPanel;
+    }
+
+    public TimeManager getTimeManager() {
+        return timeManager;
+    }
 }

@@ -1,5 +1,7 @@
 package org.emrick.project;
 
+import org.emrick.project.effect.Effect;
+
 import java.awt.*;
 import java.awt.geom.*;
 import java.util.*;

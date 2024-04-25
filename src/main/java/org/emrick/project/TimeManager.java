@@ -97,6 +97,13 @@ public class TimeManager {
         return set2MSec;
     }
 
+    public static String getFormattedTime(long timestampMillis) {
+        long minutes = java.util.concurrent.TimeUnit.MILLISECONDS.toMinutes(timestampMillis);
+        long seconds = java.util.concurrent.TimeUnit.MILLISECONDS.toSeconds(timestampMillis) % 60;
+        long milliseconds = timestampMillis % 1000;
+        return String.format("%d:%02d.%03d", minutes, seconds, milliseconds);
+    }
+
     public static void main(String[] args) {
         HashMap<String, Integer> set2CountDummy = new HashMap<>();
         set2CountDummy.put("1", 0);

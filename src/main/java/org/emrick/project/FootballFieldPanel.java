@@ -1,5 +1,8 @@
 package org.emrick.project;
 
+import org.emrick.project.effect.Effect;
+import org.emrick.project.effect.EffectManager;
+
 import javax.swing.*;
 import javax.swing.event.MouseInputListener;
 import java.awt.*;
@@ -7,7 +10,6 @@ import java.awt.event.MouseEvent;
 import java.awt.geom.Point2D;
 import java.awt.image.BufferedImage;
 import java.util.HashMap;
-import java.util.Map;
 
 public class FootballFieldPanel extends JPanel implements RepaintListener {
     public Drill drill;
@@ -170,26 +172,26 @@ public class FootballFieldPanel extends JPanel implements RepaintListener {
 //    }
 
     protected Color calculateColor(Effect e) {
-        long currMS = effectManager.timeManager.getCount2MSec().get(currentCount);
-        if (e.DO_DELAY) {
-            if (e.startTimeMSec + e.delay.toMillis() > currMS) {
-                if (e.INSTANT_COLOR) {
-                    return e.startColor;
+        long currMS = effectManager.getTimeManager().getCount2MSec().get(currentCount);
+        if (e.isDO_DELAY()) {
+            if (e.getStartTimeMSec() + e.getDelay().toMillis() > currMS) {
+                if (e.isINSTANT_COLOR()) {
+                    return e.getStartColor();
                 } else {
                     return Color.black;
                 }
             }
         }
-        if (e.TIME_GRADIENT) {
-            if (e.startTimeMSec + e.delay.toMillis() + e.duration.toMillis() > currMS) {
-                long startGradient = e.startTimeMSec + e.delay.toMillis();
-                float shiftProgress = (float) (currMS - startGradient) / (float) e.duration.toMillis();
+        if (e.isTIME_GRADIENT()) {
+            if (e.getStartTimeMSec() + e.getDelay().toMillis() + e.getDuration().toMillis() > currMS) {
+                long startGradient = e.getStartTimeMSec() + e.getDelay().toMillis();
+                float shiftProgress = (float) (currMS - startGradient) / (float) e.getDuration().toMillis();
                 float[] hsvs = new float[3];
-                Color.RGBtoHSB(e.startColor.getRed(), e.startColor.getGreen(), e.startColor.getBlue(), hsvs);
+                Color.RGBtoHSB(e.getStartColor().getRed(), e.getStartColor().getGreen(), e.getStartColor().getBlue(), hsvs);
                 hsvs[0] *= 360;
                 float startHue = hsvs[0];
                 float[] hsve = new float[3];
-                Color.RGBtoHSB(e.endColor.getRed(), e.endColor.getGreen(), e.endColor.getBlue(), hsve);
+                Color.RGBtoHSB(e.getEndColor().getRed(), e.getEndColor().getGreen(), e.getEndColor().getBlue(), hsve);
                 hsve[0] *= 360;
                 float endHue = hsve[0];
                 boolean clockwise = true;
@@ -225,9 +227,9 @@ public class FootballFieldPanel extends JPanel implements RepaintListener {
                 return new Color(Color.HSBtoRGB(h,s,v));
             }
         }
-        if (e.SET_TIMEOUT) {
-            if (e.startTimeMSec + e.delay.toMillis() + e.duration.toMillis() + e.timeout.toMillis() > currMS) {
-                return e.endColor;
+        if (e.isSET_TIMEOUT()) {
+            if (e.getStartTimeMSec() + e.getDelay().toMillis() + e.getDuration().toMillis() + e.getTimeout().toMillis() > currMS) {
+                return e.getEndColor();
             }
         }
         return Color.black;
