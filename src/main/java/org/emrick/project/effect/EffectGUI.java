@@ -83,6 +83,7 @@ public class EffectGUI implements ActionListener {
     JCheckBox INSTANT_COLORBox = new JCheckBox("INSTANT_COLOR");
     JButton applyBtn = new JButton("REPLACE THIS TEXT WITH UPDATE OR CREATE EFFECT TEXT");
     JButton deleteBtn = new JButton("Delete effect");
+    JLabel batteryEstLabel = new JLabel("Estimated Battery Usage: ");
     /*private JButton deleteEffectButton;*/
     private JPanel effectCrudActionsPanel;
     private JLabel effectDescriptionLabel;
@@ -353,6 +354,18 @@ public class EffectGUI implements ActionListener {
         gc.anchor = GridBagConstraints.FIRST_LINE_START;
         this.effectPanel.add(applyBtn, gc);
 
+        //////////////// Battery Estimation  ///////////////////
+
+        gc.weightx = 1;
+        gc.weighty = 0.2;
+
+        gc.gridx = 0;
+        gc.gridy = 11;
+        gc.fill = GridBagConstraints.NONE;
+        gc.anchor = GridBagConstraints.LINE_END;
+        gc.insets = spacedInsets;
+        this.effectPanel.add(batteryEstLabel, gc);
+
         // If effect exists, load pattern on gui
         loadEffectToGUI(this.effectMod);
     }
@@ -388,6 +401,25 @@ public class EffectGUI implements ActionListener {
         };
     }
 
+    private double calcBattery(int R, int G, int B, double secondsDuration) {
+        double normR = R/255.0;
+        double normG = G/255.0;
+        double normB = B/255.0;
+
+        // Coefficients for power consumption
+        double coeffR = 1.0;
+        double coeffG = 1.2;
+        double coeffB = 1.5;
+
+        // Total power consumption relative to full white
+        double totalPower = (normR * coeffR + normG * coeffG + normB * coeffB) / (coeffR + coeffG + coeffB);
+
+        // Calculate battery usage as a percentage
+        double batteryUsage = (totalPower * (secondsDuration/60.0)) / 90.0;  // 90 minutes is the baseline for full white at 100%
+
+        return batteryUsage * 100;  // Convert to percentage
+    }
+
     private void loadEffectToGUI(Effect effect) {
 
         System.out.println("effect = " + effect);
@@ -419,6 +451,13 @@ public class EffectGUI implements ActionListener {
         long secondsEnd = java.util.concurrent.TimeUnit.MILLISECONDS.toSeconds(effect.getEndTimeMSec()) % 60;
         long millisecondsEnd = effect.getEndTimeMSec() % 1000;
         endTimeLabel.setText(String.format("End: %d:%02d:%03d", minutesEnd, secondsEnd, millisecondsEnd));
+
+        //calcBattery
+        int avgRed = (int)((effect.getStartColor().getRed() + effect.getEndColor().getRed())/2);
+        int avgBlue = (int)((effect.getStartColor().getBlue() + effect.getEndColor().getBlue())/2);
+        int avgGreen = (int)((effect.getStartColor().getGreen() + effect.getEndColor().getGreen())/2);
+        double battEst = calcBattery(avgRed, avgBlue, avgGreen, Double.parseDouble(durationStr));
+        batteryEstLabel.setText(String.format("Battery Usage: %.2f%%", battEst));
 
         if (this.isNewEffect) {
             applyBtn.setText("Create effect");
