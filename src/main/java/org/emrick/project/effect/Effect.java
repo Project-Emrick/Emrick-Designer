@@ -1,10 +1,14 @@
 package org.emrick.project.effect;
 
+import org.emrick.project.TimeManager;
+
+import javax.swing.*;
+import javax.swing.border.Border;
 import java.awt.*;
 import java.time.Duration;
 import java.util.Objects;
 
-public class Effect implements Cloneable {
+public class Effect implements Cloneable, TimelineEvent {
 
     // Application
     private long startTimeMSec; // Based on position of scrub bar cursor when user first creates the effect
@@ -163,4 +167,34 @@ public class Effect implements Cloneable {
                 Objects.equals(timeout, effect.timeout);
     }
 
+    @Override
+    public JPanel getTimelineWidget() {
+        Border outerBorder = BorderFactory.createLineBorder(Color.lightGray);
+        Border innerBorder = BorderFactory.createEmptyBorder(2,2,2,2);
+
+        JPanel widgetPanel = new JPanel(new GridLayout(5,1));
+        widgetPanel.setBorder(BorderFactory.createCompoundBorder(outerBorder, innerBorder));
+
+        JLabel titleLabel = new JLabel("<html><b>Effect</b></html>");
+        JLabel startTimeLabel = new JLabel("Start: " + TimeManager.getFormattedTime(startTimeMSec));
+        JLabel endTimeLabel = new JLabel("End: " + TimeManager.getFormattedTime(endTimeMSec));
+
+        JPanel startColorPanel = new JPanel();
+        startColorPanel.setPreferredSize(new Dimension(10, 10));
+        startColorPanel.setBackground(startColor);
+
+        JPanel endColorPanel = new JPanel();
+        endColorPanel.setPreferredSize(new Dimension(10, 10));
+        endColorPanel.setBackground(endColor);
+
+        widgetPanel.add(titleLabel);
+        widgetPanel.add(startTimeLabel);
+        widgetPanel.add(endTimeLabel);
+        widgetPanel.add(startColorPanel);
+        widgetPanel.add(endColorPanel);
+
+        widgetPanel.setPreferredSize(new Dimension(100, 85));
+
+        return widgetPanel;
+    }
 }

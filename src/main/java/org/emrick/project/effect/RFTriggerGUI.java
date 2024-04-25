@@ -1,6 +1,7 @@
 package org.emrick.project.effect;
 
 import org.emrick.project.SelectFileGUI;
+import org.emrick.project.TimeManager;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -13,12 +14,14 @@ import java.awt.*;
 public class RFTriggerGUI {
 
     private final int count;
+    private long timestampMillis;
     private RFTrigger rfTrigger;
     private final RFTriggerListener rfTriggerListener;
     private JButton createDeleteBtn;
 
-    public RFTriggerGUI(int count, RFTrigger rfTrigger, RFTriggerListener rfTriggerListener) {
+    public RFTriggerGUI(int count, long timestampMillis, RFTrigger rfTrigger, RFTriggerListener rfTriggerListener) {
         this.count = count;
+        this.timestampMillis = timestampMillis;
         this.rfTrigger = rfTrigger;
         this.rfTriggerListener = rfTriggerListener;
         setupGUI();
@@ -29,11 +32,8 @@ public class RFTriggerGUI {
             createDeleteBtn = new JButton("Create RF Trigger");
 
             createDeleteBtn.addActionListener(e -> {
-                rfTrigger = new RFTrigger(count);
+                rfTrigger = new RFTrigger(count, timestampMillis);
                 rfTriggerListener.onCreateRFTrigger(rfTrigger);
-                JOptionPane.showMessageDialog(null,
-                        "RF trigger created successfully at count " + count, "RF Trigger Create: Success",
-                        JOptionPane.INFORMATION_MESSAGE);
             });
         } else {
             createDeleteBtn = new JButton("Delete RF Trigger");
@@ -42,9 +42,6 @@ public class RFTriggerGUI {
 
             createDeleteBtn.addActionListener(e -> {
                 rfTriggerListener.onDeleteRFTrigger(count);
-                JOptionPane.showMessageDialog(null,
-                        "RF trigger at count " + count + " deleted successfully", "RF Trigger Delete: Success",
-                        JOptionPane.INFORMATION_MESSAGE);
             });
         }
     }
@@ -71,8 +68,9 @@ public class RFTriggerGUI {
             }
         };
 
-        RFTrigger rfTrigger1 = new RFTrigger(10);
-        RFTriggerGUI rfTriggerGUI = new RFTriggerGUI(10, rfTrigger1, rfTriggerListener1);
+        long timestampMillis = 1000;
+        RFTrigger rfTrigger1 = new RFTrigger(1, 1050);
+        RFTriggerGUI rfTriggerGUI = new RFTriggerGUI(10, timestampMillis, rfTrigger1, rfTriggerListener1);
         frame.add(rfTriggerGUI.getCreateDeleteBtn());
 
         frame.setVisible(true);
