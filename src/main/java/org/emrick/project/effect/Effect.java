@@ -41,6 +41,20 @@ public class Effect implements Cloneable, TimelineEvent {
         calculateEndTimeMSec();
     }
 
+    public Effect(long startTimeMSec) {
+        this.startTimeMSec = startTimeMSec;
+        this.startColor = Color.black;
+        this.endColor = Color.black;
+        this.delay = Duration.ZERO;
+        this.duration = Duration.ZERO;
+        this.timeout = Duration.ZERO;
+        this.TIME_GRADIENT = true;
+        this.SET_TIMEOUT = false;
+        this.DO_DELAY = false;
+        this.INSTANT_COLOR = true;
+        calculateEndTimeMSec();
+    }
+
     public Effect(long startTimeMSec,
                   Color startColor, Color endColor, Duration delay, Duration duration, Duration timeout,
                   boolean TIME_GRADIENT, boolean SET_TIMEOUT, boolean DO_DELAY, boolean INSTANT_COLOR) {
