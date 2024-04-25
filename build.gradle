@@ -4,7 +4,7 @@ plugins {
 }
 
 group 'org.emrick.project'
-version '4.1-SNAPSHOT'
+version '4.23-SNAPSHOT'
 
 repositories {
     mavenCentral()

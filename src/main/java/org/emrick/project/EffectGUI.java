@@ -48,6 +48,9 @@ public class EffectGUI implements ActionListener {
     public static String noPerformerMsg = "<html><body style='text-align: center;'>Select one or more performers to modify their effects.</body></html>";
     public static String noCommonEffectMsg = "<html><body style='text-align: center;'>No common effect found among selected performers.</body></html>";
 
+    public EffectGUI() {
+
+    }
     /**
      * @param effect The current effect, as it exists. Passed in null if it doesn't exist.
      * @param startTime In the case that no effect exists for the performer at the given time, we still need the current
@@ -114,7 +117,7 @@ public class EffectGUI implements ActionListener {
         this.effectPanel.add(placeholderLabel, gc);
     }
 
-    private void setupGUI() {
+    protected void setupGUI() {
         this.effectPanel = new JPanel();
 
         // Color button customization
@@ -326,7 +329,7 @@ public class EffectGUI implements ActionListener {
         loadEffectToGUI(this.effectMod);
     }
 
-    private void loadEffectToGUI(Effect effect) {
+    protected void loadEffectToGUI(Effect effect) {
 
         // Get start and end colors
         startColorBtn.setBackground(effect.getStartColor());
@@ -336,9 +339,7 @@ public class EffectGUI implements ActionListener {
         String delayStr = String.valueOf(effect.getDelay().toNanos() / 1_000_000_000.0);
         String durationStr = String.valueOf(effect.getDuration().toNanos() / 1_000_000_000.0);
         String timeoutStr = String.valueOf(effect.getTimeout().toNanos() / 1_000_000_000.0);
-        delayField.setText(delayStr);
         durationField.setText(durationStr);
-        timeoutField.setText(timeoutStr);
 
         TIME_GRADIENTBox.setSelected(effect.isTIME_GRADIENT());
         SET_TIMEOUTBox.setSelected(effect.isSET_TIMEOUT());
@@ -366,11 +367,11 @@ public class EffectGUI implements ActionListener {
         }
     }
 
-    public JPanel getEffectPanel() {
+    protected JPanel getEffectPanel() {
         return effectPanel;
     }
 
-    private void applyToEffectMod() {
+    protected void applyToEffectMod() {
 
         // Start and end color are applied automatically to effectCopy
         Duration delay = Duration.ofNanos((long) (Double.parseDouble(delayField.getText()) * 1_000_000_000L));
@@ -414,7 +415,7 @@ public class EffectGUI implements ActionListener {
         }
     }
 
-    private DocumentListener getDocumentListener() {
+    protected DocumentListener getDocumentListener() {
         return new DocumentListener() {
 
             @Override
@@ -436,7 +437,7 @@ public class EffectGUI implements ActionListener {
         };
     }
 
-    private ItemListener getCheckBoxItemListener() {
+    protected ItemListener getCheckBoxItemListener() {
         return new ItemListener() {
             @Override
             public void itemStateChanged(ItemEvent e) {
@@ -445,7 +446,7 @@ public class EffectGUI implements ActionListener {
         };
     }
 
-    private void liveUpdateEndTime() {
+    protected void liveUpdateEndTime() {
 
         // Calculate the new end time, live gui update
         long newEndTime = effectMod.getStartTimeMSec();
