@@ -891,6 +891,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
 
             if (pf.timeSync != null && pf.startDelay != null) {
                 timeSync = pf.timeSync;
+                scrubBarGUI.setTimeSync(timeSync);
                 startDelay = pf.startDelay;
                 setupEffectView();
             }
