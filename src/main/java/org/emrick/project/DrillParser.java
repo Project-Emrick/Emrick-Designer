@@ -92,7 +92,12 @@ public class DrillParser {
      */
     public static Performer parseDrill(String text, Drill drill) {
         String symbol = text.split("Symbol: ")[1].split(" ")[0];
-        int label = Integer.parseInt(text.split("Label: ")[1].split(" ")[0]);
+        int label;
+        try {
+            label = Integer.parseInt(text.split("Label: ")[1].split(" ")[0]);
+        } catch (NumberFormatException nfe) {
+            label = Integer.parseInt(text.split("Label: ")[1].split(" ")[0].substring(1));
+        }
         Performer performer = new Performer(symbol, label);
         String[] lines = text.split("\n");
         for (int i = 1; i < lines.length-2; i++) {

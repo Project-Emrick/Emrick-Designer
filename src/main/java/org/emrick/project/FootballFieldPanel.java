@@ -31,6 +31,7 @@ public class FootballFieldPanel extends JPanel implements RepaintListener {
     private boolean ctrlHeld = false;
     private Set currentSet;
     private double currentSetRatio = 0.0;
+    public long currentMS = 0;
     private int currentCount = 0;
     private int currentSetStartCount = 0;
     private SerialTransmitter serialTransmitter;
@@ -147,7 +148,8 @@ public class FootballFieldPanel extends JPanel implements RepaintListener {
     }
 
     protected Color calculateColor(Effect e) {
-        long currMS = effectManager.getTimeManager().getCount2MSec().get(currentCount);
+        long setMS = effectManager.getTimeManager().getSet2MSec().get(currentSet.index).getValue();
+        long currMS = currentMS + setMS;
         if (e.isDO_DELAY()) {
             if (e.getStartTimeMSec() + e.getDelay().toMillis() > currMS) {
                 if (e.isINSTANT_COLOR()) {
@@ -186,18 +188,15 @@ public class FootballFieldPanel extends JPanel implements RepaintListener {
                     } else {
                         h = ((hsve[0] + 360 - hsvs[0]) * shiftProgress + hsvs[0]) % 360;
                     }
-                    s = (hsve[1] - hsvs[1]) * shiftProgress + hsvs[1];
-                    v = (hsve[2] - hsvs[2]) * shiftProgress + hsvs[2];
                 } else {
                     if (hsve[0] <= hsvs[0]) {
                         h = ((hsvs[0] - (hsve[0] - hsvs[0]) * shiftProgress)) % 360;
                     } else {
                         h = (hsvs[0] + 360 - (hsvs[0] + 360 - hsve[0]) * shiftProgress) % 360;
                     }
-                    s = (hsve[1] - hsvs[1]) * shiftProgress + hsvs[1];
-                    v = (hsve[2] - hsvs[2]) * shiftProgress + hsvs[2];
                 }
-//                System.out.println(h + ", " + s + ", " + v + ", " + shiftProgress);
+                s = (hsve[1] - hsvs[1]) * shiftProgress + hsvs[1];
+                v = (hsve[2] - hsvs[2]) * shiftProgress + hsvs[2];
                 h /= 360;
                 return new Color(Color.HSBtoRGB(h,s,v));
             }
@@ -213,7 +212,11 @@ public class FootballFieldPanel extends JPanel implements RepaintListener {
     @Override
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
-
+        long currMS = 0;
+        if (effectManager != null) {
+            long setMS = effectManager.getTimeManager().getSet2MSec().get(currentSet.index).getValue();
+            currMS = currentMS + setMS;
+        }
         // Case: User is not using FPS playback mode
         if (!useFps) currentSetRatio = 1;
 
@@ -248,7 +251,7 @@ public class FootballFieldPanel extends JPanel implements RepaintListener {
 
             g.setColor(c1.getColor()); // Default is coordinate color. Remove this?
             if (effectManager != null) {
-                Effect currentEffect = effectManager.getEffect(p);
+                Effect currentEffect = effectManager.getEffect(p, currMS);
 
                 // No effect is present at the current count
                 if (currentEffect == null) {

@@ -262,8 +262,8 @@ public class EffectManager {
      * @param performer The performer of interest.
      * @return The effect at the current count for the given performer. If there is none, return null.
      */
-    public Effect getEffect(Performer performer) {
-        long currentMSec = timeManager.getCount2MSec().get(footballFieldPanel.getCurrentCount());
+    public Effect getEffect(Performer performer, long time) {
+        long currentMSec = time;
 
         // Find effect in performer where current millis falls in range of effect start and end time
         for (Effect effect : performer.getEffects()) {
@@ -274,10 +274,10 @@ public class EffectManager {
         return null;
     }
 
-    public Effect getEffectFromSelectedPerformer() {
+    public Effect getEffectFromSelectedPerformer(long time) {
         Performer performer = getSelectedPerformer();
         if (performer == null) return null;
-        return getEffect(performer);
+        return getEffect(performer, time);
     }
 
     /**

@@ -1397,6 +1397,11 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         return 0;
     }
 
+    @Override
+    public void onTimeChange(long time) {
+        footballFieldPanel.currentMS = time;
+    }
+
     private void updateRFTriggerButton() {
         // Create a create/delete button depending on whether there is RF trigger at current count
         if (rfTriggerGUI != null) {
@@ -1568,8 +1573,8 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         }
 
         // FIXME: Here, we know there's only one performer selected. The EffectGUI is for that single performer, for now
-        currentEffect = effectManager.getEffectFromSelectedPerformer();
         long currentMSec = timeManager.getCount2MSec().get(footballFieldPanel.getCurrentCount());
+        currentEffect = effectManager.getEffectFromSelectedPerformer(currentMSec);
         effectGUI = new EffectGUI(currentEffect, currentMSec, this);
 
         // Add updated data for effect view
