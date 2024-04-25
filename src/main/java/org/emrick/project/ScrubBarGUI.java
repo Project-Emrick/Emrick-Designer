@@ -71,9 +71,6 @@ public class ScrubBarGUI extends JComponent implements ActionListener {
     private boolean useFps = false;
     private ArrayList<SyncTimeGUI.Pair> timeSync = null;
 
-    // Audio
-    private boolean canSeekAudio = false;
-
     public ScrubBarGUI(JFrame parent, ScrubBarListener scrubBarListener, SyncListener syncListener, FootballFieldPanel footballFieldPanel) {
         this.parent = parent;
 

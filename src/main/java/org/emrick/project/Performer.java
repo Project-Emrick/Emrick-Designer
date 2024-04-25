@@ -3,55 +3,51 @@ package org.emrick.project;
 import org.emrick.project.effect.Effect;
 
 import java.awt.*;
-import java.awt.geom.Point2D;
-import java.util.ArrayList;
+import java.awt.geom.*;
+import java.util.*;
 
 public class Performer {
+
+    public Point2D currentLocation;
     private Color color;
     private String symbol;
     private int label;
     private ArrayList<Coordinate> coordinates;
     private ArrayList<Effect> effects;
-    public Point2D currentLocation;
+    private String deviceId;
 
     public Performer() {
         symbol = "";
         label = 0;
         coordinates = new ArrayList<>();
-        currentLocation = new Point2D.Double(0,0);
+        currentLocation = new Point2D.Double(0, 0);
         this.color = Color.BLACK;
         this.effects = new ArrayList<>();
     }
+
     public Performer(String symbol, int label) {
         this.color = Color.BLACK;
         this.symbol = symbol;
         this.label = label;
         coordinates = new ArrayList<>();
-        currentLocation = new Point2D.Double(0,0);
+        currentLocation = new Point2D.Double(0, 0);
         this.effects = new ArrayList<>();
     }
 
-    public String getSymbol() {
-        return symbol;
+    public Color getColor() {
+        return color;
     }
 
-    public void setColor(Color color){
+    public void setColor(Color color) {
         this.color = color;
     }
 
-    public Color getColor(){
-        return color;
-    }
-    public void setSymbol(String symbol) {
-        this.symbol = symbol;
+    String getDeviceId() {
+        return deviceId;
     }
 
-    public int getLabel() {
-        return label;
-    }
-
-    public void setLabel(int label) {
-        this.label = label;
+    void setDeviceId(String deviceId) {
+        this.deviceId = deviceId;
     }
 
     public void loadCoordinates(ArrayList<Coordinate> coordinates) {
@@ -67,6 +63,10 @@ public class Performer {
         return coordinates;
     }
 
+    public void setCoordinates(ArrayList<Coordinate> coordinates) {
+        this.coordinates = coordinates;
+    }
+
     public Coordinate getCoordinateFromSet(String set) {
         for (Coordinate c : coordinates) {
             if (c.set.equals(set)) {
@@ -78,10 +78,6 @@ public class Performer {
 
     public ArrayList<Effect> getEffects() {
         return effects;
-    }
-
-    public void setCoordinates(ArrayList<Coordinate> coordinates) {
-        this.coordinates = coordinates;
     }
 
     public void addSet(Coordinate coordinate) {
@@ -117,6 +113,22 @@ public class Performer {
 
     public String getIdentifier() {
         return getSymbol() + getLabel();
+    }
+
+    public String getSymbol() {
+        return symbol;
+    }
+
+    public void setSymbol(String symbol) {
+        this.symbol = symbol;
+    }
+
+    public int getLabel() {
+        return label;
+    }
+
+    public void setLabel(int label) {
+        this.label = label;
     }
 
 }

@@ -3,10 +3,9 @@ package org.emrick.project;
 import javax.swing.*;
 import javax.swing.filechooser.FileFilter;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.io.File;
-import java.util.Optional;
+import java.awt.event.*;
+import java.io.*;
+import java.util.*;
 
 /**
  * This class constructs a Swing GUI window for importing Coordinates PDF and Pyware Archive file (.3dz)
@@ -21,28 +20,27 @@ public class SelectFileGUI implements ActionListener {
     private final ImportListener importListener;
     // Parent frame
     private final JDialog dialogWindow;
-
-    // Paths to selected files
-    private File coordsFile;
-    private File archiveFile;
-
+    private final JButton ulCsvButton;
+    private final JLabel ulCsvFilename;
     // Upload File Buttons
     private final JButton ulCoordsButton;
     private final JButton ulArchiveButton;
-
     // Filename Display Labels
     private final JLabel ulCoordsFilename;
     private final JLabel ulArchiveFilename;
-
     // Import / Cancel Buttons
     private final JButton cancelButton;
     private final JButton importButton;
-
     // Import Archive Service
     private final ImportArchive importArchive;
+    // Paths to selected files
+    private File coordsFile;
+    private File archiveFile;
+    private File csvFile;
 
     /**
      * Prepare ImportArchive service object.
+     *
      * @param importListener Passed down from a class that overrides ImportListener methods.
      *                       Provides callback functionality (e.g., to repaint field after importing
      *                       floorCover or surface images).
@@ -57,7 +55,7 @@ public class SelectFileGUI implements ActionListener {
         dialogWindow = new JDialog(parent, true);
         dialogWindow.setTitle("New Project - Import");
         dialogWindow.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-        dialogWindow.setSize(400, 300);
+        dialogWindow.setSize(400, 400);
         dialogWindow.setLocationRelativeTo(null); // center on screen
         dialogWindow.setResizable(false); // resize window option
 
@@ -90,16 +88,32 @@ public class SelectFileGUI implements ActionListener {
         ulArchivePanel.add(ulArchiveButton);
         ulArchivePanel.add(ulArchiveFilename);
 
+        // Upload CSV (csv)
+        JLabel ulCsvLabel = new JLabel("Device ID Comma Separated Values (.csv)");
+        this.ulCsvButton = new JButton("Select File");
+        this.ulCsvFilename = new JLabel("No File Selected");
+
+        JPanel ulCsvPanel = new JPanel();
+        ulCsvPanel.setLayout(new FlowLayout(FlowLayout.LEFT, 10, 5));
+        ulCsvPanel.add(ulCsvButton);
+        ulCsvPanel.add(ulCsvFilename);
+
         // Build UI structure
         ulPanel.add(ulCoordsLabel);
         ulCoordsLabel.setAlignmentX(Component.LEFT_ALIGNMENT); // Need all components left-aligned
         ulPanel.add(ulCoordsPanel);
         ulCoordsPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
-        ulPanel.add(Box.createRigidArea(new Dimension(0,10)));
+        ulPanel.add(Box.createRigidArea(new Dimension(0, 10)));
         ulPanel.add(ulArchiveLabel);
         ulArchiveLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
         ulPanel.add(ulArchivePanel);
         ulArchivePanel.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+        ulPanel.add(Box.createRigidArea(new Dimension(0, 10)));
+        ulPanel.add(ulCsvLabel);
+        ulCsvLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
+        ulPanel.add(ulCsvPanel);
+        ulCsvPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
 
         // Cancel/Import buttons
         this.cancelButton = new JButton("Cancel");
@@ -122,6 +136,7 @@ public class SelectFileGUI implements ActionListener {
 
         ulCoordsButton.addActionListener(this);
         ulArchiveButton.addActionListener(this);
+        ulCsvButton.addActionListener(this);
         importButton.addActionListener(this);
         cancelButton.addActionListener(this);
 
@@ -129,23 +144,26 @@ public class SelectFileGUI implements ActionListener {
         if (IS_DEBUG) {
 
             // FIXME: Turn IS_DEBUG to false or replace these paths with your paths
-            autoImport(
-                    "D:\\DrillExample_NoMergeSubsetCounts.pdf",
-                    "D:\\Purdue23-1-1aint_no_mountain_high_enough.3dz"
-            );
-        }
-        else dialogWindow.setVisible(true);
+            autoImport("D:\\DrillExample_NoMergeSubsetCounts.pdf", "D:\\Purdue23-1-1aint_no_mountain_high_enough.3dz");
+        } else dialogWindow.setVisible(true);
+    }
+
+    private void autoImport(String coordsFilePath, String archiveFilePath) {
+        this.coordsFile = new File(coordsFilePath);
+        this.archiveFile = new File(archiveFilePath);
+        this.importButton.doClick();
     }
 
     /**
      * Obtain the file extension programmatically in Java
+     *
      * @param filename - We want the extension of this file
      * @return A string representing the extension, if the extension exists
      */
     public Optional<String> getExtensionByStringHandling(String filename) {
         return Optional.ofNullable(filename)
-                .filter(f -> f.contains("."))
-                .map(f -> f.substring(filename.lastIndexOf(".") + 1));
+                       .filter(f -> f.contains("."))
+                       .map(f -> f.substring(filename.lastIndexOf(".") + 1));
     }
 
     @Override
@@ -179,6 +197,19 @@ public class SelectFileGUI implements ActionListener {
                 }
             }
 
+            // Select csv file (.csv)
+            else if (sourceButton.equals(ulCsvButton)) {
+                JFileChooser fileChooser = getFileChooser("Device ID Comma Separated Values (*.csv)", ".csv");
+
+                int returnValue = fileChooser.showOpenDialog(null);
+                if (returnValue == JFileChooser.APPROVE_OPTION) {
+                    File selectedFile = fileChooser.getSelectedFile();
+                    System.out.println("CSV     | Selected file: " + selectedFile.getAbsoluteFile());
+                    ulCsvFilename.setText(selectedFile.getName());
+                    csvFile = selectedFile;
+                }
+            }
+
             // Cancel
             else if (sourceButton.equals(cancelButton)) {
                 dialogWindow.dispose();
@@ -188,24 +219,29 @@ public class SelectFileGUI implements ActionListener {
             else if (sourceButton.equals(importButton)) {
                 if (coordsFile == null) {
                     JOptionPane.showMessageDialog(dialogWindow,
-                            "Please select the coordinates (.pdf) file.",
-                            "Upload Error",
-                            JOptionPane.ERROR_MESSAGE);
+                                                  "Please select the coordinates (.pdf) file.",
+                                                  "Upload Error",
+                                                  JOptionPane.ERROR_MESSAGE);
                     return;
-                }
-                else if (archiveFile == null) {
+                } else if (archiveFile == null) {
                     JOptionPane.showMessageDialog(dialogWindow,
-                            "Please select the Pyware archive (.3dz) file.",
-                            "Upload Error",
-                            JOptionPane.ERROR_MESSAGE);
+                                                  "Please select the Pyware archive (.3dz) file.",
+                                                  "Upload Error",
+                                                  JOptionPane.ERROR_MESSAGE);
                     return;
-                }
+                }/*else if (csvFile == null) {
+                    JOptionPane.showMessageDialog(dialogWindow,
+                                                  "Please select the Comma Separated Values (.csv) file.",
+                                                  "Upload Error",
+                                                  JOptionPane.ERROR_MESSAGE);
+                    return;
+                }*/
                 // TODO: add status of import here?
                 System.out.println("begin import...");
 
                 // TODO: Import Coordinates Pdf and Pyware Archive
 
-                importListener.onFileSelect(archiveFile, coordsFile);
+                importListener.onFileSelect(archiveFile, coordsFile, csvFile);
                 importArchive.fullImport(archiveFile.getAbsolutePath(), coordsFile.getAbsolutePath());
 
                 dialogWindow.dispose();
@@ -214,21 +250,11 @@ public class SelectFileGUI implements ActionListener {
         }
     }
 
-    private void autoImport(String coordsFilePath, String archiveFilePath) {
-        this.coordsFile = new File(coordsFilePath);
-        this.archiveFile = new File(archiveFilePath);
-        this.importButton.doClick();
-    }
-
-    private static JFileChooser getFileChooser(String x, String suffix) {
+    static JFileChooser getFileChooser(String x, String suffix) {
         JFileChooser fileChooser = new JFileChooser();
 
         // Filter for archive files (e.g., pyware_archive.3dz)
         fileChooser.setFileFilter(new FileFilter() {
-
-            public String getDescription() {
-                return x;
-            }
 
             public boolean accept(File f) {
                 if (f.isDirectory()) {
@@ -237,6 +263,10 @@ public class SelectFileGUI implements ActionListener {
                     String filename = f.getName().toLowerCase();
                     return filename.endsWith(suffix);
                 }
+            }
+
+            public String getDescription() {
+                return x;
             }
         });
 
