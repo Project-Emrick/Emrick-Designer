@@ -12,7 +12,6 @@ public class AudioPlayer extends Thread {
     private Sequencer sequencer; // MIDI - is different from waveform audio: use a Sequencer instead of Clip.
     private Clip clip; // WAV and OGG
 
-
     public AudioPlayer(File audioFile) {
         this.audioFile = audioFile;
         initialize();
@@ -21,7 +20,6 @@ public class AudioPlayer extends Thread {
     public void setAudioFile(File audioFile) {
         this.audioFile = audioFile;
     }
-
 
     public void initialize() {
         sequencer = null;
@@ -97,13 +95,33 @@ public class AudioPlayer extends Thread {
     // Play / Pause Logic
 
     public void playAudio() {
-        // TODO: seek to correct position before playing
         if (sequencer != null) {
             //  For seeking, consider sequencer.setTickPosition(tick); or sequencer.setMicrosecondPosition(microseconds);
             sequencer.start();
         }
         else if (clip != null) {
             clip.start();
+        }
+    }
+
+    public void playAudio(long timestampMillis) {
+        System.out.println("AudioPlayer: timestampMillis = " + timestampMillis);
+        if (clip != null) {
+            try {
+                long timestampMicros = timestampMillis * 1000;
+                // Set the clip position
+                if (clip.isControlSupported(FloatControl.Type.MASTER_GAIN)) {
+                    clip.setMicrosecondPosition(timestampMicros);
+                }
+                // Start playing the clip from the set position
+                clip.start();
+            } catch (IllegalArgumentException e) {
+                System.err.println("The provided timestamp is out of the clip's range.");
+            } catch (Exception e) {
+                System.out.println("AudioPlayer: " + e.getMessage());
+            }
+        } else if (sequencer != null) {
+            // TODO: Handle navigation for sequencer, less common
         }
     }
 

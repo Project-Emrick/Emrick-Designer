@@ -132,20 +132,26 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                 return;
             }
 
-            scrubBarGUI.nextCount();
+            if (scrubBarGUI.isUseFps()) {
+                if (scrubBarGUI.nextStep(playbackSpeed)) {
+                    // Reached the end
+                    playbackTimer.stop();
+                    scrubBarGUI.setIsPlayingPlay();
+                }
+            } else {
+                scrubBarGUI.nextCount();
 
-            if (scrubBarGUI.isAtLastSet() && scrubBarGUI.isAtEndOfSet()) {
-                playbackTimer.stop();
-                // TODO: stop music
-                scrubBarGUI.setIsPlayingPlay();
-                return;
-            } else if (scrubBarGUI.isAtEndOfSet()) {
-                scrubBarGUI.nextSet();
+                if (scrubBarGUI.isAtLastSet() && scrubBarGUI.isAtEndOfSet()) {
+                    // Reached the end
+                    playbackTimer.stop();
+                    audioPlayer.pauseAudio();
+                    scrubBarGUI.setIsPlayingPlay();
+                    return;
+                } else if (scrubBarGUI.isAtEndOfSet()) {
+                    scrubBarGUI.nextSet();
+                }
+                setPlaybackTimerTimeByCounts();
             }
-
-            setPlaybackTimerTime();
-
-            // TODO: repaint everything relevant (field, timer, etc)
         });
 
         // Change Font Size for Menu and MenuIem
@@ -174,18 +180,15 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         createAndShowGUI();
     }
 
-    public static void main(String[] args) {
-        try {
-            UIManager.setLookAndFeel(new FlatLightLaf());
-        } catch (Exception ex) {
-            System.err.println("Failed to initialize LaF");
-        }
+    private void setPlaybackTimerTimeByFps() {
+        scrubBarGUI.setPlaybackTime();
+        playbackTimer.setDelay((int) (1 / scrubBarGUI.getFps() * 1000.0 / playbackSpeed));
+    }
 
-        // Run this program on the Event Dispatch Thread (EDT)
-        EventQueue.invokeLater(new Runnable() {
-            @Override
-            public void run() {new MediaEditorGUI();}
-        });
+    private void setPlaybackTimerTimeByCounts() {
+        float setSyncDuration = timeSync.get(scrubBarGUI.getCurrentSetIndex()).getValue();
+        float setDuration = scrubBarGUI.getCurrSetDuration();
+        playbackTimer.setDelay(Math.round(setSyncDuration / setDuration * 1000 / playbackSpeed));
     }
 
     public void createAndShowGUI() {
@@ -200,7 +203,8 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
 
         frame.add(topPanel, BorderLayout.NORTH);
 
-        // Main content panel
+        // 
+ content panel
         mainContentPanel = new JPanel();
         mainContentPanel.setLayout(new BorderLayout());
 
@@ -507,6 +511,8 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         runMenu.add(runShowItem);
         JMenuItem flowViewerItem = new JMenuItem("Run Show via Flow View");
         runMenu.add(flowViewerItem);
+        JMenuItem programItem = new JMenuItem("Enter Programming Mode");
+        runMenu.add(programItem);
         JMenuItem stopShowItem = new JMenuItem("Stop show");
         stopShowItem.addActionListener(e -> {
             footballFieldPanel.setSerialTransmitter(null);
@@ -518,6 +524,45 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                 runMenu.add(flowViewerItem);
             }
         });
+        programItem.addActionListener(e -> {
+            SerialTransmitter st = new SerialTransmitter();
+            String port = st.getSerialPort().getDescriptivePortName();
+            int option = 1;
+            while (option > 0) {
+                if (option == 1) {
+                    option = JOptionPane.showConfirmDialog(null,
+                            "Is (" + port + ") the correct port for the transmitter?",
+                            "Run Show",
+                            JOptionPane.YES_NO_OPTION);
+                } else if (option == 2) {
+                    option = JOptionPane.showConfirmDialog(null,
+                            "Port invalid: Make sure you have the right port and that "
+                                    + "it is not already in use then try again.",
+                            "Run show: ERROR",
+                            JOptionPane.OK_CANCEL_OPTION);
+                    if (option == 2) {
+                        option = -1;
+                        return;
+                    } else if (option == 0) {
+                        option = 1;
+                    }
+                }
+                if (option == 1) {
+                    port = JOptionPane.showInputDialog("Enter COM port (example: COM7): ");
+                    if (port != null) {
+                        if (!st.setSerialPort(port)) {
+                            option = 2;
+                        } else {
+                            port = st.getSerialPort().getDescriptivePortName();
+                        }
+                    } else {
+                        option = -1;
+                        return;
+                    }
+                }
+            }
+            st.writeToSerialPort("p");
+        });
         flowViewerItem.addActionListener(e -> {
             SerialTransmitter st = new SerialTransmitter();
             String port = st.getSerialPort().getDescriptivePortName();
@@ -525,15 +570,15 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             while (option > 0) {
                 if (option == 1) {
                     option = JOptionPane.showConfirmDialog(null,
-                                                           "Is (" + port + ") the correct port for the transmitter?",
-                                                           "Run Show",
-                                                           JOptionPane.YES_NO_OPTION);
+                            "Is (" + port + ") the correct port for the transmitter?",
+                            "Run Show",
+                            JOptionPane.YES_NO_OPTION);
                 } else if (option == 2) {
                     option = JOptionPane.showConfirmDialog(null,
-                                                           "Port invalid: Make sure you have the right port and that "
-                                                           + "it is not already in use then try again.",
-                                                           "Run show: ERROR",
-                                                           JOptionPane.OK_CANCEL_OPTION);
+                            "Port invalid: Make sure you have the right port and that "
+                                    + "it is not already in use then try again.",
+                            "Run show: ERROR",
+                            JOptionPane.OK_CANCEL_OPTION);
                     if (option == 2) {
                         option = -1;
                         return;
@@ -611,15 +656,15 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             while (option > 0) {
                 if (option == 1) {
                     option = JOptionPane.showConfirmDialog(null,
-                                                           "Is (" + port + ") the correct port for the transmitter?",
-                                                           "Run Show",
-                                                           JOptionPane.YES_NO_OPTION);
+                            "Is (" + port + ") the correct port for the transmitter?",
+                            "Run Show",
+                            JOptionPane.YES_NO_OPTION);
                 } else if (option == 2) {
                     option = JOptionPane.showConfirmDialog(null,
-                                                           "Port invalid: Make sure you have the right port and that "
-                                                           + "it is not already in use then try again.",
-                                                           "Run show: ERROR",
-                                                           JOptionPane.OK_CANCEL_OPTION);
+                            "Port invalid: Make sure you have the right port and that "
+                                    + "it is not already in use then try again.",
+                            "Run show: ERROR",
+                            JOptionPane.OK_CANCEL_OPTION);
                     if (option == 2) {
                         option = -1;
                     } else if (option == 0) {
@@ -1411,6 +1456,246 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         return transparency;
     }
 
+    public static void main(String[] args) {
+        try {
+            UIManager.setLookAndFeel(new FlatLightLaf());
+        } catch (Exception ex) {
+            System.err.println("Failed to initialize LaF");
+        }
+
+        // Run this program on the Event Dispatch Thread (EDT)
+        EventQueue.invokeLater(new Runnable() {
+            @Override
+            public void run() { new MediaEditorGUI(); }
+        });
+    }
+
+    ////////////////////////// Importing Listeners //////////////////////////
+
+    @Override
+    public void onImport() {
+        scrubBarGUI.setReady(true);
+    }
+
+    @Override
+    public void onFileSelect(File archivePath, File drillPath) {
+        this.archivePath = archivePath;
+        this.drillPath = drillPath;
+    }
+
+    @Override
+    public void onFloorCoverImport(Image image) {
+        footballFieldPanel.setFloorCoverImage(image);
+        footballFieldPanel.repaint();
+    }
+
+    @Override
+    public void onSurfaceImport(Image image) {
+        footballFieldPanel.setSurfaceImage(image);
+        footballFieldPanel.repaint();
+    }
+
+    @Override
+    public void onAudioImport(File audioFile) {
+        // Playing or pausing audio is done through the AudioPlayer service class
+        audioPlayer = new AudioPlayer(audioFile);
+    }
+
+    @Override
+    public void onDrillImport(String drill) {
+        String text = DrillParser.extractText(drill);
+        footballFieldPanel.drill = DrillParser.parseWholeDrill(text);
+        footballFieldPanel.addSetToField(footballFieldPanel.drill.sets.get(0));
+        rebuildPageTabCounts();
+    }
+
+    private void rebuildPageTabCounts() {
+        Map<String, Integer> pageTabCounts = new HashMap<>();
+        int startCount = 0;
+        for (Set s : footballFieldPanel.drill.sets) {
+            startCount += s.duration;
+            pageTabCounts.put(s.label, startCount);
+        }
+
+        scrubBarGUI.updatePageTabCounts(pageTabCounts);
+        buildScrubBarPanel();
+    }
+
+    ////////////////////////// Sync Listeners //////////////////////////
+
+    @Override
+    public void onSync(ArrayList<SyncTimeGUI.Pair> times, float startDelay) {
+        System.out.println("MediaEditorGUI: Got Synced Times");
+        this.timeSync = times;
+        scrubBarGUI.setTimeSync(timeSync);
+        this.startDelay = startDelay;
+
+        setupEffectView();
+    }
+
+    private void setupEffectView() {
+        // Recalculate set to count map (pageTab2Count) to initialize timeManager
+        Map<String, Integer> pageTab2Count = new HashMap<>();
+        int startCount = 0;
+        for (Set s : footballFieldPanel.drill.sets) {
+            startCount += s.duration;
+            pageTab2Count.put(s.label, startCount);
+        }
+
+        this.timeManager = new TimeManager(pageTab2Count, this.timeSync, this.startDelay);
+        this.effectManager = new EffectManager(this.footballFieldPanel, this.timeManager);
+        this.footballFieldPanel.setEffectManager(this.effectManager);
+
+        updateEffectViewPanel();
+    }
+
+    ////////////////////////// Scrub Bar Listeners //////////////////////////
+
+    @Override
+    public boolean onPlay() {
+        if (timeSync == null) {
+            JOptionPane.showMessageDialog(frame, "Cannot play without syncing time!",
+                    "Playback Error", JOptionPane.ERROR_MESSAGE);
+            return false;
+        }
+        if (audioPlayer != null && scrubBarGUI.getAudioCheckbox().isSelected()) {
+            playAudioFromCorrectPosition();
+        }
+        if (scrubBarGUI.isUseFps()) {
+            setPlaybackTimerTimeByFps();
+            footballFieldPanel.setUseFps(true);
+        } else {
+            setPlaybackTimerTimeByCounts();
+            footballFieldPanel.setUseFps(false);
+        }
+        playbackTimer.start();
+        return true;
+    }
+
+    @Override
+    public boolean onPause() {
+        if (timeSync == null) {
+            JOptionPane.showMessageDialog(frame, "Cannot play without syncing time!",
+                    "Playback Error", JOptionPane.ERROR_MESSAGE);
+            return false;
+        }
+        if (audioPlayer != null) {
+            audioPlayer.pauseAudio();
+        }
+        playbackTimer.stop();
+        return true;
+    }
+
+    @Override
+    public long onScrub() {
+        // If time cursor is at start of first set, arm the start-delay
+        useStartDelay = scrubBarGUI.isAtFirstSet() && scrubBarGUI.isAtStartOfSet();
+        if (this.footballFieldPanel.getNumSelectedPerformers() > 0) {
+            updateEffectViewPanel();
+        }
+        if (scrubBarGUI.isPlaying() && scrubBarGUI.isCanSeekAudio()) {
+            System.out.println("Called onScrub() -> Seeking audio...");
+            playAudioFromCorrectPosition();
+            // During playback, don't repeatedly seek audio while program controls the scrub bar
+            scrubBarGUI.setCanSeekAudio(false);
+        }
+        if (timeManager != null) {
+            return timeManager.getCount2MSec().get(footballFieldPanel.getCurrentCount());
+        }
+        return 0;
+    }
+
+    private void playAudioFromCorrectPosition() {
+        // Get audio to correct position before playing
+        if (!scrubBarGUI.getAudioCheckbox().isSelected()) {
+            audioPlayer.pauseAudio();
+            return;
+        }
+        long timestampMillis = timeManager.getCount2MSec().get(footballFieldPanel.getCurrentCount());
+        if (useStartDelay) {
+            timestampMillis -= (long) (startDelay * 1000);
+        }
+        audioPlayer.pauseAudio();
+        audioPlayer.playAudio(timestampMillis);
+    }
+
+    @Override
+    public void onSpeedChange(float playbackSpeed) {
+        System.out.println("MediaEditorGUI: playbackSpeed = " + playbackSpeed);
+        // If playback speed is not normal, don't play the audio (simple solution)
+        if (playbackSpeed != 1) {
+            scrubBarGUI.getAudioCheckbox().setSelected(false);
+            scrubBarGUI.getAudioCheckbox().setEnabled(false);
+            if (audioPlayer != null) audioPlayer.pauseAudio();
+        } else {
+            scrubBarGUI.getAudioCheckbox().setEnabled(true);
+        }
+        this.playbackSpeed = playbackSpeed;
+    }
+
+    ////////////////////////// Effect Listeners //////////////////////////
+
+    @Override
+    public void onCreateEffect(Effect effect) {
+        boolean successful = this.effectManager.addEffectToSelectedPerformer(effect);
+        this.footballFieldPanel.repaint();
+        if (successful) updateEffectViewPanel();
+    }
+
+    @Override
+    public void onUpdateEffect(Effect oldEffect, Effect newEffect) {
+        this.effectManager.replaceEffectForSelectedPerformer(oldEffect, newEffect);
+        this.footballFieldPanel.repaint();
+        updateEffectViewPanel();
+    }
+
+    @Override
+    public void onDeleteEffect(Effect effect) {
+        this.effectManager.removeEffectFromSelectedPerformer(effect);
+        this.footballFieldPanel.repaint();
+        updateEffectViewPanel();
+    }
+
+    ////////////////////////// Football Field Listeners //////////////////////////
+
+    @Override
+    public void onPerformerSelect() {
+        updateEffectViewPanel();
+    }
+
+    @Override
+    public void onPerformerDeselect() {
+        updateEffectViewPanel();
+    }
+
+    private void updateEffectViewPanel() {
+        if (this.effectManager == null) return;
+
+        this.effectViewPanel.remove(this.effectGUI.getEffectPanel());
+        this.effectViewPanel.revalidate();
+        this.effectViewPanel.repaint();
+
+        // TODO: Eventually, for multiple selected performers, also check if not all selected performers share the same effect
+        if (this.footballFieldPanel.selectedPerformers.size() != 1) {
+            this.currentEffect = null;
+
+            this.effectGUI = new EffectGUI(EffectGUI.noPerformerMsg);
+
+            this.effectViewPanel.add(this.effectGUI.getEffectPanel());
+
+            return;
+        }
+
+        // FIXME: Here, we know there's only one performer selected. The EffectGUI is for that single performer.
+        this.currentEffect = this.effectManager.getEffectFromSelectedPerformer();
+        long currentMSec = this.timeManager.getCount2MSec().get(this.footballFieldPanel.getCurrentCount());
+        this.effectGUI = new EffectGUI(this.currentEffect, currentMSec, this);
+
+        this.effectViewPanel.add(this.effectGUI.getEffectPanel());
+        this.effectViewPanel.revalidate();
+        this.effectViewPanel.repaint();
+    }
+
     private void autosaveProject() {
         // we don't have a project open, nothing to save
         if (archivePath == null || drillPath == null) {
@@ -1433,7 +1718,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             Files.copy(drillPath.toPath(), drillDir);
         } catch (IOException e) {
             // TODO: handle error from the backup failing
-            System.out.println(e.getMessage());
+            System.out.println("MediaEditorGUI autosaveProject(): " + e.getMessage());
             return;
         }
 

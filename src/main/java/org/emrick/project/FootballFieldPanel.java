@@ -37,6 +37,11 @@ public class FootballFieldPanel extends JPanel implements RepaintListener {
     private final FootballFieldListener footballFieldListener;
     private EffectManager effectManager;
     private int effectTransparency = 255;
+    private boolean useFps;
+
+    public void setUseFps(boolean useFps) {
+        this.useFps = useFps;
+    }
 
     public FootballFieldPanel(FootballFieldListener footballFieldListener) {
 //        setPreferredSize(new Dimension(fieldWidth + 2*margin, fieldHeight + 2*margin)); // Set preferred size for the drawing area
@@ -232,6 +237,9 @@ public class FootballFieldPanel extends JPanel implements RepaintListener {
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
 
+        // Case: User is not using FPS playback mode
+        if (!useFps) currentSetRatio = 1;
+
         // Draw the surface image
         if (surfaceImage != null && showSurfaceImage) {
             drawBetterImage(g, surfaceImage);
@@ -254,11 +262,16 @@ public class FootballFieldPanel extends JPanel implements RepaintListener {
                 if (c1.x == c2.x && c1.y == c2.y) {
                     p.currentLocation = dotToPoint(c1.x, c1.y);
                 } else {
-                    int duration = drill.sets.get(currentSet.index + 1).duration;
-                    p.currentLocation = dotToPoint(
-                            (c2.x - c1.x) * currentSetRatio + c1.x,
-                            (c2.y - c1.y) * currentSetRatio + c1.y
-                    );
+                    if (useFps) {
+                        p.currentLocation = dotToPoint(
+                                (c2.x - c1.x) * currentSetRatio + c1.x,
+                                (c2.y - c1.y) * currentSetRatio + c1.y
+                        );
+                    } else {
+                        int duration = drill.sets.get(currentSet.index + 1).duration;
+                        p.currentLocation = dotToPoint((c2.x - c1.x) * (double) (currentCount - currentSetStartCount) /
+                                duration + c1.x, (c2.y - c1.y) * (double) (currentCount - currentSetStartCount) / duration + c1.y);
+                    }
                 }
             } else {
                 p.currentLocation = dotToPoint(c1.x, c1.y);
