@@ -26,8 +26,9 @@ import java.util.*;
 import java.util.concurrent.*;
 import java.util.stream.*;
 
+
 public class MediaEditorGUI extends Component implements ImportListener, ScrubBarListener, SyncListener,
-        FootballFieldListener, EffectListener, SelectListener {
+        FootballFieldListener, EffectListener, SelectListener, UserAuthListener {
 
     // String definitions
     public static final String FILE_MENU_NEW_PROJECT = "New Project";
@@ -767,6 +768,18 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
 //
 //            }
         });
+
+        JMenuItem loginItem = new JMenu("Account");
+        //loginItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_L, ActionEvent.CTRL_MASK));
+        menuBar.add(loginItem);
+
+        JMenuItem signIn = new JMenuItem("Sign In");
+        signIn.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_N, ActionEvent.CTRL_MASK));
+        signIn.addActionListener(e -> {
+            System.out.println("Signing in...");
+            new UserAuthGUI(frame, this); // This assumes UserAuthGUI sets itself visible
+        });
+        loginItem.add(signIn);
 
         // System message
         menuBar.add(Box.createHorizontalGlue());
@@ -1635,6 +1648,10 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
 
     ////////////////////////// Effect Listeners //////////////////////////
 
+    @Override
+    public void onUserLoggedIn(String username) {
+        frame.setTitle("Emrick Designer - Welcome "+username);
+    }
     @Override
     public void onCreateEffect(Effect effect) {
         boolean successful = this.effectManager.addEffectToSelectedPerformer(effect);
