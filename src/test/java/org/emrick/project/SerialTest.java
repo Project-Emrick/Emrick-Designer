@@ -4,7 +4,7 @@ public class SerialTest {
     @org.junit.jupiter.api.Test
     public void testSerial() {
         SerialTransmitter st = new SerialTransmitter();
-        st.setSerialPort("COM29");
+        st.setSerialPort("COM21");
         st.writeToSerialPort("p");
     }
 }
