@@ -65,9 +65,14 @@ public class ScrubBarGUI extends JComponent implements ActionListener {
     private final ImageIcon PLAY_ICON;
     private final ImageIcon PAUSE_ICON;
 
+    // Frame rate
     private double fps = 60;
     private double time = 0;
+    private boolean useFps = false;
     private ArrayList<SyncTimeGUI.Pair> timeSync = null;
+
+    // Audio
+    private boolean canSeekAudio = false;
 
     public ScrubBarGUI(JFrame parent, ScrubBarListener scrubBarListener, SyncListener syncListener, FootballFieldPanel footballFieldPanel) {
         this.parent = parent;
@@ -150,14 +155,27 @@ public class ScrubBarGUI extends JComponent implements ActionListener {
 
         // Status Panel.
         // TODO: Add more info (like start/end times?)
-        JPanel statusPanel = new JPanel(new GridLayout(3, 1));
+        JPanel statusPanel = new JPanel(new GridLayout(4, 1));
         statusPanel.setPreferredSize(new Dimension(100, 1));
         JLabel statusLabel = new JLabel("Set: 0", JLabel.CENTER);
         JLabel timeLabel = new JLabel("0:00.000", JLabel.CENTER);
-        JComboBox<Double> fpsChanger = new JComboBox<>(new Double[]{60.0, 30.0, 15.0});
+
+        String[] playbackFps = { "Count", "60 fps", "30 fps", "15 fps" };
+//        Double[] playbackFps = {60.0, 30.0, 15.0};
+        JComboBox<String> fpsChanger = new JComboBox<>(playbackFps);
         fpsChanger.addActionListener(e -> {
-            this.fps = (double) fpsChanger.getSelectedItem();
+            // Added: give user ability to not use FPS option
+            String selected = (String) fpsChanger.getSelectedItem();
+            assert(selected != null);
+            if (selected.equals("Count")) {
+                useFps = false;
+                return;
+            }
+            useFps = true;
+            String selectedFps = selected.split(" ")[0];
+            this.fps = Double.parseDouble(selectedFps);
         });
+
         statusPanel.add(statusLabel);
         statusPanel.add(timeLabel);
         statusPanel.add(fpsChanger);
@@ -220,25 +238,29 @@ public class ScrubBarGUI extends JComponent implements ActionListener {
             long milliseconds = currTimeMSec % 1000;
             timeLabel.setText(String.format("%d:%02d.%03d", minutes, seconds, milliseconds));
 
-            if (!isPlaying && timeSync != null) {
-                float setSyncDuration = timeSync.get(this.getCurrentSetIndex()).getValue();
-                float setDuration = this.getCurrSetDuration(); // in counts
-                time = (float) (val - botSlider.getMinimum()) / setDuration * setSyncDuration;
-                double ratio = time / setSyncDuration;
-                footballFieldPanel.setCurrentSetRatio(Math.min(ratio, 1));
-                footballFieldPanel.repaint();
-            } else if (!isPlaying) {
-                float setDuration = this.getCurrSetDuration(); // in counts
-                double ratio = (float) (val - botSlider.getMinimum()) / setDuration;
-                footballFieldPanel.setCurrentSetRatio(Math.min(ratio, 1));
-                footballFieldPanel.repaint();
-            }
+            setPlaybackTime();
         });
 
         sliderPanel.add(topSlider);
         sliderPanel.add(botSlider);
 
         scrubBarPanel.add(sliderPanel, BorderLayout.CENTER);
+    }
+
+    public void setPlaybackTime() {
+        if (!isPlaying && timeSync != null) {
+            float setSyncDuration = timeSync.get(this.getCurrentSetIndex()).getValue();
+            float setDuration = this.getCurrSetDuration(); // in counts
+            time = (float) (botSlider.getValue() - botSlider.getMinimum()) / setDuration * setSyncDuration;
+            double ratio = time / setSyncDuration;
+            footballFieldPanel.setCurrentSetRatio(Math.min(ratio, 1));
+            footballFieldPanel.repaint();
+        } else if (!isPlaying) {
+            float setDuration = this.getCurrSetDuration(); // in counts
+            double ratio = (float) (botSlider.getValue() - botSlider.getMinimum()) / setDuration;
+            footballFieldPanel.setCurrentSetRatio(Math.min(ratio, 1));
+            footballFieldPanel.repaint();
+        }
     }
 
     public boolean nextStep(double playbackSpeed) {
@@ -355,6 +377,7 @@ public class ScrubBarGUI extends JComponent implements ActionListener {
 
         // Audio
         this.audioCheckbox = new JCheckBox();
+//        this.audioCheckbox.setSelected(true);
         this.audioCheckbox.setToolTipText("Toggle audio on/off");
         JLabel audioLabel = new JLabel();
         audioLabel.setIcon(scaleImageIcon(new ImageIcon(PATH_AUDIO_ICON)));
@@ -412,6 +435,10 @@ public class ScrubBarGUI extends JComponent implements ActionListener {
 
     public JCheckBox getAudioCheckbox() {
         return audioCheckbox;
+    }
+
+    public boolean isUseFps() {
+        return useFps;
     }
 
     /**
@@ -486,6 +513,18 @@ public class ScrubBarGUI extends JComponent implements ActionListener {
 //        System.out.println("currSetEndCount = " + currSetEndCount);
     }
 
+    public void setCanSeekAudio(boolean canSeekAudio) {
+        this.canSeekAudio = canSeekAudio;
+    }
+
+    public boolean isCanSeekAudio() {
+        return canSeekAudio;
+    }
+
+    public boolean isPlaying() {
+        return isPlaying;
+    }
+
     @Override
     public void actionPerformed(ActionEvent e) {
 
@@ -508,15 +547,19 @@ public class ScrubBarGUI extends JComponent implements ActionListener {
             }
         }
         else if (e.getSource().equals(prevSetButton)) {
+            this.canSeekAudio = true;
             prevSet();
         }
         else if (e.getSource().equals(nextSetButton)) {
+            this.canSeekAudio = true;
             nextSet();
         }
         else if (e.getSource().equals(prevCountButton)) {
+            this.canSeekAudio = true;
             prevCount();
         }
         else if (e.getSource().equals(nextCountButton)) {
+            this.canSeekAudio = true;
             nextCount();
         }
         else if (e.getSource().equals(syncButton)) {
@@ -544,14 +587,14 @@ public class ScrubBarGUI extends JComponent implements ActionListener {
         isPlaying = true;
 
 //        time = scrubBarListener.onScrub() / 1000.0;
-        System.out.println(scrubBarListener.onScrub() / 1000.0);
+        System.out.println("ScrubBarGUI: isPlaying = " + isPlaying + ", time = " + scrubBarListener.onScrub() / 1000.0);
     }
     public void setIsPlayingPlay() {
         playPauseButton.setIcon(PLAY_ICON);
         isPlaying = false;
 
         time = scrubBarListener.onScrub() / 1000.0;
-        System.out.println(scrubBarListener.onScrub() / 1000.0);
+        System.out.println("ScrubBarGUI: isPlaying = " + isPlaying + ", time = " + scrubBarListener.onScrub() / 1000.0);
     }
 
     public void prevSet() {
