@@ -15,7 +15,7 @@ import java.util.*;
 public class SelectFileGUI implements ActionListener {
 
     // Temporary
-    private static final boolean IS_DEBUG = true;
+    private static final boolean IS_DEBUG = false;
 
     private final ImportListener importListener;
     // Parent frame
