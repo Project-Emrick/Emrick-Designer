@@ -6,7 +6,7 @@ import java.net.URI;
 
 public interface ImportListener {
     void onImport();
-    void onFileSelect(File archivePath, File drillPath);
+    void onFileSelect(File archivePath, File drillPath, File csvFile);
     void onFloorCoverImport(Image image);
     void onSurfaceImport(Image image);
     void onAudioImport(File audioFile);

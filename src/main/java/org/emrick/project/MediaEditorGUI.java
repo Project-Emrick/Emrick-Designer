@@ -2,30 +2,32 @@ package org.emrick.project;
 
 import com.formdev.flatlaf.*;
 import com.google.gson.*;
+import com.itextpdf.text.Document;
+import com.itextpdf.text.*;
+import com.itextpdf.text.pdf.*;
 import org.emrick.project.audio.*;
 import org.emrick.project.serde.*;
 
 import javax.swing.Timer;
 import javax.swing.*;
-import javax.swing.border.Border;
+import javax.swing.border.*;
 import javax.swing.event.*;
 import javax.swing.filechooser.*;
-import javax.swing.text.AttributeSet;
-import javax.swing.text.BadLocationException;
-import javax.swing.text.PlainDocument;
+import javax.swing.text.*;
+import java.awt.Font;
+import java.awt.Image;
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.geom.*;
 import java.io.*;
 import java.nio.file.*;
-import java.time.Duration;
+import java.time.*;
 import java.util.*;
+import java.util.concurrent.*;
 import java.util.stream.*;
-import com.itextpdf.text.Document;
-import com.itextpdf.text.Paragraph;
-import com.itextpdf.text.pdf.PdfWriter;
 
-public class MediaEditorGUI extends Component implements ImportListener, ScrubBarListener, SyncListener, FootballFieldListener, EffectListener, SelectListener {
+public class MediaEditorGUI extends Component implements ImportListener, ScrubBarListener, SyncListener,
+        FootballFieldListener, EffectListener, SelectListener {
 
     // String definitions
     public static final String FILE_MENU_NEW_PROJECT = "New Project";
@@ -34,54 +36,51 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
     private final ColorChangeCaretaker colorChangeCaretaker = new ColorChangeCaretaker();
     // UI Components of MediaEditorGUI
     private final JFrame frame;
-    private JPanel mainContentPanel;
     private final FootballFieldPanel footballFieldPanel;
-    private JPanel scrubBarPanel; // Refers directly to panel of ScrubBarGUI. Reduces UI refreshing issues.
-    private ScrubBarGUI scrubBarGUI; // Refers to ScrubBarGUI instance, with functionality
-    private JPanel effectViewPanel;
-
-    // Audio Components
-    //  May want to abstract this away into some DrillPlayer class in the future
-    private AudioPlayer audioPlayer;
-    private Color chosenColor;
-    private JPanel colorDisplayPanel;
     // dots
     private final JLabel sysMsg = new JLabel("Welcome to Emrick Designer!", SwingConstants.RIGHT);
     private final Timer clearSysMsg = new Timer(5000, e -> {
         sysMsg.setText("");
     });
-
+    // JSON serde
+    private final Gson gson;
+    private final Path userHome = Paths.get(System.getProperty("user.home"), ".emrick");
+    private final String[] tutorialMessages = {
+            "<html>Welcome to Media Editor!<br>Click 'File' to open or create new project.<br></html>",
+            "Modify Each player over Main Panel",
+            "<html>Use the Scrub Bar to manipulate your project. <br> You can change to the drill you wanted or " +
+            "change the speed there <br></html> ",
+            "<html>On the right side,<br> there are many effects that can apply to each performers.<br></html>",
+            "Use the 'Help' menu for detailed documentation."
+    };
+    public int currentTutorialIndex = 0;
+    private JPanel mainContentPanel;
+    private JPanel scrubBarPanel; // Refers directly to panel of ScrubBarGUI. Reduces UI refreshing issues.
+    private ScrubBarGUI scrubBarGUI; // Refers to ScrubBarGUI instance, with functionality
+    private JPanel effectViewPanel;
+    // Audio Components
+    //  May want to abstract this away into some DrillPlayer class in the future
+    private AudioPlayer audioPlayer;
+    private Color chosenColor;
+    private JPanel colorDisplayPanel;
     // Effect
     private EffectManager effectManager;
     private EffectGUI effectGUI;
     private Effect currentEffect;
     private Effect copiedEffect;
-
     // Time keeping
     // TODO: save this
     private TimeManager timeManager;
     private ArrayList<SyncTimeGUI.Pair> timeSync = null;
     private boolean useStartDelay; // If we are at the first count of the first set, useStartDelay = true
     private float startDelay; // Drills might not start immediately, therefore use this. Unit: seconds.
-    private float playbackSpeed = 1; // The selected playback speed. For example "0.5", "1.0", "1.5". Use as a multiplier
+    private float playbackSpeed = 1;
+    // The selected playback speed. For example "0.5", "1.0", "1.5". Use as a multiplier
     private Timer playbackTimer = null;
-    // JSON serde
-    private final Gson gson;
-
     // Project info
     private File archivePath = null;
     private File drillPath = null;
-    private final Path userHome = Paths.get(System.getProperty("user.home"), ".emrick");
-
-    private final String[] tutorialMessages = {
-            "<html>Welcome to Media Editor!<br>Click 'File' to open or create new project.<br></html>",
-            "Modify Each player over Main Panel",
-            "<html>Use the Scrub Bar to manipulate your project. <br> You can change to the drill you wanted or change the speed there <br></html> ",
-            "<html>On the right side,<br> there are many effects that can apply to each performers.<br></html>",
-            "Use the 'Help' menu for detailed documentation."
-    };
-
-    public int currentTutorialIndex = 0;
+    private File csvFile;
     private Border originalBorder;  // To store the original border of the highlighted component
 
     public MediaEditorGUI() {
@@ -133,23 +132,20 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                 return;
             }
 
-            if (scrubBarGUI.nextStep(playbackSpeed)) {
+            scrubBarGUI.nextCount();
+
+            if (scrubBarGUI.isAtLastSet() && scrubBarGUI.isAtEndOfSet()) {
                 playbackTimer.stop();
+                // TODO: stop music
                 scrubBarGUI.setIsPlayingPlay();
+                return;
+            } else if (scrubBarGUI.isAtEndOfSet()) {
+                scrubBarGUI.nextSet();
             }
 
-//            scrubBarGUI.nextCount();
-//
-//            if (scrubBarGUI.isAtLastSet() && scrubBarGUI.isAtEndOfSet()) {
-//                playbackTimer.stop();
-//                // TODO: stop music
-//                scrubBarGUI.setIsPlayingPlay();
-//                return;
-//            } else if (scrubBarGUI.isAtEndOfSet()) {
-//                scrubBarGUI.nextSet();
-//            }
+            setPlaybackTimerTime();
 
-//            setPlaybackTimerTime();
+            // TODO: repaint everything relevant (field, timer, etc)
         });
 
         // Change Font Size for Menu and MenuIem
@@ -178,11 +174,18 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         createAndShowGUI();
     }
 
-    private void setPlaybackTimerTime() {
-//        float setSyncDuration = timeSync.get(scrubBarGUI.getCurrentSetIndex()).getValue();
-//        float setDuration = scrubBarGUI.getCurrSetDuration();
-//        playbackTimer.setDelay(Math.round(setSyncDuration / setDuration * 1000 / playbackSpeed));
-        playbackTimer.setDelay((int) (1 / scrubBarGUI.getFps() * 1000.0 / playbackSpeed));
+    public static void main(String[] args) {
+        try {
+            UIManager.setLookAndFeel(new FlatLightLaf());
+        } catch (Exception ex) {
+            System.err.println("Failed to initialize LaF");
+        }
+
+        // Run this program on the Event Dispatch Thread (EDT)
+        EventQueue.invokeLater(new Runnable() {
+            @Override
+            public void run() {new MediaEditorGUI();}
+        });
     }
 
     public void createAndShowGUI() {
@@ -289,6 +292,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
 
         // Export Emerick Packets
         JMenuItem exportItem = new JMenuItem("Export Emerick Packets File");
+        exportItem.setEnabled(csvFile != null);
         exportItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_E, ActionEvent.CTRL_MASK));
         fileMenu.add(exportItem);
         exportItem.addActionListener(e -> {
@@ -302,16 +306,54 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
 
         fileMenu.addSeparator();
 
+        // Export CSV file
+        JMenuItem exportCsvItem = new JMenuItem("Export Device IDs CSV");
+        fileMenu.add(exportCsvItem);
+        exportCsvItem.addActionListener(e -> {
+            ArrayList<Performer> performers = footballFieldPanel.drill.performers;
+
+            JFileChooser fileChooser = SelectFileGUI.getFileChooser("Device ID Comma Separated Values (*.csv)", ".csv");
+
+            int retVal = fileChooser.showSaveDialog(null);
+
+            System.out.println("retVal = " + retVal);
+
+            if (retVal == JFileChooser.APPROVE_OPTION) {
+                File selectedFile = fileChooser.getSelectedFile();
+                exportCsvFileForPerformerDeviceIDs(selectedFile);
+            }
+
+        });
+
+        // Import CSV file
+        JMenuItem importCsvItem = new JMenuItem("Import Device IDs CSV");
+        fileMenu.add(importCsvItem);
+        importCsvItem.addActionListener(e -> {
+            JFileChooser fileChooser = SelectFileGUI.getFileChooser("Device ID Comma Separated Values (*.csv)", ".csv");
+
+            int returnValue = fileChooser.showOpenDialog(null);
+            if (returnValue == JFileChooser.APPROVE_OPTION) {
+                File selectedFile = fileChooser.getSelectedFile();
+                System.out.println("CSV     | Selected file: " + selectedFile.getAbsoluteFile());
+                csvFile = selectedFile;
+                exportItem.setEnabled(true);
+                parseCsvFileForPerformerDeviceIDs(csvFile);
+            }
+        });
+
+        fileMenu.addSeparator();
+
         // Demos
         JMenuItem displayCircleDrill = new JMenuItem("Load Demo Drill Object");
         displayCircleDrill.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_L,
-                                                             Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx()));
+                                                                 Toolkit.getDefaultToolkit()
+                                                                        .getMenuShortcutKeyMaskEx()));
         fileMenu.add(displayCircleDrill);
         displayCircleDrill.addActionListener(e -> loadDemoDrillObj());
 
         JMenuItem displayTestDrill = new JMenuItem("Load Test Drill Object");
         displayTestDrill.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_K,
-                                                             Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx()));
+                                                               Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx()));
         fileMenu.add(displayTestDrill);
         displayTestDrill.addActionListener(e -> loadTestDrillObj());
 
@@ -375,7 +417,8 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
 
         JMenuItem removeEffectsForSelected = new JMenuItem("Reset Selected Performers");
         removeEffectsForSelected.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_R,
-                Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx()));
+                                                                       Toolkit.getDefaultToolkit()
+                                                                              .getMenuShortcutKeyMaskEx()));
         editMenu.add(removeEffectsForSelected);
         removeEffectsForSelected.addActionListener(e -> {
             if (this.effectManager == null) return;
@@ -387,23 +430,29 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
 
         JMenuItem copyCurrentEffect = new JMenuItem("Copy Effect");
         copyCurrentEffect.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_C,
-                Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx()));
+                                                                Toolkit.getDefaultToolkit()
+                                                                       .getMenuShortcutKeyMaskEx()));
         copyCurrentEffect.addActionListener(e -> {
             if (this.effectManager == null) return;
             if (this.currentEffect == null) {
-                JOptionPane.showMessageDialog(frame, "No effect to copy.",
-                        "Copy Effect: Warning", JOptionPane.WARNING_MESSAGE);
+                JOptionPane.showMessageDialog(frame,
+                                              "No effect to copy.",
+                                              "Copy Effect: Warning",
+                                              JOptionPane.WARNING_MESSAGE);
                 return;
             }
-            JOptionPane.showMessageDialog(frame, "Effect copied.",
-                    "Copy Effect: Success", JOptionPane.INFORMATION_MESSAGE);
+            JOptionPane.showMessageDialog(frame,
+                                          "Effect copied.",
+                                          "Copy Effect: Success",
+                                          JOptionPane.INFORMATION_MESSAGE);
             this.copiedEffect = this.currentEffect;
         });
         editMenu.add(copyCurrentEffect);
 
         JMenuItem pasteCopiedEffect = new JMenuItem("Paste Effect");
         pasteCopiedEffect.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_V,
-                Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx()));
+                                                                Toolkit.getDefaultToolkit()
+                                                                       .getMenuShortcutKeyMaskEx()));
         pasteCopiedEffect.addActionListener(e -> {
             if (this.effectManager == null) return;
             boolean success = this.effectManager.addEffectToSelectedPerformers(this.copiedEffect);
@@ -533,6 +582,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             ListSelectionModel lsm = table.getSelectionModel();
             lsm.addListSelectionListener(new ListSelectionListener() {
                 int last = -1;
+
                 @Override
                 public void valueChanged(ListSelectionEvent e) {
                     if (e.getValueIsAdjusting()) {
@@ -687,9 +737,8 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         timeWeatherItem.addActionListener(e -> showTimeWeatherDialog(frame));
         lightMenuPopup.add(timeWeatherItem);
 
-
         JMenuItem lightDescription = new JMenuItem("Light Description");
-        lightDescription.addActionListener(e->showlightDescription(frame));
+        lightDescription.addActionListener(e -> showlightDescription(frame));
         lightMenuPopup.add(lightDescription);
 
         // Button that triggers the popup menu
@@ -736,6 +785,123 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         frame.setTitle("Emrick Designer");
     }
 
+    public void loadDemoDrillObj() {
+        clearDotsFromField();
+        String filePath = "./src/test/java/org/emrick/project/ExpectedPDFOutput.txt";
+        try {
+            String DrillString = Files.lines(Paths.get(filePath)).collect(Collectors.joining(System.lineSeparator()));
+            //System.out.println("Got drill string");
+            //System.out.println(DrillString);
+            DrillParser parse1 = new DrillParser();
+            Drill drillby = parse1.parseWholeDrill(DrillString);
+            footballFieldPanel.drill = drillby;
+            footballFieldPanel.addSetToField(drillby.sets.get(0));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void loadTestDrillObj() {
+        clearDotsFromField();
+        String filePath = "./src/test/java/org/emrick/project/testDrillParsed.txt";
+        try {
+            String DrillString = Files.lines(Paths.get(filePath)).collect(Collectors.joining(System.lineSeparator()));
+            DrillParser parse1 = new DrillParser();
+            Drill drilltest = parse1.parseWholeDrill(DrillString);
+            footballFieldPanel.drill = drilltest;
+            footballFieldPanel.addSetToField(drilltest.sets.get(0));
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void loadProject(File path) {
+        try {
+            // TODO: pdf loading is redundant with project file. fix? - LHD
+            FileReader r = new FileReader(path);
+            ProjectFile pf = gson.fromJson(r, ProjectFile.class);
+            ImportArchive ia = new ImportArchive(this);
+            Path fullArchive = Paths.get(path.getParentFile().getPath(), pf.archivePath);
+            Path fullDrill = Paths.get(path.getParentFile().getPath(), pf.drillPath);
+
+            archivePath = fullArchive.toFile();
+            drillPath = fullDrill.toFile();
+
+            ia.fullImport(fullArchive.toString(), fullDrill.toString());
+            footballFieldPanel.drill = pf.drill;
+            footballFieldPanel.setCurrentSet(footballFieldPanel.drill.sets.get(0));
+//            rebuildPageTabCounts();
+//            scrubBarGUI.setReady(true);
+            footballFieldPanel.repaint();
+
+            if (pf.timeSync != null && pf.startDelay != null) {
+                timeSync = pf.timeSync;
+                startDelay = pf.startDelay;
+                setupEffectView();
+            }
+
+        } catch (JsonIOException | JsonSyntaxException | FileNotFoundException e) {
+            writeSysMsg("Failed to open to `" + path + "`.");
+            throw new RuntimeException(e);
+        }
+    }
+
+    public void clearDotsFromField() {
+        footballFieldPanel.clearDots();
+    }
+
+    @Override
+    public void onImport() {
+        scrubBarGUI.setReady(true);
+    }
+
+    @Override
+    public void onFileSelect(File archivePath, File drillPath, File csvFile) {
+        this.archivePath = archivePath;
+        this.drillPath = drillPath;
+        this.csvFile = csvFile;
+    }
+
+    @Override
+    public void onFloorCoverImport(Image image) {
+        footballFieldPanel.setFloorCoverImage(image);
+        footballFieldPanel.repaint();
+    }
+
+    @Override
+    public void onSurfaceImport(Image image) {
+        footballFieldPanel.setSurfaceImage(image);
+        footballFieldPanel.repaint();
+    }
+
+    @Override
+    public void onAudioImport(File audioFile) {
+
+        // Play or pause audio through the AudioPlayer service class
+        audioPlayer = new AudioPlayer(audioFile);
+    }
+
+    @Override
+    public void onDrillImport(String drill) {
+        String text = DrillParser.extractText(drill);
+        footballFieldPanel.drill = DrillParser.parseWholeDrill(text);
+        footballFieldPanel.addSetToField(footballFieldPanel.drill.sets.get(0));
+        rebuildPageTabCounts();
+    }
+
+    private void rebuildPageTabCounts() {
+        Map<String, Integer> pageTabCounts = new HashMap<>();
+        int startCount = 0;
+        for (Set s : footballFieldPanel.drill.sets) {
+            startCount += s.duration;
+            pageTabCounts.put(s.label, startCount);
+        }
+
+        scrubBarGUI.updatePageTabCounts(pageTabCounts);
+        buildScrubBarPanel();
+    }
+
     /**
      * Loads the ScrubBarGUI Panel if it has not been created, or refreshes it if it already exists.
      */
@@ -756,6 +922,240 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         mainContentPanel.revalidate();
         mainContentPanel.repaint();
     }
+
+    @Override
+    public void onSync(ArrayList<SyncTimeGUI.Pair> times, float startDelay) {
+        System.out.println("MediaEditorGUI: Got Synced Times");
+        this.timeSync = times;
+        this.startDelay = startDelay;
+
+        setupEffectView();
+    }
+
+    private void setupEffectView() {
+        // Recalculate set to count map (pageTab2Count) to initialize timeManager
+        Map<String, Integer> pageTab2Count = new HashMap<>();
+        int startCount = 0;
+        for (Set s : footballFieldPanel.drill.sets) {
+            startCount += s.duration;
+            pageTab2Count.put(s.label, startCount);
+        }
+
+        this.timeManager = new TimeManager(pageTab2Count, this.timeSync, this.startDelay);
+        this.effectManager = new EffectManager(this.footballFieldPanel, this.timeManager);
+        this.footballFieldPanel.setEffectManager(this.effectManager);
+
+        updateEffectViewPanel();
+    }
+
+    // ScrubBar Listeners
+
+    private void updateEffectViewPanel() {
+        if (this.effectManager == null) return;
+
+        this.effectViewPanel.remove(this.effectGUI.getEffectPanel());
+        this.effectViewPanel.revalidate();
+        this.effectViewPanel.repaint();
+
+        System.out.println("this.footballFieldPanel.selectedPerformers.size() = " + this.footballFieldPanel.selectedPerformers.size());
+
+        // TODO: Eventually, for multiple selected performers, also check if not all selected performers share the
+        //  same effect
+        if (this.footballFieldPanel.selectedPerformers.size() > 1) {
+            this.currentEffect = null;
+
+            String placeholderText = EffectGUI.noPerformerMsg;
+            Map<Performer, Collection<Effect>> selectedEffects = new LinkedHashMap<>();
+
+            for (Performer performer : this.footballFieldPanel.selectedPerformers.values()) {
+                if (performer.getEffects() == null || performer.getEffects().isEmpty()) {
+                    placeholderText = EffectGUI.noCommonEffectMsg;
+                } else {
+                    selectedEffects.put(performer, performer.getEffects());
+                }
+            }
+
+            this.effectGUI = new EffectGUI(placeholderText);
+            if (placeholderText.equals(EffectGUI.noCommonEffectMsg)) {
+                effectGUI.setSelectedEffects(new LinkedHashMap<>());
+            } else {
+                effectGUI.setSelectedEffects(selectedEffects);
+            }
+
+            this.effectViewPanel.add(this.effectGUI.getEffectPanel());
+            this.effectViewPanel.revalidate();
+            this.effectViewPanel.repaint();
+            return;
+        }
+
+        if (footballFieldPanel.selectedPerformers.isEmpty()) {
+            currentEffect = null;
+            this.effectGUI = new EffectGUI(EffectGUI.noPerformerMsg);
+
+            this.effectViewPanel.add(this.effectGUI.getEffectPanel());
+            this.effectViewPanel.revalidate();
+            this.effectViewPanel.repaint();
+            return;
+        }
+
+        // FIXME: Here, we know there's only one performer selected. The EffectGUI is for that single performer.
+        this.currentEffect = this.effectManager.getEffectFromSelectedPerformer();
+        long currentMSec = this.timeManager.getCount2MSec().get(this.footballFieldPanel.getCurrentCount());
+        this.effectGUI = new EffectGUI(this.currentEffect, currentMSec, this);
+
+        this.effectViewPanel.add(this.effectGUI.getEffectPanel());
+        this.effectViewPanel.revalidate();
+        this.effectViewPanel.repaint();
+    }
+
+    @Override
+    public boolean onPlay() {
+        if (timeSync == null) {
+            JOptionPane.showMessageDialog(frame,
+                                          "Cannot play without syncing time!",
+                                          "Playback Error",
+                                          JOptionPane.ERROR_MESSAGE);
+            return false;
+        }
+        if (audioPlayer != null && scrubBarGUI.getAudioCheckbox().isSelected()) {
+            // TODO: get audio to correct position
+            audioPlayer.playAudio();
+        }
+        setPlaybackTimerTime();
+        playbackTimer.start();
+        return true;
+    }
+
+    private void setPlaybackTimerTime() {
+        float setSyncDuration = timeSync.get(scrubBarGUI.getCurrentSetIndex()).getValue();
+        float setDuration = scrubBarGUI.getCurrSetDuration();
+        playbackTimer.setDelay(Math.round(setSyncDuration / setDuration * 1000 / playbackSpeed));
+    }
+
+    @Override
+    public boolean onPause() {
+        if (timeSync == null) {
+            JOptionPane.showMessageDialog(frame,
+                                          "Cannot play without syncing time!",
+                                          "Playback Error",
+                                          JOptionPane.ERROR_MESSAGE);
+            return false;
+        }
+        if (audioPlayer != null) {
+            audioPlayer.pauseAudio();
+        }
+        playbackTimer.stop();
+        return true;
+    }
+
+    @Override
+    public long onScrub() {
+        useStartDelay = scrubBarGUI.isAtFirstSet() && scrubBarGUI.isAtStartOfSet();
+
+        if (this.footballFieldPanel.getNumSelectedPerformers() > 0) updateEffectViewPanel();
+
+        if (timeManager != null) return timeManager.getCount2MSec().get(footballFieldPanel.getCurrentCount());
+        return 0;
+    }
+
+    @Override
+    public void onSpeedChange(float playbackSpeed) {
+        System.out.println("MediaEditorGUI: playbackSpeed = " + playbackSpeed);
+        this.playbackSpeed = playbackSpeed;
+    }
+
+    @Override
+    public void onCreateEffect(Effect effect) {
+        boolean successful = this.effectManager.addEffectToSelectedPerformer(effect);
+        this.footballFieldPanel.repaint();
+        if (successful) updateEffectViewPanel();
+    }
+
+    ////////////////////////// Importing Listeners //////////////////////////
+
+    @Override
+    public void onUpdateEffect(Effect oldEffect, Effect newEffect) {
+        this.effectManager.replaceEffectForSelectedPerformer(oldEffect, newEffect);
+        this.footballFieldPanel.repaint();
+        updateEffectViewPanel();
+    }
+
+    @Override
+    public void onDeleteEffect(Effect effect) {
+        this.effectManager.removeEffectFromSelectedPerformer(effect);
+        this.footballFieldPanel.repaint();
+        updateEffectViewPanel();
+    }
+
+    @Override
+    public void onPerformerSelect() {
+        updateEffectViewPanel();
+    }
+
+    @Override
+    public void onPerformerDeselect() {
+        updateEffectViewPanel();
+    }
+
+    @Override
+    public void onMultiSelect(HashSet<Integer> labels, HashSet<String> symbols) {
+        // TODO: select stuff
+//        footballFieldPanel.selectedPerformers
+        for (Performer p : footballFieldPanel.drill.performers) {
+            if (labels.contains(p.getLabel()) || symbols.contains(p.getSymbol())) {
+                String key = p.getSymbol() + p.getLabel();
+                footballFieldPanel.selectedPerformers.put(key, p);
+            }
+        }
+        footballFieldPanel.repaint();
+    }
+
+    private void exportCsvFileForPerformerDeviceIDs(File selectedFile) {
+        Random random = ThreadLocalRandom.current();
+
+        try (FileWriter fileWriter = new FileWriter(selectedFile)) {
+            for (Performer performer : footballFieldPanel.drill.performers) {
+                fileWriter.write(random.nextInt() + "");
+                fileWriter.write(",");
+                fileWriter.write(performer.getIdentifier());
+                fileWriter.write(System.lineSeparator());
+            }
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private void parseCsvFileForPerformerDeviceIDs(File inputFile) {
+        try (var fileReader = new FileReader(inputFile); var bufferReader = new BufferedReader(fileReader)) {
+            String temp = "";
+            //read file
+            int linesCount = 0;
+            while ((temp = bufferReader.readLine()) != null) {
+                if (!temp.contains(",")) {
+                    continue;
+                }
+                String[] tmpContent = temp.split(",");
+                for (String s : tmpContent) {
+                    if (!s.trim().isEmpty()) {
+                        footballFieldPanel.drill.performers.stream()
+                                                           .filter(performer -> performer.getIdentifier()
+                                                                                         .equals(tmpContent[1]))
+                                                           .findFirst()
+                                                           .ifPresent(performer -> performer.setDeviceId(tmpContent[0]));
+                    }
+                }
+                linesCount = linesCount + 1;
+            }
+
+            if (linesCount != footballFieldPanel.drill.performers.size()) {
+                exportCsvFileForPerformerDeviceIDs(inputFile);
+            }
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    ////////////////////////// Sync Listeners //////////////////////////
 
     private void openProjectDialog() {
         System.out.println("Opening project...");
@@ -795,36 +1195,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         }
     }
 
-    public void loadDemoDrillObj() {
-        clearDotsFromField();
-        String filePath = "./src/test/java/org/emrick/project/ExpectedPDFOutput.txt";
-        try {
-            String DrillString = Files.lines(Paths.get(filePath)).collect(Collectors.joining(System.lineSeparator()));
-            //System.out.println("Got drill string");
-            //System.out.println(DrillString);
-            DrillParser parse1 = new DrillParser();
-            Drill drillby = parse1.parseWholeDrill(DrillString);
-            footballFieldPanel.drill = drillby;
-            footballFieldPanel.addSetToField(drillby.sets.get(0));
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
-    public void loadTestDrillObj() {
-        clearDotsFromField();
-        String filePath = "./src/test/java/org/emrick/project/testDrillParsed.txt";
-        try {
-            String DrillString = Files.lines(Paths.get(filePath)).collect(Collectors.joining(System.lineSeparator()));
-            DrillParser parse1 = new DrillParser();
-            Drill drilltest = parse1.parseWholeDrill(DrillString);
-            footballFieldPanel.drill = drilltest;
-            footballFieldPanel.addSetToField(drilltest.sets.get(0));
-
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
+    ////////////////////////// Scrub Bar Listeners //////////////////////////
 
     private void undoColorChange() {
         ColorChangeMemento memento = colorChangeCaretaker.undo();
@@ -849,7 +1220,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         }
     }
 
-    private void showlightDescription(Frame parentFrame){
+    private void showlightDescription(Frame parentFrame) {
         JDialog dialog = new JDialog(parentFrame, "Light Description", true);
         dialog.getContentPane().setBackground(Color.WHITE);
 
@@ -861,9 +1232,14 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         textArea.setLineWrap(true);
         textArea.setWrapStyleWord(true);
         JScrollPane scrollPane = new JScrollPane(textArea);
-        scrollPane.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(new Color(221, 221, 221)), // Outer border color
-                BorderFactory.createEmptyBorder(5, 5, 5, 5))); // Inner padding
+        scrollPane.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createLineBorder(new Color(221,
+                                                                                                         221,
+                                                                                                         221)),
+                                                                // Outer border color
+                                                                BorderFactory.createEmptyBorder(5,
+                                                                                                5,
+                                                                                                5,
+                                                                                                5))); // Inner padding
 
         textArea.setDocument(new LimitedDocument(5000));
         JLabel charCountLabel = new JLabel("5000 characters remaining");
@@ -914,24 +1290,12 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         dialog.setVisible(true);
     }
 
+    ////////////////////////// Effect Listeners //////////////////////////
+
     private void updateCharCountLabel(JLabel label, int currentLength, int maxChars) {
         label.setText((maxChars - currentLength) + " characters remaining");
     }
-    public class LimitedDocument extends PlainDocument {
-        private final int limit;
 
-        public LimitedDocument(int limit) {
-            this.limit = limit;
-        }
-
-        public void insertString(int offset, String str, AttributeSet attr) throws BadLocationException {
-            if (str == null) return;
-
-            if ((getLength() + str.length()) <= limit) {
-                super.insertString(offset, str, attr);
-            }
-        }
-    }
     private void exportToPDF(String textContent) {
         if (textContent.isEmpty()) {
             JOptionPane.showMessageDialog(this, "The text area cannot be empty.", "Error", JOptionPane.ERROR_MESSAGE);
@@ -944,13 +1308,17 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             document.open();
             document.add(new Paragraph(textContent));
             document.close();
-            JOptionPane.showMessageDialog(this, "PDF exported successfully!", "Success", JOptionPane.INFORMATION_MESSAGE);
+            JOptionPane.showMessageDialog(this,
+                                          "PDF exported successfully!",
+                                          "Success",
+                                          JOptionPane.INFORMATION_MESSAGE);
         } catch (Exception e) {
-            JOptionPane.showMessageDialog(this, "Could not create PDF: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this,
+                                          "Could not create PDF: " + e.getMessage(),
+                                          "Error",
+                                          JOptionPane.ERROR_MESSAGE);
         }
     }
-
-    // ScrubBar Listeners
 
     private void showTimeWeatherDialog(Frame parent) {
         JDialog dialog = new JDialog(parent, "Time & Weather", true);
@@ -975,7 +1343,10 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             for (int i = 0; i < drill.coordinates.size(); i++) {
                 Coordinate c = drill.coordinates.get(i);
                 Color originalColor = c.getColor();
-                Color colorWithNewTransparency = new Color(originalColor.getRed(), originalColor.getGreen(), originalColor.getBlue(), transparency);
+                Color colorWithNewTransparency = new Color(originalColor.getRed(),
+                                                           originalColor.getGreen(),
+                                                           originalColor.getBlue(),
+                                                           transparency);
                 c.setColor(colorWithNewTransparency);
             }
             footballFieldPanel.repaint();
@@ -989,8 +1360,8 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             dialog.dispose();
         });
 
-        JPanel timeWeatherPanel = new JPanel(new GridLayout(0,1,0,1));
-        timeWeatherPanel.setBorder(BorderFactory.createEmptyBorder(5,5,5,5));
+        JPanel timeWeatherPanel = new JPanel(new GridLayout(0, 1, 0, 1));
+        timeWeatherPanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
 
         timeWeatherPanel.add(new JLabel("Select Time:"));
         timeWeatherPanel.add(timeSpinner);
@@ -1006,69 +1377,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         dialog.setVisible(true);
     }
 
-    public void loadProject(File path) {
-        try {
-            // TODO: pdf loading is redundant with project file. fix? - LHD
-            FileReader r = new FileReader(path);
-            ProjectFile pf = gson.fromJson(r, ProjectFile.class);
-            ImportArchive ia = new ImportArchive(this);
-            Path fullArchive = Paths.get(path.getParentFile().getPath(), pf.archivePath);
-            Path fullDrill = Paths.get(path.getParentFile().getPath(), pf.drillPath);
-
-            archivePath = fullArchive.toFile();
-            drillPath = fullDrill.toFile();
-
-            ia.fullImport(fullArchive.toString(), fullDrill.toString());
-            footballFieldPanel.drill = pf.drill;
-            footballFieldPanel.setCurrentSet(footballFieldPanel.drill.sets.get(0));
-//            rebuildPageTabCounts();
-//            scrubBarGUI.setReady(true);
-            footballFieldPanel.repaint();
-
-            if (pf.timeSync != null && pf.startDelay != null) {
-                timeSync = pf.timeSync;
-                startDelay = pf.startDelay;
-                scrubBarGUI.setTimeSync(timeSync);
-                setupEffectView();
-            }
-
-        } catch (JsonIOException | JsonSyntaxException | FileNotFoundException e) {
-            writeSysMsg("Failed to open to `" + path + "`.");
-            throw new RuntimeException(e);
-        }
-    }
-
-    private void writeSysMsg(String msg) {
-        clearSysMsg.stop();
-        sysMsg.setText(msg);
-        clearSysMsg.start();
-    }
-
-    public void saveProject(File path, File archivePath, File drillPath) {
-        String relArchive = path.getParentFile().toURI().relativize(archivePath.toURI()).getPath();
-        String relDrill = path.getParentFile().toURI().relativize(drillPath.toURI()).getPath();
-
-        ProjectFile pf = new ProjectFile(footballFieldPanel.drill, relArchive, relDrill, timeSync, startDelay);
-        String g = gson.toJson(pf);
-
-        System.out.println("saving to `" + path + "`");
-//        System.out.println(g);
-
-        try {
-            FileWriter w = new FileWriter(path);
-            w.write(g);
-            w.close();
-        } catch (IOException e) {
-            writeSysMsg("Failed to save to `" + path + "`.");
-            throw new RuntimeException(e);
-        }
-
-        writeSysMsg("Saved project to `" + path + "`.");
-    }
-
-    public void clearDotsFromField() {
-        footballFieldPanel.clearDots();
-    }
+    ////////////////////////// Football Field Listeners //////////////////////////
 
     private int calculateTransparency(Date time, String weather) {
         Calendar calendar = Calendar.getInstance();
@@ -1102,214 +1411,6 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         return transparency;
     }
 
-    public static void main(String[] args) {
-        try {
-            UIManager.setLookAndFeel(new FlatLightLaf());
-        } catch (Exception ex) {
-            System.err.println("Failed to initialize LaF");
-        }
-
-        // Run this program on the Event Dispatch Thread (EDT)
-        EventQueue.invokeLater(new Runnable() {
-            @Override
-            public void run() { new MediaEditorGUI(); }
-        });
-    }
-
-    ////////////////////////// Importing Listeners //////////////////////////
-
-    @Override
-    public void onImport() {
-        scrubBarGUI.setReady(true);
-    }
-
-    @Override
-    public void onFileSelect(File archivePath, File drillPath) {
-        this.archivePath = archivePath;
-        this.drillPath = drillPath;
-    }
-
-    @Override
-    public void onFloorCoverImport(Image image) {
-        footballFieldPanel.setFloorCoverImage(image);
-        footballFieldPanel.repaint();
-    }
-
-    @Override
-    public void onSurfaceImport(Image image) {
-        footballFieldPanel.setSurfaceImage(image);
-        footballFieldPanel.repaint();
-    }
-
-    @Override
-    public void onAudioImport(File audioFile) {
-
-        // Play or pause audio through the AudioPlayer service class
-        audioPlayer = new AudioPlayer(audioFile);
-    }
-
-    @Override
-    public void onDrillImport(String drill) {
-        String text = DrillParser.extractText(drill);
-        footballFieldPanel.drill = DrillParser.parseWholeDrill(text);
-        footballFieldPanel.addSetToField(footballFieldPanel.drill.sets.get(0));
-        rebuildPageTabCounts();
-    }
-
-    private void rebuildPageTabCounts() {
-        Map<String, Integer> pageTabCounts = new HashMap<>();
-        int startCount = 0;
-        for (Set s : footballFieldPanel.drill.sets) {
-            startCount += s.duration;
-            pageTabCounts.put(s.label, startCount);
-        }
-
-        scrubBarGUI.updatePageTabCounts(pageTabCounts);
-        buildScrubBarPanel();
-    }
-
-    ////////////////////////// Sync Listeners //////////////////////////
-
-    @Override
-    public void onSync(ArrayList<SyncTimeGUI.Pair> times, float startDelay) {
-        System.out.println("MediaEditorGUI: Got Synced Times");
-        this.timeSync = times;
-        scrubBarGUI.setTimeSync(timeSync);
-        this.startDelay = startDelay;
-
-        setupEffectView();
-    }
-
-    private void setupEffectView() {
-        // Recalculate set to count map (pageTab2Count) to initialize timeManager
-        Map<String, Integer> pageTab2Count = new HashMap<>();
-        int startCount = 0;
-        for (Set s : footballFieldPanel.drill.sets) {
-            startCount += s.duration;
-            pageTab2Count.put(s.label, startCount);
-        }
-
-        this.timeManager = new TimeManager(pageTab2Count, this.timeSync, this.startDelay);
-        this.effectManager = new EffectManager(this.footballFieldPanel, this.timeManager);
-        this.footballFieldPanel.setEffectManager(this.effectManager);
-
-        updateEffectViewPanel();
-    }
-
-    ////////////////////////// Scrub Bar Listeners //////////////////////////
-
-    @Override
-    public boolean onPlay() {
-        if (timeSync == null) {
-            JOptionPane.showMessageDialog(frame, "Cannot play without syncing time!",
-                    "Playback Error", JOptionPane.ERROR_MESSAGE);
-            return false;
-        }
-        if (audioPlayer != null && scrubBarGUI.getAudioCheckbox().isSelected()) {
-            // TODO: get audio to correct position
-            audioPlayer.playAudio();
-        }
-        setPlaybackTimerTime();
-        playbackTimer.start();
-        return true;
-    }
-
-    @Override
-    public boolean onPause() {
-        if (timeSync == null) {
-            JOptionPane.showMessageDialog(frame, "Cannot play without syncing time!",
-                    "Playback Error", JOptionPane.ERROR_MESSAGE);
-            return false;
-        }
-        if (audioPlayer != null) {
-            audioPlayer.pauseAudio();
-        }
-        playbackTimer.stop();
-        return true;
-    }
-
-    @Override
-    public long onScrub() {
-        useStartDelay = scrubBarGUI.isAtFirstSet() && scrubBarGUI.isAtStartOfSet();
-
-        if (this.footballFieldPanel.getNumSelectedPerformers() > 0)
-            updateEffectViewPanel();
-
-        if (timeManager != null)
-            return timeManager.getCount2MSec().get(footballFieldPanel.getCurrentCount());
-
-        return 0;
-    }
-
-    @Override
-    public void onSpeedChange(float playbackSpeed) {
-        System.out.println("MediaEditorGUI: playbackSpeed = " + playbackSpeed);
-        this.playbackSpeed = playbackSpeed;
-    }
-
-    ////////////////////////// Effect Listeners //////////////////////////
-
-    @Override
-    public void onCreateEffect(Effect effect) {
-        boolean successful = this.effectManager.addEffectToSelectedPerformer(effect);
-        this.footballFieldPanel.repaint();
-        if (successful) updateEffectViewPanel();
-    }
-
-    @Override
-    public void onUpdateEffect(Effect oldEffect, Effect newEffect) {
-        this.effectManager.replaceEffectForSelectedPerformer(oldEffect, newEffect);
-        this.footballFieldPanel.repaint();
-        updateEffectViewPanel();
-    }
-
-    @Override
-    public void onDeleteEffect(Effect effect) {
-        this.effectManager.removeEffectFromSelectedPerformer(effect);
-        this.footballFieldPanel.repaint();
-        updateEffectViewPanel();
-    }
-
-    ////////////////////////// Football Field Listeners //////////////////////////
-
-    @Override
-    public void onPerformerSelect() {
-        updateEffectViewPanel();
-    }
-
-    @Override
-    public void onPerformerDeselect() {
-        updateEffectViewPanel();
-    }
-
-    private void updateEffectViewPanel() {
-        if (this.effectManager == null) return;
-
-        this.effectViewPanel.remove(this.effectGUI.getEffectPanel());
-        this.effectViewPanel.revalidate();
-        this.effectViewPanel.repaint();
-
-        // TODO: Eventually, for multiple selected performers, also check if not all selected performers share the same effect
-        if (this.footballFieldPanel.selectedPerformers.size() != 1) {
-            this.currentEffect = null;
-
-            this.effectGUI = new EffectGUI(EffectGUI.noPerformerMsg);
-
-            this.effectViewPanel.add(this.effectGUI.getEffectPanel());
-
-            return;
-        }
-
-        // FIXME: Here, we know there's only one performer selected. The EffectGUI is for that single performer.
-        this.currentEffect = this.effectManager.getEffectFromSelectedPerformer();
-        long currentMSec = this.timeManager.getCount2MSec().get(this.footballFieldPanel.getCurrentCount());
-        this.effectGUI = new EffectGUI(this.currentEffect, currentMSec, this);
-
-        this.effectViewPanel.add(this.effectGUI.getEffectPanel());
-        this.effectViewPanel.revalidate();
-        this.effectViewPanel.repaint();
-    }
-
     private void autosaveProject() {
         // we don't have a project open, nothing to save
         if (archivePath == null || drillPath == null) {
@@ -1340,22 +1441,33 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         writeSysMsg("Autosaved project to `" + jsonDir + "`.");
     }
 
-    @Override
-    public void onMultiSelect(HashSet<Integer> labels, HashSet<String> symbols) {
-        // TODO: select stuff
-//        footballFieldPanel.selectedPerformers
-        for (Performer p : footballFieldPanel.drill.performers) {
-            if (labels.contains(p.getLabel()) || symbols.contains(p.getSymbol())) {
-                String key = p.getSymbol() + p.getLabel();
-                footballFieldPanel.selectedPerformers.put(key, p);
-            }
+    public void saveProject(File path, File archivePath, File drillPath) {
+        String relArchive = path.getParentFile().toURI().relativize(archivePath.toURI()).getPath();
+        String relDrill = path.getParentFile().toURI().relativize(drillPath.toURI()).getPath();
+
+        ProjectFile pf = new ProjectFile(footballFieldPanel.drill, relArchive, relDrill, timeSync, startDelay);
+        String g = gson.toJson(pf);
+
+        System.out.println("saving to `" + path + "`");
+//        System.out.println(g);
+
+        try {
+            FileWriter w = new FileWriter(path);
+            w.write(g);
+            w.close();
+        } catch (IOException e) {
+            writeSysMsg("Failed to save to `" + path + "`.");
+            throw new RuntimeException(e);
         }
-        footballFieldPanel.repaint();
+
+        writeSysMsg("Saved project to `" + path + "`.");
     }
 
-    /*
-        tutorial
-     */
+    private void writeSysMsg(String msg) {
+        clearSysMsg.stop();
+        sysMsg.setText(msg);
+        clearSysMsg.start();
+    }
 
     private void displayNonModalTip(String message) {
         JWindow tipWindow = new JWindow(frame);
@@ -1377,7 +1489,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                 currentTutorialIndex++;
                 if (currentTutorialIndex < tutorialMessages.length) {
                     // Effect Panel
-                    if(currentTutorialIndex == 3){
+                    if (currentTutorialIndex == 3) {
                         effectViewPanel.setBorder(BorderFactory.createLineBorder(Color.RED, 2));
                         Timer timer = new Timer(1000, new ActionListener() {
                             public void actionPerformed(ActionEvent e) {
@@ -1423,7 +1535,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                         displayNonModalTip(tutorialMessages[currentTutorialIndex]);
                     }
                     //
-                    else{
+                    else {
                         displayNonModalTip(tutorialMessages[currentTutorialIndex]);
                     }
                 }
@@ -1439,8 +1551,29 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         tipWindow.setContentPane(contentPane);
         tipWindow.setSize(400, 100);
         tipWindow.setLocation(frame.getLocationOnScreen().x + (frame.getWidth() - tipWindow.getWidth()) / 2,
-                frame.getLocationOnScreen().y + (frame.getHeight() - tipWindow.getHeight()) / 2);
+                              frame.getLocationOnScreen().y + (frame.getHeight() - tipWindow.getHeight()) / 2);
         tipWindow.setVisible(true);
+    }
+
+    /*
+        tutorial
+     */
+
+    public class LimitedDocument extends PlainDocument {
+
+        private final int limit;
+
+        public LimitedDocument(int limit) {
+            this.limit = limit;
+        }
+
+        public void insertString(int offset, String str, AttributeSet attr) throws BadLocationException {
+            if (str == null) return;
+
+            if ((getLength() + str.length()) <= limit) {
+                super.insertString(offset, str, attr);
+            }
+        }
     }
 
 }
