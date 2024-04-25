@@ -1260,6 +1260,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
     }
 
     ////////////////////////// Effect Listeners //////////////////////////
+
     @Override
     public void onUserLoggedIn(String username) {
         frame.setTitle("Emrick Designer - Welcome "+username);
