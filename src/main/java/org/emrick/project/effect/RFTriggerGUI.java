@@ -6,52 +6,16 @@ import javax.swing.*;
 import javax.swing.border.Border;
 import java.awt.*;
 
+/**
+ * This class really just sets up a button to create an RF trigger. If there's already an RF trigger on the current
+ * count, then set up a delete button. If there's not, then set up a create button.
+ */
 public class RFTriggerGUI {
 
     private final int count;
     private RFTrigger rfTrigger;
     private final RFTriggerListener rfTriggerListener;
-    private JPanel rfTriggerPanel;
-
-    public static String noProjectSyncMsg = "<html><body style='text-align: center;'>Load a time-synced Emrick project to get started using RF triggers.</body></html>";
-
-    /**
-     * In the case that the project has not yet been loaded and synced.
-     * @param placeholderText Placeholder message.
-     */
-    public RFTriggerGUI(String placeholderText) {
-        this.count = 0;
-        this.rfTrigger = null;
-        this.rfTriggerListener = null;
-
-        this.rfTriggerPanel = new JPanel();
-        this.rfTriggerPanel.setPreferredSize(new Dimension(300, 120));
-
-        Border innerBorder = BorderFactory.createTitledBorder("RF Trigger");
-        Border outerBorder = BorderFactory.createEmptyBorder(0,5,5,5);
-        Border innerBorder2 = BorderFactory.createEmptyBorder(20,20,20,20);
-        Border outerBorder2 = BorderFactory.createCompoundBorder(outerBorder, innerBorder);
-
-        this.rfTriggerPanel.setBorder(BorderFactory.createCompoundBorder(outerBorder2, innerBorder2));
-
-        this.rfTriggerPanel.setLayout(new GridBagLayout());
-
-        JLabel placeholderLabel = new JLabel(placeholderText);
-        placeholderLabel.setHorizontalAlignment(JLabel.CENTER);
-
-        GridBagConstraints gc = new GridBagConstraints();
-
-        //////////////// 0th Row ////////////////
-
-        gc.weightx = 1;
-        gc.weighty = 1;
-
-        gc.gridx = 0;
-        gc.gridy = 0;
-        gc.fill = GridBagConstraints.HORIZONTAL;
-        gc.anchor = GridBagConstraints.CENTER;
-        this.rfTriggerPanel.add(placeholderLabel, gc);
-    }
+    private JButton createDeleteBtn;
 
     public RFTriggerGUI(int count, RFTrigger rfTrigger, RFTriggerListener rfTriggerListener) {
         this.count = count;
@@ -61,22 +25,10 @@ public class RFTriggerGUI {
     }
 
     private void setupGUI() {
-        this.rfTriggerPanel = new JPanel();
-        this.rfTriggerPanel.setPreferredSize(new Dimension(300, 70));
-
-        Border innerBorder = BorderFactory.createTitledBorder("RF Trigger");
-        Border outerBorder = BorderFactory.createEmptyBorder(0,5,5,5);
-
-        this.rfTriggerPanel.setBorder(BorderFactory.createCompoundBorder(outerBorder, innerBorder));
-
-        this.rfTriggerPanel.setLayout(new GridBagLayout());
-
         if (rfTrigger == null) {
-            JButton createButton = new JButton("Create RF Trigger");
-            createButton.setBackground(new Color(175, 215, 241));
-            this.rfTriggerPanel.add(createButton);
+            createDeleteBtn = new JButton("Create RF Trigger");
 
-            createButton.addActionListener(e -> {
+            createDeleteBtn.addActionListener(e -> {
                 rfTrigger = new RFTrigger(count);
                 rfTriggerListener.onCreateRFTrigger(rfTrigger);
                 JOptionPane.showMessageDialog(null,
@@ -84,11 +36,11 @@ public class RFTriggerGUI {
                         JOptionPane.INFORMATION_MESSAGE);
             });
         } else {
-            JButton deleteButton = new JButton("Delete RF Trigger");
-            deleteButton.setBackground(new Color(241, 177, 177));
-            this.rfTriggerPanel.add(deleteButton);
+            createDeleteBtn = new JButton("Delete RF Trigger");
+            createDeleteBtn.setBackground(new Color(32, 136, 203));
+            createDeleteBtn.setForeground(Color.WHITE);
 
-            deleteButton.addActionListener(e -> {
+            createDeleteBtn.addActionListener(e -> {
                 rfTriggerListener.onDeleteRFTrigger(count);
                 JOptionPane.showMessageDialog(null,
                         "RF trigger at count " + count + " deleted successfully", "RF Trigger Delete: Success",
@@ -97,8 +49,8 @@ public class RFTriggerGUI {
         }
     }
 
-    public JPanel getRfTriggerPanel() {
-        return rfTriggerPanel;
+    public JButton getCreateDeleteBtn() {
+        return createDeleteBtn;
     }
 
     public static void main(String[] args) {
@@ -120,9 +72,8 @@ public class RFTriggerGUI {
         };
 
         RFTrigger rfTrigger1 = new RFTrigger(10);
-//        RFTriggerGUI rfTriggerGUI = new RFTriggerGUI(10, rfTrigger1, rfTriggerListener1);
-        RFTriggerGUI rfTriggerGUI2 = new RFTriggerGUI(RFTriggerGUI.noProjectSyncMsg);
-        frame.add(rfTriggerGUI2.getRfTriggerPanel());
+        RFTriggerGUI rfTriggerGUI = new RFTriggerGUI(10, rfTrigger1, rfTriggerListener1);
+        frame.add(rfTriggerGUI.getCreateDeleteBtn());
 
         frame.setVisible(true);
     }
