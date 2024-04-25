@@ -204,8 +204,6 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
 
         frame.add(topPanel, BorderLayout.NORTH);
 
-        // 
- content panel
         mainContentPanel = new JPanel();
         mainContentPanel.setLayout(new BorderLayout());
 
@@ -909,57 +907,6 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         footballFieldPanel.clearDots();
     }
 
-    @Override
-    public void onImport() {
-        scrubBarGUI.setReady(true);
-    }
-
-    @Override
-    public void onFileSelect(File archivePath, File drillPath, File csvFile) {
-        this.archivePath = archivePath;
-        this.drillPath = drillPath;
-        this.csvFile = csvFile;
-    }
-
-    @Override
-    public void onFloorCoverImport(Image image) {
-        footballFieldPanel.setFloorCoverImage(image);
-        footballFieldPanel.repaint();
-    }
-
-    @Override
-    public void onSurfaceImport(Image image) {
-        footballFieldPanel.setSurfaceImage(image);
-        footballFieldPanel.repaint();
-    }
-
-    @Override
-    public void onAudioImport(File audioFile) {
-
-        // Play or pause audio through the AudioPlayer service class
-        audioPlayer = new AudioPlayer(audioFile);
-    }
-
-    @Override
-    public void onDrillImport(String drill) {
-        String text = DrillParser.extractText(drill);
-        footballFieldPanel.drill = DrillParser.parseWholeDrill(text);
-        footballFieldPanel.addSetToField(footballFieldPanel.drill.sets.get(0));
-        rebuildPageTabCounts();
-    }
-
-    private void rebuildPageTabCounts() {
-        Map<String, Integer> pageTabCounts = new HashMap<>();
-        int startCount = 0;
-        for (Set s : footballFieldPanel.drill.sets) {
-            startCount += s.duration;
-            pageTabCounts.put(s.label, startCount);
-        }
-
-        scrubBarGUI.updatePageTabCounts(pageTabCounts);
-        buildScrubBarPanel();
-    }
-
     /**
      * Loads the ScrubBarGUI Panel if it has not been created, or refreshes it if it already exists.
      */
@@ -979,180 +926,6 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         // IMPORTANT
         mainContentPanel.revalidate();
         mainContentPanel.repaint();
-    }
-
-    @Override
-    public void onSync(ArrayList<SyncTimeGUI.Pair> times, float startDelay) {
-        System.out.println("MediaEditorGUI: Got Synced Times");
-        this.timeSync = times;
-        this.startDelay = startDelay;
-
-        setupEffectView();
-    }
-
-    private void setupEffectView() {
-        // Recalculate set to count map (pageTab2Count) to initialize timeManager
-        Map<String, Integer> pageTab2Count = new HashMap<>();
-        int startCount = 0;
-        for (Set s : footballFieldPanel.drill.sets) {
-            startCount += s.duration;
-            pageTab2Count.put(s.label, startCount);
-        }
-
-        this.timeManager = new TimeManager(pageTab2Count, this.timeSync, this.startDelay);
-        this.effectManager = new EffectManager(this.footballFieldPanel, this.timeManager);
-        this.footballFieldPanel.setEffectManager(this.effectManager);
-
-        updateEffectViewPanel();
-    }
-
-    // ScrubBar Listeners
-
-    private void updateEffectViewPanel() {
-        if (this.effectManager == null) return;
-
-        this.effectViewPanel.remove(this.effectGUI.getEffectPanel());
-        this.effectViewPanel.revalidate();
-        this.effectViewPanel.repaint();
-
-        System.out.println("this.footballFieldPanel.selectedPerformers.size() = " + this.footballFieldPanel.selectedPerformers.size());
-
-        // TODO: Eventually, for multiple selected performers, also check if not all selected performers share the
-        //  same effect
-        if (this.footballFieldPanel.selectedPerformers.size() > 1) {
-            this.currentEffect = null;
-
-            String placeholderText = EffectGUI.noPerformerMsg;
-            Map<Performer, Collection<Effect>> selectedEffects = new LinkedHashMap<>();
-
-            for (Performer performer : this.footballFieldPanel.selectedPerformers.values()) {
-                if (performer.getEffects() == null || performer.getEffects().isEmpty()) {
-                    placeholderText = EffectGUI.noCommonEffectMsg;
-                } else {
-                    selectedEffects.put(performer, performer.getEffects());
-                }
-            }
-
-            this.effectGUI = new EffectGUI(placeholderText);
-            if (placeholderText.equals(EffectGUI.noCommonEffectMsg)) {
-                effectGUI.setSelectedEffects(new LinkedHashMap<>());
-            } else {
-                effectGUI.setSelectedEffects(selectedEffects);
-            }
-
-            this.effectViewPanel.add(this.effectGUI.getEffectPanel());
-            this.effectViewPanel.revalidate();
-            this.effectViewPanel.repaint();
-            return;
-        }
-
-        if (footballFieldPanel.selectedPerformers.isEmpty()) {
-            currentEffect = null;
-            this.effectGUI = new EffectGUI(EffectGUI.noPerformerMsg);
-
-            this.effectViewPanel.add(this.effectGUI.getEffectPanel());
-            this.effectViewPanel.revalidate();
-            this.effectViewPanel.repaint();
-            return;
-        }
-
-        // FIXME: Here, we know there's only one performer selected. The EffectGUI is for that single performer.
-        this.currentEffect = this.effectManager.getEffectFromSelectedPerformer();
-        long currentMSec = this.timeManager.getCount2MSec().get(this.footballFieldPanel.getCurrentCount());
-        this.effectGUI = new EffectGUI(this.currentEffect, currentMSec, this);
-
-        this.effectViewPanel.add(this.effectGUI.getEffectPanel());
-        this.effectViewPanel.revalidate();
-        this.effectViewPanel.repaint();
-    }
-
-    @Override
-    public boolean onPlay() {
-        if (timeSync == null) {
-            JOptionPane.showMessageDialog(frame,
-                                          "Cannot play without syncing time!",
-                                          "Playback Error",
-                                          JOptionPane.ERROR_MESSAGE);
-            return false;
-        }
-        if (audioPlayer != null && scrubBarGUI.getAudioCheckbox().isSelected()) {
-            // TODO: get audio to correct position
-            audioPlayer.playAudio();
-        }
-        setPlaybackTimerTime();
-        playbackTimer.start();
-        return true;
-    }
-
-    private void setPlaybackTimerTime() {
-        float setSyncDuration = timeSync.get(scrubBarGUI.getCurrentSetIndex()).getValue();
-        float setDuration = scrubBarGUI.getCurrSetDuration();
-        playbackTimer.setDelay(Math.round(setSyncDuration / setDuration * 1000 / playbackSpeed));
-    }
-
-    @Override
-    public boolean onPause() {
-        if (timeSync == null) {
-            JOptionPane.showMessageDialog(frame,
-                                          "Cannot play without syncing time!",
-                                          "Playback Error",
-                                          JOptionPane.ERROR_MESSAGE);
-            return false;
-        }
-        if (audioPlayer != null) {
-            audioPlayer.pauseAudio();
-        }
-        playbackTimer.stop();
-        return true;
-    }
-
-    @Override
-    public long onScrub() {
-        useStartDelay = scrubBarGUI.isAtFirstSet() && scrubBarGUI.isAtStartOfSet();
-
-        if (this.footballFieldPanel.getNumSelectedPerformers() > 0) updateEffectViewPanel();
-
-        if (timeManager != null) return timeManager.getCount2MSec().get(footballFieldPanel.getCurrentCount());
-        return 0;
-    }
-
-    @Override
-    public void onSpeedChange(float playbackSpeed) {
-        System.out.println("MediaEditorGUI: playbackSpeed = " + playbackSpeed);
-        this.playbackSpeed = playbackSpeed;
-    }
-
-    @Override
-    public void onCreateEffect(Effect effect) {
-        boolean successful = this.effectManager.addEffectToSelectedPerformer(effect);
-        this.footballFieldPanel.repaint();
-        if (successful) updateEffectViewPanel();
-    }
-
-    ////////////////////////// Importing Listeners //////////////////////////
-
-    @Override
-    public void onUpdateEffect(Effect oldEffect, Effect newEffect) {
-        this.effectManager.replaceEffectForSelectedPerformer(oldEffect, newEffect);
-        this.footballFieldPanel.repaint();
-        updateEffectViewPanel();
-    }
-
-    @Override
-    public void onDeleteEffect(Effect effect) {
-        this.effectManager.removeEffectFromSelectedPerformer(effect);
-        this.footballFieldPanel.repaint();
-        updateEffectViewPanel();
-    }
-
-    @Override
-    public void onPerformerSelect() {
-        updateEffectViewPanel();
-    }
-
-    @Override
-    public void onPerformerDeselect() {
-        updateEffectViewPanel();
     }
 
     @Override
@@ -1491,9 +1264,10 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
     }
 
     @Override
-    public void onFileSelect(File archivePath, File drillPath) {
+    public void onFileSelect(File archivePath, File drillPath, File csvFile) {
         this.archivePath = archivePath;
         this.drillPath = drillPath;
+        this.csvFile = csvFile;
     }
 
     @Override
