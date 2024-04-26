@@ -1206,6 +1206,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             JOptionPane.showMessageDialog(null,
                     "Please select multiple performers arranged in a grid to use the grid pattern feature",
                     "Grid Pattern: Error", JOptionPane.ERROR_MESSAGE);
+            return;
         }
 
         // Get the current time by using current count
