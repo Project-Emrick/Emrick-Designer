@@ -20,12 +20,16 @@ public class Effect implements Cloneable, TimelineEvent {
     private Duration delay;
     private Duration duration;
     private Duration timeout;
+    private double speed;
 
     // Bitflags
     private boolean TIME_GRADIENT;
     private boolean SET_TIMEOUT;
     private boolean DO_DELAY;
     private boolean INSTANT_COLOR;
+    private boolean upOrSide;
+    private boolean direction;
+    private int effectType;
 
     public Effect(long startTimeMSec) {
         this.startTimeMSec = startTimeMSec;
@@ -38,6 +42,10 @@ public class Effect implements Cloneable, TimelineEvent {
         this.SET_TIMEOUT = false;
         this.DO_DELAY = false;
         this.INSTANT_COLOR = true;
+        this.upOrSide = false;
+        this.direction = false;
+        this.speed = 1;
+        this.effectType = 0;
         calculateEndTimeMSec();
     }
 
@@ -53,8 +61,11 @@ public class Effect implements Cloneable, TimelineEvent {
         this.SET_TIMEOUT = SET_TIMEOUT;
         this.DO_DELAY = DO_DELAY;
         this.INSTANT_COLOR = INSTANT_COLOR;
-
+        this.upOrSide = false;
+        this.direction = false;
+        this.speed = 1;
         this.startTimeMSec = startTimeMSec;
+        this.effectType = 0;
         calculateEndTimeMSec();
     }
 
@@ -65,6 +76,14 @@ public class Effect implements Cloneable, TimelineEvent {
         if (DO_DELAY) this.endTimeMSec += delay.toMillis();
         if (TIME_GRADIENT) this.endTimeMSec += duration.toMillis();
         if (SET_TIMEOUT) this.endTimeMSec += timeout.toMillis();
+    }
+
+    public int getEffectType() {
+        return effectType;
+    }
+
+    public void setEffectType(int effectType) {
+        this.effectType = effectType;
     }
 
     public long getStartTimeMSec() {
@@ -151,6 +170,30 @@ public class Effect implements Cloneable, TimelineEvent {
 
     public void setINSTANT_COLOR(boolean INSTANT_COLOR) {
         this.INSTANT_COLOR = INSTANT_COLOR;
+    }
+
+    public double getSpeed() {
+        return speed;
+    }
+
+    public void setSpeed(double speed) {
+        this.speed = speed;
+    }
+
+    public boolean isUpOrSide() {
+        return upOrSide;
+    }
+
+    public void setUpOrSide(boolean upOrSide) {
+        this.upOrSide = upOrSide;
+    }
+
+    public boolean isDirection() {
+        return direction;
+    }
+
+    public void setDirection(boolean direction) {
+        this.direction = direction;
     }
 
     @Override

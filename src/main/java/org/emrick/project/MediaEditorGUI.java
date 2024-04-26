@@ -866,6 +866,20 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         });
         lightMenuPopup.add(fadePattern);
 
+        JMenuItem staticColorPattern = new JMenuItem("Create Static Color Pattern");
+        staticColorPattern.addActionListener(e -> {
+            selectedEffectType = effectGUI.STATIC_COLOR;
+            updateEffectViewPanel(selectedEffectType);
+        });
+        lightMenuPopup.add(staticColorPattern);
+
+        JMenuItem wavePattern = new JMenuItem("Create Wave Pattern");
+        wavePattern.addActionListener(e -> {
+            selectedEffectType = effectGUI.WAVE;
+            updateEffectViewPanel(selectedEffectType);
+        });
+        lightMenuPopup.add(wavePattern);
+
         // Button that triggers the popup menu
         JButton lightButton = new JButton("Effect Options");
         lightButton.addActionListener(new ActionListener() {
