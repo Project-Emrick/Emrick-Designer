@@ -20,8 +20,13 @@ import java.util.stream.*;
 
 public class EffectGUI implements ActionListener {
 
-    public final int DEFAULT_EFFECT = 0;
-    public final int GENERATED_FADE = 1;
+    public static int DEFAULT_EFFECT = 0;
+    public static int GENERATED_FADE = 1;
+    public static int STATIC_COLOR = 2;
+    public static int FLASHING_COLOR = 3;
+    public static int RIPPLE = 4;
+    public static int WAVE = 5;
+    public static int CIRCLE_CHASE = 6;
     private static List<EffectsGroup> EFFECTS_GROUPS;
     // Strings
     public static String
@@ -81,11 +86,17 @@ public class EffectGUI implements ActionListener {
     JLabel delayLabel = new JLabel("Delay (s): ");
     JLabel durationLabel = new JLabel("Duration (s): ");
     JLabel timeoutLabel = new JLabel("Timeout (s): ");
+    JLabel staticColorLabel = new JLabel("Static color: ");
+    JLabel waveColorLabel = new JLabel("Wave Color: ");
+    JCheckBox upOrSideBox = new JCheckBox("Vertical");
+    JCheckBox directionBox = new JCheckBox("Up/Right");
+    JLabel speedLabel = new JLabel("Speed: ");
     JButton startColorBtn = new JButton();
     JButton endColorBtn = new JButton();
     JTextField delayField = new JTextField(10);
     JTextField durationField = new JTextField(10);
     JTextField timeoutField = new JTextField(10);
+    JTextField speedField = new JTextField(10);
     JCheckBox TIME_GRADIENTBox = new JCheckBox("TIME_GRADIENT");
     JCheckBox SET_TIMEOUTBox = new JCheckBox("SET_TIMEOUT");
     JCheckBox DO_DELAYBox = new JCheckBox("DO_DELAY");
@@ -149,6 +160,7 @@ public class EffectGUI implements ActionListener {
                                      SET_TIMEOUT,
                                      DO_DELAY,
                                      INSTANT_COLOR);
+            this.effect.setEffectType(effectType);
         }
 
         this.effectMod = this.effect.clone(); // Changes made in GUI are not applied to original effect object
@@ -156,7 +168,271 @@ public class EffectGUI implements ActionListener {
             setupGUI();
         } else if (effectType == GENERATED_FADE) {
             setupFadeGUI();
+        } else if (effectType == STATIC_COLOR) {
+            setupStaticColorGUI();
+        } else if (effectType == WAVE) {
+            setupWaveGUI();
         }
+    }
+
+    private void setupWaveGUI() {
+        this.effectPanel = new JPanel();
+
+        // Color button customization
+        startColorBtn.setPreferredSize(new Dimension(20, 20));
+        startColorBtn.setFocusable(false);
+        startColorBtn.addActionListener(this);
+        endColorBtn.setPreferredSize(new Dimension(20,20));
+        endColorBtn.setFocusable(false);
+        endColorBtn.addActionListener(this);
+
+        durationField.getDocument().addDocumentListener(getDocumentListener());
+
+        applyBtn.addActionListener(this);
+        deleteBtn.addActionListener(this);
+
+        Border innerBorder = BorderFactory.createTitledBorder("Effect");
+        Border outerBorder = BorderFactory.createEmptyBorder(5, 5, 5, 5);
+
+        this.effectPanel.setBorder(BorderFactory.createCompoundBorder(outerBorder, innerBorder));
+
+        this.effectPanel.setLayout(new GridBagLayout());
+
+        GridBagConstraints gc = new GridBagConstraints();
+
+        Insets spacedInsets = new Insets(0, 0, 0, 5);
+        Insets noSpacedInsets = new Insets(0, 0, 0, 0);
+
+        //////////////// 0th Row ////////////////
+
+        gc.weightx = 1;
+        gc.weighty = 0.2;
+
+        gc.gridx = 0;
+        gc.gridy = 0;
+        gc.fill = GridBagConstraints.NONE;
+        gc.anchor = GridBagConstraints.LINE_END;
+        gc.insets = spacedInsets;
+        this.effectPanel.add(startTimeLabel, gc);
+
+        gc.gridx = 1;
+        gc.gridy = 0;
+        gc.anchor = GridBagConstraints.LINE_START;
+        gc.insets = spacedInsets;
+        this.effectPanel.add(endTimeLabel, gc);
+
+        //////////////// 1st Row ////////////////
+
+        gc.weightx = 1;
+        gc.weighty = 0.1;
+
+        gc.gridx = 0; // Horizontally, left to right
+        gc.gridy = 1; // Vertically, top to bottom
+        gc.anchor = GridBagConstraints.LINE_END;
+        gc.insets = spacedInsets;
+        this.effectPanel.add(staticColorLabel, gc);
+
+        gc.gridx = 1;
+        gc.gridy = 1;
+        gc.anchor = GridBagConstraints.LINE_START;
+        gc.insets = noSpacedInsets;
+        this.effectPanel.add(startColorBtn, gc);
+
+        //////////////// 2nd Row ////////////////
+
+        gc.weightx = 1;
+        gc.weighty = 0.1;
+
+        gc.gridx = 0; // Horizontally, left to right
+        gc.gridy = 2; // Vertically, top to bottom
+        gc.anchor = GridBagConstraints.LINE_END;
+        gc.insets = spacedInsets;
+        this.effectPanel.add(waveColorLabel, gc);
+
+        gc.gridx = 1;
+        gc.gridy = 2;
+        gc.anchor = GridBagConstraints.LINE_START;
+        gc.insets = noSpacedInsets;
+        this.effectPanel.add(endColorBtn, gc);
+
+        //////////////// 3rd Row ////////////////
+
+        gc.weightx = 1;
+        gc.weighty = 0.1;
+
+        gc.gridx = 0;
+        gc.gridy = 3;
+        gc.anchor = GridBagConstraints.LINE_END;
+        gc.insets = spacedInsets;
+        this.effectPanel.add(durationLabel, gc);
+
+        gc.gridx = 1;
+        gc.gridy = 3;
+        gc.anchor = GridBagConstraints.LINE_START;
+        gc.insets = noSpacedInsets;
+        this.effectPanel.add(durationField, gc);
+
+
+        //////////////// 4th Row ////////////////
+
+        gc.weightx = 1;
+        gc.weighty = 0.1;
+
+        gc.gridx = 0;
+        gc.gridy = 4;
+        gc.anchor = GridBagConstraints.LINE_END;
+        gc.insets = spacedInsets;
+        this.effectPanel.add(speedLabel, gc);
+
+        gc.gridx = 1;
+        gc.gridy = 4;
+        gc.anchor = GridBagConstraints.LINE_START;
+        gc.insets = noSpacedInsets;
+        this.effectPanel.add(speedField, gc);
+
+        //////////////// 5th Row ////////////////
+
+        gc.weightx = 1;
+        gc.weighty = 0.1;
+
+        gc.gridx = 0;
+        gc.gridy = 5;
+        gc.anchor = GridBagConstraints.LINE_END;
+        this.effectPanel.add(upOrSideBox, gc);
+
+        //////////////// 6th Row ////////////////
+
+        gc.weightx = 1;
+        gc.weighty = 0.1;
+
+        gc.gridx = 0;
+        gc.gridy = 6;
+        gc.anchor = GridBagConstraints.LINE_END;
+        this.effectPanel.add(directionBox, gc);
+
+        //////////////// Apply or Delete Buttons ////////////////
+
+        gc.weightx = 1;
+        gc.weighty = 2.0;
+
+        gc.gridx = 0;
+        gc.gridy = 7;
+        gc.anchor = GridBagConstraints.FIRST_LINE_END;
+        gc.insets = new Insets(0, 0, 0, 5);
+        this.effectPanel.add(deleteBtn, gc);
+
+        gc.weightx = 1;
+        gc.weighty = 2.0;
+
+        gc.gridx = 1;
+        gc.gridy = 7;
+        gc.insets = new Insets(0, 5, 0, 0);
+        gc.anchor = GridBagConstraints.FIRST_LINE_START;
+        this.effectPanel.add(applyBtn, gc);
+
+        // If effect exists, load pattern on gui
+        loadEffectToGUI(this.effectMod);
+    }
+
+    private void setupStaticColorGUI() {
+        this.effectPanel = new JPanel();
+
+        // Color button customization
+        startColorBtn.setPreferredSize(new Dimension(20, 20));
+        startColorBtn.setFocusable(false);
+        startColorBtn.addActionListener(this);
+
+        durationField.getDocument().addDocumentListener(getDocumentListener());
+
+        applyBtn.addActionListener(this);
+        deleteBtn.addActionListener(this);
+
+        Border innerBorder = BorderFactory.createTitledBorder("Effect");
+        Border outerBorder = BorderFactory.createEmptyBorder(5, 5, 5, 5);
+
+        this.effectPanel.setBorder(BorderFactory.createCompoundBorder(outerBorder, innerBorder));
+
+        this.effectPanel.setLayout(new GridBagLayout());
+
+        GridBagConstraints gc = new GridBagConstraints();
+
+        Insets spacedInsets = new Insets(0, 0, 0, 5);
+        Insets noSpacedInsets = new Insets(0, 0, 0, 0);
+
+        //////////////// 0th Row ////////////////
+
+        gc.weightx = 1;
+        gc.weighty = 0.2;
+
+        gc.gridx = 0;
+        gc.gridy = 0;
+        gc.fill = GridBagConstraints.NONE;
+        gc.anchor = GridBagConstraints.LINE_END;
+        gc.insets = spacedInsets;
+        this.effectPanel.add(startTimeLabel, gc);
+
+        gc.gridx = 1;
+        gc.gridy = 0;
+        gc.anchor = GridBagConstraints.LINE_START;
+        gc.insets = spacedInsets;
+        this.effectPanel.add(endTimeLabel, gc);
+
+        //////////////// 1st Row ////////////////
+
+        gc.weightx = 1;
+        gc.weighty = 0.1;
+
+        gc.gridx = 0; // Horizontally, left to right
+        gc.gridy = 1; // Vertically, top to bottom
+        gc.anchor = GridBagConstraints.LINE_END;
+        gc.insets = spacedInsets;
+        this.effectPanel.add(startColorLabel, gc);
+
+        gc.gridx = 1;
+        gc.gridy = 1;
+        gc.anchor = GridBagConstraints.LINE_START;
+        gc.insets = noSpacedInsets;
+        this.effectPanel.add(startColorBtn, gc);
+
+        //////////////// 2nd Row ////////////////
+
+        gc.weightx = 1;
+        gc.weighty = 0.1;
+
+        gc.gridx = 0;
+        gc.gridy = 2;
+        gc.anchor = GridBagConstraints.LINE_END;
+        gc.insets = spacedInsets;
+        this.effectPanel.add(durationLabel, gc);
+
+        gc.gridx = 1;
+        gc.gridy = 2;
+        gc.anchor = GridBagConstraints.LINE_START;
+        gc.insets = noSpacedInsets;
+        this.effectPanel.add(durationField, gc);
+
+        //////////////// Apply or Delete Buttons ////////////////
+
+        gc.weightx = 1;
+        gc.weighty = 2.0;
+
+        gc.gridx = 0;
+        gc.gridy = 3;
+        gc.anchor = GridBagConstraints.FIRST_LINE_END;
+        gc.insets = new Insets(0, 0, 0, 5);
+        this.effectPanel.add(deleteBtn, gc);
+
+        gc.weightx = 1;
+        gc.weighty = 2.0;
+
+        gc.gridx = 1;
+        gc.gridy = 3;
+        gc.insets = new Insets(0, 5, 0, 0);
+        gc.anchor = GridBagConstraints.FIRST_LINE_START;
+        this.effectPanel.add(applyBtn, gc);
+
+        // If effect exists, load pattern on gui
+        loadEffectToGUI(this.effectMod);
     }
 
     private void setupFadeGUI() {
@@ -535,14 +811,18 @@ public class EffectGUI implements ActionListener {
         String delayStr = String.valueOf(effect.getDelay().toNanos() / 1_000_000_000.0);
         String durationStr = String.valueOf(effect.getDuration().toNanos() / 1_000_000_000.0);
         String timeoutStr = String.valueOf(effect.getTimeout().toNanos() / 1_000_000_000.0);
+        String speedStr = String.valueOf(effect.getSpeed());
         delayField.setText(delayStr);
         durationField.setText(durationStr);
         timeoutField.setText(timeoutStr);
+        speedField.setText(speedStr);
 
         TIME_GRADIENTBox.setSelected(effect.isTIME_GRADIENT());
         SET_TIMEOUTBox.setSelected(effect.isSET_TIMEOUT());
         DO_DELAYBox.setSelected(effect.isDO_DELAY());
         INSTANT_COLORBox.setSelected(effect.isINSTANT_COLOR());
+        upOrSideBox.setSelected(effect.isUpOrSide());
+        directionBox.setSelected(effect.isDirection());
 
         // Calculate start time label
         long minutesStart = java.util.concurrent.TimeUnit.MILLISECONDS.toMinutes(effect.getStartTimeMSec());
@@ -895,6 +1175,9 @@ public class EffectGUI implements ActionListener {
                 this.endColorBtn.setBackground(selectedColor);
             }
         } else if (e.getSource().equals(this.applyBtn)) {
+            if (effectType == STATIC_COLOR) {
+                effectMod.setEndColor(effectMod.getStartColor());
+            }
             applyToEffectMod();
             if (this.isNewEffect) effectListener.onCreateEffect(this.effectMod);
             else effectListener.onUpdateEffect(this.effect, this.effectMod);
@@ -912,11 +1195,14 @@ public class EffectGUI implements ActionListener {
         this.effectMod.setDelay(delay);
         this.effectMod.setDuration(duration);
         this.effectMod.setTimeout(timeout);
+        this.effectMod.setSpeed(Double.parseDouble(speedField.getText()));
 
         this.effectMod.setTIME_GRADIENT(this.TIME_GRADIENTBox.isSelected());
         this.effectMod.setSET_TIMEOUT(this.SET_TIMEOUTBox.isSelected());
         this.effectMod.setDO_DELAY(this.DO_DELAYBox.isSelected());
         this.effectMod.setINSTANT_COLOR(this.INSTANT_COLORBox.isSelected());
+        this.effectMod.setUpOrSide(this.upOrSideBox.isSelected());
+        this.effectMod.setDirection(this.directionBox.isSelected());
     }
 
     public void setSelectedEffects(Map<Performer, Collection<Effect>> selectedEffects) {
