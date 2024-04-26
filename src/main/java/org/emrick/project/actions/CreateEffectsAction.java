@@ -4,27 +4,27 @@ import org.emrick.project.*;
 import org.emrick.project.effect.Effect;
 
 import java.util.*;
+import java.util.Set;
 
 public class CreateEffectsAction implements UndoableAction {
 
-    private final Effect effect;
-    private final List<Performer> performers;
+    private final ArrayList<EffectPerformerMap> effects;
 
-    public CreateEffectsAction(Effect effect, List<Performer> performers) {
-        this.effect = effect;
-        this.performers = new ArrayList<>(performers);
+    public CreateEffectsAction(ArrayList<EffectPerformerMap> effects) {
+        this.effects = effects;
+
     }
 
     @Override
     public void execute() {
         //performers.getEffects().add(effect);
-        performers.forEach(performer -> performer.getEffects().add(effect));
+        effects.forEach(map -> map.getPerformer().getEffects().add(map.getEffect()));
     }
 
     @Override
     public void undo() {
         //performers.getEffects().remove(effect);
-        performers.forEach(performer -> performer.getEffects().remove(effect));
+        effects.forEach(map -> map.getPerformer().getEffects().remove(map.getEffect()));
     }
 
     @Override

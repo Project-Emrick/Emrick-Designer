@@ -119,7 +119,11 @@ public class EffectManager {
 
     private void addEffect(Effect effect, List<Performer> performers) {
         showAddEffectSuccessDialog();
-        UndoableAction createEffectsAction = new CreateEffectsAction(effect, performers);
+        ArrayList<EffectPerformerMap> map = new ArrayList<>();
+        for (Performer p : performers) {
+            map.add(new EffectPerformerMap(effect, p));
+        }
+        UndoableAction createEffectsAction = new CreateEffectsAction(map);
         createEffectsAction.execute();
         undoStack.push(createEffectsAction);
         redoStack.clear();
@@ -158,6 +162,7 @@ public class EffectManager {
         if (effect.getEffectType() == EffectGUI.WAVE) {
             double startExtreme;
             double endExtreme;
+            ArrayList<EffectPerformerMap> map = new ArrayList<>();
             if (effect.isUpOrSide()) {
                 startExtreme = selectedPerformers.get(0).currentLocation.getY();
                 endExtreme = selectedPerformers.get(0).currentLocation.getY();
@@ -239,14 +244,19 @@ public class EffectManager {
                     s2.setDuration(Duration.ofMillis(effect.getEndTimeMSec() - waveStartTime - 2 * waveHalfDuration - 1));
                 }
                 if (s1 != null) {
-                    p.getEffects().add(s1);
+                    map.add(new EffectPerformerMap(s1, p));
                 }
-                p.getEffects().add(w1);
-                p.getEffects().add(w2);
+                map.add(new EffectPerformerMap(w1, p));
+                map.add(new EffectPerformerMap(w2, p));
                 if (s2 != null) {
-                    p.getEffects().add(w2);
+                    map.add(new EffectPerformerMap(s2, p));
                 }
             }
+            System.out.println(map.size());
+            UndoableAction e = new CreateEffectsAction(map);
+            e.execute();
+            undoStack.add(e);
+            redoStack.clear();
             return true;
         }
         addEffect(effect, selectedPerformers);
