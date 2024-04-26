@@ -34,9 +34,16 @@ public class EffectGUI implements ActionListener {
             noCommonEffectMsg
             = "<html><body style='text-align: center;'>No common effect found among selected performers.</body></html>";
 
+    public static String
+            noEffectGroupMsg
+            = "<html><body style='text-align: center;'>One or more performers are missing effects to use effect groups.</body></html>";
+
     static {
         //EFFECTS_GROUPS = new ArrayList<>();
-        String fileName = System.getProperty("user.dir") + File.separator + "effectsGroup.json";
+        // String fileName = System.getProperty("user.dir") + File.separator + "effectsGroup.json";
+        // ! NOTE ! Assume Working Directory is Emrick-Designer/
+        System.out.println("Working Directory = " + System.getProperty("user.dir"));
+        String fileName = "./src/main/resources/effect/" + "effectsGroup.json";
 
         if (!new File(fileName).exists()) {
             try {
@@ -390,7 +397,7 @@ public class EffectGUI implements ActionListener {
 
     private void loadEffectToGUI(Effect effect) {
 
-        System.out.println("effect = " + effect);
+        System.out.println("EffectGUI: effect = " + effect);
 
         // Get start and end colors
         startColorBtn.setBackground(effect.getStartColor());
@@ -655,7 +662,9 @@ public class EffectGUI implements ActionListener {
         }
         System.out.println("effectsGroup = " + effectsGroup);
 
-        String fileName = System.getProperty("user.dir") + File.separator + "effectsGroup.json";
+        // ! NOTE ! Assume Working Directory is Emrick-Designer/
+        System.out.println("Working Directory = " + System.getProperty("user.dir"));
+        String fileName = "./src/main/resources/effect/" + "effectsGroup.json";
 
         if (!new File(fileName).exists()) {
             try {
@@ -782,7 +791,7 @@ public class EffectGUI implements ActionListener {
         this.effectMod.setINSTANT_COLOR(this.INSTANT_COLORBox.isSelected());
     }
 
-    void setSelectedEffects(Map<Performer, Collection<Effect>> selectedEffects) {
+    public void setSelectedEffects(Map<Performer, Collection<Effect>> selectedEffects) {
         this.selectedEffects = new LinkedHashMap<>(selectedEffects);
         System.out.println("selectedEffects = " + selectedEffects);
 

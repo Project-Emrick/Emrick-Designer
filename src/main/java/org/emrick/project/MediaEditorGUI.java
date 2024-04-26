@@ -773,8 +773,8 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         menuBar.add(sysMsg);
 
         //Light menu. and adjust its menu location
-        JButton lightButton = getLightOptionsBtn();
-        effectViewPanel.add(lightButton, BorderLayout.NORTH);
+        JButton effectOptions = getEffectOptionsButton();
+        effectViewPanel.add(effectOptions, BorderLayout.NORTH);
 
         // handle closing the window
         frame.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
@@ -809,7 +809,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         frame.setTitle("Emrick Designer");
     }
 
-    private JButton getLightOptionsBtn() {
+    private JButton getEffectOptionsButton() {
         JPopupMenu lightMenuPopup = new JPopupMenu();
 
         JMenuItem timeWeatherItem = new JMenuItem("Time & Weather Effects");
@@ -825,11 +825,15 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         lightMenuPopup.addSeparator();
 
         JMenuItem lightDescription = new JMenuItem("Create Light Description");
-        lightDescription.addActionListener(e->showlightDescription(frame));
+        lightDescription.addActionListener(e-> showLightDescription(frame));
         lightMenuPopup.add(lightDescription);
 
+        JMenuItem effectDescription = new JMenuItem("Create Effect Group Descriptions");
+        effectDescription.addActionListener(e-> showEffectGroupDescriptions());
+        lightMenuPopup.add(effectDescription);
+
         // Button that triggers the popup menu
-        JButton lightButton = new JButton("Light Options");
+        JButton lightButton = new JButton("Effect Options");
         lightButton.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
                 int x = 0;
@@ -1028,7 +1032,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
 
     ////////////////////////// Scrub Bar Listeners //////////////////////////
 
-    private void showlightDescription(Frame parentFrame){
+    private void showLightDescription(Frame parentFrame){
         JDialog dialog = new JDialog(parentFrame, "Light Description", true);
         dialog.getContentPane().setBackground(Color.WHITE);
 
@@ -1091,6 +1095,47 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         });
 
         dialog.setVisible(true);
+    }
+
+    private void showEffectGroupDescriptions() {
+        if (this.effectManager == null) {
+            return;
+        }
+
+        System.out.println("this.footballFieldPanel.selectedPerformers.size() = " + this.footballFieldPanel.selectedPerformers.size());
+        if (this.footballFieldPanel.selectedPerformers.size() > 1) {
+            this.effectViewPanel.remove(this.effectGUI.getEffectPanel());
+            this.effectViewPanel.revalidate();
+            this.effectViewPanel.repaint();
+
+            this.currentEffect = null;
+
+            String placeholderText = EffectGUI.noPerformerMsg;
+            Map<Performer, Collection<Effect>> selectedEffects = new LinkedHashMap<>();
+
+            for (Performer performer : this.footballFieldPanel.selectedPerformers.values()) {
+                if (performer.getEffects() == null || performer.getEffects().isEmpty()) {
+                    placeholderText = EffectGUI.noEffectGroupMsg;
+                } else {
+                    selectedEffects.put(performer, performer.getEffects());
+                }
+            }
+
+            this.effectGUI = new EffectGUI(placeholderText);
+            if (placeholderText.equals(EffectGUI.noEffectGroupMsg)) {
+                effectGUI.setSelectedEffects(new LinkedHashMap<>());
+            } else {
+                effectGUI.setSelectedEffects(selectedEffects);
+            }
+
+            this.effectViewPanel.add(this.effectGUI.getEffectPanel());
+            this.effectViewPanel.revalidate();
+            this.effectViewPanel.repaint();
+        } else {
+            JOptionPane.showMessageDialog(null,
+                    "Please select multiple performers to use the effect group feature",
+                    "Effect Group: Error", JOptionPane.ERROR_MESSAGE);
+        }
     }
 
     ////////////////////////// Effect Listeners //////////////////////////
@@ -1280,7 +1325,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         buildScrubBarPanel();
 
         // At the point of import process, the project is ready to sync
-        scrubBarGUI.getSyncButton().doClick();
+         scrubBarGUI.getSyncButton().doClick();
     }
 
     ////////////////////////// Sync Listeners //////////////////////////
@@ -1494,35 +1539,32 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
     ////////////////////////// Effect Listeners //////////////////////////
 
     private void updateEffectViewPanel() {
+        if (this.effectManager == null) return;
 
-        // No point in updating effect view if can't use effects
-        if (effectManager == null) return;
+        this.effectViewPanel.remove(this.effectGUI.getEffectPanel());
+        this.effectViewPanel.revalidate();
+        this.effectViewPanel.repaint();
 
-        // Remove existing effect data
-        effectViewPanel.remove(effectGUI.getEffectPanel());
-        effectViewPanel.revalidate();
-        effectViewPanel.repaint();
-
-        // Effects
-        // TODO: Eventually, for multiple selected performers, also check if not all selected performers share the same effect
-        if (footballFieldPanel.selectedPerformers.size() != 1) {
-            // Eventually should be able to work with multiple performers at a time
+        // TODO: Eventually, for multiple selected performers, also check if not all selected performers share the
+        //  same effect
+        if (footballFieldPanel.selectedPerformers.isEmpty()) {
             currentEffect = null;
-            effectGUI = new EffectGUI(EffectGUI.noPerformerMsg);
-            effectViewPanel.add(effectGUI.getEffectPanel(), BorderLayout.CENTER);
+            this.effectGUI = new EffectGUI(EffectGUI.noPerformerMsg);
 
+            this.effectViewPanel.add(this.effectGUI.getEffectPanel());
+            this.effectViewPanel.revalidate();
+            this.effectViewPanel.repaint();
             return;
         }
 
-        // FIXME: Here, we know there's only one performer selected. The EffectGUI is for that single performer, for now
-        currentEffect = effectManager.getEffectFromSelectedPerformer();
-        long currentMSec = timeManager.getCount2MSec().get(footballFieldPanel.getCurrentCount());
-        effectGUI = new EffectGUI(currentEffect, currentMSec, this);
+        // FIXME: Here, we know there's only one performer selected. The EffectGUI is for that single performer.
+        this.currentEffect = this.effectManager.getEffectFromSelectedPerformer();
+        long currentMSec = this.timeManager.getCount2MSec().get(this.footballFieldPanel.getCurrentCount());
+        this.effectGUI = new EffectGUI(this.currentEffect, currentMSec, this);
 
-        // Add updated data for effect view
-        effectViewPanel.add(effectGUI.getEffectPanel(), BorderLayout.CENTER);
-        effectViewPanel.revalidate();
-        effectViewPanel.repaint();
+        this.effectViewPanel.add(this.effectGUI.getEffectPanel());
+        this.effectViewPanel.revalidate();
+        this.effectViewPanel.repaint();
     }
 
     private void updateTimelinePanel() {
@@ -1550,6 +1592,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         timelinePanel.repaint();
     }
 
+    // Don't delete, just unused for now because I don't want my disk space being eaten up
     private void autosaveProject() {
         // we don't have a project open, nothing to save
         if (archivePath == null || drillPath == null) {
