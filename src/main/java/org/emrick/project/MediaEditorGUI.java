@@ -298,7 +298,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
 
         fileMenu.addSeparator();
 
-        // Export Emerick Packets
+        // Export Emrick Packets
         JMenuItem exportItem = new JMenuItem("Export Emrick Packets File");
         exportItem.setEnabled(csvFile != null);
         exportItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_E, ActionEvent.CTRL_MASK));
@@ -791,8 +791,8 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         menuBar.add(sysMsg);
 
         //Light menu. and adjust its menu location
-        JButton lightButton = getLightOptionsBtn();
-        effectViewPanel.add(lightButton, BorderLayout.NORTH);
+        JButton effectOptions = getEffectOptionsButton();
+        effectViewPanel.add(effectOptions, BorderLayout.NORTH);
 
         // handle closing the window
         frame.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
@@ -827,7 +827,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         frame.setTitle("Emrick Designer");
     }
 
-    private JButton getLightOptionsBtn() {
+    private JButton getEffectOptionsButton() {
         JPopupMenu lightMenuPopup = new JPopupMenu();
 
         JMenuItem timeWeatherItem = new JMenuItem("Time & Weather Effects");
@@ -843,8 +843,12 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         lightMenuPopup.addSeparator();
 
         JMenuItem lightDescription = new JMenuItem("Create Light Description");
-        lightDescription.addActionListener(e->showlightDescription(frame));
+        lightDescription.addActionListener(e-> showLightDescription(frame));
         lightMenuPopup.add(lightDescription);
+
+        JMenuItem effectDescription = new JMenuItem("Create Effect Group Descriptions");
+        effectDescription.addActionListener(e-> showEffectGroupDescriptions());
+        lightMenuPopup.add(effectDescription);
 
         lightMenuPopup.addSeparator();
 
@@ -856,7 +860,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         lightMenuPopup.add(fadePattern);
 
         // Button that triggers the popup menu
-        JButton lightButton = new JButton("Light Options");
+        JButton lightButton = new JButton("Effect Options");
         lightButton.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
                 int x = 0;
@@ -1060,7 +1064,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
 
     ////////////////////////// Scrub Bar Listeners //////////////////////////
 
-    private void showlightDescription(Frame parentFrame){
+    private void showLightDescription(Frame parentFrame){
         JDialog dialog = new JDialog(parentFrame, "Light Description", true);
         dialog.getContentPane().setBackground(Color.WHITE);
 
@@ -1123,6 +1127,47 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         });
 
         dialog.setVisible(true);
+    }
+
+    private void showEffectGroupDescriptions() {
+        if (this.effectManager == null) {
+            return;
+        }
+
+        System.out.println("this.footballFieldPanel.selectedPerformers.size() = " + this.footballFieldPanel.selectedPerformers.size());
+        if (this.footballFieldPanel.selectedPerformers.size() > 1) {
+            this.effectViewPanel.remove(this.effectGUI.getEffectPanel());
+            this.effectViewPanel.revalidate();
+            this.effectViewPanel.repaint();
+
+            this.currentEffect = null;
+
+            String placeholderText = EffectGUI.noPerformerMsg;
+            Map<Performer, Collection<Effect>> selectedEffects = new LinkedHashMap<>();
+
+            for (Performer performer : this.footballFieldPanel.selectedPerformers.values()) {
+                if (performer.getEffects() == null || performer.getEffects().isEmpty()) {
+                    placeholderText = EffectGUI.noEffectGroupMsg;
+                } else {
+                    selectedEffects.put(performer, performer.getEffects());
+                }
+            }
+
+            this.effectGUI = new EffectGUI(placeholderText);
+            if (placeholderText.equals(EffectGUI.noEffectGroupMsg)) {
+                effectGUI.setSelectedEffects(new LinkedHashMap<>());
+            } else {
+                effectGUI.setSelectedEffects(selectedEffects);
+            }
+
+            this.effectViewPanel.add(this.effectGUI.getEffectPanel());
+            this.effectViewPanel.revalidate();
+            this.effectViewPanel.repaint();
+        } else {
+            JOptionPane.showMessageDialog(null,
+                    "Please select multiple performers to use the effect group feature",
+                    "Effect Group: Error", JOptionPane.ERROR_MESSAGE);
+        }
     }
 
     ////////////////////////// Effect Listeners //////////////////////////
@@ -1640,6 +1685,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         timelinePanel.repaint();
     }
 
+    // Don't delete, just unused for now because I don't want my disk space being eaten up
     private void autosaveProject() {
         // we don't have a project open, nothing to save
         if (archivePath == null || drillPath == null) {
