@@ -622,17 +622,21 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             flowFrame.setSize(1200, 800);
             flowFrame.setVisible(true);
             // TODO - When we add RF triggers, swap the list of sets to a list of triggers
-            String[][] sets = new String[footballFieldPanel.drill.sets.size()][5];
-            for (int i = 0; i < footballFieldPanel.drill.sets.size(); i++) {
-                sets[i][0] = footballFieldPanel.drill.sets.get(i).label;
-                sets[i][1] = Integer.toString(footballFieldPanel.drill.sets.get(i).duration);
+            String[][] sets = new String[count2RFTrigger.size()][5];
+            Iterator<RFTrigger> triggers = count2RFTrigger.values().iterator();
+            int i = 0;
+            System.out.println(count2RFTrigger.size());
+            while (triggers.hasNext()) {
+                sets[i][0] = Integer.toString(i);
+                sets[i][1] = Integer.toString(triggers.next().getCount());
                 sets[i][2] = "";
                 sets[i][3] = "";
                 sets[i][4] = "";
+                i++;
             }
             String[] labels = new String[5];
             labels[0] = "Set";
-            labels[1] = "Counts";
+            labels[1] = "Count";
             labels[2] = "Title";
             labels[3] = "Cue";
             labels[4] = "Description";
