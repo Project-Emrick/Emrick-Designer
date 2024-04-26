@@ -9,6 +9,8 @@ import java.util.List;
 
 public class SyncTimeGUI implements ActionListener {
 
+    private static boolean IS_DEBUG = false;
+
     // String Constants
     private static final String PATH_INSTR_IMAGE = "./src/main/resources/images/sync_time_instr.jpg";
     private static final String START_TIMESTAMP_INSTRUCTION = "Provide a start delay in seconds (optional):";
@@ -93,7 +95,7 @@ public class SyncTimeGUI implements ActionListener {
         dialogWindow.add(tabbedPane);
         dialogWindow.add(buttonPane, BorderLayout.SOUTH);
 
-        show();
+        dialogWindow.setVisible(true);
     }
 
     private JPanel createBpmPanel() {
@@ -142,6 +144,12 @@ public class SyncTimeGUI implements ActionListener {
 
             JTextField textField = new JTextField();
             textField.setToolTipText("Enter BPM of Set " + entry.getKey());
+
+            if (IS_DEBUG) {
+                startDelayFieldBpm.setText("0.5");
+                textField.setText("138.93");
+                IS_DEBUG = false;
+            }
 
             set2BpmField.add(new AbstractMap.SimpleEntry<>(entry.getKey(), textField)); // Keep a reference to text fields
             bpmPanel.add(textField);
@@ -281,10 +289,6 @@ public class SyncTimeGUI implements ActionListener {
         mainPanel.add(entryScrollPane, BorderLayout.CENTER);
 
         return mainPanel;
-    }
-
-    public void show() {
-        dialogWindow.setVisible(true);
     }
 
     public static class Pair {
