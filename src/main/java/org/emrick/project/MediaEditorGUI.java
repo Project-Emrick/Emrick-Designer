@@ -1033,7 +1033,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                                     .filter(performer -> performer.getIdentifier()
                                             .equals(tmpContent[1].substring(0,tmpContent[1].length()-1)))
                                     .findFirst()
-                                    .ifPresent(performer -> performer.setDeviceId(tmpContent[0]));
+                                    .ifPresent(performer -> performer.setDeviceId(Integer.toString(Integer.parseInt(tmpContent[0]) / 2)));
                         }
                     }
                 }
