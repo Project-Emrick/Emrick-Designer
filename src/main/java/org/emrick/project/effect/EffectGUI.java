@@ -316,7 +316,7 @@ public class EffectGUI implements ActionListener {
         gc.weighty = 2.0;
 
         gc.gridx = 0;
-        gc.gridy = 4;
+        gc.gridy = 7;
         gc.anchor = GridBagConstraints.FIRST_LINE_END;
         gc.insets = new Insets(0, 0, 0, 5);
         this.effectPanel.add(deleteBtn, gc);
@@ -325,7 +325,7 @@ public class EffectGUI implements ActionListener {
         gc.weighty = 2.0;
 
         gc.gridx = 1;
-        gc.gridy = 4;
+        gc.gridy = 7;
         gc.insets = new Insets(0, 5, 0, 0);
         gc.anchor = GridBagConstraints.FIRST_LINE_START;
         this.effectPanel.add(applyBtn, gc);
