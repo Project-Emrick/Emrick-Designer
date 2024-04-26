@@ -9,7 +9,7 @@ import java.util.List;
 
 public class SyncTimeGUI implements ActionListener {
 
-    private static boolean IS_DEBUG = true;
+    private static boolean IS_DEBUG = false;
 
     // String Constants
     private static final String PATH_INSTR_IMAGE = "./src/main/resources/images/sync_time_instr.jpg";

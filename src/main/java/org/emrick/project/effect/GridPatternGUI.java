@@ -201,13 +201,14 @@ public class GridPatternGUI implements ActionListener {
         else if (source.equals(confirmButton)) {
 
             // Check that fields are entered correctly
-            long durationMSec = 0;
+            long durationMSec;
             try {
                 durationMSec = (long) (Float.parseFloat(durationField.getText()) * 1000);
             } catch (NumberFormatException nfe) {
                 System.out.println("GridPatternGUI: NumberFormatException - " + nfe.getMessage());
                 JOptionPane.showMessageDialog(dialog, "Please provide a proper duration in seconds.",
                         "Parameter Error", JOptionPane.ERROR_MESSAGE);
+                return;
             }
 
             // Notify GridPatternHelper of selected parameters from GUI
