@@ -77,6 +77,12 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
     private Effect currentEffect;
     private Effect copiedEffect;
     private int selectedEffectType = 0;
+    public final int DEFAULT_FUNCTION = 0x1;
+    public final int TIME_GRADIENT = 0x2;
+    public final int SET_TIMEOUT = 0x4;
+    public final int DO_DELAY = 0x8;
+    public final int INSTANT_COLOR = 0x10;
+    public final int PROGRAMMING_MODE = 0x20;
 
     // RF Trigger
     private RFTriggerGUI rfTriggerGUI;
@@ -300,7 +306,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
 
         // Export Emrick Packets
         JMenuItem exportItem = new JMenuItem("Export Emrick Packets File");
-        exportItem.setEnabled(csvFile != null);
+        exportItem.setEnabled(true);
         exportItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_E, ActionEvent.CTRL_MASK));
         fileMenu.add(exportItem);
         exportItem.addActionListener(e -> {
@@ -309,6 +315,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             fileChooser.setDialogTitle("Export Project");
             if (fileChooser.showSaveDialog(fileMenu) == JFileChooser.APPROVE_OPTION) {
                 System.out.println("Exporting file `" + fileChooser.getSelectedFile().getAbsolutePath() + "`.");
+                exportPackets(new File(fileChooser.getSelectedFile().getAbsolutePath()));
             }
         });
 
@@ -926,6 +933,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                 onSync(timeSync, pf.startDelay);
                 scrubBarGUI.setTimeSync(timeSync);
                 startDelay = pf.startDelay;
+                count2RFTrigger = pf.count2RFTrigger;
                 setupEffectView();
             }
 
@@ -1720,7 +1728,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         String relArchive = path.getParentFile().toURI().relativize(archivePath.toURI()).getPath();
         String relDrill = path.getParentFile().toURI().relativize(drillPath.toURI()).getPath();
 
-        ProjectFile pf = new ProjectFile(footballFieldPanel.drill, relArchive, relDrill, timeSync, startDelay);
+        ProjectFile pf = new ProjectFile(footballFieldPanel.drill, relArchive, relDrill, timeSync, startDelay, count2RFTrigger);
         String g = gson.toJson(pf);
 
         System.out.println("saving to `" + path + "`");
@@ -1736,6 +1744,141 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         }
 
         writeSysMsg("Saved project to `" + path + "`.");
+    }
+
+    private long timeBeforeEffect(int index, Effect e, ArrayList<Effect> effects, Long[] timesMS) {
+        if (index == 0) {
+            return e.getStartTimeMSec() - timesMS[0];
+        }
+        long lastTrigger = 0;
+        for (int i = 0; i < timesMS.length; i++) {
+            if (timesMS[i] <= e.getStartTimeMSec()) {
+                lastTrigger = timesMS[i];
+            } else {
+                break;
+            }
+        }
+        if (effects.get(index-1).getStartTimeMSec() > lastTrigger) {
+            return e.getStartTimeMSec() - effects.get(index-1).getEndTimeMSec();
+        } else {
+            return e.getStartTimeMSec() - lastTrigger;
+        }
+    }
+
+    private long timeAfterEffect(int index, Effect e, ArrayList<Effect> effects, Long[] timesMS) {
+        if (index == effects.size()-1) {
+            return Long.MAX_VALUE;
+        }
+        long nextTrigger = 0;
+        for (int i = timesMS.length-1; i >= 0; i--) {
+            if (timesMS[i] > e.getStartTimeMSec()) {
+                nextTrigger = timesMS[i];
+            } else {
+                break;
+            }
+        }
+        if (effects.get(index+1).getStartTimeMSec() < nextTrigger) {
+            if (effects.get(index+1).getStartTimeMSec() > e.getEndTimeMSec()+1) {
+                return effects.get(index+1).getStartTimeMSec() - e.getEndTimeMSec();
+            } else {
+                return Long.MAX_VALUE;
+            }
+        } else {
+            return Long.MAX_VALUE;
+        }
+    }
+
+    private int getEffectTriggerIndex(Effect e, Long[] timesMS) {
+        int r = 0;
+        for (int i = 0; i < timesMS.length; i++) {
+            if (e.getStartTimeMSec() >= timesMS[i]) {
+                r = i;
+            } else {
+                break;
+            }
+        }
+        return r;
+    }
+
+    public void exportPackets(File path) {
+        int s = count2RFTrigger.size();
+        RFTrigger[] rfTriggerArray = new RFTrigger[s];
+        Iterator<RFTrigger> rfIterator = count2RFTrigger.values().iterator();
+        int i = 0;
+        while (rfIterator.hasNext()) {
+            rfTriggerArray[i] = rfIterator.next();
+            i++;
+        }
+        ArrayList<Long> timeMS = new ArrayList<>();
+        timeMS.add(rfTriggerArray[0].getTimestampMillis());
+        for (i = 1; i < rfTriggerArray.length; i++) {
+             for (int j = 0; j < timeMS.size(); j++) {
+                 if (rfTriggerArray[i].getTimestampMillis() < timeMS.get(j)) {
+                     timeMS.add(j, rfTriggerArray[i].getTimestampMillis());
+                     break;
+                 } else {
+                     if (j == timeMS.size()-1) {
+                         timeMS.add(rfTriggerArray[i].getTimestampMillis());
+                         break;
+                     }
+                 }
+             }
+        }
+        Long[] timesMS = new Long[timeMS.size()];
+        timesMS = timeMS.toArray(timesMS);
+        try {
+            BufferedWriter bfw = new BufferedWriter(new FileWriter(path));
+            String out = "{\"Devices\": [\n";
+            for (int k = 0; k < footballFieldPanel.drill.performers.size(); k++) {
+                Performer p = footballFieldPanel.drill.performers.get(k);
+                out += "\t{\"Device_id\": " + p.getDeviceId() + ", \n";
+                out += "\t\"Pkt_count\": " + p.getEffects().size() + ",\n";
+                out += "\t\"Packets\": [\n";
+                for (i = 0; i < p.getEffects().size(); i++) {
+                    Effect e = p.getEffects().get(i);
+                    out += "\t\t{\"Size\": 0,";
+                    out += "\"Strip_id\": " + p.getDeviceId() + ", ";
+                    out += "\"Set_id\": " + getEffectTriggerIndex(e, timesMS) + ", ";
+                    Color startColor = e.getStartColor();
+                    out += "\"Start_color\": {" + startColor.getRed() + ", " + startColor.getBlue() + ", " + startColor.getGreen() + "}, ";
+                    Color endColor = e.getEndColor();
+                    out += "\"End_color\": {" + endColor.getRed() + ", " + endColor.getBlue() + ", " + endColor.getGreen() + "}, ";
+                    int flags = 0;
+                    if (timeBeforeEffect(i, e, p.getEffects(), timesMS) != 0) {
+                        flags += DO_DELAY;
+                    }
+                    if (timeAfterEffect(i, e, p.getEffects(), timesMS) == Long.MAX_VALUE) {
+                        flags += SET_TIMEOUT;
+                    }
+                    flags += TIME_GRADIENT;
+                    if ((flags & DO_DELAY) > 0) {
+                        out += "\"Delay\": " + timeBeforeEffect(i, e, p.getEffects(), timesMS) + ",";
+                    } else {
+                        out += "\"Delay\": 0, ";
+                    }
+                    out += "\"Duration\": " + (e.getEndTimeMSec() - e.getStartTimeMSec()) + ", ";
+                    out += "\"Function\": 0, ";
+                    out += "\"Timeout\": 0},\n";
+                    if (i < p.getEffects().size() - 1) {
+                        bfw.write(out);
+                        bfw.flush();
+                        out = "";
+                    }
+                }
+                if (k < footballFieldPanel.drill.performers.size() - 1) {
+                    out = out.substring(0, out.length() - 2) + "]},\n";
+                    bfw.write(out);
+                    bfw.flush();
+                    out = "";
+                }
+            }
+            out = out.substring(0, out.length() - 2) + "]}\n\t]\n}\n";
+            bfw.write(out);
+            bfw.flush();
+        }
+        catch (IOException ioe) {
+            throw new RuntimeException(ioe);
+        }
     }
 
     private void writeSysMsg(String msg) {
