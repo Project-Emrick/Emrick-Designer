@@ -844,7 +844,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         lightMenuPopup.addSeparator();
 
         JMenuItem createGridPattern = new JMenuItem("Create Grid Pattern");
-        createGridPattern.addActionListener(null);
+        createGridPattern.addActionListener(e -> showGridPatternDialog(frame));
         lightMenuPopup.add(createGridPattern);
 
         lightMenuPopup.addSeparator();
@@ -1176,6 +1176,22 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                     "Please select multiple performers to use the effect group feature",
                     "Effect Group: Error", JOptionPane.ERROR_MESSAGE);
         }
+    }
+
+    private void showGridPatternDialog(JFrame frame) {
+
+        // Show 'Create Grid Pattern' window -- Calculations performed internally.
+        ArrayList<Performer> selectedPerformers = new ArrayList<>(footballFieldPanel.selectedPerformers.values());
+        if (selectedPerformers.size() < 4) {
+            JOptionPane.showMessageDialog(null,
+                    "Please select multiple performers arranged in a grid to use the grid pattern feature",
+                    "Grid Pattern: Error", JOptionPane.ERROR_MESSAGE);
+        }
+
+        // Get the current time by using current count
+        long startTimeMSec = timeManager.getCount2MSec().get(footballFieldPanel.getCurrentCount());
+
+        new GridPatternGUI(frame, selectedPerformers, effectManager, startTimeMSec);
     }
 
     ////////////////////////// Effect Listeners //////////////////////////
