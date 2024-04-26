@@ -1858,53 +1858,46 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         timesMS = timeMS.toArray(timesMS);
         try {
             BufferedWriter bfw = new BufferedWriter(new FileWriter(path));
-            String out = "{\"Devices\": [\n";
+            String out = "";
             for (int k = 0; k < footballFieldPanel.drill.performers.size(); k++) {
                 Performer p = footballFieldPanel.drill.performers.get(k);
-                out += "\t{\"Device_id\": " + p.getDeviceId() + ", \n";
-                out += "\t\"Pkt_count\": " + p.getEffects().size() + ",\n";
-                out += "\t\"Packets\": [\n";
-                for (i = 0; i < p.getEffects().size(); i++) {
-                    Effect e = p.getEffects().get(i);
-                    out += "\t\t{\"Size\": 0,";
-                    out += "\"Strip_id\": " + p.getDeviceId() + ", ";
-                    out += "\"Set_id\": " + getEffectTriggerIndex(e, timesMS) + ", ";
-                    Color startColor = e.getStartColor();
-                    out += "\"Start_color\": {" + startColor.getRed() + ", " + startColor.getBlue() + ", " + startColor.getGreen() + "}, ";
-                    Color endColor = e.getEndColor();
-                    out += "\"End_color\": {" + endColor.getRed() + ", " + endColor.getBlue() + ", " + endColor.getGreen() + "}, ";
-                    int flags = 0;
-                    if (timeBeforeEffect(i, e, p.getEffects(), timesMS) != 0) {
-                        flags += DO_DELAY;
-                    }
-                    if (timeAfterEffect(i, e, p.getEffects(), timesMS) == Long.MAX_VALUE) {
-                        flags += SET_TIMEOUT;
-                    }
-                    flags += TIME_GRADIENT;
-                    if ((flags & DO_DELAY) > 0) {
-                        out += "\"Delay\": " + timeBeforeEffect(i, e, p.getEffects(), timesMS) + ",";
-                    } else {
-                        out += "\"Delay\": 0, ";
-                    }
-                    out += "\"Duration\": " + (e.getEndTimeMSec() - e.getStartTimeMSec()) + ", ";
-                    out += "\"Function\": 0, ";
-                    out += "\"Timeout\": 0},\n";
-                    if (i < p.getEffects().size() - 1) {
+                if (p.getEffects().size() > 0) {
+                    out += "Pkt_count: " + p.getEffects().size() + ", ";
+                    for (i = 0; i < p.getEffects().size(); i++) {
+                        Effect e = p.getEffects().get(i);
+                        out += "Size: 0, ";
+                        out += "Strip_id: " + p.getDeviceId() + ", ";
+                        out += "Set_id: " + getEffectTriggerIndex(e, timesMS) + ", ";
+                        Color startColor = e.getStartColor();
+                        out += "Start_color: " + startColor.getRed() + ", " + startColor.getBlue() + ", " + startColor.getGreen() + ", ";
+                        Color endColor = e.getEndColor();
+                        out += "End_color: " + endColor.getRed() + ", " + endColor.getBlue() + ", " + endColor.getGreen() + ", ";
+                        int flags = 0;
+                        if (timeBeforeEffect(i, e, p.getEffects(), timesMS) != 0) {
+                            flags += DO_DELAY;
+                        }
+                        if (timeAfterEffect(i, e, p.getEffects(), timesMS) == Long.MAX_VALUE) {
+                            flags += SET_TIMEOUT;
+                        }
+                        flags += TIME_GRADIENT;
+                        if ((flags & DO_DELAY) > 0) {
+                            out += "Delay: " + timeBeforeEffect(i, e, p.getEffects(), timesMS) + ", ";
+                        } else {
+                            out += "Delay: 0, ";
+                        }
+                        out += "Duration: " + (e.getEndTimeMSec() - e.getStartTimeMSec()) + ", ";
+                        out += "Function: 0, ";
+                        out += "Timeout: 0\n";
                         bfw.write(out);
                         bfw.flush();
                         out = "";
                     }
-                }
-                if (k < footballFieldPanel.drill.performers.size() - 1) {
-                    out = out.substring(0, out.length() - 2) + "]},\n";
+                    out += "\n";
                     bfw.write(out);
                     bfw.flush();
                     out = "";
                 }
             }
-            out = out.substring(0, out.length() - 2) + "]}\n\t]\n}\n";
-            bfw.write(out);
-            bfw.flush();
         }
         catch (IOException ioe) {
             throw new RuntimeException(ioe);
