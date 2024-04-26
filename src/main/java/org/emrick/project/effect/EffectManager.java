@@ -189,10 +189,12 @@ public class EffectManager {
         redoStack.clear();
     }
 
-    public void removeEffectFromSelectedPerformer(Effect effect) {
-        Performer performer = getSelectedPerformer();
-        if (performer == null) return;
-        removeEffect(effect, performer);
+    public void removeEffectFromSelectedPerformers(Effect effect) {
+        ArrayList<Performer> performers = getSelectedPerformers();
+        if (performers == null) return;
+        for (Performer performer : performers) {
+            removeEffect(effect, performer);
+        }
     }
 
     public void removeAllEffects(Performer performer) {
@@ -248,10 +250,15 @@ public class EffectManager {
         return true;
     }
 
-    public void replaceEffectForSelectedPerformer(Effect oldEffect, Effect newEffect) {
-        Performer performer = getSelectedPerformer();
-        if (performer == null) return;
-        boolean successful = replaceEffect(oldEffect, newEffect, performer);
+    public void replaceEffectForSelectedPerformers(Effect oldEffect, Effect newEffect) {
+        ArrayList<Performer> performers = getSelectedPerformers();
+        if (performers == null) return;
+        boolean successful = true;
+        int i = 0;
+        while (successful && i < performers.size()) {
+            successful = replaceEffect(oldEffect, newEffect, performers.get(i));
+            i++;
+        }
         if (successful) showAddEffectSuccessDialog();
     }
 
@@ -280,6 +287,29 @@ public class EffectManager {
         return getEffect(performer, time);
     }
 
+    public Effect getEffectsFromSelectedPerformers(long time) {
+        Effect e = null;
+        for (int i = 0; i < footballFieldPanel.selectedPerformers.values().size(); i++) {
+            if (e == null && i == 0) {
+                e = getEffect((Performer) footballFieldPanel.selectedPerformers.values().toArray()[i], time);
+            } else {
+                Effect f = getEffect((Performer) footballFieldPanel.selectedPerformers.values().toArray()[i], time);
+                if (e == null) {
+                    if (f != null) {
+                        return null;
+                    }
+                } else if (!e.equals(f)) {
+                    return null;
+                }
+            }
+        }
+        if (e != null) {
+            return e;
+        } else {
+            return new Effect(time);
+        }
+    }
+
     /**
      * For now, assume only one performer is selected. Can change for future.
      * @return The single selected performer
@@ -293,6 +323,8 @@ public class EffectManager {
         }
         return null;
     }
+
+
 
     private ArrayList<Performer> getSelectedPerformers() {
         ArrayList<Performer> selectedPerformers = new ArrayList<>();

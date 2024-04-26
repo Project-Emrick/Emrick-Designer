@@ -25,13 +25,14 @@ public class Performer {
         this.effects = new ArrayList<>();
     }
 
-    public Performer(String symbol, int label) {
+    public Performer(String symbol, int label, int id) {
         this.color = Color.BLACK;
         this.symbol = symbol;
         this.label = label;
         coordinates = new ArrayList<>();
         currentLocation = new Point2D.Double(0, 0);
         this.effects = new ArrayList<>();
+        this.deviceId = Integer.toString(id);
     }
 
     public Color getColor() {

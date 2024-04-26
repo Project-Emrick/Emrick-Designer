@@ -20,6 +20,8 @@ import java.util.stream.*;
 
 public class EffectGUI implements ActionListener {
 
+    public final int DEFAULT_EFFECT = 0;
+    public final int GENERATED_FADE = 1;
     private static List<EffectsGroup> EFFECTS_GROUPS;
     // Strings
     public static String
@@ -103,17 +105,19 @@ public class EffectGUI implements ActionListener {
     private JLabel placeholderLabel;
     private JButton saveEffectButton;
     private Map<Performer, Collection<Effect>> selectedEffects;
+    private int effectType;
 
     /**
      * @param effect    The current effect, as it exists. Passed in null if it doesn't exist.
      * @param startTime In the case that no effect exists for the performer at the given time, we still need the current
      *                  time for gui display.
      */
-    public EffectGUI(Effect effect, long startTime, EffectListener effectListener) {
+    public EffectGUI(Effect effect, long startTime, EffectListener effectListener, int effectType) {
         this.effect = effect;
         this.effectListener = effectListener;
+        this.effectType = effectType;
 
-        if (this.effect == null) {
+        if (this.effect.equals(new Effect(startTime))) {
             this.isNewEffect = true;
 
             // Set up dummy effect with default values for user to customize
@@ -141,7 +145,133 @@ public class EffectGUI implements ActionListener {
         }
 
         this.effectMod = this.effect.clone(); // Changes made in GUI are not applied to original effect object
-        setupGUI();
+        if (effectType == DEFAULT_EFFECT) {
+            setupGUI();
+        } else if (effectType == GENERATED_FADE) {
+            setupFadeGUI();
+        }
+    }
+
+    private void setupFadeGUI() {
+        this.effectPanel = new JPanel();
+
+        // Color button customization
+        startColorBtn.setPreferredSize(new Dimension(20, 20));
+        startColorBtn.setFocusable(false);
+        startColorBtn.addActionListener(this);
+        endColorBtn.setPreferredSize(new Dimension(20, 20));
+        endColorBtn.setFocusable(false);
+        endColorBtn.addActionListener(this);
+
+        durationField.getDocument().addDocumentListener(getDocumentListener());
+
+        applyBtn.addActionListener(this);
+        deleteBtn.addActionListener(this);
+
+        Border innerBorder = BorderFactory.createTitledBorder("Effect");
+        Border outerBorder = BorderFactory.createEmptyBorder(5, 5, 5, 5);
+
+        this.effectPanel.setBorder(BorderFactory.createCompoundBorder(outerBorder, innerBorder));
+
+        this.effectPanel.setLayout(new GridBagLayout());
+
+        GridBagConstraints gc = new GridBagConstraints();
+
+        Insets spacedInsets = new Insets(0, 0, 0, 5);
+        Insets noSpacedInsets = new Insets(0, 0, 0, 0);
+
+        //////////////// 0th Row ////////////////
+
+        gc.weightx = 1;
+        gc.weighty = 0.2;
+
+        gc.gridx = 0;
+        gc.gridy = 0;
+        gc.fill = GridBagConstraints.NONE;
+        gc.anchor = GridBagConstraints.LINE_END;
+        gc.insets = spacedInsets;
+        this.effectPanel.add(startTimeLabel, gc);
+
+        gc.gridx = 1;
+        gc.gridy = 0;
+        gc.anchor = GridBagConstraints.LINE_START;
+        gc.insets = spacedInsets;
+        this.effectPanel.add(endTimeLabel, gc);
+
+        //////////////// 1st Row ////////////////
+
+        gc.weightx = 1;
+        gc.weighty = 0.1;
+
+        gc.gridx = 0; // Horizontally, left to right
+        gc.gridy = 1; // Vertically, top to bottom
+        gc.anchor = GridBagConstraints.LINE_END;
+        gc.insets = spacedInsets;
+        this.effectPanel.add(startColorLabel, gc);
+
+        gc.gridx = 1;
+        gc.gridy = 1;
+        gc.anchor = GridBagConstraints.LINE_START;
+        gc.insets = noSpacedInsets;
+        this.effectPanel.add(startColorBtn, gc);
+
+        //////////////// 2nd Row ////////////////
+
+        gc.weightx = 1;
+        gc.weighty = 0.1;
+
+        gc.gridx = 0;
+        gc.gridy = 2;
+        gc.anchor = GridBagConstraints.LINE_END;
+        gc.insets = spacedInsets;
+        this.effectPanel.add(endColorLabel, gc);
+
+        gc.gridx = 1;
+        gc.gridy = 2;
+        gc.anchor = GridBagConstraints.LINE_START;
+        gc.insets = noSpacedInsets;
+        this.effectPanel.add(endColorBtn, gc);
+
+
+        //////////////// 3rd Row ////////////////
+
+        gc.weightx = 1;
+        gc.weighty = 0.1;
+
+        gc.gridx = 0;
+        gc.gridy = 3;
+        gc.anchor = GridBagConstraints.LINE_END;
+        gc.insets = spacedInsets;
+        this.effectPanel.add(durationLabel, gc);
+
+        gc.gridx = 1;
+        gc.gridy = 3;
+        gc.anchor = GridBagConstraints.LINE_START;
+        gc.insets = noSpacedInsets;
+        this.effectPanel.add(durationField, gc);
+
+        //////////////// Apply or Delete Buttons ////////////////
+
+        gc.weightx = 1;
+        gc.weighty = 2.0;
+
+        gc.gridx = 0;
+        gc.gridy = 4;
+        gc.anchor = GridBagConstraints.FIRST_LINE_END;
+        gc.insets = new Insets(0, 0, 0, 5);
+        this.effectPanel.add(deleteBtn, gc);
+
+        gc.weightx = 1;
+        gc.weighty = 2.0;
+
+        gc.gridx = 1;
+        gc.gridy = 4;
+        gc.insets = new Insets(0, 5, 0, 0);
+        gc.anchor = GridBagConstraints.FIRST_LINE_START;
+        this.effectPanel.add(applyBtn, gc);
+
+        // If effect exists, load pattern on gui
+        loadEffectToGUI(this.effectMod);
     }
 
     private void setupGUI() {
@@ -390,7 +520,6 @@ public class EffectGUI implements ActionListener {
 
     private void loadEffectToGUI(Effect effect) {
 
-        System.out.println("effect = " + effect);
 
         // Get start and end colors
         startColorBtn.setBackground(effect.getStartColor());
@@ -728,7 +857,7 @@ public class EffectGUI implements ActionListener {
             }
         };
 
-        EffectGUI effectGUI = new EffectGUI(null, startTimeMSec, el);
+        EffectGUI effectGUI = new EffectGUI(null, startTimeMSec, el, 0);
         effectGUI = new EffectGUI(EffectGUI.noCommonEffectMsg);
         frame.add(effectGUI.getEffectPanel());
 

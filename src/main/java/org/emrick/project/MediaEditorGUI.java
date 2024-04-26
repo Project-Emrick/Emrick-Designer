@@ -76,6 +76,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
     private EffectGUI effectGUI;
     private Effect currentEffect;
     private Effect copiedEffect;
+    private int selectedEffectType = 0;
 
     // RF Trigger
     private RFTriggerGUI rfTriggerGUI;
@@ -298,7 +299,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         fileMenu.addSeparator();
 
         // Export Emerick Packets
-        JMenuItem exportItem = new JMenuItem("Export Emerick Packets File");
+        JMenuItem exportItem = new JMenuItem("Export Emrick Packets File");
         exportItem.setEnabled(csvFile != null);
         exportItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_E, ActionEvent.CTRL_MASK));
         fileMenu.add(exportItem);
@@ -466,7 +467,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         pasteCopiedEffect.addActionListener(e -> {
             if (this.effectManager == null) return;
             boolean success = this.effectManager.addEffectToSelectedPerformers(this.copiedEffect);
-            if (success) updateEffectViewPanel();
+            if (success) updateEffectViewPanel(selectedEffectType);
             this.footballFieldPanel.repaint();
         });
         editMenu.add(pasteCopiedEffect);
@@ -845,6 +846,15 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         lightDescription.addActionListener(e->showlightDescription(frame));
         lightMenuPopup.add(lightDescription);
 
+        lightMenuPopup.addSeparator();
+
+        JMenuItem fadePattern = new JMenuItem("Create Fade Pattern");
+        fadePattern.addActionListener(e -> {
+            selectedEffectType = effectGUI.GENERATED_FADE;
+            updateEffectViewPanel(selectedEffectType);
+        });
+        lightMenuPopup.add(fadePattern);
+
         // Button that triggers the popup menu
         JButton lightButton = new JButton("Light Options");
         lightButton.addActionListener(new ActionListener() {
@@ -909,6 +919,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
 
             if (pf.timeSync != null && pf.startDelay != null) {
                 timeSync = pf.timeSync;
+                onSync(timeSync, pf.startDelay);
                 scrubBarGUI.setTimeSync(timeSync);
                 startDelay = pf.startDelay;
                 setupEffectView();
@@ -959,13 +970,15 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
     }
 
     private void exportCsvFileForPerformerDeviceIDs(File selectedFile) {
-        Random random = ThreadLocalRandom.current();
-
         try (FileWriter fileWriter = new FileWriter(selectedFile)) {
             for (Performer performer : footballFieldPanel.drill.performers) {
-                fileWriter.write(random.nextInt() + "");
+                fileWriter.write((Integer.parseInt(performer.getDeviceId()) * 2) + "");
                 fileWriter.write(",");
-                fileWriter.write(performer.getIdentifier());
+                fileWriter.write(performer.getIdentifier() + "L");
+                fileWriter.write(System.lineSeparator());
+                fileWriter.write((Integer.parseInt(performer.getDeviceId()) * 2 + 1) + "");
+                fileWriter.write(",");
+                fileWriter.write(performer.getIdentifier() + "R");
                 fileWriter.write(System.lineSeparator());
             }
         } catch (IOException e) {
@@ -985,11 +998,13 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                 String[] tmpContent = temp.split(",");
                 for (String s : tmpContent) {
                     if (!s.trim().isEmpty()) {
-                        footballFieldPanel.drill.performers.stream()
-                                                           .filter(performer -> performer.getIdentifier()
-                                                                                         .equals(tmpContent[1]))
-                                                           .findFirst()
-                                                           .ifPresent(performer -> performer.setDeviceId(tmpContent[0]));
+                        if (tmpContent[1].contains("L")) {
+                            footballFieldPanel.drill.performers.stream()
+                                    .filter(performer -> performer.getIdentifier()
+                                            .equals(tmpContent[1].substring(0,tmpContent[1].length()-1)))
+                                    .findFirst()
+                                    .ifPresent(performer -> performer.setDeviceId(tmpContent[0]));
+                        }
                     }
                 }
                 linesCount = linesCount + 1;
@@ -1301,7 +1316,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         buildScrubBarPanel();
 
         // At the point of import process, the project is ready to sync
-        scrubBarGUI.getSyncButton().doClick();
+        //scrubBarGUI.getSyncButton().doClick();
     }
 
     ////////////////////////// Sync Listeners //////////////////////////
@@ -1333,7 +1348,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         this.effectManager = new EffectManager(this.footballFieldPanel, this.timeManager, this.count2RFTrigger);
         this.footballFieldPanel.setEffectManager(this.effectManager);
 
-        updateEffectViewPanel();
+        updateEffectViewPanel(selectedEffectType);
         updateRFTriggerButton();
     }
 
@@ -1381,7 +1396,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         // If time cursor is at start of first set, arm the start-delay
         useStartDelay = scrubBarGUI.isAtFirstSet() && scrubBarGUI.isAtStartOfSet();
         if (this.footballFieldPanel.getNumSelectedPerformers() > 0) {
-            updateEffectViewPanel();
+            updateEffectViewPanel(selectedEffectType);
         }
         // If triggers are ready to be used, refresh on scroll
         if (count2RFTrigger != null) {
@@ -1454,29 +1469,38 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         frame.setTitle("Emrick Designer - Welcome "+username);
     }
 
+    private void showEffectBeforeFirstTriggerError() {
+        JOptionPane.showMessageDialog(null,
+                "Could not create effect. Ensure that an RF Trigger is placed before or at the same time as the first effect.",
+                "Create Effect: Error", JOptionPane.ERROR_MESSAGE);
+    }
     @Override
     public void onCreateEffect(Effect effect) {
-        boolean successful = this.effectManager.addEffectToSelectedPerformer(effect);
+        if (effect.getStartTimeMSec() < ((RFTrigger) count2RFTrigger.values().toArray()[0]).getTimestampMillis()) {
+            showEffectBeforeFirstTriggerError();
+            return;
+        }
+        boolean successful = this.effectManager.addEffectToSelectedPerformers(effect);
         this.footballFieldPanel.repaint();
         if (successful) {
-            updateEffectViewPanel();
+            updateEffectViewPanel(selectedEffectType);
             updateTimelinePanel();
         }
     }
 
     @Override
     public void onUpdateEffect(Effect oldEffect, Effect newEffect) {
-        this.effectManager.replaceEffectForSelectedPerformer(oldEffect, newEffect);
+        this.effectManager.replaceEffectForSelectedPerformers(oldEffect, newEffect);
         this.footballFieldPanel.repaint();
-        updateEffectViewPanel();
+        updateEffectViewPanel(selectedEffectType);
         updateTimelinePanel();
     }
 
     @Override
     public void onDeleteEffect(Effect effect) {
-        this.effectManager.removeEffectFromSelectedPerformer(effect);
+        this.effectManager.removeEffectFromSelectedPerformers(effect);
         this.footballFieldPanel.repaint();
-        updateEffectViewPanel();
+        updateEffectViewPanel(selectedEffectType);
         updateTimelinePanel();
     }
 
@@ -1484,13 +1508,13 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
 
     @Override
     public void onPerformerSelect() {
-        updateEffectViewPanel();
+        updateEffectViewPanel(selectedEffectType);
         updateTimelinePanel();
     }
 
     @Override
     public void onPerformerDeselect() {
-        updateEffectViewPanel();
+        updateEffectViewPanel(selectedEffectType);
         updateTimelinePanel();
     }
 
@@ -1551,7 +1575,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         }
     }
 
-    private void updateEffectViewPanel() {
+    private void updateEffectViewPanel(int effectType) {
 
         // No point in updating effect view if can't use effects
         if (effectManager == null) return;
@@ -1563,7 +1587,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
 
         // Effects
         // TODO: Eventually, for multiple selected performers, also check if not all selected performers share the same effect
-        if (footballFieldPanel.selectedPerformers.size() != 1) {
+        if (footballFieldPanel.selectedPerformers.size() < 1) {
             // Eventually should be able to work with multiple performers at a time
             currentEffect = null;
             effectGUI = new EffectGUI(EffectGUI.noPerformerMsg);
@@ -1574,8 +1598,16 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
 
         // FIXME: Here, we know there's only one performer selected. The EffectGUI is for that single performer, for now
         long currentMSec = timeManager.getCount2MSec().get(footballFieldPanel.getCurrentCount());
-        currentEffect = effectManager.getEffectFromSelectedPerformer(currentMSec);
-        effectGUI = new EffectGUI(currentEffect, currentMSec, this);
+        currentEffect = effectManager.getEffectsFromSelectedPerformers(currentMSec);
+        if (currentEffect == null) {
+            // Eventually should be able to work with multiple performers at a time
+            currentEffect = null;
+            effectGUI = new EffectGUI(EffectGUI.noCommonEffectMsg);
+            effectViewPanel.add(effectGUI.getEffectPanel(), BorderLayout.CENTER);
+
+            return;
+        }
+        effectGUI = new EffectGUI(currentEffect, currentMSec, this, selectedEffectType);
 
         // Add updated data for effect view
         effectViewPanel.add(effectGUI.getEffectPanel(), BorderLayout.CENTER);
