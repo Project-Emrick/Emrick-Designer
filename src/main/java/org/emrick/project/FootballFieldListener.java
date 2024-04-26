@@ -6,4 +6,6 @@ package org.emrick.project;
 public interface FootballFieldListener {
     void onPerformerSelect();
     void onPerformerDeselect();
+    void onResizeBackground();
+    void onFinishRepaint();
 }

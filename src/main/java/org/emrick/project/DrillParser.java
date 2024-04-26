@@ -73,9 +73,11 @@ public class DrillParser {
         Drill drill = new Drill();
         String[] performerCharts = text.split("Set");
         performerCharts[0] = "";
+        int i = 0;
         for (String t : performerCharts) {
             if (!t.equals("")) {
-                drill.addPerformer(parseDrill(t, drill));
+                drill.addPerformer(parseDrill(t, drill, i));
+                i++;
             }
         }
         drill.loadSets();
@@ -88,12 +90,18 @@ public class DrillParser {
      * performer object.
      * @param text      Raw text drill data for a single performer
      * @param drill     Drill object
+     * @param id        ID for new Performer object
      * @return          newly created Performer object
      */
-    public static Performer parseDrill(String text, Drill drill) {
+    public static Performer parseDrill(String text, Drill drill, int id) {
         String symbol = text.split("Symbol: ")[1].split(" ")[0];
-        int label = Integer.parseInt(text.split("Label: ")[1].split(" ")[0]);
-        Performer performer = new Performer(symbol, label);
+        int label;
+        try {
+            label = Integer.parseInt(text.split("Label: ")[1].split(" ")[0]);
+        } catch (NumberFormatException nfe) {
+            label = Integer.parseInt(text.split("Label: ")[1].split(" ")[0].substring(1));
+        }
+        Performer performer = new Performer(symbol, label, id);
         String[] lines = text.split("\n");
         for (int i = 1; i < lines.length-2; i++) {
             String set = lines[i].split(" ")[0];

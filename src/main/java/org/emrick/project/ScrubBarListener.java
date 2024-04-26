@@ -5,4 +5,5 @@ public interface ScrubBarListener {
     boolean onPause();
     long onScrub();
     void onSpeedChange(float playbackSpeed);
+    void onTimeChange(long time);
 }

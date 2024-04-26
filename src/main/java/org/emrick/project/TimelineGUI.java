@@ -31,11 +31,11 @@ public class TimelineGUI {
 
         // Store the effects and triggers into common timeline map
         ArrayList<Map.Entry<Long, TimelineEvent>> timelineEvents = new ArrayList<>();
-        for (Effect e : effects) {
-            timelineEvents.add(new AbstractMap.SimpleEntry<>(e.getStartTimeMSec(), e));
-        }
         for (RFTrigger t : triggers) {
             timelineEvents.add(new AbstractMap.SimpleEntry<>(t.getTimestampMillis(), t));
+        }
+        for (Effect e : effects) {
+            timelineEvents.add(new AbstractMap.SimpleEntry<>(e.getStartTimeMSec(), e));
         }
 
         // Sort by timestamp
