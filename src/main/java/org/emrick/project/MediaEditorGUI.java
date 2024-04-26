@@ -202,6 +202,8 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
 
         // Main frame
         frame = new JFrame("Emrick Designer");
+        Image icon = Toolkit.getDefaultToolkit().getImage("./src/main/resources/images/icon.png");
+        frame.setIconImage(icon);
 
         // Scrub Bar
         scrubBarGUI = new ScrubBarGUI(frame, this, this, footballFieldPanel);
