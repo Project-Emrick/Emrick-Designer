@@ -376,7 +376,7 @@ public class FootballFieldPanel extends JPanel implements RepaintListener {
                 selectedPerformers.clear();
                 footballFieldListener.onPerformerDeselect();
             }
-
+            boolean select = false;
             for (Performer p : drill.performers) {
                 double px = p.currentLocation.getX();
                 double py = p.currentLocation.getY();
@@ -397,15 +397,17 @@ public class FootballFieldPanel extends JPanel implements RepaintListener {
                         }
                         else {
                             selectedPerformers.put(key, p); // Select if not already selected
-                            footballFieldListener.onPerformerSelect();
+                            select = true;
                         }
                     } else {
                         selectedPerformers.put(key, p);
-                        footballFieldListener.onPerformerSelect();
+                        select = true;
                     }
                 }
             }
-
+            if (select) {
+                footballFieldListener.onPerformerSelect();
+            }
             this.repaintListener.onRepaintCall();
         }
 
