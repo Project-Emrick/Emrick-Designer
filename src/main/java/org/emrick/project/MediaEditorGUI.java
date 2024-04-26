@@ -1876,9 +1876,9 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                     out += "\"Strip_id\": " + p.getDeviceId() + ", ";
                     out += "\"Set_id\": " + getEffectTriggerIndex(e, timesMS) + ", ";
                     Color startColor = e.getStartColor();
-                    out += "\"Start_color\": {" + startColor.getRed() + ", " + startColor.getBlue() + ", " + startColor.getGreen() + "}, ";
+                    out += "\"Start_color\": [" + startColor.getRed() + ", " + startColor.getBlue() + ", " + startColor.getGreen() + "], ";
                     Color endColor = e.getEndColor();
-                    out += "\"End_color\": {" + endColor.getRed() + ", " + endColor.getBlue() + ", " + endColor.getGreen() + "}, ";
+                    out += "\"End_color\": [" + endColor.getRed() + ", " + endColor.getBlue() + ", " + endColor.getGreen() + "], ";
                     int flags = 0;
                     if (timeBeforeEffect(i, e, p.getEffects(), timesMS) != 0) {
                         flags += DO_DELAY;
