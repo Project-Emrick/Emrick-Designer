@@ -160,8 +160,11 @@ public class EffectGUI implements ActionListener {
                                      TIME_GRADIENT,
                                      SET_TIMEOUT,
                                      DO_DELAY,
-                                     INSTANT_COLOR);
+                                     INSTANT_COLOR,
+                                  0);
             this.effect.setEffectType(effectType);
+        } else {
+            this.isNewEffect = false;
         }
 
         this.effectMod = this.effect.clone(); // Changes made in GUI are not applied to original effect object
@@ -1165,7 +1168,8 @@ public class EffectGUI implements ActionListener {
                                    TIME_GRADIENT,
                                    SET_TIMEOUT,
                                    DO_DELAY,
-                                   INSTANT_COLOR);
+                                   INSTANT_COLOR,
+                                0);
 
         EffectListener el = new EffectListener() {
             @Override

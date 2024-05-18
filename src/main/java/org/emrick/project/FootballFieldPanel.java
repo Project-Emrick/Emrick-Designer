@@ -182,8 +182,7 @@ public class FootballFieldPanel extends JPanel implements RepaintListener {
                     }
                 }
                 float h,s,v;
-                System.out.println("hsvs: " + hsvs[0]);
-                System.out.println("hsve: " + hsve[0]);
+                // the math to make this work sucks and probably has redundancies but it works and I refuse to touch it
                 if (clockwise) {
                     if (hsve[0] >= hsvs[0]) {
                         h = ((hsve[0] - hsvs[0]) * shiftProgress + hsvs[0]) % 360;

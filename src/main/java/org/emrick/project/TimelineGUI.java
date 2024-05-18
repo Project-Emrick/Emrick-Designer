@@ -82,7 +82,7 @@ public class TimelineGUI {
         ArrayList<Effect> effects = new ArrayList<>();
         for (int i = 0; i < 5; i += 1) {
             Effect e = new Effect(startTimeMSec + i, startColor, endColor, delay, duration, timeout, TIME_GRADIENT,
-                    SET_TIMEOUT, DO_DELAY, INSTANT_COLOR);
+                    SET_TIMEOUT, DO_DELAY, INSTANT_COLOR, 0);
             effects.add(e);
         }
 

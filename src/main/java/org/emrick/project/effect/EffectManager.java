@@ -15,11 +15,13 @@ public class EffectManager {
     private FootballFieldPanel footballFieldPanel; // For easy access to selection info and performers
     private TimeManager timeManager; // Same TimeManager object as in MediaEditorGUI
     private HashMap<Integer, RFTrigger> count2RFTrigger; // Please keep EffectManager updated
+    private ArrayList<Integer> ids;
 
     public EffectManager(FootballFieldPanel footballFieldPanel, TimeManager timeManager, HashMap<Integer, RFTrigger> count2RFTrigger) {
         this.footballFieldPanel = footballFieldPanel;
         this.timeManager = timeManager;
         this.count2RFTrigger = count2RFTrigger;
+        ids = new ArrayList<>();
     }
 
     /**
@@ -147,6 +149,17 @@ public class EffectManager {
     }
 
     public boolean addEffectToSelectedPerformers(Effect effect) {
+        int id = 0;
+        if (ids.size() > 0) {
+            int prev = ids.get(0);
+            for (int i : ids) {
+                if (i > prev) {
+                    prev = i;
+                }
+            }
+            id = prev + 1;
+        }
+        System.out.println("Id: " + id);
         if (effect == null)
             return false;
 
@@ -159,6 +172,7 @@ public class EffectManager {
                 return false;
             }
         }
+        ids.add(id);
         if (effect.getEffectType() == EffectGUI.WAVE) {
             double startExtreme;
             double endExtreme;
@@ -245,11 +259,15 @@ public class EffectManager {
                     s2.setDuration(Duration.ofMillis(effect.getEndTimeMSec() - waveStartTime - 2 * waveHalfDuration - 1));
                 }
                 if (s1 != null) {
+                    s1.setId(id);
                     map.add(new EffectPerformerMap(s1, p));
                 }
+                w1.setId(id);
                 map.add(new EffectPerformerMap(w1, p));
+                w2.setId(id);
                 map.add(new EffectPerformerMap(w2, p));
                 if (s2 != null) {
+                    s2.setId(id);
                     map.add(new EffectPerformerMap(s2, p));
                 }
                 if (first) {
@@ -266,6 +284,7 @@ public class EffectManager {
             redoStack.clear();
             return true;
         }
+        effect.setId(id);
         addEffect(effect, selectedPerformers);
         return true;
     }
@@ -365,6 +384,17 @@ public class EffectManager {
     public void replaceEffectForSelectedPerformers(Effect oldEffect, Effect newEffect) {
         ArrayList<Performer> performers = getSelectedPerformers();
         if (performers == null) return;
+        ArrayList<Performer> allPerformers = footballFieldPanel.drill.performers;
+        for (int i = 0; i < allPerformers.size(); i++) {
+            for (int j = 0; j < allPerformers.get(i).getEffects().size(); i++) {
+                if (allPerformers.get(i).getEffects().get(j).equals(oldEffect)) {
+                    if (!performers.contains(allPerformers.get(i))) {
+                        performers.add(allPerformers.get(i));
+                    }
+                    break;
+                }
+            }
+        }
         boolean successful = true;
         int i = 0;
         while (successful && i < performers.size()) {
@@ -460,5 +490,13 @@ public class EffectManager {
 
     public void setCount2RFTrigger(HashMap<Integer, RFTrigger> count2RFTrigger) {
         this.count2RFTrigger = count2RFTrigger;
+    }
+
+    public ArrayList<Integer> getIds() {
+        return ids;
+    }
+
+    public void setIds(ArrayList<Integer> ids) {
+        this.ids = ids;
     }
 }

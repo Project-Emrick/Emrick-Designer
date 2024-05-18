@@ -948,13 +948,14 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
 //            scrubBarGUI.setReady(true);
             footballFieldPanel.repaint();
 
+
             if (pf.timeSync != null && pf.startDelay != null) {
                 timeSync = pf.timeSync;
                 onSync(timeSync, pf.startDelay);
                 scrubBarGUI.setTimeSync(timeSync);
                 startDelay = pf.startDelay;
                 count2RFTrigger = pf.count2RFTrigger;
-                setupEffectView();
+                setupEffectView(pf.ids);
             }
 
         } catch (JsonIOException | JsonSyntaxException | FileNotFoundException e) {
@@ -1421,10 +1422,10 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         scrubBarGUI.setTimeSync(timeSync);
         count2RFTrigger = new HashMap<>();
 
-        setupEffectView();
+        setupEffectView(null);
     }
 
-    private void setupEffectView() {
+    private void setupEffectView(ArrayList<Integer> ids) {
 
         // Recalculate set to count map (pageTab2Count) to initialize timeManager
         Map<String, Integer> pageTab2Count = new HashMap<>();
@@ -1436,6 +1437,9 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         // Initialize important state member variables
         this.timeManager = new TimeManager(pageTab2Count, this.timeSync, this.startDelay);
         this.effectManager = new EffectManager(this.footballFieldPanel, this.timeManager, this.count2RFTrigger);
+        if (ids != null) {
+            this.effectManager.setIds(ids);
+        }
         this.footballFieldPanel.setEffectManager(this.effectManager);
 
         updateEffectViewPanel(selectedEffectType);
@@ -1765,7 +1769,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         String relArchive = path.getParentFile().toURI().relativize(archivePath.toURI()).getPath();
         String relDrill = path.getParentFile().toURI().relativize(drillPath.toURI()).getPath();
 
-        ProjectFile pf = new ProjectFile(footballFieldPanel.drill, relArchive, relDrill, timeSync, startDelay, count2RFTrigger);
+        ProjectFile pf = new ProjectFile(footballFieldPanel.drill, relArchive, relDrill, timeSync, startDelay, count2RFTrigger, effectManager.getIds());
         String g = gson.toJson(pf);
 
         System.out.println("saving to `" + path + "`");

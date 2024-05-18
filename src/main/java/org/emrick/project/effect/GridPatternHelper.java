@@ -142,7 +142,7 @@ public class GridPatternHelper {
             long startMSec = startTimeMSec + row * durationMSecPerRow;
             Effect effect = new Effect(startMSec,
                     color, color, Duration.ZERO, Duration.ofMillis(durationMSecPerRow), Duration.ZERO,
-                    true, true, true, true);
+                    true, true, true, true, 0);
 
             System.out.println("GridPatternHelper: startMSec = " + startMSec);
 

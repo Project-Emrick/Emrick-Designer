@@ -30,6 +30,7 @@ public class Effect implements Cloneable, TimelineEvent {
     private boolean upOrSide;
     private boolean direction;
     private int effectType;
+    private int id;
 
     public Effect(long startTimeMSec) {
         this.startTimeMSec = startTimeMSec;
@@ -46,12 +47,13 @@ public class Effect implements Cloneable, TimelineEvent {
         this.direction = false;
         this.speed = 1;
         this.effectType = 0;
+        this.id = -1;
         calculateEndTimeMSec();
     }
 
     public Effect(long startTimeMSec,
                   Color startColor, Color endColor, Duration delay, Duration duration, Duration timeout,
-                  boolean TIME_GRADIENT, boolean SET_TIMEOUT, boolean DO_DELAY, boolean INSTANT_COLOR) {
+                  boolean TIME_GRADIENT, boolean SET_TIMEOUT, boolean DO_DELAY, boolean INSTANT_COLOR, int id) {
         this.startColor = startColor;
         this.endColor = endColor;
         this.delay = delay;
@@ -66,6 +68,7 @@ public class Effect implements Cloneable, TimelineEvent {
         this.speed = 1;
         this.startTimeMSec = startTimeMSec;
         this.effectType = 0;
+        this.id = id;
         calculateEndTimeMSec();
     }
 
@@ -76,6 +79,14 @@ public class Effect implements Cloneable, TimelineEvent {
         if (DO_DELAY) this.endTimeMSec += delay.toMillis();
         if (TIME_GRADIENT) this.endTimeMSec += duration.toMillis();
         if (SET_TIMEOUT) this.endTimeMSec += timeout.toMillis();
+    }
+
+    public int getId() {
+        return id;
+    }
+
+    public void setId(int id) {
+        this.id = id;
     }
 
     public int getEffectType() {
@@ -211,17 +222,7 @@ public class Effect implements Cloneable, TimelineEvent {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         Effect effect = (Effect) o;
-        return startTimeMSec == effect.startTimeMSec &&
-                endTimeMSec == effect.endTimeMSec &&
-                TIME_GRADIENT == effect.TIME_GRADIENT &&
-                SET_TIMEOUT == effect.SET_TIMEOUT &&
-                DO_DELAY == effect.DO_DELAY &&
-                INSTANT_COLOR == effect.INSTANT_COLOR &&
-                Objects.equals(startColor, effect.startColor) &&
-                Objects.equals(endColor, effect.endColor) &&
-                Objects.equals(delay, effect.delay) &&
-                Objects.equals(duration, effect.duration) &&
-                Objects.equals(timeout, effect.timeout);
+        return id == effect.getId();
     }
 
     @Override
