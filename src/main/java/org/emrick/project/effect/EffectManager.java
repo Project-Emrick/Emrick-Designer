@@ -206,6 +206,7 @@ public class EffectManager {
                 }
             }
             long wavePeriod = (long) (1.0/(1.0+effect.getSpeed()) * (double) effect.getDuration().toMillis());
+            boolean first = true;
             for (Performer p : selectedPerformers) {
                 long waveStartTime = 0;
                 double extremeDiff = endExtreme - startExtreme;
@@ -251,8 +252,14 @@ public class EffectManager {
                 if (s2 != null) {
                     map.add(new EffectPerformerMap(s2, p));
                 }
+                if (first) {
+                    System.out.println(w1.getStartColor());
+                    System.out.println(w1.getEndColor());
+                    System.out.println(w2.getStartColor());
+                    System.out.println(w2.getEndColor());
+                }
+                first = false;
             }
-            System.out.println(map.size());
             UndoableAction e = new CreateEffectsAction(map);
             e.execute();
             undoStack.add(e);

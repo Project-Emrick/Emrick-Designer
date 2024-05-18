@@ -157,9 +157,11 @@ public class ScrubBarGUI extends JComponent implements ActionListener {
         JLabel statusLabel = new JLabel("Set: 0", JLabel.CENTER);
         JLabel timeLabel = new JLabel("0:00.000", JLabel.CENTER);
 
-        String[] playbackFps = { "Count", "60 fps", "30 fps", "15 fps" };
+        String[] playbackFps = { "60 fps", "30 fps", "15 fps", "Count" };
 //        Double[] playbackFps = {60.0, 30.0, 15.0};
         JComboBox<String> fpsChanger = new JComboBox<>(playbackFps);
+        this.useFps = true;
+        this.fps = 60.0;
         fpsChanger.addActionListener(e -> {
             // Added: give user ability to not use FPS option
             String selected = (String) fpsChanger.getSelectedItem();

@@ -182,6 +182,8 @@ public class FootballFieldPanel extends JPanel implements RepaintListener {
                     }
                 }
                 float h,s,v;
+                System.out.println("hsvs: " + hsvs[0]);
+                System.out.println("hsve: " + hsve[0]);
                 if (clockwise) {
                     if (hsve[0] >= hsvs[0]) {
                         h = ((hsve[0] - hsvs[0]) * shiftProgress + hsvs[0]) % 360;
@@ -189,10 +191,10 @@ public class FootballFieldPanel extends JPanel implements RepaintListener {
                         h = ((hsve[0] + 360 - hsvs[0]) * shiftProgress + hsvs[0]) % 360;
                     }
                 } else {
-                    if (hsve[0] <= hsvs[0]) {
-                        h = ((hsvs[0] - (hsve[0] - hsvs[0]) * shiftProgress)) % 360;
+                    if (hsve[0] >= hsvs[0]) {
+                        h = ((hsvs[0] + 360 - (hsvs[0] - (hsve[0] - 360)) * shiftProgress)) % 360;
                     } else {
-                        h = (hsvs[0] + 360 - (hsvs[0] + 360 - hsve[0]) * shiftProgress) % 360;
+                        h = (hsvs[0] - (hsvs[0] - hsve[0]) * shiftProgress) % 360;
                     }
                 }
                 s = (hsve[1] - hsvs[1]) * shiftProgress + hsvs[1];
