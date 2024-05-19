@@ -385,6 +385,8 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             //undoColorChange();
             effectManager.undo();
             footballFieldPanel.repaint();
+            updateTimelinePanel();
+            updateEffectViewPanel(selectedEffectType);
         });
         editMenu.add(undoColorsItem);
 
@@ -395,6 +397,8 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             //redoColorChange();
             effectManager.redo();
             footballFieldPanel.repaint();
+            updateTimelinePanel();
+            updateEffectViewPanel(selectedEffectType);
         });
         editMenu.add(redoColorsItem);
 
@@ -1622,18 +1626,12 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         count2RFTrigger.put(footballFieldPanel.getCurrentCount(), rfTrigger);
         updateRFTriggerButton();
         updateTimelinePanel();
-        JOptionPane.showMessageDialog(null,
-                "RF trigger created successfully at count " + footballFieldPanel.getCurrentCount(),
-                "RF Trigger Create: Success", JOptionPane.INFORMATION_MESSAGE);
     }
 
     @Override
     public void onDeleteRFTrigger(int count) {
         count2RFTrigger.remove(count);
         updateRFTriggerButton();
-        JOptionPane.showMessageDialog(null,
-                "RF trigger at count " + count + " deleted successfully", "RF Trigger Delete: Success",
-                JOptionPane.INFORMATION_MESSAGE);
         updateTimelinePanel();
     }
 

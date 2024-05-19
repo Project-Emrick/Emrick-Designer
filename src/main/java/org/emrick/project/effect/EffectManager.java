@@ -120,7 +120,6 @@ public class EffectManager {
     }
 
     private void addEffect(Effect effect, List<Performer> performers) {
-        showAddEffectSuccessDialog();
         ArrayList<EffectPerformerMap> map = new ArrayList<>();
         for (Performer p : performers) {
             map.add(new EffectPerformerMap(effect, p));
@@ -143,8 +142,6 @@ public class EffectManager {
             return false;
 
         boolean successful = addEffect(effect, performer);
-        if (successful)
-            showAddEffectSuccessDialog();
         return successful;
     }
 
@@ -301,16 +298,6 @@ public class EffectManager {
                 "Apply Effect: Error", JOptionPane.ERROR_MESSAGE);
     }
 
-    private void showAddEffectSuccessDialog() {
-        JOptionPane.showMessageDialog(null, "Effect applied successfully.",
-                "Apply Effect: Success", JOptionPane.INFORMATION_MESSAGE);
-    }
-
-    private void showRemoveEffectSuccessDialog() {
-        JOptionPane.showMessageDialog(null, "Effect removed successfully.",
-                "Remove Effect: Success", JOptionPane.INFORMATION_MESSAGE);
-    }
-
     public void removeEffect(Effect effect, Performer performer) {
         UndoableAction removeEffectAction = new RemoveEffectAction(effect, performer);
         removeEffectAction.execute();
@@ -329,7 +316,6 @@ public class EffectManager {
         action.execute();
         undoStack.push(action);
         redoStack.clear();
-        showRemoveEffectSuccessDialog(); // An effect should always be removable
     }
 
     public void removeAllEffects(Performer performer) {
@@ -423,10 +409,7 @@ public class EffectManager {
         replaceEffectsAction.execute();
         undoStack.push(replaceEffectsAction);
         redoStack.clear();
-        showAddEffectSuccessDialog();
     }
-
-    // TODO: Create ReplaceEffectsAction class (plural)
 
     /**
      * Get the effect based on current count as specified by attribute of FootballFieldPanel.
