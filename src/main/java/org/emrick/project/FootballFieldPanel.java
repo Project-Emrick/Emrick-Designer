@@ -171,30 +171,42 @@ public class FootballFieldPanel extends JPanel implements RepaintListener {
                 Color.RGBtoHSB(e.getEndColor().getRed(), e.getEndColor().getGreen(), e.getEndColor().getBlue(), hsve);
                 hsve[0] *= 360;
                 float endHue = hsve[0];
-                boolean clockwise = true;
-                if (endHue > startHue) {
-                    if (endHue - startHue > 180) {
-                        clockwise = false;
-                    }
-                } else {
-                    if (startHue - endHue < 180) {
-                        clockwise = false;
-                    }
+                if (e.getStartColor().equals(Color.black)) {
+                    hsvs[0] = hsve[0];
+                    startHue = hsvs[0];
                 }
-                float h,s,v;
-                // the math to make this work sucks and probably has redundancies but it works and I refuse to touch it
-                if (clockwise) {
-                    if (hsve[0] >= hsvs[0]) {
-                        h = ((hsve[0] - hsvs[0]) * shiftProgress + hsvs[0]) % 360;
+                if (e.getEndColor().equals(Color.black)) {
+                    hsve[0] = hsvs[0];
+                    endHue = hsve[0];
+                }
+                float h, s, v;
+                if (startHue != endHue) {
+                    boolean clockwise = true;
+                    if (endHue > startHue) {
+                        if (endHue - startHue > 180) {
+                            clockwise = false;
+                        }
                     } else {
-                        h = ((hsve[0] + 360 - hsvs[0]) * shiftProgress + hsvs[0]) % 360;
+                        if (startHue - endHue < 180) {
+                            clockwise = false;
+                        }
+                    }
+                    // the math to make this work sucks and probably has redundancies but it works and I refuse to touch it
+                    if (clockwise) {
+                        if (hsve[0] >= hsvs[0]) {
+                            h = ((hsve[0] - hsvs[0]) * shiftProgress + hsvs[0]) % 360;
+                        } else {
+                            h = ((hsve[0] + 360 - hsvs[0]) * shiftProgress + hsvs[0]) % 360;
+                        }
+                    } else {
+                        if (hsve[0] >= hsvs[0]) {
+                            h = ((hsvs[0] + 360 - (hsvs[0] - (hsve[0] - 360)) * shiftProgress)) % 360;
+                        } else {
+                            h = (hsvs[0] - (hsvs[0] - hsve[0]) * shiftProgress) % 360;
+                        }
                     }
                 } else {
-                    if (hsve[0] >= hsvs[0]) {
-                        h = ((hsvs[0] + 360 - (hsvs[0] - (hsve[0] - 360)) * shiftProgress)) % 360;
-                    } else {
-                        h = (hsvs[0] - (hsvs[0] - hsve[0]) * shiftProgress) % 360;
-                    }
+                    h = hsvs[0];
                 }
                 s = (hsve[1] - hsvs[1]) * shiftProgress + hsvs[1];
                 v = (hsve[2] - hsvs[2]) * shiftProgress + hsvs[2];
