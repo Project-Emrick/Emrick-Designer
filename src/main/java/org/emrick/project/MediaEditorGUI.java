@@ -76,7 +76,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
     private EffectGUI effectGUI;
     private Effect currentEffect;
     private Effect copiedEffect;
-    private int selectedEffectType = 0;
+    private int selectedEffectType = 2;
     public final int DEFAULT_FUNCTION = 0x1;
     public final int TIME_GRADIENT = 0x2;
     public final int SET_TIMEOUT = 0x4;
