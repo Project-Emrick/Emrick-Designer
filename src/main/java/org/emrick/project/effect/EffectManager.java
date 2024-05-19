@@ -159,7 +159,6 @@ public class EffectManager {
             }
             id = prev + 1;
         }
-        System.out.println("Id: " + id);
         if (effect == null)
             return false;
 
@@ -322,9 +321,14 @@ public class EffectManager {
     public void removeEffectFromSelectedPerformers(Effect effect) {
         ArrayList<Performer> performers = getSelectedPerformers();
         if (performers == null) return;
+        ArrayList<EffectPerformerMap> map = new ArrayList<>();
         for (Performer performer : performers) {
-            removeEffect(effect, performer);
+            map.add(new EffectPerformerMap(effect, performer));
         }
+        UndoableAction action = new RemoveEffectsAction(map);
+        action.execute();
+        undoStack.push(action);
+        redoStack.clear();
         showRemoveEffectSuccessDialog(); // An effect should always be removable
     }
 
@@ -345,15 +349,29 @@ public class EffectManager {
 
     public void removeAllEffectsFromSelectedPerformers() {
         ArrayList<Performer> selectedPerformers = getSelectedPerformers();
+        ArrayList<EffectPerformerMap> map = new ArrayList<>();
         for (Performer performer : selectedPerformers) {
-            removeAllEffects(performer);
+            for (Effect effect : performer.getEffects()) {
+                map.add(new EffectPerformerMap(effect, performer));
+            }
         }
+        UndoableAction action = new RemoveEffectsAction(map);
+        action.execute();
+        undoStack.push(action);
+        redoStack.clear();
     }
 
     public void removeAllEffectsFromAllPerformers() {
+        ArrayList<EffectPerformerMap> map = new ArrayList<>();
         for (Performer performer : this.footballFieldPanel.drill.performers) {
-            removeAllEffects(performer);
+            for (Effect e : performer.getEffects()) {
+                map.add(new EffectPerformerMap(e, performer));
+            }
         }
+        UndoableAction action = new RemoveEffectsAction(map);
+        action.execute();
+        undoStack.push(action);
+        redoStack.clear();
     }
 
     /**

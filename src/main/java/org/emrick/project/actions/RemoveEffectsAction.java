@@ -3,26 +3,24 @@ package org.emrick.project.actions;
 import org.emrick.project.effect.Effect;
 import org.emrick.project.Performer;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class RemoveEffectsAction implements UndoableAction {
+    private final ArrayList<EffectPerformerMap> map;
 
-    private final Effect effect;
-    private final List<Performer> performers;
-
-    public RemoveEffectsAction(Effect effect, List<Performer> performers) {
-        this.effect = effect;
-        this.performers = performers;
+    public RemoveEffectsAction(ArrayList<EffectPerformerMap> map) {
+        this.map = map;
     }
 
     @Override
     public void execute() {
-        performers.forEach(performer -> performer.getEffects().remove(effect));
+        map.forEach(m -> m.getPerformer().getEffects().remove(m.getEffect()));
     }
 
     @Override
     public void undo() {
-        performers.forEach(performer -> performer.getEffects().add(effect));
+        map.forEach(m -> m.getPerformer().getEffects().add(m.getEffect()));
     }
 
     @Override
