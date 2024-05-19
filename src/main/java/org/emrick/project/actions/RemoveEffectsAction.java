@@ -15,7 +15,9 @@ public class RemoveEffectsAction implements UndoableAction {
 
     @Override
     public void execute() {
-        map.forEach(m -> m.getPerformer().getEffects().remove(m.getEffect()));
+        map.forEach(m -> {
+            while(m.getPerformer().getEffects().remove(m.getEffect())){}
+        });
     }
 
     @Override

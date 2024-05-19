@@ -1606,6 +1606,11 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
 
     @Override
     public void onPerformerSelect() {
+        Performer p = effectManager.getSelectedPerformers().get(0);
+        long msec = footballFieldPanel.currentMS;
+        if (p.getEffects().size() != 0) {
+            selectedEffectType = effectManager.getEffect(p, msec).getEffectType();
+        }
         updateEffectViewPanel(selectedEffectType);
         updateTimelinePanel();
     }
@@ -1699,8 +1704,21 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
 
             return;
         }
+        if (currentEffect.getGeneratedEffect() != null) {
+            WaveEffect waveEffect = (WaveEffect) currentEffect.getGeneratedEffect();
+            currentEffect = new Effect(waveEffect.getStartTime());
+            currentEffect.setEndTimeMSec(waveEffect.getEndTime());
+            currentEffect.setStartColor(waveEffect.getStaticColor());
+            currentEffect.setEndColor(waveEffect.getWaveColor());
+            currentEffect.setDuration(waveEffect.getDuration());
+            currentEffect.setSpeed(waveEffect.getSpeed());
+            currentEffect.setUpOrSide(waveEffect.isVertical());
+            currentEffect.setDirection(waveEffect.isUpRight());
+            currentEffect.setEffectType(EffectGUI.WAVE);
+            currentEffect.setId(waveEffect.getId());
+        }
+        System.out.println(currentEffect);
         effectGUI = new EffectGUI(currentEffect, currentMSec, this, selectedEffectType);
-
         // Add updated data for effect view
         effectViewPanel.add(effectGUI.getEffectPanel(), BorderLayout.CENTER);
         effectViewPanel.revalidate();

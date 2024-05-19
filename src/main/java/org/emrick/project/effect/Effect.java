@@ -13,6 +13,7 @@ public class Effect implements Cloneable, TimelineEvent {
     // Application
     private final long startTimeMSec; // Based on position of scrub bar cursor when user first creates the effect
     private long endTimeMSec; // Calculated from start time, delay, duration, and timeout
+    private GeneratedEffect generatedEffect;
 
     // Main Parameters
     private Color startColor;
@@ -79,6 +80,18 @@ public class Effect implements Cloneable, TimelineEvent {
         if (DO_DELAY) this.endTimeMSec += delay.toMillis();
         if (TIME_GRADIENT) this.endTimeMSec += duration.toMillis();
         if (SET_TIMEOUT) this.endTimeMSec += timeout.toMillis();
+    }
+
+    public GeneratedEffect getGeneratedEffect() {
+        return generatedEffect;
+    }
+
+    public void setGeneratedEffect(GeneratedEffect generatedEffect) {
+        this.generatedEffect = generatedEffect;
+    }
+
+    public void setEndTimeMSec(long endTimeMSec) {
+        this.endTimeMSec = endTimeMSec;
     }
 
     public int getId() {

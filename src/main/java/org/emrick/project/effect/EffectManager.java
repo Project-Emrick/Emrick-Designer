@@ -170,110 +170,7 @@ public class EffectManager {
         }
         ids.add(id);
         if (effect.getEffectType() == EffectGUI.WAVE) {
-            double startExtreme;
-            double endExtreme;
-            ArrayList<EffectPerformerMap> map = new ArrayList<>();
-            if (effect.isUpOrSide()) {
-                startExtreme = selectedPerformers.get(0).currentLocation.getY();
-                endExtreme = selectedPerformers.get(0).currentLocation.getY();
-            } else {
-                startExtreme = selectedPerformers.get(0).currentLocation.getX();
-                endExtreme = selectedPerformers.get(0).currentLocation.getX();
-            }
-            for (Performer p : selectedPerformers) {
-                if (effect.isUpOrSide()) {
-                    if (effect.isDirection()) { // down
-                        if (p.currentLocation.getY() > startExtreme) {
-                            startExtreme = p.currentLocation.getY();
-                        }
-                        if (p.currentLocation.getY() < endExtreme) {
-                            endExtreme = p.currentLocation.getY();
-                        }
-                    } else { // up
-                        if (p.currentLocation.getY() < startExtreme) {
-                            startExtreme = p.currentLocation.getY();
-                        }
-                        if (p.currentLocation.getY() > endExtreme) {
-                            endExtreme = p.currentLocation.getY();
-                        }
-                    }
-                } else {
-                    if (effect.isDirection()) { // right
-                        if (p.currentLocation.getX() < startExtreme) {
-                            startExtreme = p.currentLocation.getX();
-                        }
-                        if (p.currentLocation.getX() > endExtreme) {
-                            endExtreme = p.currentLocation.getX();
-                        }
-                    } else { // left
-                        if (p.currentLocation.getX() > startExtreme) {
-                            startExtreme = p.currentLocation.getX();
-                        }
-                        if (p.currentLocation.getX() < endExtreme) {
-                            endExtreme = p.currentLocation.getX();
-                        }
-                    }
-                }
-            }
-            long wavePeriod = (long) (1.0/(1.0+effect.getSpeed()) * (double) effect.getDuration().toMillis());
-            boolean first = true;
-            for (Performer p : selectedPerformers) {
-                long waveStartTime = 0;
-                double extremeDiff = endExtreme - startExtreme;
-                if (effect.isUpOrSide()) {
-                    double startDiff = p.currentLocation.getY() - startExtreme;
-                    double relativePosition = Math.abs(startDiff / extremeDiff);
-                    waveStartTime = (long) ((float) (effect.getDuration().toMillis() - wavePeriod) * relativePosition);
-                } else {
-                    double startDiff = p.currentLocation.getX() - startExtreme;
-                    double relativePosition = Math.abs(startDiff / extremeDiff);
-                    waveStartTime = (long) ((float) (effect.getDuration().toMillis() - wavePeriod) * relativePosition);
-                }
-                Effect s1 = null;
-                Effect w1 = null;
-                Effect w2 = null;
-                Effect s2 = null;
-                if (waveStartTime != 0) {
-                    s1 = new Effect(effect.getStartTimeMSec());
-                    s1.setStartColor(effect.getStartColor());
-                    s1.setEndColor(effect.getStartColor());
-                    s1.setDuration(Duration.ofMillis(waveStartTime - 1));
-                }
-                long waveHalfDuration = wavePeriod / 2;
-                w1 = new Effect(effect.getStartTimeMSec() + waveStartTime);
-                w1.setStartColor(effect.getStartColor());
-                w1.setEndColor(effect.getEndColor());
-                w1.setDuration(Duration.ofMillis(waveHalfDuration));
-                w2 = new Effect(effect.getStartTimeMSec() + waveStartTime + waveHalfDuration + 1);
-                w2.setStartColor(effect.getEndColor());
-                w2.setEndColor(effect.getStartColor());
-                w2.setDuration(Duration.ofMillis(waveHalfDuration));
-                if (waveStartTime + 2 * waveHalfDuration < effect.getEndTimeMSec()) {
-                    s2 = new Effect(effect.getStartTimeMSec() + waveStartTime + waveHalfDuration * 2 + 1);
-                    s2.setStartColor(effect.getStartColor());
-                    s2.setEndColor(effect.getStartColor());
-                    s2.setDuration(Duration.ofMillis(effect.getEndTimeMSec() - waveStartTime - 2 * waveHalfDuration - 1));
-                }
-                if (s1 != null) {
-                    s1.setId(id);
-                    map.add(new EffectPerformerMap(s1, p));
-                }
-                w1.setId(id);
-                map.add(new EffectPerformerMap(w1, p));
-                w2.setId(id);
-                map.add(new EffectPerformerMap(w2, p));
-                if (s2 != null) {
-                    s2.setId(id);
-                    map.add(new EffectPerformerMap(s2, p));
-                }
-                if (first) {
-                    System.out.println(w1.getStartColor());
-                    System.out.println(w1.getEndColor());
-                    System.out.println(w2.getStartColor());
-                    System.out.println(w2.getEndColor());
-                }
-                first = false;
-            }
+            ArrayList<EffectPerformerMap> map = generateWaveEffect(selectedPerformers, effect);
             UndoableAction e = new CreateEffectsAction(map);
             e.execute();
             undoStack.add(e);
@@ -283,6 +180,116 @@ public class EffectManager {
         effect.setId(id);
         addEffect(effect, selectedPerformers);
         return true;
+    }
+
+    public static ArrayList<EffectPerformerMap> generateWaveEffect(ArrayList<Performer> performers, Effect effect) {
+        WaveEffect waveEffect = new WaveEffect(effect.getStartTimeMSec(), effect.getEndTimeMSec(), effect.getStartColor(), effect.getEndColor(), effect.getDuration(), effect.getSpeed(), effect.isUpOrSide(), effect.isDirection(), effect.getId());
+        int id = effect.getId();
+        double startExtreme;
+        double endExtreme;
+        ArrayList<EffectPerformerMap> map = new ArrayList<>();
+        if (effect.isUpOrSide()) {
+            startExtreme = performers.get(0).currentLocation.getY();
+            endExtreme = performers.get(0).currentLocation.getY();
+        } else {
+            startExtreme = performers.get(0).currentLocation.getX();
+            endExtreme = performers.get(0).currentLocation.getX();
+        }
+        for (Performer p : performers) {
+            if (effect.isUpOrSide()) {
+                if (effect.isDirection()) { // down
+                    if (p.currentLocation.getY() > startExtreme) {
+                        startExtreme = p.currentLocation.getY();
+                    }
+                    if (p.currentLocation.getY() < endExtreme) {
+                        endExtreme = p.currentLocation.getY();
+                    }
+                } else { // up
+                    if (p.currentLocation.getY() < startExtreme) {
+                        startExtreme = p.currentLocation.getY();
+                    }
+                    if (p.currentLocation.getY() > endExtreme) {
+                        endExtreme = p.currentLocation.getY();
+                    }
+                }
+            } else {
+                if (effect.isDirection()) { // right
+                    if (p.currentLocation.getX() < startExtreme) {
+                        startExtreme = p.currentLocation.getX();
+                    }
+                    if (p.currentLocation.getX() > endExtreme) {
+                        endExtreme = p.currentLocation.getX();
+                    }
+                } else { // left
+                    if (p.currentLocation.getX() > startExtreme) {
+                        startExtreme = p.currentLocation.getX();
+                    }
+                    if (p.currentLocation.getX() < endExtreme) {
+                        endExtreme = p.currentLocation.getX();
+                    }
+                }
+            }
+        }
+        long wavePeriod = (long) (1.0/(1.0+effect.getSpeed()) * (double) effect.getDuration().toMillis());
+        for (Performer p : performers) {
+            long waveStartTime = 0;
+            double extremeDiff = endExtreme - startExtreme;
+            if (effect.isUpOrSide()) {
+                double startDiff = p.currentLocation.getY() - startExtreme;
+                double relativePosition = Math.abs(startDiff / extremeDiff);
+                waveStartTime = (long) ((float) (effect.getDuration().toMillis() - wavePeriod) * relativePosition);
+            } else {
+                double startDiff = p.currentLocation.getX() - startExtreme;
+                double relativePosition = Math.abs(startDiff / extremeDiff);
+                waveStartTime = (long) ((float) (effect.getDuration().toMillis() - wavePeriod) * relativePosition);
+            }
+            Effect s1 = null;
+            Effect w1 = null;
+            Effect w2 = null;
+            Effect s2 = null;
+            if (waveStartTime != 0) {
+                s1 = new Effect(effect.getStartTimeMSec());
+                s1.setStartColor(effect.getStartColor());
+                s1.setEndColor(effect.getStartColor());
+                s1.setDuration(Duration.ofMillis(waveStartTime - 1));
+            }
+            long waveHalfDuration = wavePeriod / 2;
+            w1 = new Effect(effect.getStartTimeMSec() + waveStartTime);
+            w1.setStartColor(effect.getStartColor());
+            w1.setEndColor(effect.getEndColor());
+            w1.setDuration(Duration.ofMillis(waveHalfDuration));
+            w2 = new Effect(effect.getStartTimeMSec() + waveStartTime + waveHalfDuration + 1);
+            w2.setStartColor(effect.getEndColor());
+            w2.setEndColor(effect.getStartColor());
+            w2.setDuration(Duration.ofMillis(waveHalfDuration));
+            if (waveStartTime + 2 * waveHalfDuration < effect.getEndTimeMSec()) {
+                s2 = new Effect(effect.getStartTimeMSec() + waveStartTime + waveHalfDuration * 2 + 1);
+                s2.setStartColor(effect.getStartColor());
+                s2.setEndColor(effect.getStartColor());
+                s2.setDuration(Duration.ofMillis(effect.getEndTimeMSec() - waveStartTime - 2 * waveHalfDuration - 1));
+            }
+            if (s1 != null) {
+                s1.setId(id);
+                s1.setEffectType(EffectGUI.WAVE);
+                s1.setGeneratedEffect(waveEffect);
+                map.add(new EffectPerformerMap(s1, p));
+            }
+            w1.setId(id);
+            w1.setEffectType(EffectGUI.WAVE);
+            w1.setGeneratedEffect(waveEffect);
+            map.add(new EffectPerformerMap(w1, p));
+            w2.setId(id);
+            w2.setEffectType(EffectGUI.WAVE);
+            w2.setGeneratedEffect(waveEffect);
+            map.add(new EffectPerformerMap(w2, p));
+            if (s2 != null) {
+                s2.setId(id);
+                s2.setEffectType(EffectGUI.WAVE);
+                s2.setGeneratedEffect(waveEffect);
+                map.add(new EffectPerformerMap(s2, p));
+            }
+        }
+        return map;
     }
 
     private void showAddRFTriggerErrorDialog(Performer performer) {
@@ -401,8 +408,15 @@ public class EffectManager {
         }
 
         ArrayList<EffectPerformerMap> map = new ArrayList<>();
-        for (int i = 0; i < performers.size(); i++) {
-            map.add(new EffectPerformerMap(oldEffect, newEffect, performers.get(i)));
+        if (newEffect.getEffectType() == EffectGUI.WAVE) {
+            map = generateWaveEffect(performers, newEffect);
+            for (EffectPerformerMap m : map) {
+                m.setOldEffect(oldEffect);
+            }
+        } else {
+            for (int i = 0; i < performers.size(); i++) {
+                map.add(new EffectPerformerMap(oldEffect, newEffect, performers.get(i)));
+            }
         }
 
         UndoableAction replaceEffectsAction = new ReplaceEffectsAction(map);
@@ -473,7 +487,7 @@ public class EffectManager {
 
 
 
-    private ArrayList<Performer> getSelectedPerformers() {
+    public ArrayList<Performer> getSelectedPerformers() {
         ArrayList<Performer> selectedPerformers = new ArrayList<>();
         if (footballFieldPanel.selectedPerformers.isEmpty()) {
             return selectedPerformers;
