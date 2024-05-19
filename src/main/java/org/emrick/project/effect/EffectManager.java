@@ -395,13 +395,17 @@ public class EffectManager {
                 }
             }
         }
-        boolean successful = true;
-        int i = 0;
-        while (successful && i < performers.size()) {
-            successful = replaceEffect(oldEffect, newEffect, performers.get(i));
-            i++;
+
+        ArrayList<EffectPerformerMap> map = new ArrayList<>();
+        for (int i = 0; i < performers.size(); i++) {
+            map.add(new EffectPerformerMap(oldEffect, newEffect, performers.get(i)));
         }
-        if (successful) showAddEffectSuccessDialog();
+
+        UndoableAction replaceEffectsAction = new ReplaceEffectsAction(map);
+        replaceEffectsAction.execute();
+        undoStack.push(replaceEffectsAction);
+        redoStack.clear();
+        showAddEffectSuccessDialog();
     }
 
     // TODO: Create ReplaceEffectsAction class (plural)
