@@ -92,16 +92,17 @@ public class Performer {
         coordinates = null;
     }
 
-    public boolean equals(Object obj) {
-        if (this.getClass() == obj.getClass()) {
-            if (this.toString().equals(obj.toString())) {
-                return true;
-            } else {
-                return false;
-            }
-        } else {
-            return false;
-        }
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Performer performer = (Performer) o;
+        return label == performer.label && Objects.equals(symbol, performer.symbol);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(symbol, label);
     }
 
     public String toString() {
