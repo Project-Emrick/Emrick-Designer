@@ -1822,7 +1822,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                 break;
             }
         }
-        if (effects.get(index-1).getStartTimeMSec() > lastTrigger) {
+        if (effects.get(index-1).getStartTimeMSec() >= lastTrigger) {
             return e.getStartTimeMSec() - effects.get(index-1).getEndTimeMSec();
         } else {
             return e.getStartTimeMSec() - lastTrigger;
@@ -1841,8 +1841,11 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                 break;
             }
         }
-        if (effects.get(index+1).getStartTimeMSec() < nextTrigger) {
-            if (effects.get(index+1).getStartTimeMSec() > e.getEndTimeMSec()+1) {
+        if (nextTrigger <= e.getStartTimeMSec()) {
+            nextTrigger = -1;
+        }
+        if (effects.get(index+1).getStartTimeMSec() < nextTrigger || nextTrigger == -1) {
+            if (effects.get(index+1).getStartTimeMSec() > e.getEndTimeMSec()) {
                 return effects.get(index+1).getStartTimeMSec() - e.getEndTimeMSec();
             } else {
                 return Long.MAX_VALUE;
@@ -1899,21 +1902,22 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                     out += "Pkt_count: " + p.getEffects().size() + ", ";
                     for (i = 0; i < p.getEffects().size(); i++) {
                         Effect e = p.getEffects().get(i);
-                        out += "Size: 0, ";
-                        out += "Strip_id: " + p.getDeviceId() + ", ";
-                        out += "Set_id: " + getEffectTriggerIndex(e, timesMS) + ", ";
-                        Color startColor = e.getStartColor();
-                        out += "Start_color: " + startColor.getRed() + ", " + startColor.getBlue() + ", " + startColor.getGreen() + ", ";
-                        Color endColor = e.getEndColor();
-                        out += "End_color: " + endColor.getRed() + ", " + endColor.getBlue() + ", " + endColor.getGreen() + ", ";
                         int flags = 0;
-                        if (timeBeforeEffect(i, e, p.getEffects(), timesMS) != 0) {
+                        if (timeBeforeEffect(i, e, p.getEffects(), timesMS) > 1) {
                             flags += DO_DELAY;
                         }
                         if (timeAfterEffect(i, e, p.getEffects(), timesMS) == Long.MAX_VALUE) {
                             flags += SET_TIMEOUT;
                         }
                         flags += TIME_GRADIENT;
+                        out += "Size: 0, ";
+                        out += "Strip_id: " + p.getDeviceId() + ", ";
+                        out += "Set_id: " + getEffectTriggerIndex(e, timesMS) + ", ";
+                        out += "Flags: " + flags + ", ";
+                        Color startColor = e.getStartColor();
+                        out += "Start_color: " + startColor.getRed() + ", " + startColor.getBlue() + ", " + startColor.getGreen() + ", ";
+                        Color endColor = e.getEndColor();
+                        out += "End_color: " + endColor.getRed() + ", " + endColor.getBlue() + ", " + endColor.getGreen() + ", ";
                         if ((flags & DO_DELAY) > 0) {
                             out += "Delay: " + timeBeforeEffect(i, e, p.getEffects(), timesMS) + ", ";
                         } else {

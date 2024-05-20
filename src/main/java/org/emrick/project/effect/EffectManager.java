@@ -257,16 +257,18 @@ public class EffectManager {
             w1 = new Effect(effect.getStartTimeMSec() + waveStartTime);
             w1.setStartColor(effect.getStartColor());
             w1.setEndColor(effect.getEndColor());
-            w1.setDuration(Duration.ofMillis(waveHalfDuration));
-            w2 = new Effect(effect.getStartTimeMSec() + waveStartTime + waveHalfDuration + 1);
+            w1.setDuration(Duration.ofMillis(waveHalfDuration-1));
+            w2 = new Effect(effect.getStartTimeMSec() + waveStartTime + waveHalfDuration);
             w2.setStartColor(effect.getEndColor());
             w2.setEndColor(effect.getStartColor());
-            w2.setDuration(Duration.ofMillis(waveHalfDuration));
+            w2.setDuration(Duration.ofMillis(waveHalfDuration-1));
             if (waveStartTime + 2 * waveHalfDuration < effect.getEndTimeMSec()) {
-                s2 = new Effect(effect.getStartTimeMSec() + waveStartTime + waveHalfDuration * 2 + 1);
+                s2 = new Effect(effect.getStartTimeMSec() + waveStartTime + waveHalfDuration * 2);
                 s2.setStartColor(effect.getStartColor());
                 s2.setEndColor(effect.getStartColor());
-                s2.setDuration(Duration.ofMillis(effect.getEndTimeMSec() - waveStartTime - 2 * waveHalfDuration - 1));
+                s2.setDuration(Duration.ofMillis(effect.getEndTimeMSec() - waveStartTime - 2 * waveHalfDuration));
+            } else {
+                s1.setDuration(Duration.ofMillis(waveStartTime));
             }
             if (s1 != null) {
                 s1.setId(id);
