@@ -102,4 +102,19 @@ public class WaveEffect implements GeneratedEffect {
     public int getEffectType() {
         return 0;
     }
+
+    @Override
+    public Effect generateEffectObj() {
+        Effect effect = new Effect(this.getStartTime());
+        effect.setEndTimeMSec(this.getEndTime());
+        effect.setStartColor(this.getStaticColor());
+        effect.setEndColor(this.getWaveColor());
+        effect.setDuration(this.getDuration());
+        effect.setSpeed(this.getSpeed());
+        effect.setUpOrSide(this.isVertical());
+        effect.setDirection(this.isUpRight());
+        effect.setEffectType(EffectGUI.WAVE);
+        effect.setId(this.getId());
+        return effect;
+    }
 }

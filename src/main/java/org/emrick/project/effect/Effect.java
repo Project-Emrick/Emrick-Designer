@@ -239,6 +239,11 @@ public class Effect implements Cloneable, TimelineEvent {
     }
 
     @Override
+    public int hashCode() {
+        return Objects.hash(id);
+    }
+
+    @Override
     public JPanel getTimelineWidget() {
         Border outerBorder = BorderFactory.createLineBorder(Color.lightGray);
         Border innerBorder = BorderFactory.createEmptyBorder(2,2,2,2);
@@ -246,7 +251,18 @@ public class Effect implements Cloneable, TimelineEvent {
         JPanel widgetPanel = new JPanel(new GridLayout(5,1));
         widgetPanel.setBorder(BorderFactory.createCompoundBorder(outerBorder, innerBorder));
 
-        JLabel titleLabel = new JLabel("<html><b>Effect</b></html>");
+        String timeLineLabel;
+        switch(effectType) {
+            case 1 : timeLineLabel = "Fade"; break;
+            case 2 : timeLineLabel = "Static Color"; break;
+            case 3 : timeLineLabel = "Flashing Color"; break;
+            case 4 : timeLineLabel = "Ripple"; break;
+            case 5 : timeLineLabel = "Wave"; break;
+            case 6 : timeLineLabel = "Circle Chase"; break;
+            default : timeLineLabel = "Default Pattern"; break;
+        }
+
+        JLabel titleLabel = new JLabel("<html><b>" + timeLineLabel + "</b></html>");
         JLabel startTimeLabel = new JLabel("Start: " + TimeManager.getFormattedTime(startTimeMSec));
         JLabel endTimeLabel = new JLabel("End: " + TimeManager.getFormattedTime(endTimeMSec));
 

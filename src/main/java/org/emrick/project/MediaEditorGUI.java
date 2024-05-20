@@ -1740,7 +1740,14 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         // Get effects of selected performers, if applicable, else will be null
         HashSet<Effect> effectsSet = new HashSet<>();
         for (Map.Entry<String, Performer> selected : footballFieldPanel.selectedPerformers.entrySet()) {
-            effectsSet.addAll(selected.getValue().getEffects());
+            Performer p = selected.getValue();
+            for (Effect e : p.getEffects()) {
+                if (e.getGeneratedEffect() != null) {
+                    effectsSet.add(e.getGeneratedEffect().generateEffectObj());
+                } else {
+                    effectsSet.add(e);
+                }
+            }
         }
         ArrayList<Effect> effectsList = new ArrayList<>(effectsSet);
         timelineGUI = new TimelineGUI(effectsList, count2RFTrigger);
