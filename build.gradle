@@ -4,7 +4,8 @@ plugins {
 }
 
 group 'org.emrick.project'
-version '4.23-SNAPSHOT'
+version '5.20'
+var jarTitle = "Emrick-Designer-$version"
 
 repositories {
     mavenCentral()
@@ -36,11 +37,26 @@ application {
     mainClass = 'org.emrick.project.MediaEditorGUI'
 }
 
+//jar {
+//    manifest {
+//        attributes 'Main-Class': application.mainClass
+//    }
+////    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+////    from {
+////        configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) }
+////    }
+//}
 jar {
     manifest {
-        attributes 'Main-Class': application.mainClass
+        attributes["Main-Class"] = "org.emrick.project.MediaEditorGUI"
     }
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+    from {
+        configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) }
+    }
+    destinationDirectory.set(file("$buildDir\\jars"))
 }
+
 
 test {
     // test task with JUnit 5

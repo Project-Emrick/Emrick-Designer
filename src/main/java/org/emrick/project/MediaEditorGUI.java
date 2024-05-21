@@ -113,6 +113,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         builder.registerTypeAdapter(Point2D.class, new Point2DAdapter());
         builder.registerTypeAdapter(SyncTimeGUI.Pair.class, new PairAdapter());
         builder.registerTypeAdapter(Duration.class, new DurationAdapter());
+        builder.registerTypeAdapter(GeneratedEffect.class, new GeneratedEffectAdapter());
         builder.serializeNulls();
         gson = builder.create();
 
@@ -1342,6 +1343,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
     }
 
     public static void main(String[] args) {
+        System.out.println(System.getProperty("user.dir"));
         try {
             UIManager.setLookAndFeel(new FlatLightLaf());
         } catch (Exception ex) {
