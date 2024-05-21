@@ -435,6 +435,8 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
 
             footballFieldPanel.drill = drill;
             footballFieldPanel.repaint();
+            updateTimelinePanel();
+            updateEffectViewPanel(selectedEffectType);
         });
 
         // Remove effects for selected
@@ -447,6 +449,8 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             if (this.effectManager == null) return;
             this.effectManager.removeAllEffectsFromSelectedPerformers();
             this.footballFieldPanel.repaint();
+            updateTimelinePanel();
+            updateEffectViewPanel(selectedEffectType);
         });
 
         editMenu.addSeparator();
