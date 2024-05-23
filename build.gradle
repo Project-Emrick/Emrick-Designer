@@ -1,6 +1,7 @@
 plugins {
     id 'java'
     id 'application'
+    id "org.panteleyev.jpackageplugin" version "1.6.0"
 }
 
 group 'org.emrick.project'
@@ -55,6 +56,25 @@ jar {
         configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) }
     }
     destinationDirectory.set(file("$buildDir\\jars"))
+}
+
+tasks.jpackage {
+    dependsOn("build")
+
+    type = "appImage"
+    input  = "$buildDir/jars"
+
+    destination = "$buildDir/dist/$version"
+
+    appName = "Emrick Designer"
+    vendor = "app.org"
+
+    mainJar = "Emrick-Designer-$version" + ".jar"
+    mainClass = "org.emrick.project.MediaEditorGUI"
+    icon = 'icon.ico'
+    windows {
+        winConsole = false
+    }
 }
 
 
