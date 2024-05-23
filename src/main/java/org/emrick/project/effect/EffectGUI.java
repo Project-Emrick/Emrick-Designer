@@ -50,7 +50,6 @@ public class EffectGUI implements ActionListener {
         // ! NOTE ! Assume Working Directory is Emrick-Designer/
         System.out.println("Working Directory = " + System.getProperty("user.dir"));
         String fileName = "./src/main/resources/effect/" + "effectsGroup.json";
-
         if (!new File(fileName).exists()) {
             try {
                 Files.createFile(Path.of(fileName));

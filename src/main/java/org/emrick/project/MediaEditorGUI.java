@@ -1615,7 +1615,10 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         Performer p = effectManager.getSelectedPerformers().get(0);
         long msec = footballFieldPanel.currentMS;
         if (p.getEffects().size() != 0) {
-            selectedEffectType = effectManager.getEffect(p, msec).getEffectType();
+            Effect effect = effectManager.getEffect(p, msec);
+            if (effect != null) {
+                selectedEffectType = effect.getEffectType();
+            }
         }
         updateEffectViewPanel(selectedEffectType);
         updateTimelinePanel();
@@ -1699,11 +1702,10 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             return;
         }
 
-        // FIXME: Here, we know there's only one performer selected. The EffectGUI is for that single performer, for now
+
         long currentMSec = timeManager.getCount2MSec().get(footballFieldPanel.getCurrentCount());
         currentEffect = effectManager.getEffectsFromSelectedPerformers(currentMSec);
         if (currentEffect == null) {
-            // Eventually should be able to work with multiple performers at a time
             currentEffect = null;
             effectGUI = new EffectGUI(EffectGUI.noCommonEffectMsg);
             effectViewPanel.add(effectGUI.getEffectPanel(), BorderLayout.CENTER);
@@ -1723,7 +1725,6 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             currentEffect.setEffectType(EffectGUI.WAVE);
             currentEffect.setId(waveEffect.getId());
         }
-        System.out.println(currentEffect);
         effectGUI = new EffectGUI(currentEffect, currentMSec, this, selectedEffectType);
         // Add updated data for effect view
         effectViewPanel.add(effectGUI.getEffectPanel(), BorderLayout.CENTER);

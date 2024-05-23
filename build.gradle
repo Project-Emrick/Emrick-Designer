@@ -4,7 +4,7 @@ plugins {
 }
 
 group 'org.emrick.project'
-version '5.20'
+version '5.23'
 var jarTitle = "Emrick-Designer-$version"
 
 repositories {
@@ -37,15 +37,15 @@ application {
     mainClass = 'org.emrick.project.MediaEditorGUI'
 }
 
-//jar {
-//    manifest {
-//        attributes 'Main-Class': application.mainClass
-//    }
-////    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
-////    from {
-////        configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) }
-////    }
-//}
+distZip {
+    into(project.name + "-$version" + "/bin") {
+        from '.'
+        include 'src/main/resources/*'
+        include 'src/main/resources/images/*'
+        include 'src/main/resources/images/scrub/*'
+    }
+}
+
 jar {
     manifest {
         attributes["Main-Class"] = "org.emrick.project.MediaEditorGUI"
