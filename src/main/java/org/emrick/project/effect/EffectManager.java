@@ -158,7 +158,7 @@ public class EffectManager {
         }
         if (effect == null)
             return false;
-
+        effect.setId(id);
         ArrayList<Performer> selectedPerformers = getSelectedPerformers();
 
         // Verify ability to add the effect to all selected performers, to avoid adding for some then error-ing out.
@@ -177,7 +177,6 @@ public class EffectManager {
             redoStack.clear();
             return true;
         }
-        effect.setId(id);
         addEffect(effect, selectedPerformers);
         return true;
     }
@@ -399,7 +398,7 @@ public class EffectManager {
         if (performers == null) return;
         ArrayList<Performer> allPerformers = footballFieldPanel.drill.performers;
         for (int i = 0; i < allPerformers.size(); i++) {
-            for (int j = 0; j < allPerformers.get(i).getEffects().size(); i++) {
+            for (int j = 0; j < allPerformers.get(i).getEffects().size(); j++) {
                 if (allPerformers.get(i).getEffects().get(j).equals(oldEffect)) {
                     if (!performers.contains(allPerformers.get(i))) {
                         performers.add(allPerformers.get(i));
