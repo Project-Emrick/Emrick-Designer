@@ -191,7 +191,7 @@ public class EffectGUI implements ActionListener {
         applyBtn.addActionListener(this);
         deleteBtn.addActionListener(this);
 
-        Border innerBorder = BorderFactory.createTitledBorder("Effect");
+        Border innerBorder = BorderFactory.createTitledBorder("Wave Effect");
         Border outerBorder = BorderFactory.createEmptyBorder(5, 5, 5, 5);
 
         this.effectPanel.setBorder(BorderFactory.createCompoundBorder(outerBorder, innerBorder));
@@ -347,7 +347,7 @@ public class EffectGUI implements ActionListener {
         applyBtn.addActionListener(this);
         deleteBtn.addActionListener(this);
 
-        Border innerBorder = BorderFactory.createTitledBorder("Effect");
+        Border innerBorder = BorderFactory.createTitledBorder("Static Color Effect");
         Border outerBorder = BorderFactory.createEmptyBorder(5, 5, 5, 5);
 
         this.effectPanel.setBorder(BorderFactory.createCompoundBorder(outerBorder, innerBorder));
@@ -451,7 +451,7 @@ public class EffectGUI implements ActionListener {
         applyBtn.addActionListener(this);
         deleteBtn.addActionListener(this);
 
-        Border innerBorder = BorderFactory.createTitledBorder("Effect");
+        Border innerBorder = BorderFactory.createTitledBorder(" Fade Effect");
         Border outerBorder = BorderFactory.createEmptyBorder(5, 5, 5, 5);
 
         this.effectPanel.setBorder(BorderFactory.createCompoundBorder(outerBorder, innerBorder));
