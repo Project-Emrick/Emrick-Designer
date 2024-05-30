@@ -965,6 +965,8 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                 startDelay = pf.startDelay;
                 count2RFTrigger = pf.count2RFTrigger;
                 setupEffectView(pf.ids);
+                updateTimelinePanel();
+                updateEffectViewPanel(selectedEffectType);
             }
 
         } catch (JsonIOException | JsonSyntaxException | FileNotFoundException e) {
@@ -1403,10 +1405,10 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         footballFieldPanel.drill = DrillParser.parseWholeDrill(text);
         footballFieldPanel.addSetToField(footballFieldPanel.drill.sets.get(0));
         count2RFTrigger = new HashMap<>();
+        timeManager = null;
         updateEffectViewPanel(selectedEffectType);
         updateTimelinePanel();
         rebuildPageTabCounts();
-        timeManager = null;
     }
 
     private void rebuildPageTabCounts() {
@@ -1737,16 +1739,19 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
     }
 
     private void updateTimelinePanel() {
-
-        // No point in updating timeline if project has not been synced
-        if (timeManager == null) return;
-
         // Remove existing timeline data if it exists
         if (timelineGUI != null) {
             timelinePanel.remove(timelineGUI.getTimelineScrollPane());
             timelinePanel.revalidate();
             timelinePanel.repaint();
         }
+
+        // No point in updating timeline if project has not been synced
+        if (timeManager == null) {
+            System.out.println("null");
+            return;
+        }
+
 
         // Get effects of selected performers, if applicable, else will be null
         HashSet<Effect> effectsSet = new HashSet<>();
