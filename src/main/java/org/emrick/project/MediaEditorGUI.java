@@ -1402,7 +1402,11 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         String text = DrillParser.extractText(drill);
         footballFieldPanel.drill = DrillParser.parseWholeDrill(text);
         footballFieldPanel.addSetToField(footballFieldPanel.drill.sets.get(0));
+        count2RFTrigger = new HashMap<>();
+        updateEffectViewPanel(selectedEffectType);
+        updateTimelinePanel();
         rebuildPageTabCounts();
+        timeManager = null;
     }
 
     private void rebuildPageTabCounts() {
