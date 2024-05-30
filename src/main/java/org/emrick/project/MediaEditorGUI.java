@@ -839,18 +839,20 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             @Override
             public void windowClosing(WindowEvent e) {
                 if (archivePath != null && drillPath != null) {
-                    int resp = JOptionPane.showConfirmDialog(frame,
-                                                             "Would you like to save before quitting?",
-                                                             "Save and Quit?",
-                                                             JOptionPane.YES_NO_CANCEL_OPTION);
-                    if (resp == JOptionPane.CANCEL_OPTION) {
-                        System.out.println("User cancelled exit.");
-                        return;
-                    } else if (resp == JOptionPane.YES_OPTION) {
-                        System.out.println("User saving and quitting.");
-                        saveProjectDialog();
-                    } else if (resp == JOptionPane.NO_OPTION) {
-                        System.out.println("User not saving but quitting anyway.");
+                    if (!effectManager.getUndoStack().isEmpty()) {
+                        int resp = JOptionPane.showConfirmDialog(frame,
+                                "Would you like to save before quitting?",
+                                "Save and Quit?",
+                                JOptionPane.YES_NO_CANCEL_OPTION);
+                        if (resp == JOptionPane.CANCEL_OPTION) {
+                            System.out.println("User cancelled exit.");
+                            return;
+                        } else if (resp == JOptionPane.YES_OPTION) {
+                            System.out.println("User saving and quitting.");
+                            saveProjectDialog();
+                        } else if (resp == JOptionPane.NO_OPTION) {
+                            System.out.println("User not saving but quitting anyway.");
+                        }
                     }
                 }
                 frame.dispose();
@@ -1407,6 +1409,23 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
     ////////////////////////// Importing Listeners //////////////////////////
 
     @Override
+    public void onBeginImport() {
+        if (effectManager != null) {
+            if (!effectManager.getUndoStack().isEmpty()) {
+                int resp = JOptionPane.showConfirmDialog(frame,
+                        "Would you like to save before quitting?",
+                        "Save and Quit?",
+                        JOptionPane.YES_NO_OPTION);
+                if (resp == JOptionPane.YES_OPTION) {
+                    System.out.println("User saving and quitting.");
+                    saveProjectDialog();
+                } else if (resp == JOptionPane.NO_OPTION) {
+                    System.out.println("User not saving but quitting anyway.");
+                }
+            }
+        }
+    }
+    @Override
     public void onImport() {
         scrubBarGUI.setReady(true);
     }
@@ -1446,7 +1465,6 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         footballFieldPanel.drill = DrillParser.parseWholeDrill(text);
         footballFieldPanel.addSetToField(footballFieldPanel.drill.sets.get(0));
         count2RFTrigger = new HashMap<>();
-        timeManager = null;
         updateEffectViewPanel(selectedEffectType);
         updateTimelinePanel();
         rebuildPageTabCounts();

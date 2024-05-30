@@ -91,6 +91,10 @@ public class EffectManager {
         return true;
     }
 
+    public Stack<UndoableAction> getUndoStack() {
+        return undoStack;
+    }
+
     public void undo() {
         if (!undoStack.isEmpty()) {
             UndoableAction action = undoStack.pop();

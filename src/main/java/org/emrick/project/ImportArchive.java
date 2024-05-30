@@ -25,6 +25,7 @@ public class ImportArchive {
     }
 
     public void fullImport(String archiveSrc, String drillSrc) {
+        importListener.onBeginImport();
 
         // ! NOTE ! Assume Working Directory is Emrick-Designer/
         System.out.println("Working Directory = " + System.getProperty("user.dir"));
