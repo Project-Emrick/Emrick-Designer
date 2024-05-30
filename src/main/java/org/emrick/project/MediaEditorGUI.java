@@ -23,7 +23,9 @@ import java.awt.event.*;
 import java.awt.geom.*;
 import java.awt.image.BufferedImage;
 import java.io.*;
+import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.net.UnknownHostException;
 import java.nio.Buffer;
 import java.nio.file.*;
 import java.time.*;
@@ -603,7 +605,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                     }
                 }
             }
-            st.writeToSerialPort("p");
+            st.enterProgMode();
         });
         flowViewerItem.addActionListener(e -> {
             SerialTransmitter st = new SerialTransmitter();

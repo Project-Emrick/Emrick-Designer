@@ -2,6 +2,9 @@ package org.emrick.project;
 
 import com.fazecast.jSerialComm.SerialPort;
 
+import java.net.InetAddress;
+import java.net.UnknownHostException;
+
 public class SerialTransmitter {
     private SerialPort sp;
     public SerialTransmitter() {
@@ -52,7 +55,12 @@ public class SerialTransmitter {
         if (!sp.openPort()) {
             System.out.println("Port is busy");
         }
-        String str = "p";
+        String str;
+        try {
+            str = "p" + InetAddress.getLocalHost().getHostAddress() + "\n";
+        } catch (UnknownHostException uhe) {
+            throw new RuntimeException(uhe);
+        }
         byte[] out = str.getBytes();
         sp.writeBytes(out, str.length());
         sp.flushIOBuffers();
