@@ -309,7 +309,6 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
 
         // Export Emrick Packets
         JMenuItem exportItem = new JMenuItem("Export Emrick Packets File");
-        exportItem.setEnabled(csvFile != null);
         exportItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_E, ActionEvent.CTRL_MASK));
         fileMenu.add(exportItem);
         exportItem.addActionListener(e -> {
