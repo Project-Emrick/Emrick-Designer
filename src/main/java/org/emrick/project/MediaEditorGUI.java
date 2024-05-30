@@ -930,8 +930,9 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             JFileChooser fileChooser = new JFileChooser();
             fileChooser.showOpenDialog(null);
             File f = fileChooser.getSelectedFile();
-            server = HttpServer.create(new InetSocketAddress(port), 0);
+            server = HttpServer.create(new InetSocketAddress(port), 250);
             System.out.println("server started at " + port);
+            System.out.println(server.getAddress());
             BufferedReader bfr = new BufferedReader(new FileReader(f.getAbsolutePath()));
             String pkt = "";
             String line = bfr.readLine();
@@ -940,7 +941,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                 line = bfr.readLine();
             }
             server.createContext("/", new GetHandler(pkt));
-            server.setExecutor(null);
+            server.setExecutor(new ServerExecutor());
             server.start();
         } catch (IOException ioe) {
             throw new RuntimeException(ioe);

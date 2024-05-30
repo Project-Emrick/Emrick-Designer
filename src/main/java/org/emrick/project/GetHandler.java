@@ -22,6 +22,16 @@ public class GetHandler implements HttpHandler {
         Map<String, Object> parameters = new HashMap<String, Object>();
         URI requestedUri = exchange.getRequestURI();
         String query = requestedUri.getRawQuery();
+        System.out.println(query);
+        if (query == null) {
+            String running = "Server is running";
+            exchange.sendResponseHeaders(200, running.length());
+            OutputStream os = exchange.getResponseBody();
+            os.write(running.getBytes());
+            os.flush();
+            os.close();
+            return;
+        }
         parseQuery(query, parameters);
         String response = "";
         String[] pkts = pkt.split("\n");
