@@ -5,6 +5,7 @@ import com.google.gson.*;
 import com.itextpdf.text.Document;
 import com.itextpdf.text.*;
 import com.itextpdf.text.pdf.*;
+import com.sun.net.httpserver.HttpServer;
 import org.emrick.project.audio.*;
 import org.emrick.project.effect.*;
 import org.emrick.project.serde.*;
@@ -22,6 +23,8 @@ import java.awt.event.*;
 import java.awt.geom.*;
 import java.awt.image.BufferedImage;
 import java.io.*;
+import java.net.InetSocketAddress;
+import java.nio.Buffer;
 import java.nio.file.*;
 import java.time.*;
 import java.util.*;
@@ -100,6 +103,8 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
     private long frameStartTime;
     private long playbackStartMS;
     private int timeAdjustment = 0;
+    // Web Server
+    private HttpServer server;
     // Project info
     private File archivePath = null;
     private File drillPath = null;
@@ -538,6 +543,19 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         JMenuItem programItem = new JMenuItem("Enter Programming Mode");
         runMenu.add(programItem);
         JMenuItem stopShowItem = new JMenuItem("Stop show");
+        JMenuItem runWebServer = new JMenuItem("Run Web Server");
+        runMenu.add(runWebServer);
+        JMenuItem stopWebServer = new JMenuItem("Stop Web Server");
+        runWebServer.addActionListener(e -> {
+            runServer();
+            runMenu.remove(runWebServer);
+            runMenu.add(stopWebServer);
+        });
+        stopWebServer.addActionListener(e -> {
+            server.stop(0);
+            runMenu.remove(stopWebServer);
+            runMenu.add(runWebServer);
+        });
         stopShowItem.addActionListener(e -> {
             footballFieldPanel.setSerialTransmitter(null);
             runMenu.remove(stopShowItem);
@@ -904,6 +922,29 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             }
         });
         return lightButton;
+    }
+
+    public void runServer() {
+        int port = 8080;
+        try {
+            JFileChooser fileChooser = new JFileChooser();
+            fileChooser.showOpenDialog(null);
+            File f = fileChooser.getSelectedFile();
+            server = HttpServer.create(new InetSocketAddress(port), 0);
+            System.out.println("server started at " + port);
+            BufferedReader bfr = new BufferedReader(new FileReader(f.getAbsolutePath()));
+            String pkt = "";
+            String line = bfr.readLine();
+            while (line != null) {
+                pkt += line + "\n";
+                line = bfr.readLine();
+            }
+            server.createContext("/", new GetHandler(pkt));
+            server.setExecutor(null);
+            server.start();
+        } catch (IOException ioe) {
+            throw new RuntimeException(ioe);
+        }
     }
 
     public void loadDemoDrillObj() {
