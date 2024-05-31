@@ -252,6 +252,7 @@ public class SelectFileGUI implements ActionListener {
 
     static JFileChooser getFileChooser(String x, String suffix) {
         JFileChooser fileChooser = new JFileChooser();
+        fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
 
         // Filter for archive files (e.g., pyware_archive.3dz)
         fileChooser.setFileFilter(new FileFilter() {

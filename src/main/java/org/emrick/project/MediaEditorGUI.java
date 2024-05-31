@@ -320,9 +320,16 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             System.out.println("Exporting packets...");
             JFileChooser fileChooser = new JFileChooser();
             fileChooser.setDialogTitle("Export Project");
+            fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
+            fileChooser.setFileFilter(new FileNameExtensionFilter("Emrick Project Packets (*.pkt)",
+                    "pkt"));
             if (fileChooser.showSaveDialog(fileMenu) == JFileChooser.APPROVE_OPTION) {
-                System.out.println("Exporting file `" + fileChooser.getSelectedFile().getAbsolutePath() + "`.");
-                exportPackets(new File(fileChooser.getSelectedFile().getAbsolutePath()));
+                String path = fileChooser.getSelectedFile().getAbsolutePath();
+                if (!path.endsWith(".pkt")) {
+                    path += ".pkt";
+                }
+                System.out.println("Exporting file `" + path + "`.");
+                exportPackets(new File(path));
             }
         });
 
@@ -342,6 +349,10 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
 
             if (retVal == JFileChooser.APPROVE_OPTION) {
                 File selectedFile = fileChooser.getSelectedFile();
+                if (!selectedFile.getAbsolutePath().endsWith(".csv")) {
+                    File tmp = selectedFile;
+                    selectedFile = new File(tmp.getAbsolutePath() + ".csv");
+                }
                 exportCsvFileForPerformerDeviceIDs(selectedFile);
             }
 
@@ -951,6 +962,9 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         int port = 8080;
         try {
             JFileChooser fileChooser = new JFileChooser();
+            fileChooser.setDialogTitle("Select Packets (.pkt) file");
+            fileChooser.setFileFilter(new FileNameExtensionFilter("Emrick Designer Packets File (*.pkt)", "pkt"));
+            fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
             fileChooser.showOpenDialog(null);
             File f = fileChooser.getSelectedFile();
             server = HttpServer.create(new InetSocketAddress(port), 250);
@@ -1133,10 +1147,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         JFileChooser fileChooser = new JFileChooser();
         fileChooser.setDialogTitle("Open Project");
         fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
-        fileChooser.setAcceptAllFileFilterUsed(false);
-        fileChooser.addChoosableFileFilter(new FileNameExtensionFilter("Emrick Project Files (emrick, json)",
-                                                                       "emrick",
-                                                                       "json"));
+        fileChooser.setFileFilter(new FileNameExtensionFilter("Emrick Project Files (*.emrick)","emrick"));
 
         if (fileChooser.showOpenDialog(null) == JFileChooser.APPROVE_OPTION) {
             System.out.println("Opening file `" + fileChooser.getSelectedFile().getAbsolutePath() + "`.");
@@ -1155,14 +1166,16 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         JFileChooser fileChooser = new JFileChooser();
         fileChooser.setDialogTitle("Save Project");
         fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
-        fileChooser.setAcceptAllFileFilterUsed(false);
-        fileChooser.addChoosableFileFilter(new FileNameExtensionFilter("Emrick Project Files (emrick, json)",
-                                                                       "emrick",
-                                                                       "json"));
+        fileChooser.setFileFilter(new FileNameExtensionFilter("Emrick Project Files (*.emrick)",
+                                                                       "emrick"));
 
         if (fileChooser.showSaveDialog(null) == JFileChooser.APPROVE_OPTION) {
-            System.out.println("Saving file `" + fileChooser.getSelectedFile().getAbsolutePath() + "`.");
-            saveProject(fileChooser.getSelectedFile(), archivePath, drillPath);
+            String path = fileChooser.getSelectedFile().getAbsolutePath();
+            if (!path.endsWith(".emrick")) {
+                path += ".emrick";
+            }
+            System.out.println("Saving file `" + path + "`.");
+            saveProject(new File(path), archivePath, drillPath);
         }
     }
 
