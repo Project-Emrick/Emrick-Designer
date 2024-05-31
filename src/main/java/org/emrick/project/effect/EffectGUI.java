@@ -49,7 +49,7 @@ public class EffectGUI implements ActionListener {
         // String fileName = System.getProperty("user.dir") + File.separator + "effectsGroup.json";
         // ! NOTE ! Assume Working Directory is Emrick-Designer/
         System.out.println("Working Directory = " + System.getProperty("user.dir"));
-        String fileName = "./src/main/resources/effect/" + "effectsGroup.json";
+        String fileName = System.getProperty("user.home") + "/AppData/Local/Emrick Designer/src/main/resources/effect/" + "effectsGroup.json";
         if (!new File(fileName).exists()) {
             try {
                 Files.createFile(Path.of(fileName));
@@ -1110,8 +1110,7 @@ public class EffectGUI implements ActionListener {
 
         // ! NOTE ! Assume Working Directory is Emrick-Designer/
         System.out.println("Working Directory = " + System.getProperty("user.dir"));
-        String fileName = "./src/main/resources/effect/" + "effectsGroup.json";
-
+        String fileName = System.getProperty("user.home") + "/AppData/Local/Emrick Designer/src/main/resources/effect/" + "effectsGroup.json";
         if (!new File(fileName).exists()) {
             try {
                 Files.createFile(Path.of(fileName));

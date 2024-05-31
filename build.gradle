@@ -38,15 +38,6 @@ application {
     mainClass = 'org.emrick.project.MediaEditorGUI'
 }
 
-distZip {
-    into(project.name + "-$version" + "/bin") {
-        from '.'
-        include 'src/main/resources/*'
-        include 'src/main/resources/images/*'
-        include 'src/main/resources/images/scrub/*'
-    }
-}
-
 jar {
     manifest {
         attributes["Main-Class"] = "org.emrick.project.MediaEditorGUI"

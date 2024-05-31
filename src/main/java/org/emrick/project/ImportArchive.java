@@ -33,7 +33,7 @@ public class ImportArchive {
         // Unzip archive into resources/unzip/ with same archive name w/o .3dz extension.
         File archiveFile = new File(archiveSrc);
         String fileNameNoExt = archiveFile.getName().replaceFirst("[.][^.]+$", "");
-        String unzipPath = "./src/main/resources/unzip/" + fileNameNoExt;
+        String unzipPath = System.getProperty("user.home") + "/AppData/Local/Emrick Designer/src/main/resources/unzip/" + fileNameNoExt;
         Unzip.unzip(archiveSrc, unzipPath);
 
         // Parse package.ini file

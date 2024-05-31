@@ -12,7 +12,7 @@ public class SyncTimeGUI implements ActionListener {
     private static boolean IS_DEBUG = false;
 
     // String Constants
-    private static final String PATH_INSTR_IMAGE = "./src/main/resources/images/sync_time_instr.jpg";
+    private static final String PATH_INSTR_IMAGE = System.getProperty("user.home") + "/AppData/Local/Emrick Designer/src/main/resources/images/sync_time_instr.jpg";
     private static final String START_TIMESTAMP_INSTRUCTION = "Provide a start delay in seconds (optional):";
     private static final String BPM_INSTRUCTION = "<html><p>" +
             "Please enter the BPM (beats-per-minute) for each set. Example: '105' or '105.5'. " +

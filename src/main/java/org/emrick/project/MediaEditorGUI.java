@@ -111,7 +111,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
     private File csvFile;
     private Border originalBorder;  // To store the original border of the highlighted component
 
-    public MediaEditorGUI() {
+    public MediaEditorGUI(String file) {
         // serde setup
         GsonBuilder builder = new GsonBuilder();
         builder.registerTypeAdapter(Color.class, new ColorAdapter());
@@ -208,7 +208,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
 
         // Main frame
         frame = new JFrame("Emrick Designer");
-        Image icon = Toolkit.getDefaultToolkit().getImage("./src/main/resources/images/icon.png");
+        Image icon = Toolkit.getDefaultToolkit().getImage(System.getProperty("user.home") + "/AppData/Local/Emrick Designer/src/main/resources/images/icon.png");
         frame.setIconImage(icon);
 
         // Scrub Bar
@@ -218,6 +218,13 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         useStartDelay = true;
 
         createAndShowGUI();
+        if (!file.equals("")) {
+            if (file.endsWith(".emrick")) {
+                loadProject(new File(file));
+            } else {
+                runServer(file);
+            }
+        }
     }
 
     private void setPlaybackTimerTimeByFps() {
@@ -558,7 +565,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         runMenu.add(runWebServer);
         JMenuItem stopWebServer = new JMenuItem("Stop Web Server");
         runWebServer.addActionListener(e -> {
-            runServer();
+            runServer("");
             runMenu.remove(runWebServer);
             runMenu.add(stopWebServer);
         });
@@ -958,15 +965,20 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         return lightButton;
     }
 
-    public void runServer() {
+    public void runServer(String path) {
         int port = 8080;
         try {
-            JFileChooser fileChooser = new JFileChooser();
-            fileChooser.setDialogTitle("Select Packets (.pkt) file");
-            fileChooser.setFileFilter(new FileNameExtensionFilter("Emrick Designer Packets File (*.pkt)", "pkt"));
-            fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
-            fileChooser.showOpenDialog(null);
-            File f = fileChooser.getSelectedFile();
+            File f;
+            if (path.equals("")) {
+                JFileChooser fileChooser = new JFileChooser();
+                fileChooser.setDialogTitle("Select Packets (.pkt) file");
+                fileChooser.setFileFilter(new FileNameExtensionFilter("Emrick Designer Packets File (*.pkt)", "pkt"));
+                fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
+                fileChooser.showOpenDialog(null);
+                f = fileChooser.getSelectedFile();
+            } else {
+                f = new File(path);
+            }
             server = HttpServer.create(new InetSocketAddress(port), 250);
             System.out.println("server started at " + port);
             System.out.println(server.getAddress());
@@ -987,7 +999,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
 
     public void loadDemoDrillObj() {
         clearDotsFromField();
-        String filePath = "./src/test/java/org/emrick/project/ExpectedPDFOutput.txt";
+        String filePath = System.getProperty("user.home") + "/AppData/Local/Emrick Designer/src/test/java/org/emrick/project/ExpectedPDFOutput.txt";
         try {
             String DrillString = Files.lines(Paths.get(filePath)).collect(Collectors.joining(System.lineSeparator()));
             //System.out.println("Got drill string");
@@ -1003,7 +1015,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
 
     public void loadTestDrillObj() {
         clearDotsFromField();
-        String filePath = "./src/test/java/org/emrick/project/testDrillParsed.txt";
+        String filePath = System.getProperty("user.home") + "/AppData/Local/Emrick Designer/src/test/java/org/emrick/project/testDrillParsed.txt";
         try {
             String DrillString = Files.lines(Paths.get(filePath)).collect(Collectors.joining(System.lineSeparator()));
             DrillParser parse1 = new DrillParser();
@@ -1426,7 +1438,12 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
     }
 
     public static void main(String[] args) {
-        System.out.println(System.getProperty("user.dir"));
+        final String file;
+        if (args.length != 0) {
+            file = args[0];
+        } else {
+            file = "";
+        }
         try {
             UIManager.setLookAndFeel(new FlatLightLaf());
         } catch (Exception ex) {
@@ -1436,7 +1453,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         // Run this program on the Event Dispatch Thread (EDT)
         EventQueue.invokeLater(new Runnable() {
             @Override
-            public void run() { new MediaEditorGUI(); }
+            public void run() { new MediaEditorGUI(file); }
         });
     }
 
