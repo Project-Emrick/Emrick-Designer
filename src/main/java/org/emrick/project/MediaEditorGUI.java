@@ -23,9 +23,7 @@ import java.awt.event.*;
 import java.awt.geom.*;
 import java.awt.image.BufferedImage;
 import java.io.*;
-import java.net.InetAddress;
-import java.net.InetSocketAddress;
-import java.net.UnknownHostException;
+import java.net.*;
 import java.nio.Buffer;
 import java.nio.file.*;
 import java.time.*;
@@ -555,6 +553,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         });
         stopWebServer.addActionListener(e -> {
             server.stop(0);
+            server = null;
             runMenu.remove(stopWebServer);
             runMenu.add(runWebServer);
         });
@@ -569,9 +568,26 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             }
         });
         programItem.addActionListener(e -> {
+            JTextField ssidField = new JTextField();
+            JPasswordField passwordField = new JPasswordField();
+
+            Object[] inputs = {
+                    new JLabel("WiFi SSID:"), ssidField,
+                    new JLabel("WiFi Password:"), passwordField
+            };
+
+            int option = JOptionPane.showConfirmDialog(null, inputs, "Enter WiFi Credentials", JOptionPane.OK_CANCEL_OPTION);
+
+            if (option != JOptionPane.OK_OPTION) {
+                return;
+            }
+            String ssid = ssidField.getText();
+            char[] password = passwordField.getPassword();
+            String passwordString = new String(password);
+
             SerialTransmitter st = new SerialTransmitter();
             String port = st.getSerialPort().getDescriptivePortName();
-            int option = 1;
+            option = 1;
             while (option > 0) {
                 if (option == 1) {
                     option = JOptionPane.showConfirmDialog(null,
@@ -605,7 +621,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                     }
                 }
             }
-            st.enterProgMode();
+            st.enterProgMode(ssid, passwordString);
         });
         flowViewerItem.addActionListener(e -> {
             SerialTransmitter st = new SerialTransmitter();
@@ -840,6 +856,9 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         frame.addWindowListener(new WindowAdapter() {
             @Override
             public void windowClosing(WindowEvent e) {
+                if (server != null) {
+                    server.stop(0);
+                }
                 if (archivePath != null && drillPath != null) {
                     if (!effectManager.getUndoStack().isEmpty()) {
                         int resp = JOptionPane.showConfirmDialog(frame,

@@ -49,7 +49,7 @@ public class SerialTransmitter {
         sp.closePort();
     }
 
-    public void enterProgMode() {
+    public void enterProgMode(String ssid, String password) {
         sp.clearRTS();
         sp.clearDTR();
         if (!sp.openPort()) {
@@ -57,7 +57,7 @@ public class SerialTransmitter {
         }
         String str;
         try {
-            str = "p" + InetAddress.getLocalHost().getHostAddress() + "\n";
+            str = "p" + InetAddress.getLocalHost().getHostAddress() + "\n" + ssid + "\n" + password + "\n";
         } catch (UnknownHostException uhe) {
             throw new RuntimeException(uhe);
         }
