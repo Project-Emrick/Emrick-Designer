@@ -1042,13 +1042,11 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             FileReader r = new FileReader(path);
             ProjectFile pf = gson.fromJson(r, ProjectFile.class);
             ImportArchive ia = new ImportArchive(this);
-            Path fullArchive = Paths.get(path.getParentFile().getPath(), pf.archivePath);
-            Path fullDrill = Paths.get(path.getParentFile().getPath(), pf.drillPath);
 
-            archivePath = fullArchive.toFile();
-            drillPath = fullDrill.toFile();
+            archivePath = new File(pf.archivePath);
+            drillPath = new File(pf.drillPath);
 
-            ia.fullImport(fullArchive.toString(), fullDrill.toString());
+            ia.fullImport(archivePath.getAbsolutePath(), drillPath.getAbsolutePath());
             footballFieldPanel.drill = pf.drill;
             footballFieldPanel.setCurrentSet(footballFieldPanel.drill.sets.get(0));
 //            rebuildPageTabCounts();
@@ -1923,10 +1921,8 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
     }
 
     public void saveProject(File path, File archivePath, File drillPath) {
-        String relArchive = path.getParentFile().toURI().relativize(archivePath.toURI()).getPath();
-        String relDrill = path.getParentFile().toURI().relativize(drillPath.toURI()).getPath();
 
-        ProjectFile pf = new ProjectFile(footballFieldPanel.drill, relArchive, relDrill, timeSync, startDelay, count2RFTrigger, effectManager.getIds());
+        ProjectFile pf = new ProjectFile(footballFieldPanel.drill, archivePath.getAbsolutePath(), drillPath.getAbsolutePath(), timeSync, startDelay, count2RFTrigger, effectManager.getIds());
         String g = gson.toJson(pf);
 
         System.out.println("saving to `" + path + "`");
