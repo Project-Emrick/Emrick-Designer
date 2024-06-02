@@ -558,32 +558,38 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         runMenu.add(runShowItem);
         JMenuItem flowViewerItem = new JMenuItem("Run Show via Flow View");
         runMenu.add(flowViewerItem);
+        JMenuItem stopShowItem = new JMenuItem("Stop show");
+        stopShowItem.setEnabled(false);
+        runMenu.add(stopShowItem);
         JMenuItem programItem = new JMenuItem("Enter Programming Mode");
         runMenu.add(programItem);
-        JMenuItem stopShowItem = new JMenuItem("Stop show");
         JMenuItem runWebServer = new JMenuItem("Run Web Server");
-        runMenu.add(runWebServer);
         JMenuItem stopWebServer = new JMenuItem("Stop Web Server");
+        runMenu.add(runWebServer);
+        runMenu.add(stopWebServer);
+        if (server == null) {
+            stopWebServer.setEnabled(false);
+        } else {
+            runWebServer.setEnabled(false);
+        }
+
         runWebServer.addActionListener(e -> {
             runServer("");
-            runMenu.remove(runWebServer);
-            runMenu.add(stopWebServer);
+            runWebServer.setEnabled(false);
+            stopWebServer.setEnabled(true);
         });
         stopWebServer.addActionListener(e -> {
             server.stop(0);
             server = null;
-            runMenu.remove(stopWebServer);
-            runMenu.add(runWebServer);
+            stopWebServer.setEnabled(false);
+            runWebServer.setEnabled(true);
         });
         stopShowItem.addActionListener(e -> {
             footballFieldPanel.setSerialTransmitter(null);
+            stopShowItem.setEnabled(false);
             runMenu.remove(stopShowItem);
-            if (!runMenu.isMenuComponent(runShowItem)) {
-                runMenu.add(runShowItem);
-            }
-            if (!runMenu.isMenuComponent(flowViewerItem)) {
-                runMenu.add(flowViewerItem);
-            }
+            runShowItem.setEnabled(true);
+            flowViewerItem.setEnabled(true);
         });
         programItem.addActionListener(e -> {
             JTextField ssidField = new JTextField();
@@ -677,8 +683,9 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                         return;
                     }
                 } else if (option == 0) {
-                    runMenu.remove(flowViewerItem);
-                    runMenu.add(stopShowItem);
+                    runShowItem.setEnabled(false);
+                    flowViewerItem.setEnabled(false);
+                    stopShowItem.setEnabled(true);
                 }
             }
             JFrame flowFrame = new JFrame("Emrick Designer - Flow Viewer");
@@ -767,8 +774,9 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                 } else if (option == 0) {
                     footballFieldPanel.setSerialTransmitter(st);
                     footballFieldPanel.addSetToField(footballFieldPanel.drill.sets.get(0));
-                    runMenu.remove(runShowItem);
-                    runMenu.add(stopShowItem);
+                    runShowItem.setEnabled(false);
+                    flowViewerItem.setEnabled(false);
+                    stopShowItem.setEnabled(true);
                 }
             }
         });
