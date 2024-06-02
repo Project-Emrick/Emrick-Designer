@@ -217,14 +217,18 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         // Scrub bar cursor starts on first count of drill by default
         useStartDelay = true;
 
-        createAndShowGUI();
         if (!file.equals("")) {
             if (file.endsWith(".emrick")) {
+                createAndShowGUI();
                 loadProject(new File(file));
             } else {
                 runServer(file);
+                createAndShowGUI();
             }
+        } else {
+            createAndShowGUI();
         }
+
     }
 
     private void setPlaybackTimerTimeByFps() {
@@ -587,7 +591,6 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         stopShowItem.addActionListener(e -> {
             footballFieldPanel.setSerialTransmitter(null);
             stopShowItem.setEnabled(false);
-            runMenu.remove(stopShowItem);
             runShowItem.setEnabled(true);
             flowViewerItem.setEnabled(true);
         });
