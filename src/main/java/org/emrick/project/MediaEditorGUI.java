@@ -1,5 +1,6 @@
 package org.emrick.project;
 
+import com.fazecast.jSerialComm.SerialPort;
 import com.formdev.flatlaf.*;
 import com.google.gson.*;
 import com.itextpdf.text.Document;
@@ -24,16 +25,14 @@ import java.awt.geom.*;
 import java.awt.image.BufferedImage;
 import java.io.*;
 import java.net.*;
-import java.nio.Buffer;
 import java.nio.file.*;
 import java.time.*;
 import java.util.*;
-import java.util.concurrent.*;
 import java.util.stream.*;
 
 
 public class MediaEditorGUI extends Component implements ImportListener, ScrubBarListener, SyncListener,
-        FootballFieldListener, EffectListener, SelectListener, UserAuthListener, RFTriggerListener {
+        FootballFieldListener, EffectListener, SelectListener, UserAuthListener, RFTriggerListener, RFSignalListener {
 
     // String definitions
     public static final String FILE_MENU_NEW_PROJECT = "New Project";
@@ -91,6 +90,8 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
     private RFTriggerGUI rfTriggerGUI;
     private HashMap<Integer, RFTrigger> count2RFTrigger;
 
+    private FlowViewGUI flowViewGUI;
+
     // Time keeping
     // TODO: save this
     private TimeManager timeManager;
@@ -110,6 +111,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
     private File drillPath = null;
     private File csvFile;
     private Border originalBorder;  // To store the original border of the highlighted component
+    private SerialTransmitter serialTransmitter;
 
     public MediaEditorGUI(String file) {
         // serde setup
@@ -565,8 +567,10 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         JMenuItem stopShowItem = new JMenuItem("Stop show");
         stopShowItem.setEnabled(false);
         runMenu.add(stopShowItem);
+        runMenu.addSeparator();
         JMenuItem programItem = new JMenuItem("Enter Programming Mode");
         runMenu.add(programItem);
+        runMenu.addSeparator();
         JMenuItem runWebServer = new JMenuItem("Run Web Server");
         JMenuItem stopWebServer = new JMenuItem("Stop Web Server");
         runMenu.add(runWebServer);
@@ -589,7 +593,14 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             runWebServer.setEnabled(true);
         });
         stopShowItem.addActionListener(e -> {
+            if (flowViewGUI != null) {
+                mainContentPanel.remove(flowViewGUI);
+                mainContentPanel.add(footballField);
+                mainContentPanel.revalidate();
+                mainContentPanel.repaint();
+            }
             footballFieldPanel.setSerialTransmitter(null);
+            serialTransmitter = null;
             stopShowItem.setEnabled(false);
             runShowItem.setEnabled(true);
             flowViewerItem.setEnabled(true);
@@ -612,176 +623,37 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             char[] password = passwordField.getPassword();
             String passwordString = new String(password);
 
-            SerialTransmitter st = new SerialTransmitter();
-            String port = st.getSerialPort().getDescriptivePortName();
-            option = 1;
-            while (option > 0) {
-                if (option == 1) {
-                    option = JOptionPane.showConfirmDialog(null,
-                            "Is (" + port + ") the correct port for the transmitter?",
-                            "Run Show",
-                            JOptionPane.YES_NO_OPTION);
-                } else if (option == 2) {
-                    option = JOptionPane.showConfirmDialog(null,
-                            "Port invalid: Make sure you have the right port and that "
-                                    + "it is not already in use then try again.",
-                            "Run show: ERROR",
-                            JOptionPane.OK_CANCEL_OPTION);
-                    if (option == 2) {
-                        option = -1;
-                        return;
-                    } else if (option == 0) {
-                        option = 1;
-                    }
-                }
-                if (option == 1) {
-                    port = JOptionPane.showInputDialog("Enter COM port (example: COM7): ");
-                    if (port != null) {
-                        if (!st.setSerialPort(port)) {
-                            option = 2;
-                        } else {
-                            port = st.getSerialPort().getDescriptivePortName();
-                        }
-                    } else {
-                        option = -1;
-                        return;
-                    }
-                }
+            SerialTransmitter st = comPortPrompt();
+            if (st != null) {
+                st.enterProgMode(ssid, passwordString);
             }
-            st.enterProgMode(ssid, passwordString);
         });
         flowViewerItem.addActionListener(e -> {
-            SerialTransmitter st = new SerialTransmitter();
-            String port = st.getSerialPort().getDescriptivePortName();
-            int option = 1;
-            while (option > 0) {
-                if (option == 1) {
-                    option = JOptionPane.showConfirmDialog(null,
-                            "Is (" + port + ") the correct port for the transmitter?",
-                            "Run Show",
-                            JOptionPane.YES_NO_OPTION);
-                } else if (option == 2) {
-                    option = JOptionPane.showConfirmDialog(null,
-                            "Port invalid: Make sure you have the right port and that "
-                                    + "it is not already in use then try again.",
-                            "Run show: ERROR",
-                            JOptionPane.OK_CANCEL_OPTION);
-                    if (option == 2) {
-                        option = -1;
-                        return;
-                    } else if (option == 0) {
-                        option = 1;
-                    }
-                }
-                if (option == 1) {
-                    port = JOptionPane.showInputDialog("Enter COM port (example: COM7): ");
-                    if (port != null) {
-                        if (!st.setSerialPort(port)) {
-                            option = 2;
-                        } else {
-                            port = st.getSerialPort().getDescriptivePortName();
-                        }
-                    } else {
-                        option = -1;
-                        return;
-                    }
-                } else if (option == 0) {
-                    runShowItem.setEnabled(false);
-                    flowViewerItem.setEnabled(false);
-                    stopShowItem.setEnabled(true);
-                }
+            serialTransmitter = comPortPrompt();
+            if (serialTransmitter == null) {
+                return;
             }
-            JFrame flowFrame = new JFrame("Emrick Designer - Flow Viewer");
-            flowFrame.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
-            flowFrame.setSize(1200, 800);
-            flowFrame.setVisible(true);
-            // TODO - When we add RF triggers, swap the list of sets to a list of triggers
-            String[][] sets = new String[count2RFTrigger.size()][5];
-            Iterator<RFTrigger> triggers = count2RFTrigger.values().iterator();
-            int i = 0;
-            System.out.println(count2RFTrigger.size());
-            while (triggers.hasNext()) {
-                sets[i][0] = Integer.toString(i);
-                sets[i][1] = Integer.toString(triggers.next().getCount());
-                sets[i][2] = "";
-                sets[i][3] = "";
-                sets[i][4] = "";
-                i++;
-            }
-            String[] labels = new String[5];
-            labels[0] = "Set";
-            labels[1] = "Count";
-            labels[2] = "Title";
-            labels[3] = "Cue";
-            labels[4] = "Description";
-            JTable table = new JTable(sets, labels);
-            table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-            ListSelectionModel lsm = table.getSelectionModel();
-            lsm.addListSelectionListener(new ListSelectionListener() {
-                int last = -1;
-
-                @Override
-                public void valueChanged(ListSelectionEvent e) {
-                    if (e.getValueIsAdjusting()) {
-                        if (e.getFirstIndex() == last) {
-                            st.writeSet(e.getLastIndex());
-                            last = e.getLastIndex();
-                        } else {
-                            st.writeSet(e.getFirstIndex());
-                            last = e.getFirstIndex();
-                        }
-                        // without a connected transmitter, above line will fail
-                        // for debug, comment out above line and uncomment line below
-                        //System.out.println(e.getLastIndex());
-                    }
-                }
-            });
-            table.setRowSelectionAllowed(true);
-            table.setFillsViewportHeight(true);
-            JScrollPane jsp = new JScrollPane(table);
-            flowFrame.add(jsp);
+            runShowItem.setEnabled(false);
+            flowViewerItem.setEnabled(false);
+            stopShowItem.setEnabled(true);
+            flowViewGUI = new FlowViewGUI(count2RFTrigger, this);
+            mainContentPanel.remove(footballField);
+            mainContentPanel.add(flowViewGUI);
+            mainContentPanel.revalidate();
+            mainContentPanel.repaint();
         });
         runShowItem.addActionListener(e -> {
-            SerialTransmitter st = new SerialTransmitter();
-            String port = st.getSerialPort().getDescriptivePortName();
-            int option = 1;
-            while (option > 0) {
-                if (option == 1) {
-                    option = JOptionPane.showConfirmDialog(null,
-                            "Is (" + port + ") the correct port for the transmitter?",
-                            "Run Show",
-                            JOptionPane.YES_NO_OPTION);
-                } else if (option == 2) {
-                    option = JOptionPane.showConfirmDialog(null,
-                            "Port invalid: Make sure you have the right port and that "
-                                    + "it is not already in use then try again.",
-                            "Run show: ERROR",
-                            JOptionPane.OK_CANCEL_OPTION);
-                    if (option == 2) {
-                        option = -1;
-                    } else if (option == 0) {
-                        option = 1;
-                    }
-                }
-                if (option == 1) {
-                    port = JOptionPane.showInputDialog("Enter COM port (example: COM7): ");
-                    if (port != null) {
-                        if (!st.setSerialPort(port)) {
-                            option = 2;
-                        } else {
-                            port = st.getSerialPort().getDescriptivePortName();
-                        }
-                    } else {
-                        option = -1;
-                    }
-                } else if (option == 0) {
-                    footballFieldPanel.setSerialTransmitter(st);
-                    footballFieldPanel.addSetToField(footballFieldPanel.drill.sets.get(0));
-                    runShowItem.setEnabled(false);
-                    flowViewerItem.setEnabled(false);
-                    stopShowItem.setEnabled(true);
-                }
+            serialTransmitter = comPortPrompt();
+
+            if (serialTransmitter == null) {
+                return;
             }
+
+            footballFieldPanel.setSerialTransmitter(serialTransmitter);
+            footballFieldPanel.addSetToField(footballFieldPanel.drill.sets.get(0));
+            runShowItem.setEnabled(false);
+            flowViewerItem.setEnabled(false);
+            stopShowItem.setEnabled(true);
         });
 
         // Help menu
@@ -974,6 +846,22 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             }
         });
         return lightButton;
+    }
+
+    public SerialTransmitter comPortPrompt() {
+        SerialTransmitter st = new SerialTransmitter();
+        SerialPort[] allPorts = SerialTransmitter.getPortNames();
+        String[] allPortNames = new String[allPorts.length];
+        for (int i = 0; i < allPorts.length; i++) {
+            allPortNames[i] = allPorts[i].getDescriptivePortName();
+        }
+        String port = (String) JOptionPane.showInputDialog(null, "Choose",
+                "Menu", JOptionPane.INFORMATION_MESSAGE,
+                new ImageIcon(System.getProperty("user.home") + "/AppData/Local/Emrick Designer/icon.ico"),
+                allPortNames, allPortNames[0]);
+        System.out.println(port);
+        System.out.println(st.setSerialPort(port));
+        return st;
     }
 
     public void runServer(String path) {
@@ -2165,6 +2053,11 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         tipWindow.setLocation(frame.getLocationOnScreen().x + (frame.getWidth() - tipWindow.getWidth()) / 2,
                               frame.getLocationOnScreen().y + (frame.getHeight() - tipWindow.getHeight()) / 2);
         tipWindow.setVisible(true);
+    }
+
+    @Override
+    public void onRFSignal(int i) {
+        serialTransmitter.writeSet(i);
     }
 
     /*

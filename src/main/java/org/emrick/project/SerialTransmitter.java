@@ -20,10 +20,19 @@ public class SerialTransmitter {
         }
     }
 
+    public static SerialPort[] getPortNames() {
+        return SerialPort.getCommPorts();
+    }
+
     public boolean setSerialPort(String port) {
-        SerialPort s = SerialPort.getCommPort(port);
+        SerialPort[] allPorts = SerialPort.getCommPorts();
+        SerialPort s = null;
+        for (SerialPort p : allPorts) {
+            if (p.getDescriptivePortName().equals(port)) {
+                s = p;
+            }
+        }
         if (s != null) {
-            System.out.println(s.getDescriptivePortName());
             if (s.getDescriptivePortName().toLowerCase().contains("cp210x")) {
                 sp = s;
                 return true;
