@@ -17,7 +17,7 @@ public class ScrubBarGUI extends JComponent implements ActionListener {
     private static final String PATH_SYNC_ICON = System.getProperty("user.home") + "/AppData/Local/Emrick Designer/src/main/resources/images/scrub/time_sync_flaticon.png";
     private static final String PATH_PREV_SET_ICON = System.getProperty("user.home") + "/AppData/Local/Emrick Designer/src/main/resources/images/scrub/prev_set_flaticon.png";
     private static final String PATH_NEXT_SET_ICON = System.getProperty("user.home") + "/AppData/Local/Emrick Designer/src/main/resources/images/scrub/next_set_flaticon.png";
-    private static final String PATH_PLAY_ICON = System.getProperty("user.home") + "/AppData/Local/Emrick Designer/src/main/resources/images/scrub/play_flaticon.png";
+    public static final String PATH_PLAY_ICON = System.getProperty("user.home") + "/AppData/Local/Emrick Designer/src/main/resources/images/scrub/play_flaticon.png";
     private static final String PATH_PAUSE_ICON = System.getProperty("user.home") + "/AppData/Local/Emrick Designer/src/main/resources/images/scrub/pause_flaticon.png";
     private static final String PATH_PREV_COUNT_ICON = System.getProperty("user.home") + "/AppData/Local/Emrick Designer/src/main/resources/images/scrub/prev_count_flaticon.png";
     private static final String PATH_NEXT_COUNT_ICON = System.getProperty("user.home") + "/AppData/Local/Emrick Designer/src/main/resources/images/scrub/next_count_flaticon.png";

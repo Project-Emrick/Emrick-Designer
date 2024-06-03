@@ -23,7 +23,6 @@ public class SerialTransmitter {
     public boolean setSerialPort(String port) {
         SerialPort s = SerialPort.getCommPort(port);
         if (s != null) {
-            System.out.println(s.getDescriptivePortName());
             if (s.getDescriptivePortName().toLowerCase().contains("cp210x")) {
                 sp = s;
                 return true;
