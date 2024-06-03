@@ -1,5 +1,6 @@
 package org.emrick.project;
 
+import com.fazecast.jSerialComm.SerialPort;
 import com.formdev.flatlaf.*;
 import com.google.gson.*;
 import com.itextpdf.text.Document;
@@ -845,41 +846,17 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
 
     public SerialTransmitter comPortPrompt() {
         SerialTransmitter st = new SerialTransmitter();
-        String port = st.getSerialPort().getDescriptivePortName();
-        int option = 1;
-        while (option > 0) {
-            if (option == 1) {
-                option = JOptionPane.showConfirmDialog(null,
-                        "Is (" + port + ") the correct port for the transmitter?",
-                        "Run Show",
-                        JOptionPane.YES_NO_OPTION);
-            } else if (option == 2) {
-                option = JOptionPane.showConfirmDialog(null,
-                        "Port invalid: Make sure you have the right port and that "
-                                + "it is not already in use then try again.",
-                        "Run show: ERROR",
-                        JOptionPane.OK_CANCEL_OPTION);
-                if (option == 2) {
-                    option = -1;
-                    return null;
-                } else if (option == 0) {
-                    option = 1;
-                }
-            }
-            if (option == 1) {
-                port = JOptionPane.showInputDialog("Enter COM port (example: COM7): ");
-                if (port != null) {
-                    if (!st.setSerialPort(port)) {
-                        option = 2;
-                    } else {
-                        port = st.getSerialPort().getDescriptivePortName();
-                    }
-                } else {
-                    option = -1;
-                    return null;
-                }
-            }
+        SerialPort[] allPorts = SerialTransmitter.getPortNames();
+        String[] allPortNames = new String[allPorts.length];
+        for (int i = 0; i < allPorts.length; i++) {
+            allPortNames[i] = allPorts[i].getDescriptivePortName();
         }
+        String port = (String) JOptionPane.showInputDialog(null, "Choose",
+                "Menu", JOptionPane.INFORMATION_MESSAGE,
+                new ImageIcon(System.getProperty("user.home") + "/AppData/Local/Emrick Designer/icon.ico"),
+                allPortNames, allPortNames[0]);
+        System.out.println(port);
+        System.out.println(st.setSerialPort(port));
         return st;
     }
 
