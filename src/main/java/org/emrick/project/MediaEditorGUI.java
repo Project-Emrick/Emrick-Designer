@@ -65,6 +65,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
     private JPanel scrubBarPanel; // Refers directly to panel of ScrubBarGUI. Reduces UI refreshing issues.
     private ScrubBarGUI scrubBarGUI; // Refers to ScrubBarGUI instance, with functionality
     private JPanel effectViewPanel;
+
     private JPanel timelinePanel;
     private TimelineGUI timelineGUI;
 
@@ -76,6 +77,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
     // Effect
     private EffectManager effectManager;
     private EffectGUI effectGUI;
+    private SelectionGroupGUI groupsGUI;
     private Effect currentEffect;
     private Effect copiedEffect;
     private int selectedEffectType = 2;
@@ -280,6 +282,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
 
         // Effect View panel
         effectGUI = new EffectGUI(EffectGUI.noProjectSyncMsg);
+        groupsGUI = new SelectionGroupGUI(this);
         effectViewPanel = new JPanel();
         effectViewPanel.setLayout(new BorderLayout());
         effectViewPanel.setPreferredSize(new Dimension(300, frame.getHeight()));
@@ -836,6 +839,26 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         });
         lightMenuPopup.add(wavePattern);
 
+        lightMenuPopup.addSeparator();
+
+        JMenuItem groups = new JMenuItem("Show Saved Groups");
+        JMenuItem hideGroups = new JMenuItem("Hide Saved Groups");
+        groups.addActionListener(e -> {
+            selectedEffectType = EffectGUI.SHOW_GROUPS;
+            updateEffectViewPanel(selectedEffectType);
+            hideGroups.setEnabled(true);
+            groups.setEnabled(false);
+        });
+        lightMenuPopup.add(groups);
+        hideGroups.addActionListener(e -> {
+            selectedEffectType = EffectGUI.HIDE_GROUPS;
+            updateEffectViewPanel(selectedEffectType);
+            groups.setEnabled(true);
+            hideGroups.setEnabled(false);
+        });
+        hideGroups.setEnabled(false);
+        lightMenuPopup.add(hideGroups);
+
         // Button that triggers the popup menu
         JButton lightButton = new JButton("Effect Options");
         lightButton.addActionListener(new ActionListener() {
@@ -998,6 +1021,31 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             }
         }
         footballFieldPanel.repaint();
+    }
+
+    @Override
+    public void onGroupSelection(Performer[] performers) {
+        footballFieldPanel.selectedPerformers.clear();
+        for (Performer p : performers) {
+            footballFieldPanel.selectedPerformers.put(p.getSymbol() + p.getLabel(), p);
+        }
+        footballFieldPanel.repaint();
+        updateTimelinePanel();
+    }
+
+    @Override
+    public Performer[] onSaveGroup() {
+        Iterator<Performer> iterator = footballFieldPanel.selectedPerformers.values().iterator();
+        Performer[] performers = new Performer[footballFieldPanel.selectedPerformers.size()];
+        for (int i = 0; i < performers.length; i++) {
+            performers[i] = iterator.next();
+        }
+        return performers;
+    }
+
+    @Override
+    public void onUpdateGroup() {
+        updateEffectViewPanel(selectedEffectType);
     }
 
     private void exportCsvFileForPerformerDeviceIDs(File selectedFile) {
@@ -1630,7 +1678,9 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         if (p.getEffects().size() != 0) {
             Effect effect = effectManager.getEffect(p, msec);
             if (effect != null) {
-                selectedEffectType = effect.getEffectType();
+                if (selectedEffectType != EffectGUI.SHOW_GROUPS) {
+                    selectedEffectType = effect.getEffectType();
+                }
             }
         }
         updateEffectViewPanel(selectedEffectType);
@@ -1700,49 +1750,68 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         if (effectManager == null) return;
 
         // Remove existing effect data
-        effectViewPanel.remove(effectGUI.getEffectPanel());
+        if (groupsGUI.getSelectionPanel() != null) {
+            effectViewPanel.remove(groupsGUI.getSelectionPanel());
+            groupsGUI.setSelectionPanel(null);
+        } else {
+            effectViewPanel.remove(effectGUI.getEffectPanel());
+        }
         effectViewPanel.revalidate();
         effectViewPanel.repaint();
 
         // Effects
-        // TODO: Eventually, for multiple selected performers, also check if not all selected performers share the same effect
-        if (footballFieldPanel.selectedPerformers.size() < 1) {
-            // Eventually should be able to work with multiple performers at a time
-            currentEffect = null;
-            effectGUI = new EffectGUI(EffectGUI.noPerformerMsg);
+        if (selectedEffectType != EffectGUI.SHOW_GROUPS) {
+            if (footballFieldPanel.selectedPerformers.size() < 1) {
+                currentEffect = null;
+                effectGUI = new EffectGUI(EffectGUI.noPerformerMsg);
+                effectViewPanel.add(effectGUI.getEffectPanel(), BorderLayout.CENTER);
+
+                return;
+            }
+
+
+            long currentMSec = timeManager.getCount2MSec().get(footballFieldPanel.getCurrentCount());
+            currentEffect = effectManager.getEffectsFromSelectedPerformers(currentMSec);
+            if (selectedEffectType == EffectGUI.HIDE_GROUPS) {
+                selectedEffectType = currentEffect.getEffectType();
+            }
+            if (currentEffect == null) {
+                currentEffect = null;
+                effectGUI = new EffectGUI(EffectGUI.noCommonEffectMsg);
+                effectViewPanel.add(effectGUI.getEffectPanel(), BorderLayout.CENTER);
+
+                return;
+            }
+            if (currentEffect.getGeneratedEffect() != null) {
+                WaveEffect waveEffect = (WaveEffect) currentEffect.getGeneratedEffect();
+                currentEffect = new Effect(waveEffect.getStartTime());
+                currentEffect.setEndTimeMSec(waveEffect.getEndTime());
+                currentEffect.setStartColor(waveEffect.getStaticColor());
+                currentEffect.setEndColor(waveEffect.getWaveColor());
+                currentEffect.setDuration(waveEffect.getDuration());
+                currentEffect.setSpeed(waveEffect.getSpeed());
+                currentEffect.setUpOrSide(waveEffect.isVertical());
+                currentEffect.setDirection(waveEffect.isUpRight());
+                currentEffect.setEffectType(EffectGUI.WAVE);
+                currentEffect.setId(waveEffect.getId());
+            }
+            effectGUI = new EffectGUI(currentEffect, currentMSec, this, selectedEffectType);
+            // Add updated data for effect view
             effectViewPanel.add(effectGUI.getEffectPanel(), BorderLayout.CENTER);
-
-            return;
+            effectViewPanel.revalidate();
+            effectViewPanel.repaint();
+        } else {
+            Performer[] performers = new Performer[footballFieldPanel.selectedPerformers.values().size()];
+            Iterator<Performer> iterator = footballFieldPanel.selectedPerformers.values().iterator();
+            for (int i = 0; i < performers.length; i++) {
+                performers[i] = iterator.next();
+            }
+            groupsGUI.initializeSelectionPanel();
+            JPanel panel = groupsGUI.getSelectionPanel();
+            effectViewPanel.add(panel);
+            effectViewPanel.revalidate();
+            effectViewPanel.repaint();
         }
-
-
-        long currentMSec = timeManager.getCount2MSec().get(footballFieldPanel.getCurrentCount());
-        currentEffect = effectManager.getEffectsFromSelectedPerformers(currentMSec);
-        if (currentEffect == null) {
-            currentEffect = null;
-            effectGUI = new EffectGUI(EffectGUI.noCommonEffectMsg);
-            effectViewPanel.add(effectGUI.getEffectPanel(), BorderLayout.CENTER);
-
-            return;
-        }
-        if (currentEffect.getGeneratedEffect() != null) {
-            WaveEffect waveEffect = (WaveEffect) currentEffect.getGeneratedEffect();
-            currentEffect = new Effect(waveEffect.getStartTime());
-            currentEffect.setEndTimeMSec(waveEffect.getEndTime());
-            currentEffect.setStartColor(waveEffect.getStaticColor());
-            currentEffect.setEndColor(waveEffect.getWaveColor());
-            currentEffect.setDuration(waveEffect.getDuration());
-            currentEffect.setSpeed(waveEffect.getSpeed());
-            currentEffect.setUpOrSide(waveEffect.isVertical());
-            currentEffect.setDirection(waveEffect.isUpRight());
-            currentEffect.setEffectType(EffectGUI.WAVE);
-            currentEffect.setId(waveEffect.getId());
-        }
-        effectGUI = new EffectGUI(currentEffect, currentMSec, this, selectedEffectType);
-        // Add updated data for effect view
-        effectViewPanel.add(effectGUI.getEffectPanel(), BorderLayout.CENTER);
-        effectViewPanel.revalidate();
-        effectViewPanel.repaint();
     }
 
     private void updateTimelinePanel() {

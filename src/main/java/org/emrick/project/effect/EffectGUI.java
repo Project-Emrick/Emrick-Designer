@@ -20,6 +20,8 @@ import java.util.stream.*;
 
 public class EffectGUI implements ActionListener {
 
+    public static int HIDE_GROUPS = -1;
+    public static int SHOW_GROUPS = 0;
     public static int GENERATED_FADE = 1;
     public static int STATIC_COLOR = 2;
     public static int FLASHING_COLOR = 3;
@@ -164,6 +166,7 @@ public class EffectGUI implements ActionListener {
         } else {
             this.isNewEffect = false;
         }
+        placeholderLabel = null;
 
         this.effectMod = this.effect.clone(); // Changes made in GUI are not applied to original effect object
         if (effectType == GENERATED_FADE) {
@@ -332,6 +335,16 @@ public class EffectGUI implements ActionListener {
 
         // If effect exists, load pattern on gui
         loadEffectToGUI(this.effectMod);
+    }
+
+    public String getPlaceholderText() {
+        if (placeholderLabel == null) {
+            return null;
+        } else if (placeholderLabel.equals("")){
+            return null;
+        } else {
+            return placeholderLabel.getText();
+        }
     }
 
     private void setupStaticColorGUI() {
