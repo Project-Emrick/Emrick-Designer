@@ -582,6 +582,14 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             footballFieldPanel.repaint();
         });
         viewMenu.add(toggleSurfaceImage);
+        JCheckBoxMenuItem toggleShowLabels = new JCheckBoxMenuItem("Show Drill IDs");
+        toggleShowLabels.setState(false);
+        toggleShowLabels.addActionListener(e -> {
+            footballFieldPanel.setShowLabels(!footballFieldPanel.isShowLabels());
+            footballFieldPanel.repaint();
+        });
+        toggleShowLabels.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_I, ActionEvent.CTRL_MASK));
+        viewMenu.add(toggleShowLabels);
 
         // Run menu
         JMenu runMenu = new JMenu("Run");

@@ -38,6 +38,7 @@ public class FootballFieldPanel extends JPanel implements RepaintListener {
     public long currentMS = 0;
     private int currentCount = 0;
     private int currentSetStartCount = 0;
+    private boolean showLabels = false;
 
     // Effects utility
     private final FootballFieldListener footballFieldListener;
@@ -307,6 +308,11 @@ public class FootballFieldPanel extends JPanel implements RepaintListener {
             g.drawRect((int)x-6,(int)y-6,12,12);
             g.drawLine((int)x,(int)y-5,(int)x,(int)y+6);
 
+            if (showLabels) {
+                g.setFont(new Font("TimesRoman", Font.BOLD, (int) Math.ceil(fieldWidth / 120)));
+                g.drawString(p.getIdentifier(), (int) x - 7, (int) y + 16);
+            }
+
         }
 
         if (selecting) {
@@ -345,6 +351,14 @@ public class FootballFieldPanel extends JPanel implements RepaintListener {
         frontSideline50 = new Point(x + (int)fieldWidth / 2,y + (int)fieldHeight);
 
         g.drawImage(image, x, y, width, height, this);
+    }
+
+    public boolean isShowLabels() {
+        return showLabels;
+    }
+
+    public void setShowLabels(boolean showLabels) {
+        this.showLabels = showLabels;
     }
 
     public void setFloorCoverImage(Image floorCoverImage) {
