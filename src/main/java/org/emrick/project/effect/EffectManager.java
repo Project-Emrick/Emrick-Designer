@@ -269,7 +269,8 @@ public class EffectManager {
                 s2 = new Effect(effect.getStartTimeMSec() + waveStartTime + waveHalfDuration * 2);
                 s2.setStartColor(effect.getStartColor());
                 s2.setEndColor(effect.getStartColor());
-                s2.setDuration(Duration.ofMillis(effect.getEndTimeMSec() - waveStartTime - 2 * waveHalfDuration));
+                s2.setDuration(Duration.ofMillis((effect.getEndTimeMSec() - w2.getEndTimeMSec())));
+
             } else {
                 s1.setDuration(Duration.ofMillis(waveStartTime));
             }
