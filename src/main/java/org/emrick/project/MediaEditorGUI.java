@@ -91,6 +91,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
     // RF Trigger
     private RFTriggerGUI rfTriggerGUI;
     private HashMap<Integer, RFTrigger> count2RFTrigger;
+    private boolean runningShow;
 
     private FlowViewGUI flowViewGUI;
 
@@ -201,7 +202,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         UIManager.put("RadioButtonMenuItem.font", f);
 
         // Field
-        footballFieldPanel = new FootballFieldPanel(this);
+        footballFieldPanel = new FootballFieldPanel(this, null);
         footballFieldPanel.setOpaque(false);
         //footballFieldPanel.setBackground(Color.lightGray); // temp. Visual indicator for unfilled space
         JScrollPane fieldScrollPane = new JScrollPane(footballFieldPanel);
@@ -220,6 +221,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
 
         // Scrub bar cursor starts on first count of drill by default
         useStartDelay = true;
+        runningShow = false;
 
         if (!file.equals("")) {
             if (file.endsWith(".emrick")) {
@@ -623,7 +625,6 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                 mainContentPanel.revalidate();
                 mainContentPanel.repaint();
             }
-            footballFieldPanel.setSerialTransmitter(null);
             serialTransmitter = null;
             stopShowItem.setEnabled(false);
             runShowItem.setEnabled(true);
@@ -673,7 +674,6 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                 return;
             }
 
-            footballFieldPanel.setSerialTransmitter(serialTransmitter);
             footballFieldPanel.addSetToField(footballFieldPanel.drill.sets.get(0));
             runShowItem.setEnabled(false);
             flowViewerItem.setEnabled(false);
@@ -976,6 +976,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                 scrubBarGUI.setTimeSync(timeSync);
                 startDelay = pf.startDelay;
                 count2RFTrigger = pf.count2RFTrigger;
+                footballFieldPanel.setCount2RFTrigger(count2RFTrigger);
                 setupEffectView(pf.ids);
                 updateTimelinePanel();
                 updateEffectViewPanel(selectedEffectType);
@@ -1463,6 +1464,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         footballFieldPanel.drill = DrillParser.parseWholeDrill(text);
         footballFieldPanel.addSetToField(footballFieldPanel.drill.sets.get(0));
         count2RFTrigger = new HashMap<>();
+        footballFieldPanel.setCount2RFTrigger(count2RFTrigger);
         updateEffectViewPanel(selectedEffectType);
         updateTimelinePanel();
         rebuildPageTabCounts();
@@ -1494,6 +1496,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
 
         scrubBarGUI.setTimeSync(timeSync);
         count2RFTrigger = new HashMap<>();
+        footballFieldPanel.setCount2RFTrigger(count2RFTrigger);
 
         setupEffectView(null);
     }
@@ -1703,6 +1706,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             return;
         }
         count2RFTrigger.put(footballFieldPanel.getCurrentCount(), rfTrigger);
+        footballFieldPanel.setCount2RFTrigger(count2RFTrigger);
         updateRFTriggerButton();
         updateTimelinePanel();
     }
@@ -1710,6 +1714,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
     @Override
     public void onDeleteRFTrigger(int count) {
         count2RFTrigger.remove(count);
+        footballFieldPanel.setCount2RFTrigger(count2RFTrigger);
         updateRFTriggerButton();
         updateTimelinePanel();
     }
@@ -1744,6 +1749,11 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                 }
             }
         }
+    }
+
+    @Override
+    public double getFrameRate() {
+        return scrubBarGUI.getFps();
     }
 
     private void updateEffectViewPanel(int effectType) {
@@ -2128,7 +2138,9 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
 
     @Override
     public void onRFSignal(int i) {
-        serialTransmitter.writeSet(i);
+        if (serialTransmitter != null && scrubBarGUI.isPlaying()) {
+            serialTransmitter.writeSet(i);
+        }
     }
 
     /*
