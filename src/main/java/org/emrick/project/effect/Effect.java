@@ -221,6 +221,17 @@ public class Effect implements Cloneable, TimelineEvent {
     }
 
     @Override
+    public String toString() {
+        return "Effect{" +
+                "startTimeMSec=" + startTimeMSec +
+                ", endTimeMSec=" + endTimeMSec +
+                ", delay=" + delay.toMillis() +
+                ", duration=" + duration.toMillis() +
+                ", id=" + id +
+                '}';
+    }
+
+    @Override
     public Effect clone() {
         try {
             // Color and Duration are immutable, so a shallow copy will work

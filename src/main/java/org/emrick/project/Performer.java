@@ -107,8 +107,8 @@ public class Performer {
 
     public String toString() {
         String out = symbol + label + "\r\n";
-        for (Coordinate c : coordinates) {
-            out += c.toString() + "\r\n";
+        for (Effect e  : effects) {
+            out += "\t" + e.toString() + "\r\n";
         }
         return out;
     }

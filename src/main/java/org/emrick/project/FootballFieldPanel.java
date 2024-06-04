@@ -162,7 +162,7 @@ public class FootballFieldPanel extends JPanel implements RepaintListener {
             }
         }
         if (e.isTIME_GRADIENT()) {
-            if (e.getStartTimeMSec() + e.getDelay().toMillis() + e.getDuration().toMillis() > currMS) {
+            if (e.getStartTimeMSec() + e.getDelay().toMillis() + e.getDuration().toMillis() >= currMS) {
                 long startGradient = e.getStartTimeMSec() + e.getDelay().toMillis();
                 float shiftProgress = (float) (currMS - startGradient) / (float) e.getDuration().toMillis();
                 float[] hsvs = new float[3];
@@ -306,6 +306,7 @@ public class FootballFieldPanel extends JPanel implements RepaintListener {
             g.drawRect((int)x-7,(int)y-7,14,14);
             g.drawRect((int)x-6,(int)y-6,12,12);
             g.drawLine((int)x,(int)y-5,(int)x,(int)y+6);
+
         }
 
         if (selecting) {
