@@ -541,6 +541,27 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             filterSelect.show();
         });
         editMenu.add(selectByCrit);
+        editMenu.addSeparator();
+
+        JMenuItem groups = new JMenuItem("Show Saved Groups");
+        JMenuItem hideGroups = new JMenuItem("Hide Saved Groups");
+        groups.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_G, ActionEvent.CTRL_MASK));
+        hideGroups.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_G, ActionEvent.CTRL_MASK));
+        groups.addActionListener(e -> {
+            selectedEffectType = EffectGUI.SHOW_GROUPS;
+            updateEffectViewPanel(selectedEffectType);
+            hideGroups.setEnabled(true);
+            groups.setEnabled(false);
+        });
+        editMenu.add(groups);
+        hideGroups.addActionListener(e -> {
+            selectedEffectType = EffectGUI.HIDE_GROUPS;
+            updateEffectViewPanel(selectedEffectType);
+            groups.setEnabled(true);
+            hideGroups.setEnabled(false);
+        });
+        hideGroups.setEnabled(false);
+        editMenu.add(hideGroups);
 
         // View menu
         JMenu viewMenu = new JMenu("View");
@@ -839,25 +860,6 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         });
         lightMenuPopup.add(wavePattern);
 
-        lightMenuPopup.addSeparator();
-
-        JMenuItem groups = new JMenuItem("Show Saved Groups");
-        JMenuItem hideGroups = new JMenuItem("Hide Saved Groups");
-        groups.addActionListener(e -> {
-            selectedEffectType = EffectGUI.SHOW_GROUPS;
-            updateEffectViewPanel(selectedEffectType);
-            hideGroups.setEnabled(true);
-            groups.setEnabled(false);
-        });
-        lightMenuPopup.add(groups);
-        hideGroups.addActionListener(e -> {
-            selectedEffectType = EffectGUI.HIDE_GROUPS;
-            updateEffectViewPanel(selectedEffectType);
-            groups.setEnabled(true);
-            hideGroups.setEnabled(false);
-        });
-        hideGroups.setEnabled(false);
-        lightMenuPopup.add(hideGroups);
 
         // Button that triggers the popup menu
         JButton lightButton = new JButton("Effect Options");
