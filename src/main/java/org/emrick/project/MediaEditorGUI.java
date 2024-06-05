@@ -179,15 +179,13 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             } else {
                 scrubBarGUI.nextCount();
 
-                if (scrubBarGUI.isAtLastSet() && scrubBarGUI.isAtEndOfSet()) {
+                if (scrubBarGUI.isAtLastSet()) {
                     // Reached the end
                     playbackTimer.stop();
                     audioPlayer.pauseAudio();
                     scrubBarGUI.setIsPlayingPlay();
                     canSeekAudio = true;
                     return;
-                } else if (scrubBarGUI.isAtEndOfSet()) {
-                    scrubBarGUI.nextSet();
                 }
                 setPlaybackTimerTimeByCounts();
             }
@@ -1742,12 +1740,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         if (scrubBarGUI.isPlaying() && scrubBarGUI.isUseFps()) {
 
             try {
-                double currTime;
-                if (footballFieldPanel.getCurrentSet().index > 0) {
-                    currTime = scrubBarGUI.getTime() * 1000 + timeManager.getSet2MSec().get(footballFieldPanel.getCurrentSet().index).getValue();
-                } else {
-                    currTime = scrubBarGUI.getTime() * 1000;
-                }
+                double currTime = scrubBarGUI.getTime() * 1000;
                 double timeDiff = System.currentTimeMillis() - playbackStartMS - currTime;
                 playbackTimer.setDelay(playbackTimer.getDelay() - (int) timeDiff);
             }

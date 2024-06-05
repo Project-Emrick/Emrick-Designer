@@ -34,7 +34,6 @@ public class ScrubBarGUI extends JComponent implements ActionListener {
 
     // Scrub Bars / Sliders
     private JSlider topSlider;
-    private JSlider botSlider;
 
     // Scrub-Bar Status
     private boolean isReady; // Whether the drill is ready to play
@@ -181,22 +180,15 @@ public class ScrubBarGUI extends JComponent implements ActionListener {
 
         scrubBarPanel.add(statusPanel, BorderLayout.EAST);
 
-        JPanel sliderPanel = new JPanel(new GridLayout(2, 1));
+        JPanel sliderPanel = new JPanel(new BorderLayout());
 
         // Slider for navigating different sets
-        topSlider = new JSlider(JSlider.HORIZONTAL,0, pageTab2Count.size() - 1, 0);
+        topSlider = new JSlider(JSlider.HORIZONTAL,0, lastCount, 0);
         Hashtable<Integer, JLabel> labelTable = buildLabelTable();
         topSlider.setLabelTable(labelTable);
         topSlider.setMinorTickSpacing(1);
-        topSlider.setPaintTicks(true);
+        topSlider.setPaintTicks(false);
         topSlider.setPaintLabels(true);
-
-        // Slider for navigating within a set
-        botSlider = new JSlider(JSlider.HORIZONTAL, currSetStartCount, currSetEndCount, 0);
-        botSlider.setMinorTickSpacing(1);
-        botSlider.setMajorTickSpacing(2);
-        botSlider.setPaintTicks(true);
-        botSlider.setPaintLabels(true);
 
         // Change Listeners
 
@@ -205,61 +197,53 @@ public class ScrubBarGUI extends JComponent implements ActionListener {
 
                 // Status label
                 int val = ((JSlider)e.getSource()).getValue();
-                String set = labelTable.get(val).getText();
+                String set = labelTable.get(getCurrentSetStart()).getText();
                 statusLabel.setText("Set: " + set);
 
-                updateCurrSetCounts(set);
-                for (Set s : footballFieldPanel.drill.sets) {
-                    if (s.equalsString(set)) {
-                        footballFieldPanel.addSetToField(s);
-                    }
-                }
+//                updateCurrSetCounts(set);
+//                for (Set s : footballFieldPanel.drill.sets) {
+//                    if (s.equalsString(set)) {
+//                        footballFieldPanel.addSetToField(s);
+//                    }
+//                }
 
-                // Update bottom slider
-                botSlider.setMinimum(currSetStartCount);
                 footballFieldPanel.setCurrentSetStartCount(currSetStartCount);
-                botSlider.setMaximum(currSetEndCount);
-                botSlider.setValue(currSetStartCount);
+                footballFieldPanel.setCurrentCount(val);
 
-                scrubBarListener.onScrub();
+
+                long currTimeMSec = scrubBarListener.onScrub();
+                if (!isUseFps()) {
+                    float pastSetTime = 0;
+                    for (int i = 0; i < getCurrentSetIndex(); i++) {
+                        pastSetTime += timeSync.get(i).getValue();
+                    }
+                    time = ((float) currTimeMSec + pastSetTime) / 1000;
+                    scrubBarListener.onTimeChange((long) ((time - pastSetTime) * 1000));
+                }
+                timeLabel.setText(TimeManager.getFormattedTime(currTimeMSec));
+
+                setPlaybackTime();
             }
         });
 
-        botSlider.addChangeListener(e -> {
-            int val = ((JSlider)e.getSource()).getValue();
-            footballFieldPanel.setCurrentCount(val);
-
-            long currTimeMSec = scrubBarListener.onScrub();
-            if (!isUseFps()) {
-                time = ((float) currTimeMSec) / 1000;
-                scrubBarListener.onTimeChange((long) (time * 1000));
-            }
-            timeLabel.setText(TimeManager.getFormattedTime(currTimeMSec));
-
-            setPlaybackTime();
-        });
-
-        sliderPanel.add(topSlider);
-        sliderPanel.add(botSlider);
+        sliderPanel.add(topSlider, BorderLayout.CENTER);
 
         scrubBarPanel.add(sliderPanel, BorderLayout.CENTER);
     }
 
     public void setPlaybackTime() {
-        if (!isPlaying && timeSync != null) {
-            float setSyncDuration = timeSync.get(this.getCurrentSetIndex()).getValue();
+        //TODO rewrite
+        if (!isPlaying) {
+            float setSyncDuration = timeSync.get(getCurrentSetIndex()).getValue();
             float setDuration = this.getCurrSetDuration(); // in counts
-            time = (float) (botSlider.getValue() - botSlider.getMinimum()) / setDuration * setSyncDuration;
-            scrubBarListener.onTimeChange((long) (time * 1000));
-            double ratio = time / setSyncDuration;
-            footballFieldPanel.setCurrentSetRatio(Math.min(ratio, 1));
-            footballFieldPanel.repaint();
-        } else if (!isPlaying) {
-            float setSyncDuration = timeSync.get(this.getCurrentSetIndex()).getValue();
-            float setDuration = this.getCurrSetDuration(); // in counts
-            time = (float) (botSlider.getValue() - botSlider.getMinimum()) / setDuration * setSyncDuration;
-            scrubBarListener.onTimeChange((long) (time * 1000));
-            double ratio = (float) (botSlider.getValue() - botSlider.getMinimum()) / setDuration;
+            float pastSetTime = 0;
+            for (int i = 0; i < getCurrentSetIndex(); i++) {
+                pastSetTime += timeSync.get(i).getValue();
+            }
+            time = (float) (topSlider.getValue() - getCurrentSetStart()) / setDuration * setSyncDuration + pastSetTime;
+            scrubBarListener.onTimeChange((long) ((time - pastSetTime) * 1000));
+            double ratio = (time - pastSetTime) / setSyncDuration;
+            footballFieldPanel.setCurrentSet(footballFieldPanel.drill.sets.get(getCurrentSetIndex()));
             footballFieldPanel.setCurrentSetRatio(Math.min(ratio, 1));
             footballFieldPanel.repaint();
         }
@@ -269,25 +253,25 @@ public class ScrubBarGUI extends JComponent implements ActionListener {
         double step = (1 / fps) / playbackSpeed;
 
         time += step;
-        scrubBarListener.onTimeChange((long) (time * 1000));
+        float pastSetTime = 0;
+        for (int i = 0; i < getCurrentSetIndex(); i++) {
+            pastSetTime += timeSync.get(i).getValue();
+        }
 
-        float setSyncDuration = timeSync.get(this.getCurrentSetIndex()).getValue();
-        float setDuration = this.getCurrSetDuration(); // in counts
+        float setSyncDuration = timeSync.get(getCurrentSetIndex()).getValue();
+        float setDuration = getCurrSetDuration(); // in counts
 
-        double ratio = time / setSyncDuration;
+        double ratio = (time - pastSetTime) / setSyncDuration;
         double setCount = ratio * setDuration;
-        botSlider.setValue(botSlider.getMinimum() + (int) Math.round(setCount));
+        topSlider.setValue(getCurrentSetStart() + (int) Math.floor(setCount));
+        scrubBarListener.onTimeChange((long) ((time - pastSetTime) * 1000));
 
+        footballFieldPanel.setCurrentSet(footballFieldPanel.drill.sets.get(getCurrentSetIndex()));
         footballFieldPanel.setCurrentSetRatio(Math.min(ratio, 1));
         footballFieldPanel.repaint();
 
-        if (ratio >= 1) {
-            time -= setSyncDuration;
-            scrubBarListener.onTimeChange((long) (time * 1000));
-            this.nextSet();
-        }
 
-        if (this.isAtLastSet() && this.isAtEndOfSet()) {
+        if (this.isAtLastSet()) {
             this.setIsPlayingPlay();
             System.out.println("we've stopped!");
             return true;
@@ -304,7 +288,8 @@ public class ScrubBarGUI extends JComponent implements ActionListener {
 
         int val = 0;
         for (Map.Entry<String, Integer> entry : list) {
-            labelTable.put(val++, new JLabel(entry.getKey()));
+            System.out.println(entry.getValue());
+            labelTable.put(entry.getValue(), new JLabel(entry.getKey()));
         }
 
         return labelTable;
@@ -569,8 +554,9 @@ public class ScrubBarGUI extends JComponent implements ActionListener {
             scrubBarListener.onSpeedChange(playbackSpeed);
         }
 
-        int val = botSlider.getValue();
+        int val = topSlider.getValue();
         footballFieldPanel.setCurrentCount(val);
+        setPlaybackTime();
     }
 
     // these might be misleading, fix?
@@ -585,8 +571,8 @@ public class ScrubBarGUI extends JComponent implements ActionListener {
         playPauseButton.setIcon(PLAY_ICON);
         isPlaying = false;
 
-        time = scrubBarListener.onScrub() / 1000.0;
-        scrubBarListener.onTimeChange((long) (time * 1000));
+//        scrubBarListener.onTimeChange((long) (time * 1000));
+//        time = scrubBarListener.onScrub() / 1000.0;
         System.out.println("ScrubBarGUI: isPlaying = " + isPlaying + ", time = " + scrubBarListener.onScrub() / 1000.0);
     }
 
@@ -595,19 +581,46 @@ public class ScrubBarGUI extends JComponent implements ActionListener {
     }
 
     public void prevSet() {
-        topSlider.setValue(topSlider.getValue() - 1);
+        Iterator<Integer> iterator = pageTab2Count.values().iterator();
+        ArrayList<Integer> list = new ArrayList<>();
+        while (iterator.hasNext()) {
+            list.add(iterator.next());
+        }
+        list.sort(Comparator.comparingInt(Integer::intValue));
+        for (int i = 0; i < list.size() - 1; i++) {
+            if (list.get(i) <= topSlider.getValue() && list.get(i+1) > topSlider.getValue()) {
+                if (topSlider.getValue() == list.get(i)) {
+                    topSlider.setValue(list.get(i - 1));
+                } else {
+                    topSlider.setValue(list.get(i));
+                }
+                return;
+            }
+        }
+        topSlider.setValue(list.get(list.size() - 2));
     }
 
     public void nextSet() {
-        topSlider.setValue(topSlider.getValue() + 1);
+        Iterator<Integer> iterator = pageTab2Count.values().iterator();
+        ArrayList<Integer> list = new ArrayList<>();
+        while (iterator.hasNext()) {
+            list.add(iterator.next());
+        }
+        list.sort(Comparator.comparingInt(Integer::intValue));
+        for (int i = 0; i < list.size() - 1; i++) {
+            if (list.get(i) <= topSlider.getValue() && list.get(i+1) > topSlider.getValue()) {
+                topSlider.setValue(list.get(i+1));
+                break;
+            }
+        }
     }
 
     public void prevCount() {
-        botSlider.setValue(botSlider.getValue() - 1);
+        topSlider.setValue(topSlider.getValue() - 1);
     }
 
     public void nextCount() {
-        botSlider.setValue(botSlider.getValue() + 1);
+        topSlider.setValue(topSlider.getValue() + 1);
     }
 
     public double getFps() {
@@ -615,7 +628,18 @@ public class ScrubBarGUI extends JComponent implements ActionListener {
     }
 
     public int getCurrentSetIndex() {
-        return topSlider.getValue();
+        Iterator<Integer> iterator = pageTab2Count.values().iterator();
+        ArrayList<Integer> list = new ArrayList<>();
+        while (iterator.hasNext()) {
+            list.add(iterator.next());
+        }
+        list.sort(Comparator.comparingInt(Integer::intValue));
+        for (int i = 0; i < list.size() - 1; i++) {
+            if (list.get(i) <= topSlider.getValue() && list.get(i+1) > topSlider.getValue()) {
+                return i;
+            }
+        }
+        return list.size()-1;
     }
 
 //    public int getCurrentCountInIndex() {
@@ -626,75 +650,73 @@ public class ScrubBarGUI extends JComponent implements ActionListener {
 //        return botSlider.getValue();
 //    }
 
-    public boolean isAtEndOfSet() {
-        return botSlider.getValue() == botSlider.getMaximum();
+    public int getCurrentSetStart() {
+        Iterator<Integer> iterator = pageTab2Count.values().iterator();
+        ArrayList<Integer> list = new ArrayList<>();
+        while (iterator.hasNext()) {
+            list.add(iterator.next());
+        }
+        list.sort(Comparator.comparingInt(Integer::intValue));
+        for (int i = 0; i < list.size() - 1; i++) {
+            if (list.get(i) <= topSlider.getValue() && list.get(i+1) > topSlider.getValue()) {
+                return list.get(i);
+            }
+        }
+        return list.get(list.size()-1);
     }
+
 
     public boolean isAtLastSet() {
         return topSlider.getValue() == topSlider.getMaximum();
     }
 
     public boolean isAtStartOfSet() {
-        return botSlider.getValue() == botSlider.getMinimum();
+        Iterator<Integer> iterator = pageTab2Count.values().iterator();
+        while (iterator.hasNext()) {
+            if (iterator.next().equals(topSlider.getValue())) {
+                return true;
+            }
+        }
+        return false;
     }
 
     public boolean isAtFirstSet() {
-        return topSlider.getValue() == topSlider.getMinimum();
+        Iterator<Integer> iterator = pageTab2Count.values().iterator();
+        ArrayList<Integer> list = new ArrayList<>();
+        while (iterator.hasNext()) {
+            list.add(iterator.next());
+        }
+        list.sort(Comparator.comparingInt(Integer::intValue));
+        return topSlider.getValue() < list.get(1);
     }
 
     public int getCurrSetDuration() {
-        return botSlider.getMaximum() - botSlider.getMinimum(); // gets duration in counts
+        Iterator<Integer> iterator = pageTab2Count.values().iterator();
+        ArrayList<Integer> list = new ArrayList<>();
+        while (iterator.hasNext()) {
+            list.add(iterator.next());
+        }
+        list.sort(Comparator.comparingInt(Integer::intValue));
+        for (int i = 0; i < list.size() - 1; i++) {
+            if (list.get(i) <= topSlider.getValue() && list.get(i+1) > topSlider.getValue()) {
+                return list.get(i+1) - list.get(i);
+            }
+        }
+        return 0;
     }
 
     public void setTimeSync(ArrayList<SyncTimeGUI.Pair> timeSync) {
         this.timeSync = timeSync;
+        this.timeSync.sort(new Comparator<SyncTimeGUI.Pair>() {
+            @Override
+            public int compare(SyncTimeGUI.Pair o1, SyncTimeGUI.Pair o2) {
+                return o1.getKey().compareTo(o2.getKey());
+            }
+        });
     }
 
     public JButton getSyncButton() {
         return syncButton;
     }
 
-    // For testing
-//    public static void main(String[] args) {
-//
-//        // Run Swing programs on the Event Dispatch Thread (EDT)
-//        SwingUtilities.invokeLater(new Runnable() {
-//            @Override
-//            public void run() {
-//
-//                ScrubBarGUI scrubBarGUI = new ScrubBarGUI(new ScrubBarListener() {
-//                    @Override
-//                    public void onPlay() {
-//                        System.out.println("onPlay called.");
-//                    }
-//
-//                    @Override
-//                    public void onPause() {
-//                        System.out.println("onPause called.");
-//                    }
-//                }, new FootballFieldPanel());
-//
-//                // Dummy input
-//                Map<String, Integer> dummyData1 = new HashMap<>();
-//                dummyData1.put("1", 0); // Page tab 1 maps to count 0
-//                dummyData1.put("1A", 16); // Page tab 1A maps to count 16
-//                dummyData1.put("2", 32); // Page tab 2 maps to count 32
-//                dummyData1.put("2A", 48); // etc.
-//                dummyData1.put("3", 64);
-//                dummyData1.put("3A", 88);
-//                dummyData1.put("4", 96);
-//                dummyData1.put("4A", 112);
-//                dummyData1.put("4B", 128);
-//
-//                // When updating Scrub Bar GUI
-//                scrubBarGUI.updatePageTabCounts(dummyData1);
-//
-//                JFrame testFrame = new JFrame();
-//                testFrame.add(scrubBarGUI.getScrubBarPanel());
-//                testFrame.setSize(new Dimension(800, 200));
-//                testFrame.setLocationRelativeTo(null);
-//                testFrame.setVisible(true);
-//            }
-//        });
-//    }
 }
