@@ -1786,7 +1786,12 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             long currentMSec = timeManager.getCount2MSec().get(footballFieldPanel.getCurrentCount());
             currentEffect = effectManager.getEffectsFromSelectedPerformers(currentMSec);
             if (selectedEffectType == EffectGUI.HIDE_GROUPS) {
-                selectedEffectType = currentEffect.getEffectType();
+                if (!currentEffect.equals(new Effect(0))) {
+                    selectedEffectType = currentEffect.getEffectType();
+                } else {
+                    selectedEffectType = EffectGUI.STATIC_COLOR;
+                }
+
             }
             if (currentEffect == null) {
                 currentEffect = null;
