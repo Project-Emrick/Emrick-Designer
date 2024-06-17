@@ -160,6 +160,7 @@ public class ScrubBarGUI extends JComponent implements ActionListener {
 //        Double[] playbackFps = {60.0, 30.0, 15.0};
         JComboBox<String> fpsChanger = new JComboBox<>(playbackFps);
         this.useFps = true;
+        footballFieldPanel.setUseFps(useFps);
         this.fps = 60.0;
         fpsChanger.addActionListener(e -> {
             // Added: give user ability to not use FPS option
@@ -167,9 +168,11 @@ public class ScrubBarGUI extends JComponent implements ActionListener {
             assert(selected != null);
             if (selected.equals("Count")) {
                 useFps = false;
+                footballFieldPanel.setUseFps(useFps);
                 return;
             }
             useFps = true;
+            footballFieldPanel.setUseFps(useFps);
             String selectedFps = selected.split(" ")[0];
             this.fps = Double.parseDouble(selectedFps);
         });
@@ -207,7 +210,7 @@ public class ScrubBarGUI extends JComponent implements ActionListener {
 //                    }
 //                }
 
-                footballFieldPanel.setCurrentSetStartCount(currSetStartCount);
+                footballFieldPanel.setCurrentSetStartCount(getCurrentSetStart());
                 footballFieldPanel.setCurrentCount(val);
 
 
@@ -288,7 +291,6 @@ public class ScrubBarGUI extends JComponent implements ActionListener {
 
         int val = 0;
         for (Map.Entry<String, Integer> entry : list) {
-            System.out.println(entry.getValue());
             labelTable.put(entry.getValue(), new JLabel(entry.getKey()));
         }
 
@@ -556,6 +558,7 @@ public class ScrubBarGUI extends JComponent implements ActionListener {
 
         int val = topSlider.getValue();
         footballFieldPanel.setCurrentCount(val);
+        footballFieldPanel.setCurrentSet(footballFieldPanel.drill.sets.get(getCurrentSetIndex()));
         setPlaybackTime();
     }
 
