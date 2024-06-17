@@ -791,7 +791,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                     server.stop(0);
                 }
                 if (archivePath != null && drillPath != null) {
-                    if (!effectManager.getUndoStack().isEmpty()) {
+                    if (effectManager != null && !effectManager.getUndoStack().isEmpty()) {
                         int resp = JOptionPane.showConfirmDialog(frame,
                                 "Would you like to save before quitting?",
                                 "Save and Quit?",
@@ -1652,6 +1652,10 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
     }
     @Override
     public void onCreateEffect(Effect effect) {
+        if (count2RFTrigger.values().size() == 0) {
+            showEffectBeforeFirstTriggerError();
+            return;
+        }
         if (effect.getStartTimeMSec() < ((RFTrigger) count2RFTrigger.values().toArray()[0]).getTimestampMillis()) {
             showEffectBeforeFirstTriggerError();
             return;
@@ -1684,18 +1688,20 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
 
     @Override
     public void onPerformerSelect() {
-        Performer p = effectManager.getSelectedPerformers().get(0);
-        long msec = footballFieldPanel.currentMS;
-        if (p.getEffects().size() != 0) {
-            Effect effect = effectManager.getEffect(p, msec);
-            if (effect != null) {
-                if (selectedEffectType != EffectGUI.SHOW_GROUPS) {
-                    selectedEffectType = effect.getEffectType();
+        if (effectManager != null) {
+            Performer p = effectManager.getSelectedPerformers().get(0);
+            long msec = footballFieldPanel.currentMS;
+            if (p.getEffects().size() != 0) {
+                Effect effect = effectManager.getEffect(p, msec);
+                if (effect != null) {
+                    if (selectedEffectType != EffectGUI.SHOW_GROUPS) {
+                        selectedEffectType = effect.getEffectType();
+                    }
                 }
             }
+            updateEffectViewPanel(selectedEffectType);
+            updateTimelinePanel();
         }
-        updateEffectViewPanel(selectedEffectType);
-        updateTimelinePanel();
     }
 
     @Override
@@ -1899,8 +1905,12 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
     }
 
     public void saveProject(File path, File archivePath, File drillPath) {
-
-        ProjectFile pf = new ProjectFile(footballFieldPanel.drill, archivePath.getAbsolutePath(), drillPath.getAbsolutePath(), timeSync, startDelay, count2RFTrigger, effectManager.getIds());
+        ProjectFile pf;
+        if (this.effectManager != null) {
+            pf = new ProjectFile(footballFieldPanel.drill, archivePath.getAbsolutePath(), drillPath.getAbsolutePath(), timeSync, startDelay, count2RFTrigger, effectManager.getIds());
+        } else {
+            pf = new ProjectFile(footballFieldPanel.drill, archivePath.getAbsolutePath(), drillPath.getAbsolutePath(), timeSync, startDelay, count2RFTrigger, null);
+        }
         String g = gson.toJson(pf);
 
         System.out.println("saving to `" + path + "`");
