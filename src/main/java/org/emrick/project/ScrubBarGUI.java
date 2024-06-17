@@ -210,6 +210,7 @@ public class ScrubBarGUI extends JComponent implements ActionListener {
 //                    }
 //                }
 
+                footballFieldPanel.setCurrentSet(footballFieldPanel.drill.sets.get(getCurrentSetIndex()));
                 footballFieldPanel.setCurrentSetStartCount(getCurrentSetStart());
                 footballFieldPanel.setCurrentCount(val);
 
@@ -556,10 +557,10 @@ public class ScrubBarGUI extends JComponent implements ActionListener {
             scrubBarListener.onSpeedChange(playbackSpeed);
         }
 
-        int val = topSlider.getValue();
-        footballFieldPanel.setCurrentCount(val);
-        footballFieldPanel.setCurrentSet(footballFieldPanel.drill.sets.get(getCurrentSetIndex()));
-        setPlaybackTime();
+//        int val = topSlider.getValue();
+//        footballFieldPanel.setCurrentCount(val);
+//        footballFieldPanel.setCurrentSet(footballFieldPanel.drill.sets.get(getCurrentSetIndex()));
+//        setPlaybackTime();
     }
 
     // these might be misleading, fix?
