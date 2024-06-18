@@ -51,7 +51,16 @@ public class EffectGUI implements ActionListener {
         // String fileName = System.getProperty("user.dir") + File.separator + "effectsGroup.json";
         // ! NOTE ! Assume Working Directory is Emrick-Designer/
         System.out.println("Working Directory = " + System.getProperty("user.dir"));
-        String fileName = System.getProperty("user.home") + "/AppData/Local/Emrick Designer/src/main/resources/effect/" + "effectsGroup.json";
+        System.out.println("user.home =" + System.getProperty("user.home"));
+        System.out.println("OS is: " + System.getProperty("os.name"));
+        String operatingSystem = System.getProperty("os.name");
+        String fileName;
+        if (operatingSystem.equals("Mac OS X")) {
+            fileName = System.getProperty("user.home") + "/Applications/Emrick-Designer/src/main/resources/effect" + "effectsGroup.json";
+        }
+        else {
+            fileName = System.getProperty("user.home") + "/AppData/Local/Emrick Designer/src/main/resources/effect/" + "effectsGroup.json";
+        }
         if (!new File(fileName).exists()) {
             try {
                 Files.createFile(Path.of(fileName));
