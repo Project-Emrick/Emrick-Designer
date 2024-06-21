@@ -3,6 +3,7 @@ package org.emrick.project.effect;
 import com.google.gson.*;
 import com.google.gson.reflect.*;
 import org.emrick.project.EffectsGroup;
+import org.emrick.project.PathConverter;
 import org.emrick.project.Performer;
 
 import javax.swing.*;
@@ -51,7 +52,8 @@ public class EffectGUI implements ActionListener {
         // String fileName = System.getProperty("user.dir") + File.separator + "effectsGroup.json";
         // ! NOTE ! Assume Working Directory is Emrick-Designer/
         System.out.println("Working Directory = " + System.getProperty("user.dir"));
-        String fileName = System.getProperty("user.home") + "/AppData/Local/Emrick Designer/src/main/resources/effect/" + "effectsGroup.json";
+
+        String fileName = PathConverter.pathConverter("src/main/resources/effect/" + "effectsGroup.json");
         if (!new File(fileName).exists()) {
             try {
                 Files.createFile(Path.of(fileName));
