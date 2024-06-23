@@ -83,6 +83,12 @@ public class Effect implements Cloneable, TimelineEvent {
     }
 
     public GeneratedEffect getGeneratedEffect() {
+        if (generatedEffect == null && effectType != 0) {
+            switch (effectType) {
+                case 2: generatedEffect = GeneratedEffectLoader.generateStaticColorEffectFromEffect(this); break;
+                case 5: generatedEffect = GeneratedEffectLoader.generateWaveEffectFromEffect(this); break;
+            }
+        }
         return generatedEffect;
     }
 

@@ -9,7 +9,6 @@ import java.util.*;
 
 public class ReplaceEffectsAction implements UndoableAction {
     private final ArrayList<EffectPerformerMap> map;
-    private boolean undone = false;
 
     public ReplaceEffectsAction(ArrayList<EffectPerformerMap> map) {
         this.map = map;
@@ -18,13 +17,6 @@ public class ReplaceEffectsAction implements UndoableAction {
     @Override
     public void execute() {
         // TODO: Rewrite to remove all effects that match id and then add new effects at the index of first old match
-        if (map.get(0).getEffect().getEffectType() != EffectGUI.WAVE && undone) {
-            for (EffectPerformerMap m : map) {
-                Effect tmp = m.getEffect();
-                m.setEffect(m.getOldEffect());
-                m.setOldEffect(tmp);
-            }
-        }
         ArrayList<Performer> performers = new ArrayList<>();
         for (int i = 0; i < map.size(); i++) {
             if (performers.size() > 0) {
@@ -71,17 +63,7 @@ public class ReplaceEffectsAction implements UndoableAction {
             }
         }
 
-        ArrayList<EffectPerformerMap> undoMap;
-        if (map.get(0).getEffect().getEffectType() == EffectGUI.WAVE) {
-            undoMap = EffectManager.generateWaveEffect(performers, map.get(0).getOldEffect());
-        } else {
-            undoMap = map;
-            for (EffectPerformerMap m : undoMap) {
-                Effect tmp = m.getEffect();
-                m.setEffect(m.getOldEffect());
-                m.setOldEffect(tmp);
-            }
-        }
+        ArrayList<EffectPerformerMap> undoMap = map.get(0).getOldEffect().getGeneratedEffect().generateEffects(performers, map.get(0).getOldEffect());
 
         int[] addIndexes = new int[performers.size()];
         int index = 0;
@@ -104,7 +86,6 @@ public class ReplaceEffectsAction implements UndoableAction {
             m.getPerformer().getEffects().add(addIndexes[i], m.getEffect());
             addIndexes[i]++;
         }
-        undone = true;
     }
 
     @Override

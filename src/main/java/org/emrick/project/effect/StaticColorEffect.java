@@ -1,7 +1,11 @@
 package org.emrick.project.effect;
 
+import org.emrick.project.Performer;
+import org.emrick.project.actions.EffectPerformerMap;
+
 import java.awt.*;
 import java.time.Duration;
+import java.util.ArrayList;
 
 public class StaticColorEffect implements GeneratedEffect {
 
@@ -79,5 +83,15 @@ public class StaticColorEffect implements GeneratedEffect {
         effect.setEffectType(EffectGUI.STATIC_COLOR);
         effect.setId(this.getId());
         return effect;
+    }
+
+    @Override
+    public ArrayList<EffectPerformerMap> generateEffects(ArrayList<Performer> performers, Effect effect) {
+        ArrayList<EffectPerformerMap> map = new ArrayList<>();
+        effect.setGeneratedEffect(StaticColorEffect.getGeneratedEffectFromEffect(effect));
+        for (Performer p : performers) {
+            map.add(new EffectPerformerMap(effect, p));
+        }
+        return map;
     }
 }
