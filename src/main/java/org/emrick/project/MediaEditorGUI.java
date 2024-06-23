@@ -2048,7 +2048,6 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                         Color endColor = e.getEndColor();
                         out += "End_color: " + endColor.getRed() + ", " + endColor.getGreen() + ", " + endColor.getBlue() + ", ";
                         if ((flags & DO_DELAY) > 0) {
-                            System.out.println(i + ", " + e.isDO_DELAY());
                             out += "Delay: " + (timeBeforeEffect(i, e, p.getEffects(), timesMS) + e.getDelay().toMillis()) + ", ";
                         } else {
                             out += "Delay: 0, ";

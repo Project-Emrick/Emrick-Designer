@@ -139,7 +139,7 @@ public class EffectGUI implements ActionListener {
 
             boolean TIME_GRADIENT = true;
             boolean SET_TIMEOUT = true;
-            boolean DO_DELAY = true;
+            boolean DO_DELAY = false;
             boolean INSTANT_COLOR = true;
 
             this.effect = new Effect(startTime,
