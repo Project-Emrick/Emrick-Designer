@@ -104,7 +104,7 @@ public class WaveEffect implements GeneratedEffect {
 
     @Override
     public int getEffectType() {
-        return 0;
+        return 5;
     }
 
     public ArrayList<EffectPerformerMap> generateEffects(ArrayList<Performer> performers, Effect effect) {

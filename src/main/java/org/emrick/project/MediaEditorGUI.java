@@ -2027,13 +2027,18 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                     for (i = 0; i < p.getEffects().size(); i++) {
                         Effect e = p.getEffects().get(i);
                         int flags = 0;
-                        if (timeBeforeEffect(i, e, p.getEffects(), timesMS) > 1) {
+                        if (timeBeforeEffect(i, e, p.getEffects(), timesMS) > 1 || e.isDO_DELAY()) {
                             flags += DO_DELAY;
                         }
                         if (timeAfterEffect(i, e, p.getEffects(), timesMS) == Long.MAX_VALUE) {
                             flags += SET_TIMEOUT;
                         }
-                        flags += TIME_GRADIENT;
+                        if (e.isTIME_GRADIENT()) {
+                            flags += TIME_GRADIENT;
+                        }
+                        if (e.isINSTANT_COLOR()) {
+                            flags += INSTANT_COLOR;
+                        }
                         out += "Size: 0, ";
                         out += "Strip_id: " + p.getDeviceId() + ", ";
                         out += "Set_id: " + getEffectTriggerIndex(e, timesMS) + ", ";
@@ -2043,11 +2048,12 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                         Color endColor = e.getEndColor();
                         out += "End_color: " + endColor.getRed() + ", " + endColor.getGreen() + ", " + endColor.getBlue() + ", ";
                         if ((flags & DO_DELAY) > 0) {
-                            out += "Delay: " + timeBeforeEffect(i, e, p.getEffects(), timesMS) + ", ";
+                            System.out.println(i + ", " + e.isDO_DELAY());
+                            out += "Delay: " + (timeBeforeEffect(i, e, p.getEffects(), timesMS) + e.getDelay().toMillis()) + ", ";
                         } else {
                             out += "Delay: 0, ";
                         }
-                        out += "Duration: " + (e.getEndTimeMSec() - e.getStartTimeMSec()) + ", ";
+                        out += "Duration: " + (e.getDuration().toMillis()) + ", ";
                         out += "Function: 0, ";
                         out += "Timeout: 0\n";
                         bfw.write(out);
