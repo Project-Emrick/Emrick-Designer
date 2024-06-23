@@ -283,7 +283,11 @@ public class Effect implements Cloneable, TimelineEvent {
 
         JPanel endColorPanel = new JPanel();
         endColorPanel.setPreferredSize(new Dimension(10, 10));
-        endColorPanel.setBackground(endColor);
+        if (effectType == EffectGUI.STATIC_COLOR) {
+            endColorPanel.setBackground(null);
+        } else {
+            endColorPanel.setBackground(endColor);
+        }
 
         widgetPanel.add(titleLabel);
         widgetPanel.add(startTimeLabel);

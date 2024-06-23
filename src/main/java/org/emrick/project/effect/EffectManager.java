@@ -180,6 +180,8 @@ public class EffectManager {
             undoStack.add(e);
             redoStack.clear();
             return true;
+        } else if (effect.getEffectType() == EffectGUI.STATIC_COLOR) {
+            effect.setGeneratedEffect(StaticColorEffect.getGeneratedEffectFromEffect(effect));
         }
         addEffect(effect, selectedPerformers);
         return true;
@@ -420,6 +422,9 @@ public class EffectManager {
                 m.setOldEffect(oldEffect);
             }
         } else {
+            if (newEffect.getEffectType() == EffectGUI.STATIC_COLOR) {
+                newEffect.setGeneratedEffect(StaticColorEffect.getGeneratedEffectFromEffect(newEffect));
+            }
             for (int i = 0; i < performers.size(); i++) {
                 map.add(new EffectPerformerMap(oldEffect, newEffect, performers.get(i)));
             }

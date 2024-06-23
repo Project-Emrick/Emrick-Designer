@@ -1805,19 +1805,31 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                 effectViewPanel.add(effectGUI.getEffectPanel(), BorderLayout.CENTER);
 
                 return;
+            } else if (currentEffect.getEffectType() != 0) {
+                selectedEffectType = currentEffect.getEffectType();
             }
             if (currentEffect.getGeneratedEffect() != null) {
-                WaveEffect waveEffect = (WaveEffect) currentEffect.getGeneratedEffect();
-                currentEffect = new Effect(waveEffect.getStartTime());
-                currentEffect.setEndTimeMSec(waveEffect.getEndTime());
-                currentEffect.setStartColor(waveEffect.getStaticColor());
-                currentEffect.setEndColor(waveEffect.getWaveColor());
-                currentEffect.setDuration(waveEffect.getDuration());
-                currentEffect.setSpeed(waveEffect.getSpeed());
-                currentEffect.setUpOrSide(waveEffect.isVertical());
-                currentEffect.setDirection(waveEffect.isUpRight());
-                currentEffect.setEffectType(EffectGUI.WAVE);
-                currentEffect.setId(waveEffect.getId());
+                if (currentEffect.getEffectType() == EffectGUI.WAVE) {
+                    WaveEffect waveEffect = (WaveEffect) currentEffect.getGeneratedEffect();
+                    currentEffect = new Effect(waveEffect.getStartTime());
+                    currentEffect.setEndTimeMSec(waveEffect.getEndTime());
+                    currentEffect.setStartColor(waveEffect.getStaticColor());
+                    currentEffect.setEndColor(waveEffect.getWaveColor());
+                    currentEffect.setDuration(waveEffect.getDuration());
+                    currentEffect.setSpeed(waveEffect.getSpeed());
+                    currentEffect.setUpOrSide(waveEffect.isVertical());
+                    currentEffect.setDirection(waveEffect.isUpRight());
+                    currentEffect.setEffectType(EffectGUI.WAVE);
+                    currentEffect.setId(waveEffect.getId());
+                } else if (currentEffect.getEffectType() == EffectGUI.STATIC_COLOR) {
+                    StaticColorEffect staticColorEffect = (StaticColorEffect) currentEffect.getGeneratedEffect();
+                    currentEffect = new Effect(staticColorEffect.getStartTime());
+                    currentEffect.setEndTimeMSec(staticColorEffect.getEndTime());
+                    currentEffect.setStartColor(staticColorEffect.getStaticColor());
+                    currentEffect.setDuration(staticColorEffect.getDuration());
+                    currentEffect.setEffectType(staticColorEffect.getEffectType());
+                    currentEffect.setId(staticColorEffect.getId());
+                }
             }
             effectGUI = new EffectGUI(currentEffect, currentMSec, this, selectedEffectType);
             // Add updated data for effect view
