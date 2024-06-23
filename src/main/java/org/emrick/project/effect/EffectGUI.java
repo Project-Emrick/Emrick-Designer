@@ -19,15 +19,6 @@ import java.util.*;
 import java.util.stream.*;
 
 public class EffectGUI implements ActionListener {
-
-    public static int HIDE_GROUPS = -1;
-    public static int SHOW_GROUPS = 0;
-    public static int GENERATED_FADE = 1;
-    public static int STATIC_COLOR = 2;
-    public static int FLASHING_COLOR = 3;
-    public static int RIPPLE = 4;
-    public static int WAVE = 5;
-    public static int CIRCLE_CHASE = 6;
     private static List<EffectsGroup> EFFECTS_GROUPS;
     // Strings
     public static String
@@ -124,14 +115,14 @@ public class EffectGUI implements ActionListener {
     private JLabel placeholderLabel;
     private JButton saveEffectButton;
     private Map<Performer, Collection<Effect>> selectedEffects;
-    private int effectType;
+    private EffectList effectType;
 
     /**
      * @param effect    The current effect, as it exists. Passed in null if it doesn't exist.
      * @param startTime In the case that no effect exists for the performer at the given time, we still need the current
      *                  time for gui display.
      */
-    public EffectGUI(Effect effect, long startTime, EffectListener effectListener, int effectType) {
+    public EffectGUI(Effect effect, long startTime, EffectListener effectListener, EffectList effectType) {
         this.effect = effect;
         this.effectListener = effectListener;
         this.effectType = effectType;
@@ -169,11 +160,11 @@ public class EffectGUI implements ActionListener {
         placeholderLabel = null;
 
         this.effectMod = this.effect.clone(); // Changes made in GUI are not applied to original effect object
-        if (effectType == GENERATED_FADE) {
+        if (effectType == EffectList.GENERATED_FADE) {
             setupFadeGUI();
-        } else if (effectType == STATIC_COLOR) {
+        } else if (effectType == EffectList.STATIC_COLOR) {
             setupStaticColorGUI();
-        } else if (effectType == WAVE) {
+        } else if (effectType == EffectList.WAVE) {
             setupWaveGUI();
         }
     }
@@ -1196,8 +1187,7 @@ public class EffectGUI implements ActionListener {
             }
         };
 
-        EffectGUI effectGUI = new EffectGUI(null, startTimeMSec, el, 0);
-        effectGUI = new EffectGUI(EffectGUI.noCommonEffectMsg);
+        EffectGUI effectGUI = new EffectGUI(EffectGUI.noCommonEffectMsg);
         frame.add(effectGUI.getEffectPanel());
 
         frame.setVisible(true);
@@ -1227,7 +1217,7 @@ public class EffectGUI implements ActionListener {
             }
         } else if (e.getSource().equals(this.applyBtn)) {
             applyToEffectMod();
-            if (this.effectMod.getEffectType() == STATIC_COLOR) {
+            if (this.effectMod.getEffectType() == EffectList.STATIC_COLOR) {
                 this.effectMod.setDO_DELAY(true);
                 this.effectMod.setTIME_GRADIENT(false);
             }

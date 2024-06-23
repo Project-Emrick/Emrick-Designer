@@ -19,7 +19,7 @@ public class GeneratedEffectAdapter extends TypeAdapter<GeneratedEffect> {
             return;
         }
 
-        if (generatedEffect.getEffectType() == EffectGUI.WAVE) {
+        if (generatedEffect.getEffectType() == EffectList.WAVE) {
             WaveEffect waveEffect = (WaveEffect) generatedEffect;
             writer.beginObject();
             writer.name("startTime");
@@ -49,9 +49,9 @@ public class GeneratedEffectAdapter extends TypeAdapter<GeneratedEffect> {
             writer.name("id");
             writer.value(waveEffect.getId());
             writer.name("effectType");
-            writer.value(waveEffect.getEffectType());
+            writer.value(waveEffect.getEffectType().ordinal());
             writer.endObject();
-        } else if (generatedEffect.getEffectType() == EffectGUI.GENERATED_FADE) {
+        } else if (generatedEffect.getEffectType() == EffectList.GENERATED_FADE) {
             FadeEffect fadeEffect = (FadeEffect) generatedEffect;
             writer.beginObject();
             writer.name("startTime");
@@ -75,27 +75,27 @@ public class GeneratedEffectAdapter extends TypeAdapter<GeneratedEffect> {
             writer.name("id");
             writer.value(fadeEffect.getId());
             writer.name("effectType");
-            writer.value(fadeEffect.getEffectType());
+            writer.value(fadeEffect.getEffectType().ordinal());
             writer.endObject();
-        } else if (generatedEffect.getEffectType() == EffectGUI.STATIC_COLOR) {
+        } else if (generatedEffect.getEffectType() == EffectList.STATIC_COLOR) {
             StaticColorEffect staticColorEffect = (StaticColorEffect) generatedEffect;
             writer.beginObject();
             writer.name("startTime");
             writer.value(staticColorEffect.getStartTime());
             writer.name("endTime");
             writer.value(staticColorEffect.getEndTime());
-            writer.name("startColorR");
+            writer.name("staticColorR");
             writer.value(staticColorEffect.getStaticColor().getRed());
-            writer.name("startColorG");
+            writer.name("staticColorG");
             writer.value(staticColorEffect.getStaticColor().getGreen());
-            writer.name("startColorB");
+            writer.name("staticColorB");
             writer.value(staticColorEffect.getStaticColor().getBlue());
             writer.name("duration");
             writer.value(staticColorEffect.getDuration().toMillis());
             writer.name("id");
             writer.value(staticColorEffect.getId());
             writer.name("effectType");
-            writer.value(staticColorEffect.getEffectType());
+            writer.value(staticColorEffect.getEffectType().ordinal());
             writer.endObject();
         } else {
             writer.nullValue();
@@ -182,7 +182,7 @@ public class GeneratedEffectAdapter extends TypeAdapter<GeneratedEffect> {
         }
         reader.endObject();
         if (effectType != null) {
-            if (effectType == EffectGUI.WAVE) {
+            if (effectType == EffectList.WAVE.ordinal()) {
 
                 if (startTime == null) {
                     throw new IOException("failed to get startTime component for GeneratedEffect");
@@ -216,55 +216,55 @@ public class GeneratedEffectAdapter extends TypeAdapter<GeneratedEffect> {
                                     new Color(staticColorR, staticColorG, staticColorB),
                                     new Color(waveColorR, waveColorG, waveColorB),
                                     Duration.ofMillis(duration), speed, vertical, upRight, id);
-            }
-        } else if (effectType == EffectGUI.GENERATED_FADE) {
-            if (startTime == null) {
-                throw new IOException("failed to get startTime component for GeneratedEffect");
-            } else if (endTime == null) {
-                throw new IOException("failed to get endTime component for GeneratedEffect");
-            } else if (startColorR == null) {
-                throw new IOException("failed to get staticColorR component for GeneratedEffect");
-            } else if (startColorG == null) {
-                throw new IOException("failed to get staticColorG component for GeneratedEffect");
-            } else if (startColorB == null) {
-                throw new IOException("failed to get staticColorB component for GeneratedEffect");
-            } else if (endColorR == null) {
-                throw new IOException("failed to get waveColorR component for GeneratedEffect");
-            } else if (endColorG == null) {
-                throw new IOException("failed to get waveColorG component for GeneratedEffect");
-            } else if (endColorB == null) {
-                throw new IOException("failed to get waveColorB component for GeneratedEffect");
-            } else if (duration == null) {
-                throw new IOException("failed to get duration component for GeneratedEffect");
-            } else if (id == null) {
-                throw new IOException("failed to get id component for GeneratedEffect");
-            }
+            }else if (effectType == EffectList.GENERATED_FADE.ordinal()) {
+                if (startTime == null) {
+                    throw new IOException("failed to get startTime component for GeneratedEffect");
+                } else if (endTime == null) {
+                    throw new IOException("failed to get endTime component for GeneratedEffect");
+                } else if (startColorR == null) {
+                    throw new IOException("failed to get staticColorR component for GeneratedEffect");
+                } else if (startColorG == null) {
+                    throw new IOException("failed to get staticColorG component for GeneratedEffect");
+                } else if (startColorB == null) {
+                    throw new IOException("failed to get staticColorB component for GeneratedEffect");
+                } else if (endColorR == null) {
+                    throw new IOException("failed to get waveColorR component for GeneratedEffect");
+                } else if (endColorG == null) {
+                    throw new IOException("failed to get waveColorG component for GeneratedEffect");
+                } else if (endColorB == null) {
+                    throw new IOException("failed to get waveColorB component for GeneratedEffect");
+                } else if (duration == null) {
+                    throw new IOException("failed to get duration component for GeneratedEffect");
+                } else if (id == null) {
+                    throw new IOException("failed to get id component for GeneratedEffect");
+                }
 
-            return new FadeEffect(startTime, endTime,
-                    new Color(startColorR, startColorG, startColorB),
-                    new Color(endColorR, endColorG, endColorB),
-                    Duration.ofMillis(duration), id);
-        } else if (effectType == EffectGUI.STATIC_COLOR) {
-            if (startTime == null) {
-                throw new IOException("failed to get startTime component for GeneratedEffect");
-            } else if (endTime == null) {
-                throw new IOException("failed to get endTime component for GeneratedEffect");
-            } else if (staticColorR == null) {
-                throw new IOException("failed to get staticColorR component for GeneratedEffect");
-            } else if (staticColorG == null) {
-                throw new IOException("failed to get staticColorG component for GeneratedEffect");
-            } else if (staticColorB == null) {
-                throw new IOException("failed to get staticColorB component for GeneratedEffect");
-            } else if (duration == null) {
-                throw new IOException("failed to get duration component for GeneratedEffect");
-            } else if (id == null) {
-                throw new IOException("failed to get id component for GeneratedEffect");
-            }
+                return new FadeEffect(startTime, endTime,
+                        new Color(startColorR, startColorG, startColorB),
+                        new Color(endColorR, endColorG, endColorB),
+                        Duration.ofMillis(duration), id);
+            } else if (effectType == EffectList.STATIC_COLOR.ordinal()) {
+                if (startTime == null) {
+                    throw new IOException("failed to get startTime component for GeneratedEffect");
+                } else if (endTime == null) {
+                    throw new IOException("failed to get endTime component for GeneratedEffect");
+                } else if (staticColorR == null) {
+                    throw new IOException("failed to get staticColorR component for GeneratedEffect");
+                } else if (staticColorG == null) {
+                    throw new IOException("failed to get staticColorG component for GeneratedEffect");
+                } else if (staticColorB == null) {
+                    throw new IOException("failed to get staticColorB component for GeneratedEffect");
+                } else if (duration == null) {
+                    throw new IOException("failed to get duration component for GeneratedEffect");
+                } else if (id == null) {
+                    throw new IOException("failed to get id component for GeneratedEffect");
+                }
 
-            return new StaticColorEffect(startTime, endTime,
-                    new Color(staticColorR, staticColorG, staticColorB),
-                    Duration.ofMillis(duration), id);
-        } else {
+                return new StaticColorEffect(startTime, endTime,
+                        new Color(staticColorR, staticColorG, staticColorB),
+                        Duration.ofMillis(duration), id);
+            }
+        }  else {
             throw new IOException("failed to get effectType component for GeneratedEffect");
         }
         return null;

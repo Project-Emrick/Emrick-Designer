@@ -73,8 +73,8 @@ public class FadeEffect implements GeneratedEffect {
     }
 
     @Override
-    public int getEffectType() {
-        return 1;
+    public EffectList getEffectType() {
+        return EffectList.GENERATED_FADE;
     }
 
     @Override
@@ -84,7 +84,7 @@ public class FadeEffect implements GeneratedEffect {
         effect.setStartColor(this.getStartColor());
         effect.setEndColor(this.getEndColor());
         effect.setDuration(this.getDuration());
-        effect.setEffectType(EffectGUI.GENERATED_FADE);
+        effect.setEffectType(EffectList.GENERATED_FADE);
         effect.setId(this.getId());
         return effect;
     }

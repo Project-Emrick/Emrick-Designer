@@ -65,8 +65,8 @@ public class StaticColorEffect implements GeneratedEffect {
     }
 
     @Override
-    public int getEffectType() {
-        return 2;
+    public EffectList getEffectType() {
+        return EffectList.STATIC_COLOR;
     }
 
     @Override
@@ -77,7 +77,7 @@ public class StaticColorEffect implements GeneratedEffect {
         effect.setDelay(this.getDuration());
         effect.setDO_DELAY(true);
         effect.setTIME_GRADIENT(false);
-        effect.setEffectType(EffectGUI.STATIC_COLOR);
+        effect.setEffectType(EffectList.STATIC_COLOR);
         effect.setId(this.getId());
         return effect;
     }

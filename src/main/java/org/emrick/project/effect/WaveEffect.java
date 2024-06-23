@@ -103,8 +103,8 @@ public class WaveEffect implements GeneratedEffect {
     }
 
     @Override
-    public int getEffectType() {
-        return 5;
+    public EffectList getEffectType() {
+        return EffectList.WAVE;
     }
 
     public ArrayList<EffectPerformerMap> generateEffects(ArrayList<Performer> performers, Effect effect) {
@@ -198,21 +198,21 @@ public class WaveEffect implements GeneratedEffect {
             }
             if (s1 != null) {
                 s1.setId(id);
-                s1.setEffectType(EffectGUI.WAVE);
+                s1.setEffectType(EffectList.WAVE);
                 s1.setGeneratedEffect(waveEffect);
                 map.add(new EffectPerformerMap(s1, p));
             }
             w1.setId(id);
-            w1.setEffectType(EffectGUI.WAVE);
+            w1.setEffectType(EffectList.WAVE);
             w1.setGeneratedEffect(waveEffect);
             map.add(new EffectPerformerMap(w1, p));
             w2.setId(id);
-            w2.setEffectType(EffectGUI.WAVE);
+            w2.setEffectType(EffectList.WAVE);
             w2.setGeneratedEffect(waveEffect);
             map.add(new EffectPerformerMap(w2, p));
             if (s2 != null) {
                 s2.setId(id);
-                s2.setEffectType(EffectGUI.WAVE);
+                s2.setEffectType(EffectList.WAVE);
                 s2.setGeneratedEffect(waveEffect);
                 map.add(new EffectPerformerMap(s2, p));
             }
@@ -230,7 +230,7 @@ public class WaveEffect implements GeneratedEffect {
         effect.setSpeed(this.getSpeed());
         effect.setUpOrSide(this.isVertical());
         effect.setDirection(this.isUpRight());
-        effect.setEffectType(EffectGUI.WAVE);
+        effect.setEffectType(EffectList.WAVE);
         effect.setId(this.getId());
         return effect;
     }

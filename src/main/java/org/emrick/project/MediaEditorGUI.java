@@ -80,7 +80,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
     private SelectionGroupGUI groupsGUI;
     private Effect currentEffect;
     private Effect copiedEffect;
-    private int selectedEffectType = 2;
+    private EffectList selectedEffectType = EffectList.STATIC_COLOR;
     public final int DEFAULT_FUNCTION = 0x1;
     public final int TIME_GRADIENT = 0x2;
     public final int SET_TIMEOUT = 0x4;
@@ -548,14 +548,14 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         groups.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_G, ActionEvent.CTRL_MASK));
         hideGroups.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_G, ActionEvent.CTRL_MASK));
         groups.addActionListener(e -> {
-            selectedEffectType = EffectGUI.SHOW_GROUPS;
+            selectedEffectType = EffectList.SHOW_GROUPS;
             updateEffectViewPanel(selectedEffectType);
             hideGroups.setEnabled(true);
             groups.setEnabled(false);
         });
         editMenu.add(groups);
         hideGroups.addActionListener(e -> {
-            selectedEffectType = EffectGUI.HIDE_GROUPS;
+            selectedEffectType = EffectList.HIDE_GROUPS;
             updateEffectViewPanel(selectedEffectType);
             groups.setEnabled(true);
             hideGroups.setEnabled(false);
@@ -847,21 +847,21 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
 
         JMenuItem fadePattern = new JMenuItem("Create Fade Pattern");
         fadePattern.addActionListener(e -> {
-            selectedEffectType = effectGUI.GENERATED_FADE;
+            selectedEffectType = EffectList.GENERATED_FADE;
             updateEffectViewPanel(selectedEffectType);
         });
         lightMenuPopup.add(fadePattern);
 
         JMenuItem staticColorPattern = new JMenuItem("Create Static Color Pattern");
         staticColorPattern.addActionListener(e -> {
-            selectedEffectType = effectGUI.STATIC_COLOR;
+            selectedEffectType = EffectList.STATIC_COLOR;
             updateEffectViewPanel(selectedEffectType);
         });
         lightMenuPopup.add(staticColorPattern);
 
         JMenuItem wavePattern = new JMenuItem("Create Wave Pattern");
         wavePattern.addActionListener(e -> {
-            selectedEffectType = effectGUI.WAVE;
+            selectedEffectType = EffectList.WAVE;
             updateEffectViewPanel(selectedEffectType);
         });
         lightMenuPopup.add(wavePattern);
@@ -1694,7 +1694,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             if (p.getEffects().size() != 0) {
                 Effect effect = effectManager.getEffect(p, msec);
                 if (effect != null) {
-                    if (selectedEffectType != EffectGUI.SHOW_GROUPS) {
+                    if (selectedEffectType != EffectList.SHOW_GROUPS) {
                         selectedEffectType = effect.getEffectType();
                     }
                 }
@@ -1763,7 +1763,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         return scrubBarGUI.getFps();
     }
 
-    private void updateEffectViewPanel(int effectType) {
+    private void updateEffectViewPanel(EffectList effectType) {
 
         // No point in updating effect view if can't use effects
         if (effectManager == null) return;
@@ -1779,7 +1779,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         effectViewPanel.repaint();
 
         // Effects
-        if (selectedEffectType != EffectGUI.SHOW_GROUPS) {
+        if (selectedEffectType != EffectList.SHOW_GROUPS) {
             if (footballFieldPanel.selectedPerformers.size() < 1) {
                 currentEffect = null;
                 effectGUI = new EffectGUI(EffectGUI.noPerformerMsg);
@@ -1791,11 +1791,11 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
 
             long currentMSec = timeManager.getCount2MSec().get(footballFieldPanel.getCurrentCount());
             currentEffect = effectManager.getEffectsFromSelectedPerformers(currentMSec);
-            if (selectedEffectType == EffectGUI.HIDE_GROUPS) {
+            if (selectedEffectType == EffectList.HIDE_GROUPS) {
                 if (!currentEffect.equals(new Effect(0))) {
                     selectedEffectType = currentEffect.getEffectType();
                 } else {
-                    selectedEffectType = EffectGUI.STATIC_COLOR;
+                    selectedEffectType = EffectList.STATIC_COLOR;
                 }
 
             }
@@ -1805,11 +1805,11 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                 effectViewPanel.add(effectGUI.getEffectPanel(), BorderLayout.CENTER);
 
                 return;
-            } else if (currentEffect.getEffectType() != 0) {
+            } else if (currentEffect.getEffectType() != EffectList.HIDE_GROUPS) {
                 selectedEffectType = currentEffect.getEffectType();
             }
             if (currentEffect.getGeneratedEffect() != null) {
-                if (currentEffect.getEffectType() == EffectGUI.WAVE) {
+                if (currentEffect.getEffectType() == EffectList.WAVE) {
                     WaveEffect waveEffect = (WaveEffect) currentEffect.getGeneratedEffect();
                     currentEffect = new Effect(waveEffect.getStartTime());
                     currentEffect.setEndTimeMSec(waveEffect.getEndTime());
@@ -1819,12 +1819,12 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                     currentEffect.setSpeed(waveEffect.getSpeed());
                     currentEffect.setUpOrSide(waveEffect.isVertical());
                     currentEffect.setDirection(waveEffect.isUpRight());
-                    currentEffect.setEffectType(EffectGUI.WAVE);
+                    currentEffect.setEffectType(EffectList.WAVE);
                     currentEffect.setId(waveEffect.getId());
-                } else if (currentEffect.getEffectType() == EffectGUI.STATIC_COLOR) {
+                } else if (currentEffect.getEffectType() == EffectList.STATIC_COLOR) {
                     StaticColorEffect staticColorEffect = (StaticColorEffect) currentEffect.getGeneratedEffect();
                     currentEffect = staticColorEffect.generateEffectObj();
-                } else if (currentEffect.getEffectType() == EffectGUI.GENERATED_FADE) {
+                } else if (currentEffect.getEffectType() == EffectList.GENERATED_FADE) {
                     FadeEffect fadeEffect = (FadeEffect) currentEffect.getGeneratedEffect();
                     currentEffect = fadeEffect.generateEffectObj();
                 }
