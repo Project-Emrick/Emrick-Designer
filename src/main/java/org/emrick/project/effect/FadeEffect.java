@@ -7,18 +7,19 @@ import java.awt.*;
 import java.time.Duration;
 import java.util.ArrayList;
 
-public class StaticColorEffect implements GeneratedEffect {
-
+public class FadeEffect implements GeneratedEffect {
     private long startTime;
     private long endTime;
-    private Color staticColor;
+    private Color startColor;
+    private Color endColor;
     private Duration duration;
     private int id;
 
-    public StaticColorEffect(long startTime, long endTime, Color staticColor, Duration duration, int id) {
+    public FadeEffect(long startTime, long endTime, Color startColor, Color endColor, Duration duration, int id) {
         this.startTime = startTime;
         this.endTime = endTime;
-        this.staticColor = staticColor;
+        this.startColor = startColor;
+        this.endColor = endColor;
         this.duration = duration;
         this.id = id;
     }
@@ -39,14 +40,21 @@ public class StaticColorEffect implements GeneratedEffect {
         this.endTime = endTime;
     }
 
-    public Color getStaticColor() {
-        return staticColor;
+    public Color getStartColor() {
+        return startColor;
     }
 
-    public void setStaticColor(Color staticColor) {
-        this.staticColor = staticColor;
+    public void setStartColor(Color startColor) {
+        this.startColor = startColor;
     }
 
+    public Color getEndColor() {
+        return endColor;
+    }
+
+    public void setEndColor(Color endColor) {
+        this.endColor = endColor;
+    }
 
     public Duration getDuration() {
         return duration;
@@ -66,18 +74,17 @@ public class StaticColorEffect implements GeneratedEffect {
 
     @Override
     public int getEffectType() {
-        return 2;
+        return 1;
     }
 
     @Override
     public Effect generateEffectObj() {
         Effect effect = new Effect(this.getStartTime());
         effect.setEndTimeMSec(this.getEndTime());
-        effect.setStartColor(this.getStaticColor());
-        effect.setDelay(this.getDuration());
-        effect.setDO_DELAY(true);
-        effect.setTIME_GRADIENT(false);
-        effect.setEffectType(EffectGUI.STATIC_COLOR);
+        effect.setStartColor(this.getStartColor());
+        effect.setEndColor(this.getEndColor());
+        effect.setDuration(this.getDuration());
+        effect.setEffectType(EffectGUI.GENERATED_FADE);
         effect.setId(this.getId());
         return effect;
     }

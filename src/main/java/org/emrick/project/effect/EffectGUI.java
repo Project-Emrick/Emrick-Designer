@@ -422,7 +422,7 @@ public class EffectGUI implements ActionListener {
         gc.gridy = 2;
         gc.anchor = GridBagConstraints.LINE_START;
         gc.insets = noSpacedInsets;
-        this.effectPanel.add(durationField, gc);
+        this.effectPanel.add(delayField, gc);
 
         //////////////// Apply or Delete Buttons ////////////////
 
@@ -1226,10 +1226,11 @@ public class EffectGUI implements ActionListener {
                 this.endColorBtn.setBackground(selectedColor);
             }
         } else if (e.getSource().equals(this.applyBtn)) {
-            if (effectType == STATIC_COLOR) {
-                effectMod.setEndColor(effectMod.getStartColor());
-            }
             applyToEffectMod();
+            if (this.effectMod.getEffectType() == STATIC_COLOR) {
+                this.effectMod.setDO_DELAY(true);
+                this.effectMod.setTIME_GRADIENT(false);
+            }
             if (this.isNewEffect) effectListener.onCreateEffect(this.effectMod);
             else effectListener.onUpdateEffect(this.effect, this.effectMod);
         } else if (e.getSource().equals(this.deleteBtn)) {

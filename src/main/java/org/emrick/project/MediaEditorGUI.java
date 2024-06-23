@@ -1823,12 +1823,10 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                     currentEffect.setId(waveEffect.getId());
                 } else if (currentEffect.getEffectType() == EffectGUI.STATIC_COLOR) {
                     StaticColorEffect staticColorEffect = (StaticColorEffect) currentEffect.getGeneratedEffect();
-                    currentEffect = new Effect(staticColorEffect.getStartTime());
-                    currentEffect.setEndTimeMSec(staticColorEffect.getEndTime());
-                    currentEffect.setStartColor(staticColorEffect.getStaticColor());
-                    currentEffect.setDuration(staticColorEffect.getDuration());
-                    currentEffect.setEffectType(staticColorEffect.getEffectType());
-                    currentEffect.setId(staticColorEffect.getId());
+                    currentEffect = staticColorEffect.generateEffectObj();
+                } else if (currentEffect.getEffectType() == EffectGUI.GENERATED_FADE) {
+                    FadeEffect fadeEffect = (FadeEffect) currentEffect.getGeneratedEffect();
+                    currentEffect = fadeEffect.generateEffectObj();
                 }
             }
             effectGUI = new EffectGUI(currentEffect, currentMSec, this, selectedEffectType);
@@ -1870,11 +1868,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         for (Map.Entry<String, Performer> selected : footballFieldPanel.selectedPerformers.entrySet()) {
             Performer p = selected.getValue();
             for (Effect e : p.getEffects()) {
-                if (e.getGeneratedEffect() != null) {
-                    effectsSet.add(e.getGeneratedEffect().generateEffectObj());
-                } else {
-                    effectsSet.add(e);
-                }
+                effectsSet.add(e.getGeneratedEffect().generateEffectObj());
             }
         }
         ArrayList<Effect> effectsList = new ArrayList<>(effectsSet);

@@ -27,27 +27,7 @@ public class ReplaceEffectsAction implements UndoableAction {
                 performers.add(map.get(i).getPerformer());
             }
         }
-        int[] addIndexes = new int[performers.size()];
-        int index = 0;
-        for (Performer p : performers) {
-
-            Effect removeEffect = null;
-            for (int i = 0; i < p.getEffects().size(); i++) {
-                if (p.getEffects().get(i).getId() == map.get(0).getEffect().getId()) {
-                    addIndexes[index] = i;
-                    removeEffect = p.getEffects().get(i);
-                    break;
-                }
-            }
-            while (p.getEffects().remove(removeEffect)){}
-
-            index++;
-        }
-        for (EffectPerformerMap m : map) {
-            int i = performers.indexOf(m.getPerformer());
-            m.getPerformer().getEffects().add(addIndexes[i], m.getEffect());
-            addIndexes[i]++;
-        }
+        addEffects(performers, map);
     }
 
     @Override
@@ -65,6 +45,10 @@ public class ReplaceEffectsAction implements UndoableAction {
 
         ArrayList<EffectPerformerMap> undoMap = map.get(0).getOldEffect().getGeneratedEffect().generateEffects(performers, map.get(0).getOldEffect());
 
+        addEffects(performers, undoMap);
+    }
+
+    private void addEffects(ArrayList<Performer> performers, ArrayList<EffectPerformerMap> undoMap) {
         int[] addIndexes = new int[performers.size()];
         int index = 0;
         for (Performer p : performers) {
