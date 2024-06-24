@@ -623,6 +623,16 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             server = null;
             stopWebServer.setEnabled(false);
             runWebServer.setEnabled(true);
+
+            File f = new File("tempPkt.pkt");
+            System.out.println(f.getAbsolutePath());
+            if(f.delete()){
+                System.out.println("yay!");
+            }
+            else{
+                System.out.println(":(");
+            }
+
         });
         stopShowItem.addActionListener(e -> {
             if (flowViewGUI != null) {
@@ -709,7 +719,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                 currentTutorialIndex = 0;
                 if (currentTutorialIndex < tutorialMessages.length) {
 
-                    // OPen or Create project
+                    // Open or Create project
                     if (currentTutorialIndex == 0) {
                         System.out.println("first one\n");
                         fileMenu.setBorder(BorderFactory.createLineBorder(Color.RED, 2));
@@ -899,16 +909,31 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         int port = 8080;
         try {
             File f;
-            if (path.equals("")) {
-                JFileChooser fileChooser = new JFileChooser();
-                fileChooser.setDialogTitle("Select Packets (.pkt) file");
-                fileChooser.setFileFilter(new FileNameExtensionFilter("Emrick Designer Packets File (*.pkt)", "pkt"));
-                fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
-                fileChooser.showOpenDialog(null);
-                f = fileChooser.getSelectedFile();
-            } else {
-                f = new File(path);
+
+            // If a project is loaded, generate the packets from the project and write them to a temp file in project directory.
+            // delete file after server is stopped.
+            if(archivePath == null || drillPath == null) { //if no project open
+                if (path.equals("")) {
+                    JFileChooser fileChooser = new JFileChooser();
+                    fileChooser.setDialogTitle("Select Packets (.pkt) file");
+                    fileChooser.setFileFilter(new FileNameExtensionFilter("Emrick Designer Packets File (*.pkt)", "pkt"));
+                    fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
+                    fileChooser.showOpenDialog(null);
+                    f = fileChooser.getSelectedFile();
+                } else {
+                    f = new File(path);
+                }
             }
+            else{ //there is a project open
+                if (path.equals("")) {
+                    f= new File("tempPkt.pkt");
+                    exportPackets(f);
+                } else {
+                    f = new File(path);
+                }
+            }
+
+
             server = HttpServer.create(new InetSocketAddress(port), 250);
             System.out.println("server started at " + port);
             System.out.println(server.getAddress());
