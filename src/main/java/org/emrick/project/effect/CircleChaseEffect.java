@@ -116,6 +116,8 @@ public class CircleChaseEffect implements GeneratedEffect {
         e.setEndColor(endColor);
         e.setSpeed(speed);
         e.setDirection(clockwise);
+        e.setAngle(startAngle);
+        e.setEffectType(EffectList.CIRCLE_CHASE);
         e.setId(id);
         return e;
     }
@@ -150,11 +152,11 @@ public class CircleChaseEffect implements GeneratedEffect {
             if (p.currentLocation.getX() > xExtremeR) {
                 xExtremeR = p.currentLocation.getX();
             }
-            if (p.currentLocation.getY() < yExtremeB) {
-                yExtremeB = p.currentLocation.getY();
-            }
-            if (p.currentLocation.getX() > yExtremeT) {
+            if (p.currentLocation.getY() < yExtremeT) {
                 yExtremeT = p.currentLocation.getY();
+            }
+            if (p.currentLocation.getY() > yExtremeB) {
+                yExtremeB = p.currentLocation.getY();
             }
         }
 
@@ -162,32 +164,40 @@ public class CircleChaseEffect implements GeneratedEffect {
 
         long wavePeriod = (long) (1.0/(1.0+this.getSpeed()) * (double) this.getDuration().toMillis());
         for (Performer p : performers) {
+            if (p.getIdentifier().equals("F2") || p.getIdentifier().equals("^20")) {
+                System.out.println("f2");
+            }
             long waveStartTime = 0;
-            double xdiff = p.currentLocation.getX() - center.getX();
-            double ydiff = p.currentLocation.getY() - center.getY();
+            double xdiff = (p.currentLocation.getX() - center.getX());
+            double ydiff = -(p.currentLocation.getY() - center.getY());
             double angle = Math.atan(ydiff / xdiff) * 180 / Math.PI;
-            if (xdiff > 0 && ydiff > 0) {
-                angle = 90 - angle;
-            } else if (xdiff < 0 && ydiff > 0) {
-                angle = 180 - angle;
-            } else if (xdiff < 0 && ydiff < 0) {
-                angle = 270 - angle;
-            } else if (xdiff > 0 && ydiff < 0) {
-                angle = 360 - angle;
-            } else if (xdiff == 0 && ydiff > 0) {
-                angle = 90;
-            } else if (xdiff < 0 && ydiff == 0) {
-                angle = 180;
-            } else if (xdiff == 0 && ydiff < 0) {
-                angle = 270;
-            } else if (xdiff == 0 && ydiff == 0) {
-                angle = startAngle;
+            if (xdiff != 0) {
+                if (xdiff > 0) {
+                    angle = (angle + 360) % 360;
+                } else {
+                    angle = (angle + 180) % 360;
+                }
+            } else {
+                if (ydiff > 0) {
+                    angle = 90;
+                } else if (ydiff < 0) {
+                    angle = 270;
+                } else {
+                    angle = startAngle;
+                }
             }
             if (this.isClockwise()) {
-                double relativePosition = (360 - (angle - startAngle)) % 360;
+                double tmp = startAngle;
+                if (angle > startAngle) {
+                    tmp += 360;
+                }
+                double relativePosition = (tmp - angle) / 360;
                 waveStartTime = (long) ((float) (this.getDuration().toMillis() - wavePeriod) * relativePosition);
             } else {
-                double relativePosition = (360 - (startAngle - angle)) % 360;
+                if (angle < startAngle) {
+                    angle += 360;
+                }
+                double relativePosition = (angle - startAngle) / 360;
                 waveStartTime = (long) ((float) (this.getDuration().toMillis() - wavePeriod) * relativePosition);
             }
             Effect s1 = null;
