@@ -97,6 +97,34 @@ public class GeneratedEffectAdapter extends TypeAdapter<GeneratedEffect> {
             writer.name("effectType");
             writer.value(staticColorEffect.getEffectType().ordinal());
             writer.endObject();
+        } else if (generatedEffect.getEffectType() == EffectList.ALTERNATING_COLOR) {
+            AlternatingColorEffect alternatingColorEffect = (AlternatingColorEffect) generatedEffect;
+            writer.beginObject();
+            writer.name("startTime");
+            writer.value(alternatingColorEffect.getStartTime());
+            writer.name("endTime");
+            writer.value(alternatingColorEffect.getEndTime());
+            writer.name("color1R");
+            writer.value(alternatingColorEffect.getColor1().getRed());
+            writer.name("color1G");
+            writer.value(alternatingColorEffect.getColor1().getGreen());
+            writer.name("color1B");
+            writer.value(alternatingColorEffect.getColor1().getBlue());
+            writer.name("color2R");
+            writer.value(alternatingColorEffect.getColor2().getRed());
+            writer.name("color2G");
+            writer.value(alternatingColorEffect.getColor2().getGreen());
+            writer.name("color2B");
+            writer.value(alternatingColorEffect.getColor2().getBlue());
+            writer.name("duration");
+            writer.value(alternatingColorEffect.getDuration().toMillis());
+            writer.name("rate");
+            writer.value(alternatingColorEffect.getRate());
+            writer.name("id");
+            writer.value(alternatingColorEffect.getId());
+            writer.name("effectType");
+            writer.value(alternatingColorEffect.getEffectType().ordinal());
+            writer.endObject();
         } else {
             writer.nullValue();
         }
@@ -118,6 +146,13 @@ public class GeneratedEffectAdapter extends TypeAdapter<GeneratedEffect> {
         Integer endColorR = null;
         Integer endColorG = null;
         Integer endColorB = null;
+        Integer color1R = null;
+        Integer color1G = null;
+        Integer color1B = null;
+        Integer color2R = null;
+        Integer color2G = null;
+        Integer color2B = null;
+        Double rate = null;
         Long duration = null;
         Double speed = null;
         Boolean vertical = null;
@@ -178,6 +213,20 @@ public class GeneratedEffectAdapter extends TypeAdapter<GeneratedEffect> {
                 id = Integer.valueOf(reader.nextInt());
             } else if ("effectType".equals(fieldname)) {
                 effectType = Integer.valueOf(reader.nextInt());
+            } else if ("color1R".equals(fieldname)) {
+                color1R = Integer.valueOf(reader.nextInt());
+            } else if ("color1G".equals(fieldname)) {
+                color1G = Integer.valueOf(reader.nextInt());
+            } else if ("color1B".equals(fieldname)) {
+                color1B = Integer.valueOf(reader.nextInt());
+            } else if ("color2R".equals(fieldname)) {
+                color2R = Integer.valueOf(reader.nextInt());
+            } else if ("color2G".equals(fieldname)) {
+                color2G = Integer.valueOf(reader.nextInt());
+            } else if ("color2B".equals(fieldname)) {
+                color2B = Integer.valueOf(reader.nextInt());
+            } else if ("rate".equals(fieldname)) {
+                rate = Double.valueOf(reader.nextDouble());
             }
         }
         reader.endObject();
@@ -216,7 +265,7 @@ public class GeneratedEffectAdapter extends TypeAdapter<GeneratedEffect> {
                                     new Color(staticColorR, staticColorG, staticColorB),
                                     new Color(waveColorR, waveColorG, waveColorB),
                                     Duration.ofMillis(duration), speed, vertical, upRight, id);
-            }else if (effectType == EffectList.GENERATED_FADE.ordinal()) {
+            } else if (effectType == EffectList.GENERATED_FADE.ordinal()) {
                 if (startTime == null) {
                     throw new IOException("failed to get startTime component for GeneratedEffect");
                 } else if (endTime == null) {
@@ -263,6 +312,35 @@ public class GeneratedEffectAdapter extends TypeAdapter<GeneratedEffect> {
                 return new StaticColorEffect(startTime, endTime,
                         new Color(staticColorR, staticColorG, staticColorB),
                         Duration.ofMillis(duration), id);
+            } else if (effectType == EffectList.ALTERNATING_COLOR.ordinal()) {
+                if (startTime == null) {
+                    throw new IOException("failed to get startTime component for GeneratedEffect");
+                } else if (endTime == null) {
+                    throw new IOException("failed to get endTime component for GeneratedEffect");
+                } else if (color1R == null) {
+                    throw new IOException("failed to get color1R component for GeneratedEffect");
+                } else if (color1G == null) {
+                    throw new IOException("failed to get color1G component for GeneratedEffect");
+                } else if (color1B == null) {
+                    throw new IOException("failed to get color1B component for GeneratedEffect");
+                } else if (color2R == null) {
+                    throw new IOException("failed to get color2R component for GeneratedEffect");
+                } else if (color2G == null) {
+                    throw new IOException("failed to get color2G component for GeneratedEffect");
+                } else if (color2B == null) {
+                    throw new IOException("failed to get color2B component for GeneratedEffect");
+                } else if (duration == null) {
+                    throw new IOException("failed to get duration component for GeneratedEffect");
+                } else if (id == null) {
+                    throw new IOException("failed to get id component for GeneratedEffect");
+                } else if (rate == null) {
+                    throw new IOException("failed to get rate component for GeneratedEffect");
+                }
+
+                return new AlternatingColorEffect(startTime, endTime,
+                        new Color(color1R, color1G, color1B),
+                        new Color(color2R, color2G, color2B),
+                        Duration.ofMillis(duration), rate, id);
             }
         }  else {
             throw new IOException("failed to get effectType component for GeneratedEffect");
