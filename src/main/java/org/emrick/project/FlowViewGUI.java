@@ -206,6 +206,7 @@ public class FlowViewGUI extends JPanel {
             ImageIcon i = new ImageIcon(ScrubBarGUI.PATH_PLAY_ICON);
             executeButton.setIcon(new ImageIcon(i.getImage().getScaledInstance(16,16, Image.SCALE_SMOOTH)));
             executeButton.addActionListener(e -> {
+                System.out.println(index);
                 rfSignalListener.onRFSignal(index);
             });
         }

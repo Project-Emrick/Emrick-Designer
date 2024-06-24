@@ -5,7 +5,7 @@ plugins {
 }
 
 group 'org.emrick.project'
-version '6.17.0'
+version '6.24.0'
 var jarTitle = "Emrick-Designer-$version"
 
 repositories {
@@ -62,7 +62,7 @@ tasks.jpackage {
 
     mainJar = "Emrick-Designer-$version" + ".jar"
     mainClass = "org.emrick.project.MediaEditorGUI"
-    icon = 'icon.ico'
+    icon = 'Emrick Designer.ico'
     windows {
         winConsole = false
     }
