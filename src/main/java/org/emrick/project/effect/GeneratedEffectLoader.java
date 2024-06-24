@@ -20,4 +20,8 @@ public class GeneratedEffectLoader {
     public static RippleEffect generateRippleEffectFromEffect(Effect e) {
         return new RippleEffect(e.getStartTimeMSec(), e.getEndTimeMSec(), e.getStartColor(), e.getEndColor(), e.getDuration(), e.getSpeed(), e.isUpOrSide(), e.isDirection(), e.getId());
     }
+
+    public static CircleChaseEffect generateCircleChaseEffectFromEffect(Effect e) {
+        return new CircleChaseEffect(e.getStartTimeMSec(), e.getEndTimeMSec(), e.getStartColor(), e.getEndColor(), e.getDuration(), e.isDirection(), e.getAngle(), e.getSpeed(), e.getId());
+    }
 }

@@ -22,6 +22,7 @@ public class Effect implements Cloneable, TimelineEvent {
     private Duration duration;
     private Duration timeout;
     private double speed;
+    private double angle;
 
     // Bitflags
     private boolean TIME_GRADIENT;
@@ -47,6 +48,7 @@ public class Effect implements Cloneable, TimelineEvent {
         this.upOrSide = false;
         this.direction = false;
         this.speed = 1;
+        this.angle = 0;
         this.effectType = EffectList.HIDE_GROUPS;
         this.id = -1;
         calculateEndTimeMSec();
@@ -67,6 +69,7 @@ public class Effect implements Cloneable, TimelineEvent {
         this.upOrSide = false;
         this.direction = false;
         this.speed = 1;
+        this.angle = 0;
         this.startTimeMSec = startTimeMSec;
         this.effectType = EffectList.HIDE_GROUPS;
         this.id = id;
@@ -90,9 +93,18 @@ public class Effect implements Cloneable, TimelineEvent {
                 case WAVE: generatedEffect = GeneratedEffectLoader.generateWaveEffectFromEffect(this); break;
                 case ALTERNATING_COLOR: generatedEffect = GeneratedEffectLoader.generateAlternatingColorEffectFromEffect(this); break;
                 case RIPPLE: generatedEffect = GeneratedEffectLoader.generateRippleEffectFromEffect(this); break;
+                case CIRCLE_CHASE: generatedEffect = GeneratedEffectLoader.generateCircleChaseEffectFromEffect(this); break;
             }
         }
         return generatedEffect;
+    }
+
+    public double getAngle() {
+        return angle;
+    }
+
+    public void setAngle(double angle) {
+        this.angle = angle;
     }
 
     public void setGeneratedEffect(GeneratedEffect generatedEffect) {
