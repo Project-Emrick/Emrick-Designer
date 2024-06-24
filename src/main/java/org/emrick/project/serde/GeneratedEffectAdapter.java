@@ -157,9 +157,39 @@ public class GeneratedEffectAdapter extends TypeAdapter<GeneratedEffect> {
             writer.name("effectType");
             writer.value(rippleEffect.getEffectType().ordinal());
             writer.endObject();
-        }
-
-        else {
+        } else if (generatedEffect.getEffectType() == EffectList.CIRCLE_CHASE) {
+            CircleChaseEffect circleChaseEffect = (CircleChaseEffect) generatedEffect;
+            writer.beginObject();
+            writer.name("startTime");
+            writer.value(circleChaseEffect.getStartTime());
+            writer.name("endTime");
+            writer.value(circleChaseEffect.getEndTime());
+            writer.name("startColorR");
+            writer.value(circleChaseEffect.getStartColor().getRed());
+            writer.name("startColorG");
+            writer.value(circleChaseEffect.getStartColor().getGreen());
+            writer.name("startColorB");
+            writer.value(circleChaseEffect.getStartColor().getBlue());
+            writer.name("endColorR");
+            writer.value(circleChaseEffect.getEndColor().getRed());
+            writer.name("endColorG");
+            writer.value(circleChaseEffect.getEndColor().getGreen());
+            writer.name("endColorB");
+            writer.value(circleChaseEffect.getEndColor().getBlue());
+            writer.name("duration");
+            writer.value(circleChaseEffect.getDuration().toMillis());
+            writer.name("speed");
+            writer.value(circleChaseEffect.getSpeed());
+            writer.name("angle");
+            writer.value(circleChaseEffect.getStartAngle());
+            writer.name("clockwise");
+            writer.value(circleChaseEffect.isClockwise());
+            writer.name("id");
+            writer.value(circleChaseEffect.getId());
+            writer.name("effectType");
+            writer.value(circleChaseEffect.getEffectType().ordinal());
+            writer.endObject();
+        } else {
             writer.nullValue();
         }
     }
@@ -186,7 +216,9 @@ public class GeneratedEffectAdapter extends TypeAdapter<GeneratedEffect> {
         Integer color2R = null;
         Integer color2G = null;
         Integer color2B = null;
+        Boolean clockwise = null;
         Double rate = null;
+        Double angle = null;
         Long duration = null;
         Double speed = null;
         Boolean vertical = null;
@@ -261,6 +293,10 @@ public class GeneratedEffectAdapter extends TypeAdapter<GeneratedEffect> {
                 color2B = Integer.valueOf(reader.nextInt());
             } else if ("rate".equals(fieldname)) {
                 rate = Double.valueOf(reader.nextDouble());
+            } else if ("clockwise".equals(fieldname)) {
+                clockwise = Boolean.valueOf(reader.nextBoolean());
+            } else if ("angle".equals(fieldname)) {
+                angle = Double.valueOf(reader.nextDouble());
             }
         }
         reader.endObject();
@@ -408,6 +444,37 @@ public class GeneratedEffectAdapter extends TypeAdapter<GeneratedEffect> {
                         new Color(staticColorR, staticColorG, staticColorB),
                         new Color(waveColorR, waveColorG, waveColorB),
                         Duration.ofMillis(duration), speed, vertical, upRight, id);
+            } else if (effectType == EffectList.CIRCLE_CHASE.ordinal()) {
+                if (startTime == null) {
+                    throw new IOException("failed to get startTime component for GeneratedEffect");
+                } else if (endTime == null) {
+                    throw new IOException("failed to get endTime component for GeneratedEffect");
+                } else if (startColorR == null) {
+                    throw new IOException("failed to get staticColorR component for GeneratedEffect");
+                } else if (startColorG == null) {
+                    throw new IOException("failed to get staticColorG component for GeneratedEffect");
+                } else if (startColorB == null) {
+                    throw new IOException("failed to get staticColorB component for GeneratedEffect");
+                } else if (endColorR == null) {
+                    throw new IOException("failed to get waveColorR component for GeneratedEffect");
+                } else if (endColorG == null) {
+                    throw new IOException("failed to get waveColorG component for GeneratedEffect");
+                } else if (endColorB == null) {
+                    throw new IOException("failed to get waveColorB component for GeneratedEffect");
+                } else if (duration == null) {
+                    throw new IOException("failed to get duration component for GeneratedEffect");
+                } else if (clockwise == null) {
+                    throw new IOException("failed to get clockwise component for GeneratedEffect");
+                } else if (id == null) {
+                    throw new IOException("failed to get id component for GeneratedEffect");
+                } else if (speed == null) {
+                    throw new IOException("failed to get speed component for GeneratedEffect");
+                }
+
+                return new CircleChaseEffect(startTime, endTime,
+                        new Color(startColorR, startColorG, startColorB),
+                        new Color(endColorR, endColorG, endColorB),
+                        Duration.ofMillis(duration), clockwise, angle, speed, id);
             }
         }  else {
             throw new IOException("failed to get effectType component for GeneratedEffect");
