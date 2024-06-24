@@ -5,7 +5,7 @@ public enum EffectList {
     SHOW_GROUPS,
     GENERATED_FADE,
     STATIC_COLOR,
-    FLASHING_COLOR,
+    ALTERNATING_COLOR,
     RIPPLE,
     WAVE,
     CIRCLE_CHASE

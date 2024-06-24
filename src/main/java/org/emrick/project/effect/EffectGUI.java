@@ -79,6 +79,9 @@ public class EffectGUI implements ActionListener {
     JLabel timeoutLabel = new JLabel("Timeout (s): ");
     JLabel staticColorLabel = new JLabel("Static color: ");
     JLabel waveColorLabel = new JLabel("Wave Color: ");
+    JLabel color1Label = new JLabel("Color 1: ");
+    JLabel color2Label = new JLabel("Color 2: ");
+    JLabel rateLabel = new JLabel("Rate (Hz): ");
     JCheckBox upOrSideBox = new JCheckBox("Vertical");
     JCheckBox directionBox = new JCheckBox("Up/Right");
     JLabel speedLabel = new JLabel("Speed: ");
@@ -166,6 +169,8 @@ public class EffectGUI implements ActionListener {
             setupStaticColorGUI();
         } else if (effectType == EffectList.WAVE) {
             setupWaveGUI();
+        } else if (effectType == EffectList.ALTERNATING_COLOR) {
+            setupAlternatingColorGUI();
         }
     }
 
@@ -455,7 +460,7 @@ public class EffectGUI implements ActionListener {
         applyBtn.addActionListener(this);
         deleteBtn.addActionListener(this);
 
-        Border innerBorder = BorderFactory.createTitledBorder(" Fade Effect");
+        Border innerBorder = BorderFactory.createTitledBorder("Fade Effect");
         Border outerBorder = BorderFactory.createEmptyBorder(5, 5, 5, 5);
 
         this.effectPanel.setBorder(BorderFactory.createCompoundBorder(outerBorder, innerBorder));
@@ -553,6 +558,146 @@ public class EffectGUI implements ActionListener {
 
         gc.gridx = 1;
         gc.gridy = 4;
+        gc.insets = new Insets(0, 5, 0, 0);
+        gc.anchor = GridBagConstraints.FIRST_LINE_START;
+        this.effectPanel.add(applyBtn, gc);
+
+        // If effect exists, load pattern on gui
+        loadEffectToGUI(this.effectMod);
+    }
+
+    private void setupAlternatingColorGUI() {
+        this.effectPanel = new JPanel();
+
+        // Color button customization
+        startColorBtn.setPreferredSize(new Dimension(20, 20));
+        startColorBtn.setFocusable(false);
+        startColorBtn.addActionListener(this);
+        endColorBtn.setPreferredSize(new Dimension(20, 20));
+        endColorBtn.setFocusable(false);
+        endColorBtn.addActionListener(this);
+
+        durationField.getDocument().addDocumentListener(getDocumentListener());
+
+        applyBtn.addActionListener(this);
+        deleteBtn.addActionListener(this);
+
+        Border innerBorder = BorderFactory.createTitledBorder("Alternating Color Effect");
+        Border outerBorder = BorderFactory.createEmptyBorder(5, 5, 5, 5);
+
+        this.effectPanel.setBorder(BorderFactory.createCompoundBorder(outerBorder, innerBorder));
+
+        this.effectPanel.setLayout(new GridBagLayout());
+
+        GridBagConstraints gc = new GridBagConstraints();
+
+        Insets spacedInsets = new Insets(0, 0, 0, 5);
+        Insets noSpacedInsets = new Insets(0, 0, 0, 0);
+
+        //////////////// 0th Row ////////////////
+
+        gc.weightx = 1;
+        gc.weighty = 0.2;
+
+        gc.gridx = 0;
+        gc.gridy = 0;
+        gc.fill = GridBagConstraints.NONE;
+        gc.anchor = GridBagConstraints.LINE_END;
+        gc.insets = spacedInsets;
+        this.effectPanel.add(startTimeLabel, gc);
+
+        gc.gridx = 1;
+        gc.gridy = 0;
+        gc.anchor = GridBagConstraints.LINE_START;
+        gc.insets = spacedInsets;
+        this.effectPanel.add(endTimeLabel, gc);
+
+        //////////////// 1st Row ////////////////
+
+        gc.weightx = 1;
+        gc.weighty = 0.1;
+
+        gc.gridx = 0; // Horizontally, left to right
+        gc.gridy = 1; // Vertically, top to bottom
+        gc.anchor = GridBagConstraints.LINE_END;
+        gc.insets = spacedInsets;
+        this.effectPanel.add(color1Label, gc);
+
+        gc.gridx = 1;
+        gc.gridy = 1;
+        gc.anchor = GridBagConstraints.LINE_START;
+        gc.insets = noSpacedInsets;
+        this.effectPanel.add(startColorBtn, gc);
+
+        //////////////// 2nd Row ////////////////
+
+        gc.weightx = 1;
+        gc.weighty = 0.1;
+
+        gc.gridx = 0;
+        gc.gridy = 2;
+        gc.anchor = GridBagConstraints.LINE_END;
+        gc.insets = spacedInsets;
+        this.effectPanel.add(color2Label, gc);
+
+        gc.gridx = 1;
+        gc.gridy = 2;
+        gc.anchor = GridBagConstraints.LINE_START;
+        gc.insets = noSpacedInsets;
+        this.effectPanel.add(endColorBtn, gc);
+
+
+        //////////////// 3rd Row ////////////////
+
+        gc.weightx = 1;
+        gc.weighty = 0.1;
+
+        gc.gridx = 0;
+        gc.gridy = 3;
+        gc.anchor = GridBagConstraints.LINE_END;
+        gc.insets = spacedInsets;
+        this.effectPanel.add(durationLabel, gc);
+
+        gc.gridx = 1;
+        gc.gridy = 3;
+        gc.anchor = GridBagConstraints.LINE_START;
+        gc.insets = noSpacedInsets;
+        this.effectPanel.add(durationField, gc);
+
+
+        //////////////// 4th Row ////////////////
+
+        gc.weightx = 1;
+        gc.weighty = 0.1;
+
+        gc.gridx = 0;
+        gc.gridy = 4;
+        gc.anchor = GridBagConstraints.LINE_END;
+        gc.insets = spacedInsets;
+        this.effectPanel.add(rateLabel, gc);
+
+        gc.gridx = 1;
+        gc.gridy = 4;
+        gc.anchor = GridBagConstraints.LINE_START;
+        gc.insets = noSpacedInsets;
+        this.effectPanel.add(speedField, gc);
+
+        //////////////// Apply or Delete Buttons ////////////////
+
+        gc.weightx = 1;
+        gc.weighty = 2.0;
+
+        gc.gridx = 0;
+        gc.gridy = 5;
+        gc.anchor = GridBagConstraints.FIRST_LINE_END;
+        gc.insets = new Insets(0, 0, 0, 5);
+        this.effectPanel.add(deleteBtn, gc);
+
+        gc.weightx = 1;
+        gc.weighty = 2.0;
+
+        gc.gridx = 1;
+        gc.gridy = 5;
         gc.insets = new Insets(0, 5, 0, 0);
         gc.anchor = GridBagConstraints.FIRST_LINE_START;
         this.effectPanel.add(applyBtn, gc);
