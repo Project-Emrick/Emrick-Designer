@@ -43,7 +43,7 @@ public class ReplaceEffectsAction implements UndoableAction {
             }
         }
 
-        ArrayList<EffectPerformerMap> undoMap = map.get(0).getOldEffect().getGeneratedEffect().generateEffects(performers, map.get(0).getOldEffect());
+        ArrayList<EffectPerformerMap> undoMap = map.get(0).getOldEffect().getGeneratedEffect().generateEffects(performers);
 
         addEffects(performers, undoMap);
     }

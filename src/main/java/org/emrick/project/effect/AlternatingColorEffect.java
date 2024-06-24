@@ -101,18 +101,18 @@ public class AlternatingColorEffect implements GeneratedEffect {
     }
 
     @Override
-    public ArrayList<EffectPerformerMap> generateEffects(ArrayList<Performer> performers, Effect effect) {
+    public ArrayList<EffectPerformerMap> generateEffects(ArrayList<Performer> performers) {
         ArrayList<EffectPerformerMap> map = new ArrayList<>();
         double count = (double) duration.toMillis() * rate / 1000;
         int fullLengthCount = (int) count;
         long packetLength = (long) (1 / rate * 1000);
-        long lengthLastPacket = effect.getDuration().toMillis() - (fullLengthCount * packetLength) - 1;
+        long lengthLastPacket = this.getDuration().toMillis() - (fullLengthCount * packetLength) - 1;
         boolean useLastPacket = lengthLastPacket > 0;
         System.out.println(count);
         System.out.println(packetLength);
         System.out.println(lengthLastPacket);
         ArrayList<Effect> packets = new ArrayList<>();
-        long nextStartTime = effect.getStartTimeMSec();
+        long nextStartTime = this.getStartTime();
         boolean even = true;
         for (int i = 0; i < fullLengthCount; i++) {
             Effect e = new Effect(nextStartTime);

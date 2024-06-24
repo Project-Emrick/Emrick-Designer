@@ -83,10 +83,10 @@ public class StaticColorEffect implements GeneratedEffect {
     }
 
     @Override
-    public ArrayList<EffectPerformerMap> generateEffects(ArrayList<Performer> performers, Effect effect) {
+    public ArrayList<EffectPerformerMap> generateEffects(ArrayList<Performer> performers) {
         ArrayList<EffectPerformerMap> map = new ArrayList<>();
         for (Performer p : performers) {
-            map.add(new EffectPerformerMap(effect, p));
+            map.add(new EffectPerformerMap(generateEffectObj(), p));
         }
         return map;
     }

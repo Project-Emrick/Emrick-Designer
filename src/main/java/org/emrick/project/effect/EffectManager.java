@@ -173,7 +173,7 @@ public class EffectManager {
             }
         }
         ids.add(id);
-        ArrayList<EffectPerformerMap> map = effect.getGeneratedEffect().generateEffects(selectedPerformers, effect);
+        ArrayList<EffectPerformerMap> map = effect.getGeneratedEffect().generateEffects(selectedPerformers);
         UndoableAction e = new CreateEffectsAction(map);
         e.execute();
         undoStack.add(e);
@@ -296,7 +296,7 @@ public class EffectManager {
             }
         }
 
-        ArrayList<EffectPerformerMap> map = newEffect.getGeneratedEffect().generateEffects(performers, newEffect);
+        ArrayList<EffectPerformerMap> map = newEffect.getGeneratedEffect().generateEffects(performers);
         for (EffectPerformerMap m : map) {
             m.setOldEffect(oldEffect);
         }

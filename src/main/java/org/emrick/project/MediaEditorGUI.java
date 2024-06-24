@@ -845,33 +845,40 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
 
         lightMenuPopup.addSeparator();
 
-        JMenuItem fadePattern = new JMenuItem("Create Fade Pattern");
+        JMenuItem fadePattern = new JMenuItem("Create Fade Effect");
         fadePattern.addActionListener(e -> {
             selectedEffectType = EffectList.GENERATED_FADE;
             updateEffectViewPanel(selectedEffectType);
         });
         lightMenuPopup.add(fadePattern);
 
-        JMenuItem staticColorPattern = new JMenuItem("Create Static Color Pattern");
+        JMenuItem staticColorPattern = new JMenuItem("Create Static Color Effect");
         staticColorPattern.addActionListener(e -> {
             selectedEffectType = EffectList.STATIC_COLOR;
             updateEffectViewPanel(selectedEffectType);
         });
         lightMenuPopup.add(staticColorPattern);
 
-        JMenuItem wavePattern = new JMenuItem("Create Wave Pattern");
+        JMenuItem wavePattern = new JMenuItem("Create Wave Effect");
         wavePattern.addActionListener(e -> {
             selectedEffectType = EffectList.WAVE;
             updateEffectViewPanel(selectedEffectType);
         });
         lightMenuPopup.add(wavePattern);
 
-        JMenuItem alternatingColorPattern = new JMenuItem("Create Alternating Color Pattern");
+        JMenuItem alternatingColorPattern = new JMenuItem("Create Alternating Color Effect");
         alternatingColorPattern.addActionListener(e -> {
             selectedEffectType = EffectList.ALTERNATING_COLOR;
             updateEffectViewPanel(selectedEffectType);
         });
         lightMenuPopup.add(alternatingColorPattern);
+
+        JMenuItem ripplePattern = new JMenuItem("Create Ripple Effect");
+        ripplePattern.addActionListener(e -> {
+            selectedEffectType = EffectList.RIPPLE;
+            updateEffectViewPanel(selectedEffectType);
+        });
+        lightMenuPopup.add(ripplePattern);
 
 
         // Button that triggers the popup menu
@@ -1837,6 +1844,9 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                 } else if (currentEffect.getEffectType() == EffectList.ALTERNATING_COLOR) {
                     AlternatingColorEffect alternatingColorEffect = (AlternatingColorEffect) currentEffect.getGeneratedEffect();
                     currentEffect = alternatingColorEffect.generateEffectObj();
+                } else if (currentEffect.getEffectType() == EffectList.RIPPLE) {
+                    RippleEffect rippleEffect = (RippleEffect) currentEffect.getGeneratedEffect();
+                    currentEffect = rippleEffect.generateEffectObj();
                 }
             }
             effectGUI = new EffectGUI(currentEffect, currentMSec, this, selectedEffectType);

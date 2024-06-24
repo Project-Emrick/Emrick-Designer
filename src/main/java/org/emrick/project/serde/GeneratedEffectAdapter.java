@@ -125,7 +125,41 @@ public class GeneratedEffectAdapter extends TypeAdapter<GeneratedEffect> {
             writer.name("effectType");
             writer.value(alternatingColorEffect.getEffectType().ordinal());
             writer.endObject();
-        } else {
+        } else if (generatedEffect.getEffectType() == EffectList.RIPPLE) {
+            RippleEffect rippleEffect = (RippleEffect) generatedEffect;
+            writer.beginObject();
+            writer.name("startTime");
+            writer.value(rippleEffect.getStartTime());
+            writer.name("endTime");
+            writer.value(rippleEffect.getEndTime());
+            writer.name("staticColorR");
+            writer.value(rippleEffect.getStaticColor().getRed());
+            writer.name("staticColorG");
+            writer.value(rippleEffect.getStaticColor().getGreen());
+            writer.name("staticColorB");
+            writer.value(rippleEffect.getStaticColor().getBlue());
+            writer.name("waveColorR");
+            writer.value(rippleEffect.getWaveColor().getRed());
+            writer.name("waveColorG");
+            writer.value(rippleEffect.getWaveColor().getGreen());
+            writer.name("waveColorB");
+            writer.value(rippleEffect.getWaveColor().getBlue());
+            writer.name("duration");
+            writer.value(rippleEffect.getDuration().toMillis());
+            writer.name("speed");
+            writer.value(rippleEffect.getSpeed());
+            writer.name("vertical");
+            writer.value(rippleEffect.isVertical());
+            writer.name("upRight");
+            writer.value(rippleEffect.isUpRight());
+            writer.name("id");
+            writer.value(rippleEffect.getId());
+            writer.name("effectType");
+            writer.value(rippleEffect.getEffectType().ordinal());
+            writer.endObject();
+        }
+
+        else {
             writer.nullValue();
         }
     }
@@ -341,6 +375,39 @@ public class GeneratedEffectAdapter extends TypeAdapter<GeneratedEffect> {
                         new Color(color1R, color1G, color1B),
                         new Color(color2R, color2G, color2B),
                         Duration.ofMillis(duration), rate, id);
+            } else if (effectType == EffectList.RIPPLE.ordinal()) {
+                if (startTime == null) {
+                    throw new IOException("failed to get startTime component for GeneratedEffect");
+                } else if (endTime == null) {
+                    throw new IOException("failed to get endTime component for GeneratedEffect");
+                } else if (staticColorR == null) {
+                    throw new IOException("failed to get staticColorR component for GeneratedEffect");
+                } else if (staticColorG == null) {
+                    throw new IOException("failed to get staticColorG component for GeneratedEffect");
+                } else if (staticColorB == null) {
+                    throw new IOException("failed to get staticColorB component for GeneratedEffect");
+                } else if (waveColorR == null) {
+                    throw new IOException("failed to get waveColorR component for GeneratedEffect");
+                } else if (waveColorG == null) {
+                    throw new IOException("failed to get waveColorG component for GeneratedEffect");
+                } else if (waveColorB == null) {
+                    throw new IOException("failed to get waveColorB component for GeneratedEffect");
+                } else if (duration == null) {
+                    throw new IOException("failed to get duration component for GeneratedEffect");
+                } else if (vertical == null) {
+                    throw new IOException("failed to get vertical component for GeneratedEffect");
+                } else if (upRight == null) {
+                    throw new IOException("failed to get upRight component for GeneratedEffect");
+                } else if (id == null) {
+                    throw new IOException("failed to get id component for GeneratedEffect");
+                } else if (speed == null) {
+                    throw new IOException("failed to get speed component for GeneratedEffect");
+                }
+
+                return new RippleEffect(startTime, endTime,
+                        new Color(staticColorR, staticColorG, staticColorB),
+                        new Color(waveColorR, waveColorG, waveColorB),
+                        Duration.ofMillis(duration), speed, vertical, upRight, id);
             }
         }  else {
             throw new IOException("failed to get effectType component for GeneratedEffect");

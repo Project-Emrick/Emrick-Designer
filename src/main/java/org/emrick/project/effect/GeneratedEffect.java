@@ -8,5 +8,5 @@ import java.util.ArrayList;
 public interface GeneratedEffect {
     EffectList getEffectType();
     Effect generateEffectObj();
-    ArrayList<EffectPerformerMap> generateEffects(ArrayList<Performer> performers, Effect effect);
+    ArrayList<EffectPerformerMap> generateEffects(ArrayList<Performer> performers);
 }

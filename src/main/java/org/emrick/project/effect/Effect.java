@@ -89,6 +89,7 @@ public class Effect implements Cloneable, TimelineEvent {
                 case STATIC_COLOR: generatedEffect = GeneratedEffectLoader.generateStaticColorEffectFromEffect(this); break;
                 case WAVE: generatedEffect = GeneratedEffectLoader.generateWaveEffectFromEffect(this); break;
                 case ALTERNATING_COLOR: generatedEffect = GeneratedEffectLoader.generateAlternatingColorEffectFromEffect(this); break;
+                case RIPPLE: generatedEffect = GeneratedEffectLoader.generateRippleEffectFromEffect(this); break;
             }
         }
         return generatedEffect;
