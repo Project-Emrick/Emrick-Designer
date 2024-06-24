@@ -890,6 +890,13 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         });
         lightMenuPopup.add(ripplePattern);
 
+        JMenuItem circleChasePattern = new JMenuItem("Create Circle Chase Effect");
+        circleChasePattern.addActionListener(e -> {
+            selectedEffectType = EffectList.CIRCLE_CHASE;
+            updateEffectViewPanel(selectedEffectType);
+        });
+        lightMenuPopup.add(circleChasePattern);
+
 
         // Button that triggers the popup menu
         JButton lightButton = new JButton("Effect Options");
@@ -1872,6 +1879,9 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                 } else if (currentEffect.getEffectType() == EffectList.RIPPLE) {
                     RippleEffect rippleEffect = (RippleEffect) currentEffect.getGeneratedEffect();
                     currentEffect = rippleEffect.generateEffectObj();
+                } else if (currentEffect.getEffectType() == EffectList.CIRCLE_CHASE) {
+                    CircleChaseEffect circleChaseEffect = (CircleChaseEffect) currentEffect.getGeneratedEffect();
+                    currentEffect = circleChaseEffect.generateEffectObj();
                 }
             }
             effectGUI = new EffectGUI(currentEffect, currentMSec, this, selectedEffectType);
