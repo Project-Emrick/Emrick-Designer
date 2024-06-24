@@ -866,6 +866,13 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         });
         lightMenuPopup.add(wavePattern);
 
+        JMenuItem alternatingColorPattern = new JMenuItem("Create Alternating Color Pattern");
+        alternatingColorPattern.addActionListener(e -> {
+            selectedEffectType = EffectList.ALTERNATING_COLOR;
+            updateEffectViewPanel(selectedEffectType);
+        });
+        lightMenuPopup.add(alternatingColorPattern);
+
 
         // Button that triggers the popup menu
         JButton lightButton = new JButton("Effect Options");
@@ -1827,6 +1834,9 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                 } else if (currentEffect.getEffectType() == EffectList.GENERATED_FADE) {
                     FadeEffect fadeEffect = (FadeEffect) currentEffect.getGeneratedEffect();
                     currentEffect = fadeEffect.generateEffectObj();
+                } else if (currentEffect.getEffectType() == EffectList.ALTERNATING_COLOR) {
+                    AlternatingColorEffect alternatingColorEffect = (AlternatingColorEffect) currentEffect.getGeneratedEffect();
+                    currentEffect = alternatingColorEffect.generateEffectObj();
                 }
             }
             effectGUI = new EffectGUI(currentEffect, currentMSec, this, selectedEffectType);
@@ -2165,7 +2175,8 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
 
     @Override
     public void onRFSignal(int i) {
-        if (serialTransmitter != null && scrubBarGUI.isPlaying()) {
+
+        if (serialTransmitter != null) {
             serialTransmitter.writeSet(i);
         }
     }

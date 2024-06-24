@@ -12,4 +12,8 @@ public class GeneratedEffectLoader {
     public static FadeEffect generateFadeEffectFromEffect(Effect e) {
         return new FadeEffect(e.getStartTimeMSec(), e.getEndTimeMSec(), e.getStartColor(), e.getEndColor(), e.getDuration(), e.getId());
     }
+
+    public static AlternatingColorEffect generateAlternatingColorEffectFromEffect(Effect e) {
+        return new AlternatingColorEffect(e.getStartTimeMSec(), e.getEndTimeMSec(), e.getStartColor(), e.getEndColor(), e.getDuration(), e.getSpeed(), e.getId());
+    }
 }

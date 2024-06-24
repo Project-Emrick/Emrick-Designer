@@ -176,25 +176,25 @@ public class WaveEffect implements GeneratedEffect {
                 s1 = new Effect(effect.getStartTimeMSec());
                 s1.setStartColor(effect.getStartColor());
                 s1.setEndColor(effect.getStartColor());
-                s1.setDuration(Duration.ofMillis(waveStartTime - 1));
+                s1.setDuration(Duration.ofMillis(waveStartTime));
             }
             long waveHalfDuration = wavePeriod / 2;
             w1 = new Effect(effect.getStartTimeMSec() + waveStartTime);
             w1.setStartColor(effect.getStartColor());
             w1.setEndColor(effect.getEndColor());
-            w1.setDuration(Duration.ofMillis(waveHalfDuration-1));
+            w1.setDuration(Duration.ofMillis(waveHalfDuration));
             w2 = new Effect(effect.getStartTimeMSec() + waveStartTime + waveHalfDuration);
             w2.setStartColor(effect.getEndColor());
             w2.setEndColor(effect.getStartColor());
-            w2.setDuration(Duration.ofMillis(waveHalfDuration-1));
+            w2.setDuration(Duration.ofMillis(waveHalfDuration));
             if (waveStartTime + 2 * waveHalfDuration < effect.getEndTimeMSec()) {
                 s2 = new Effect(effect.getStartTimeMSec() + waveStartTime + waveHalfDuration * 2);
                 s2.setStartColor(effect.getStartColor());
                 s2.setEndColor(effect.getStartColor());
-                s2.setDuration(Duration.ofMillis((effect.getEndTimeMSec() - w2.getEndTimeMSec())));
+                s2.setDuration(Duration.ofMillis((effect.getEndTimeMSec() - w2.getEndTimeMSec() - 1)));
 
             } else {
-                s1.setDuration(Duration.ofMillis(waveStartTime));
+                s1.setDuration(Duration.ofMillis(waveStartTime - 1));
             }
             if (s1 != null) {
                 s1.setId(id);
