@@ -107,7 +107,7 @@ public class AlternatingColorEffect implements GeneratedEffect {
         double count = (double) duration.toMillis() * doubleRate / 1000;
         int fullLengthCount = (int) count;
         long packetLength = (long) (1 / doubleRate * 1000);
-        long lengthLastPacket = this.getDuration().toMillis() - (fullLengthCount * packetLength) - 1;
+        long lengthLastPacket = this.getDuration().toMillis() - (fullLengthCount * packetLength);
         boolean useLastPacket = lengthLastPacket > 0;
         ArrayList<Effect> packets = new ArrayList<>();
         long nextStartTime = this.getStartTime();
@@ -115,11 +115,7 @@ public class AlternatingColorEffect implements GeneratedEffect {
         for (int i = 0; i < fullLengthCount; i++) {
             Effect e = new Effect(nextStartTime);
             e.setDO_DELAY(true);
-            if (!useLastPacket && i == count - 1) {
-                e.setDelay(Duration.ofMillis(packetLength - 1));
-            } else {
-                e.setDelay(Duration.ofMillis(packetLength));
-            }
+            e.setDelay(Duration.ofMillis(packetLength));
             nextStartTime += packetLength;
             if (even) {
                 e.setStartColor(color1);
