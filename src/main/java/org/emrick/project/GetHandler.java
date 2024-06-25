@@ -3,10 +3,7 @@ package org.emrick.project;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 
-import java.io.BufferedReader;
-import java.io.FileReader;
-import java.io.IOException;
-import java.io.OutputStream;
+import java.io.*;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -34,12 +31,17 @@ public class GetHandler implements HttpHandler {
         }
         parseQuery(query, parameters);
         String response = "";
-        String[] pkts = pkt.split("\n");
-        for (int i = 0; i < pkts.length; i++) {
-            if (pkts[i].contains("Strip_id: " + parameters.get("id") + ",")) {
-                response += pkts[i] + "\n";
-            }
+
+
+        File f = new File(pkt + parameters.get("id"));
+        BufferedReader bfr = new BufferedReader(new FileReader(f));
+        String line = bfr.readLine();
+        while (line != null) {
+            response += line + "\n";
+            line = bfr.readLine();
         }
+        bfr.close();
+
         exchange.sendResponseHeaders(200,response.length());
         OutputStream os = exchange.getResponseBody();
         os.write(response.getBytes());

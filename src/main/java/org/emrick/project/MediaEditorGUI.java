@@ -29,6 +29,8 @@ import java.nio.file.*;
 import java.time.*;
 import java.util.*;
 import java.util.stream.*;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
 
 public class MediaEditorGUI extends Component implements ImportListener, ScrubBarListener, SyncListener,
@@ -624,13 +626,15 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             stopWebServer.setEnabled(false);
             runWebServer.setEnabled(true);
 
-            File f = new File("tempPkt.pkt");
-            System.out.println(f.getAbsolutePath());
-            if(f.delete()){
-                System.out.println("yay!");
+            File dir = new File(System.getProperty("user.home") + "/AppData/Local/Emrick Designer/tmp/");
+            File[] files = dir.listFiles();
+            for (File f : files) {
+                f.delete();
             }
-            else{
-                System.out.println(":(");
+            dir.delete();
+            File f = new File("tempPkt.pkt");
+            if (f.exists()) {
+                f.delete();
             }
 
         });
@@ -799,6 +803,16 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             public void windowClosing(WindowEvent e) {
                 if (server != null) {
                     server.stop(0);
+                    File dir = new File(System.getProperty("user.home") + "/AppData/Local/Emrick Designer/tmp/");
+                    File[] files = dir.listFiles();
+                    for (File f : files) {
+                        f.delete();
+                    }
+                    dir.delete();
+                    File f = new File("tempPkt.pkt");
+                    if (f.exists()) {
+                        f.delete();
+                    }
                 }
                 if (archivePath != null && drillPath != null) {
                     if (effectManager != null && !effectManager.getUndoStack().isEmpty()) {
@@ -947,25 +961,20 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             }
             else{ //there is a project open
                 if (path.equals("")) {
-                    f= new File("tempPkt.pkt");
+                    f = new File("tempPkt.pkt");
                     exportPackets(f);
                 } else {
                     f = new File(path);
                 }
             }
 
+            Unzip.unzip(f.getAbsolutePath(), System.getProperty("user.home") + "/AppData/Local/Emrick Designer/tmp/");
 
             server = HttpServer.create(new InetSocketAddress(port), 250);
             System.out.println("server started at " + port);
             System.out.println(server.getAddress());
-            BufferedReader bfr = new BufferedReader(new FileReader(f.getAbsolutePath()));
-            String pkt = "";
-            String line = bfr.readLine();
-            while (line != null) {
-                pkt += line + "\n";
-                line = bfr.readLine();
-            }
-            server.createContext("/", new GetHandler(pkt));
+
+            server.createContext("/", new GetHandler(System.getProperty("user.home") + "/AppData/Local/Emrick Designer/tmp/"));
             server.setExecutor(new ServerExecutor());
             server.start();
         } catch (IOException ioe) {
@@ -2073,72 +2082,73 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         Long[] timesMS = new Long[timeMS.size()];
         timesMS = timeMS.toArray(timesMS);
         try {
-            BufferedWriter bfw = new BufferedWriter(new FileWriter(path));
             String out = "";
+            File dir = new File(System.getProperty("user.home") + "/AppData/Local/Emrick Designer/tmp/");
+            dir.mkdirs();
+            ArrayList<String> files = new ArrayList<>();
+            ArrayList<Performer> list0 = new ArrayList<>();
+            ArrayList<Performer> list1 = new ArrayList<>();
+            ArrayList<Performer> list2 = new ArrayList<>();
+            ArrayList<Performer> list3 = new ArrayList<>();
+            ArrayList<Performer> list4 = new ArrayList<>();
+            ArrayList<Performer> list5 = new ArrayList<>();
+            ArrayList<Performer> list6 = new ArrayList<>();
+            ArrayList<Performer> list7 = new ArrayList<>();
             for (int k = 0; k < footballFieldPanel.drill.performers.size(); k++) {
                 Performer p = footballFieldPanel.drill.performers.get(k);
-                p.sortEffects();
-                if (p.getEffects().size() > 0) {
-                    out += "Pkt_count: " + p.getEffects().size() + ", ";
-                    for (i = 0; i < p.getEffects().size(); i++) {
-                        Effect e = p.getEffects().get(i);
-                        int flags = 0;
-                        if (timeBeforeEffect(i, e, p.getEffects(), timesMS) > 1 || e.isDO_DELAY()) {
-                            flags += DO_DELAY;
-                            if (e.isDO_DELAY() && timeBeforeEffect(i, e, p.getEffects(), timesMS) > 1) {
-                                out += "Size: 0, Strip_id: " + p.getDeviceId() + ", Set_id: " + getEffectTriggerIndex(e,timesMS)
-                                    + ", Flags: 24, Start_color: 0, 0, 0, End_color: 0, 0, 0, Delay: " + timeBeforeEffect(i, e, p.getEffects(), timesMS)
-                                    + ", Duration: 0, Function: 0, Timeout: 0\n";
-                                int count = Integer.valueOf(out.substring(out.indexOf(" ")+1, out.indexOf(",")));
-                                out = out.substring(0,out.indexOf(" ")+1) + (count+1) + out.substring(out.indexOf(","));
-                            }
-                        }
-                        if (timeAfterEffect(i, e, p.getEffects(), timesMS) == Long.MAX_VALUE) {
-                            flags += SET_TIMEOUT;
-                        }
-                        if (e.isTIME_GRADIENT()) {
-                            flags += TIME_GRADIENT;
-                        }
-                        if (e.isINSTANT_COLOR()) {
-                            flags += INSTANT_COLOR;
-                        }
-                        out += "Size: 0, ";
-                        out += "Strip_id: " + p.getDeviceId() + ", ";
-                        out += "Set_id: " + getEffectTriggerIndex(e, timesMS) + ", ";
-                        out += "Flags: " + flags + ", ";
-                        Color startColor = e.getStartColor();
-                        out += "Start_color: " + startColor.getRed() + ", " + startColor.getGreen() + ", " + startColor.getBlue() + ", ";
-                        Color endColor = e.getEndColor();
-                        out += "End_color: " + endColor.getRed() + ", " + endColor.getGreen() + ", " + endColor.getBlue() + ", ";
-                        if ((flags & DO_DELAY) > 0) {
-                            if (e.isDO_DELAY()) {
-                                out += "Delay: " + e.getDelay().toMillis() + ", ";
-                            } else {
-                                out += "Delay: " + timeBeforeEffect(i, e, p.getEffects(), timesMS) + ", ";
-                            }
+                File curr = new File(System.getProperty("user.home") + "/AppData/Local/Emrick Designer/tmp/" + p.getDeviceId());
+                curr.createNewFile();
+                files.add(curr.getAbsolutePath());
 
-                        } else {
-                            out += "Delay: 0, ";
-                        }
-                        out += "Duration: " + (e.getDuration().toMillis()) + ", ";
-                        out += "Function: 0, ";
-                        out += "Timeout: 0\n";
-
-                        /* These lines need to stay commented until changes are made to store packets in separate files
-                        * for separate performers */
-//                        bfw.write(out);
-//                        bfw.flush();
-//                        out = "";
-                    }
-                    out += "\n";
-                    bfw.write(out);
-                    bfw.flush();
-                    out = "";
+                switch (k % 8) {
+                    case 0: list0.add(p); break;
+                    case 1: list1.add(p); break;
+                    case 2: list2.add(p); break;
+                    case 3: list3.add(p); break;
+                    case 4: list4.add(p); break;
+                    case 5: list5.add(p); break;
+                    case 6: list6.add(p); break;
+                    case 7: list7.add(p); break;
                 }
             }
+            System.out.println(list0.size());
+            Thread[] threads = new Thread[8];
+            threads[0] = new Thread(new PacketExport(list0, timesMS));
+            threads[1] = new Thread(new PacketExport(list1, timesMS));
+            threads[2] = new Thread(new PacketExport(list2, timesMS));
+            threads[3] = new Thread(new PacketExport(list3, timesMS));
+            threads[4] = new Thread(new PacketExport(list4, timesMS));
+            threads[5] = new Thread(new PacketExport(list5, timesMS));
+            threads[6] = new Thread(new PacketExport(list6, timesMS));
+            threads[7] = new Thread(new PacketExport(list7, timesMS));
+            for (i = 0; i < 8; i++) {
+                threads[i].start();
+            }
+            for (i = 0; i < 8; i++) {
+                threads[i].join();
+            }
+
+            ZipOutputStream zos = new ZipOutputStream(new FileOutputStream(path));
+            for (String file : files) {
+                File f = new File(file);
+                FileInputStream fis = new FileInputStream(f);
+                ZipEntry zipEntry = new ZipEntry(f.getName());
+                zos.putNextEntry(zipEntry);
+                byte[] bytes = new byte[1024];
+                int length;
+                while((length = fis.read(bytes)) >= 0) {
+                    zos.write(bytes, 0, length);
+                }
+                fis.close();
+                f.delete();
+            }
+            zos.close();
+            dir.delete();
         }
         catch (IOException ioe) {
             throw new RuntimeException(ioe);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
         }
     }
 
@@ -2241,6 +2251,88 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             serialTransmitter.writeSet(i);
         }
     }
+
+
+    private class PacketExport implements Runnable {
+        private ArrayList<Performer> performers;
+        private Long[] timesMS;
+        public PacketExport(ArrayList<Performer> performers, Long[] timesMS) {
+            this.performers = performers;
+            this.timesMS = timesMS;
+        }
+
+        @Override
+        public void run() {
+            try {
+                String out = "";
+                int a = 0;
+                for (Performer p : performers) {
+                    a++;
+                    File curr = new File(System.getProperty("user.home") + "/AppData/Local/Emrick Designer/tmp/" + p.getDeviceId());
+
+                    BufferedWriter bfw = new BufferedWriter(new FileWriter(curr));
+
+                    p.sortEffects();
+                    if (p.getEffects().size() > 0) {
+                        out += "Pkt_count: " + p.getEffects().size() + ", ";
+                        for (int i = 0; i < p.getEffects().size(); i++) {
+                            Effect e = p.getEffects().get(i);
+                            int flags = 0;
+                            if (timeBeforeEffect(i, e, p.getEffects(), timesMS) > 1 || e.isDO_DELAY()) {
+                                flags += DO_DELAY;
+                                if (e.isDO_DELAY() && timeBeforeEffect(i, e, p.getEffects(), timesMS) > 1) {
+                                    out += "Size: 0, Strip_id: " + p.getDeviceId() + ", Set_id: " + getEffectTriggerIndex(e, timesMS)
+                                            + ", Flags: 24, Start_color: 0, 0, 0, End_color: 0, 0, 0, Delay: " + timeBeforeEffect(i, e, p.getEffects(), timesMS)
+                                            + ", Duration: 0, Function: 0, Timeout: 0\n";
+                                    int count = Integer.valueOf(out.substring(out.indexOf(" ") + 1, out.indexOf(",")));
+                                    out = out.substring(0, out.indexOf(" ") + 1) + (count + 1) + out.substring(out.indexOf(","));
+                                }
+                            }
+                            if (timeAfterEffect(i, e, p.getEffects(), timesMS) == Long.MAX_VALUE) {
+                                flags += SET_TIMEOUT;
+                            }
+                            if (e.isTIME_GRADIENT()) {
+                                flags += TIME_GRADIENT;
+                            }
+                            if (e.isINSTANT_COLOR()) {
+                                flags += INSTANT_COLOR;
+                            }
+                            out += "Size: 0, ";
+                            out += "Strip_id: " + p.getDeviceId() + ", ";
+                            out += "Set_id: " + getEffectTriggerIndex(e, timesMS) + ", ";
+                            out += "Flags: " + flags + ", ";
+                            Color startColor = e.getStartColor();
+                            out += "Start_color: " + startColor.getRed() + ", " + startColor.getGreen() + ", " + startColor.getBlue() + ", ";
+                            Color endColor = e.getEndColor();
+                            out += "End_color: " + endColor.getRed() + ", " + endColor.getGreen() + ", " + endColor.getBlue() + ", ";
+                            if ((flags & DO_DELAY) > 0) {
+                                if (e.isDO_DELAY()) {
+                                    out += "Delay: " + e.getDelay().toMillis() + ", ";
+                                } else {
+                                    out += "Delay: " + timeBeforeEffect(i, e, p.getEffects(), timesMS) + ", ";
+                                }
+
+                            } else {
+                                out += "Delay: 0, ";
+                            }
+                            out += "Duration: " + (e.getDuration().toMillis()) + ", ";
+                            out += "Function: 0, ";
+                            out += "Timeout: 0\n";
+                        }
+                        out += "\n";
+                        bfw.write(out);
+                        bfw.flush();
+                        bfw.close();
+                        out = "";
+                    }
+                }
+            } catch (IOException ioe) {
+                throw new RuntimeException(ioe);
+            }
+        }
+    }
+
+
 
     /*
         tutorial
