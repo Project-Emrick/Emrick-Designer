@@ -2024,7 +2024,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             nextTrigger = -1;
         }
         if (effects.get(index+1).getStartTimeMSec() < nextTrigger || nextTrigger == -1) {
-            if (effects.get(index+1).getStartTimeMSec() > e.getEndTimeMSec()) {
+            if (effects.get(index+1).getStartTimeMSec() >= e.getEndTimeMSec()) {
                 return effects.get(index+1).getStartTimeMSec() - e.getEndTimeMSec();
             } else {
                 return Long.MAX_VALUE;
@@ -2077,6 +2077,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             String out = "";
             for (int k = 0; k < footballFieldPanel.drill.performers.size(); k++) {
                 Performer p = footballFieldPanel.drill.performers.get(k);
+                p.sortEffects();
                 if (p.getEffects().size() > 0) {
                     out += "Pkt_count: " + p.getEffects().size() + ", ";
                     for (i = 0; i < p.getEffects().size(); i++) {
@@ -2084,6 +2085,13 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                         int flags = 0;
                         if (timeBeforeEffect(i, e, p.getEffects(), timesMS) > 1 || e.isDO_DELAY()) {
                             flags += DO_DELAY;
+                            if (e.isDO_DELAY() && timeBeforeEffect(i, e, p.getEffects(), timesMS) > 1) {
+                                out += "Size: 0, Strip_id: " + p.getDeviceId() + ", Set_id: " + getEffectTriggerIndex(e,timesMS)
+                                    + ", Flags: 24, Start_color: 0, 0, 0, End_color: 0, 0, 0, Delay: " + timeBeforeEffect(i, e, p.getEffects(), timesMS)
+                                    + ", Duration: 0, Function: 0, Timeout: 0\n";
+                                int count = Integer.valueOf(out.substring(out.indexOf(" ")+1, out.indexOf(",")));
+                                out = out.substring(0,out.indexOf(" ")+1) + (count+1) + out.substring(out.indexOf(","));
+                            }
                         }
                         if (timeAfterEffect(i, e, p.getEffects(), timesMS) == Long.MAX_VALUE) {
                             flags += SET_TIMEOUT;
@@ -2103,16 +2111,24 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                         Color endColor = e.getEndColor();
                         out += "End_color: " + endColor.getRed() + ", " + endColor.getGreen() + ", " + endColor.getBlue() + ", ";
                         if ((flags & DO_DELAY) > 0) {
-                            out += "Delay: " + (timeBeforeEffect(i, e, p.getEffects(), timesMS) + e.getDelay().toMillis()) + ", ";
+                            if (e.isDO_DELAY()) {
+                                out += "Delay: " + e.getDelay().toMillis() + ", ";
+                            } else {
+                                out += "Delay: " + timeBeforeEffect(i, e, p.getEffects(), timesMS) + ", ";
+                            }
+
                         } else {
                             out += "Delay: 0, ";
                         }
                         out += "Duration: " + (e.getDuration().toMillis()) + ", ";
                         out += "Function: 0, ";
                         out += "Timeout: 0\n";
-                        bfw.write(out);
-                        bfw.flush();
-                        out = "";
+
+                        /* These lines need to stay commented until changes are made to store packets in separate files
+                        * for separate performers */
+//                        bfw.write(out);
+//                        bfw.flush();
+//                        out = "";
                     }
                     out += "\n";
                     bfw.write(out);

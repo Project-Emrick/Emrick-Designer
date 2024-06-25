@@ -288,6 +288,12 @@ public class FlowViewGUI extends JPanel {
 
         public void setIndex(int index) {
             this.index = index;
+            executeButton = new JButton();
+            ImageIcon i = new ImageIcon(ScrubBarGUI.PATH_PLAY_ICON);
+            executeButton.setIcon(new ImageIcon(i.getImage().getScaledInstance(16,16, Image.SCALE_SMOOTH)));
+            executeButton.addActionListener(e -> {
+                rfSignalListener.onRFSignal(index);
+            });
         }
 
         public int getCount() {

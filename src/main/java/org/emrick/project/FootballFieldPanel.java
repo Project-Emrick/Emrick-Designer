@@ -177,10 +177,12 @@ public class FootballFieldPanel extends JPanel implements RepaintListener {
                 if (e.getStartColor().equals(Color.black)) {
                     hsvs[0] = hsve[0];
                     startHue = hsvs[0];
+                    hsvs[1] = hsve[1];
                 }
                 if (e.getEndColor().equals(Color.black)) {
                     hsve[0] = hsvs[0];
                     endHue = hsve[0];
+                    hsve[1] = hsvs[1];
                 }
                 float h, s, v;
                 if (startHue != endHue) {
