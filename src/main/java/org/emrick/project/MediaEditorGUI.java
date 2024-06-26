@@ -831,6 +831,16 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                         }
                     }
                 }
+                File showDataDir = new File(System.getProperty("user.home") + "/AppData/Local/Emrick Designer/show_data/");
+                showDataDir.mkdirs();
+                File[] cleanFiles = showDataDir.listFiles();
+                for (File f : cleanFiles) {
+                    if (f.isDirectory()) {
+                        deleteDirectory(f);
+                    } else {
+                        f.delete();
+                    }
+                }
                 frame.dispose();
                 super.windowClosing(e);
             }
@@ -842,6 +852,16 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         frame.setLocationRelativeTo(null);
         frame.setVisible(true);
         frame.setTitle("Emrick Designer");
+    }
+
+    private boolean deleteDirectory(File directoryToBeDeleted) {
+        File[] allContents = directoryToBeDeleted.listFiles();
+        if (allContents != null) {
+            for (File file : allContents) {
+                deleteDirectory(file);
+            }
+        }
+        return directoryToBeDeleted.delete();
     }
 
     private JButton getEffectOptionsButton() {
@@ -1016,12 +1036,35 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
     public void loadProject(File path) {
         try {
             // TODO: pdf loading is redundant with project file. fix? - LHD
+
+            File showDataDir = new File(System.getProperty("user.home") + "/AppData/Local/Emrick Designer/show_data/");
+            showDataDir.mkdirs();
+            File[] cleanFiles = showDataDir.listFiles();
+            for (File f : cleanFiles) {
+                if (f.isDirectory()) {
+                    deleteDirectory(f);
+                } else {
+                    f.delete();
+                }
+            }
+            Unzip.unzip(path.getAbsolutePath(), System.getProperty("user.home") + "/AppData/Local/Emrick Designer/show_data/");
+            File[] dataFiles = showDataDir.listFiles();
+            for (File f : dataFiles) {
+                if (!f.isDirectory()) {
+                    if (f.getName().substring(f.getName().lastIndexOf(".")).equals(".json")) {
+                        path = f;
+                    }
+                }
+            }
+
+
             FileReader r = new FileReader(path);
             ProjectFile pf = gson.fromJson(r, ProjectFile.class);
+            r.close();
             ImportArchive ia = new ImportArchive(this);
 
-            archivePath = new File(pf.archivePath);
-            drillPath = new File(pf.drillPath);
+            archivePath = new File(System.getProperty("user.home") + "/AppData/Local/Emrick Designer/show_data/" + pf.archivePath);
+            drillPath = new File(System.getProperty("user.home") + "/AppData/Local/Emrick Designer/show_data/" + pf.drillPath);
 
             ia.fullImport(archivePath.getAbsolutePath(), drillPath.getAbsolutePath());
             footballFieldPanel.drill = pf.drill;
@@ -1043,7 +1086,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                 updateEffectViewPanel(selectedEffectType);
             }
 
-        } catch (JsonIOException | JsonSyntaxException | FileNotFoundException e) {
+        } catch (JsonIOException | JsonSyntaxException | IOException e) {
             writeSysMsg("Failed to open to `" + path + "`.");
             throw new RuntimeException(e);
         }
@@ -1976,24 +2019,48 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
 
     public void saveProject(File path, File archivePath, File drillPath) {
         ProjectFile pf;
+        String aPath = archivePath.getName();
+        String dPath = drillPath.getName();
         if (this.effectManager != null) {
-            pf = new ProjectFile(footballFieldPanel.drill, archivePath.getAbsolutePath(), drillPath.getAbsolutePath(), timeSync, startDelay, count2RFTrigger, effectManager.getIds());
+            pf = new ProjectFile(footballFieldPanel.drill, aPath, dPath, timeSync, startDelay, count2RFTrigger, effectManager.getIds());
         } else {
-            pf = new ProjectFile(footballFieldPanel.drill, archivePath.getAbsolutePath(), drillPath.getAbsolutePath(), timeSync, startDelay, count2RFTrigger, null);
+            pf = new ProjectFile(footballFieldPanel.drill, aPath, dPath, timeSync, startDelay, count2RFTrigger, null);
         }
         String g = gson.toJson(pf);
 
         System.out.println("saving to `" + path + "`");
 //        System.out.println(g);
 
+        String jsonName = path.getName();
+        jsonName = jsonName.substring(0, jsonName.indexOf(".emrick")) + ".json";
+        File dir = new File(System.getProperty("user.home") + "/AppData/Local/Emrick Designer/show_data/");
+        dir.mkdirs();
+        File[] cleanJson = dir.listFiles();
+        for (File f : cleanJson) {
+            if (f.getName().endsWith(".json")) {
+                f.delete();
+            }
+        }
+
         try {
-            FileWriter w = new FileWriter(path);
+            FileWriter w = new FileWriter(System.getProperty("user.home") + "/AppData/Local/Emrick Designer/show_data/" + jsonName);
             w.write(g);
             w.close();
         } catch (IOException e) {
             writeSysMsg("Failed to save to `" + path + "`.");
             throw new RuntimeException(e);
         }
+
+        File showDataDir = new File(System.getProperty("user.home") + "/AppData/Local/Emrick Designer/show_data/");
+        showDataDir.mkdirs();
+        File[] saveFiles = showDataDir.listFiles();
+        ArrayList<String> files = new ArrayList<>();
+        for (File f : saveFiles) {
+            if (!f.isDirectory()) {
+                files.add(f.getAbsolutePath());
+            }
+        }
+        Unzip.zip(files, path.getAbsolutePath(), false);
 
         writeSysMsg("Saved project to `" + path + "`.");
     }
@@ -2127,22 +2194,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             for (i = 0; i < 8; i++) {
                 threads[i].join();
             }
-
-            ZipOutputStream zos = new ZipOutputStream(new FileOutputStream(path));
-            for (String file : files) {
-                File f = new File(file);
-                FileInputStream fis = new FileInputStream(f);
-                ZipEntry zipEntry = new ZipEntry(f.getName());
-                zos.putNextEntry(zipEntry);
-                byte[] bytes = new byte[1024];
-                int length;
-                while((length = fis.read(bytes)) >= 0) {
-                    zos.write(bytes, 0, length);
-                }
-                fis.close();
-                f.delete();
-            }
-            zos.close();
+            Unzip.zip(files, path.getAbsolutePath(), true);
             dir.delete();
         }
         catch (IOException ioe) {
