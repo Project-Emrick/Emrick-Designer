@@ -132,7 +132,7 @@ public class DrillParser {
         if (!line.contains("On 50 yd ln")) {
             String[] tmp = xLine.split(" ");
             x = (50 - (double) Integer.parseInt(tmp[tmp.length-1])) * 8.0/5.0;
-            if (xLine.contains("Side 1")) {
+            if (xLine.contains("Left")) {
                 x *= -1;
             }
             if (!xLine.contains("On")) {
@@ -140,7 +140,7 @@ public class DrillParser {
                 if (xLine.contains("inside")) {
                     offset *= -1;
                 }
-                if (xLine.contains("Side 1")) {
+                if (xLine.contains("Left")) {
                     offset *= -1;
                 }
                 x += offset;
@@ -164,13 +164,13 @@ public class DrillParser {
             yLine = yLine.substring(1);
         }
         if (yLine.contains("side")) {
-            if (yLine.contains("Back")) {
+            if (yLine.contains("Visitor")) {
                 y = 84.0;
             } else {
                 y = 0.0;
             }
         } else {
-            if (yLine.contains("Back")) {
+            if (yLine.contains("Visitor")) {
                 y = 52.0;
             } else {
                 y = 32.0;
