@@ -235,7 +235,7 @@ public class FootballFieldPanel extends JPanel implements RepaintListener {
 
             g.fillRect((int)x-6,(int)y-6,6,12);
             g.fillRect((int)x,(int)y-6,6,12);
-            if (selectedPerformers.get(p.getSymbol()+p.getLabel()) != null) {
+            if (selectedPerformers.get(p.getIdentifier()) != null) {
                 g.setColor(Color.GREEN);
             } else {
                 g.setColor(Color.BLACK);
