@@ -23,16 +23,18 @@ public class Effect implements Cloneable, TimelineEvent {
     private Duration timeout;
     private double speed;
     private double angle;
+    private EffectList effectType;
+    private int id;
+    private LightingDisplay.Function function;
+    private int size;
 
     // Bitflags
-    private boolean TIME_GRADIENT;
+    private boolean USE_DURATION;
     private boolean SET_TIMEOUT;
     private boolean DO_DELAY;
     private boolean INSTANT_COLOR;
     private boolean upOrSide;
     private boolean direction;
-    private EffectList effectType;
-    private int id;
 
     public Effect(long startTimeMSec) {
         this.startTimeMSec = startTimeMSec;
@@ -41,7 +43,9 @@ public class Effect implements Cloneable, TimelineEvent {
         this.delay = Duration.ZERO;
         this.duration = Duration.ZERO;
         this.timeout = Duration.ZERO;
-        this.TIME_GRADIENT = true;
+        this.function = LightingDisplay.Function.DEFAULT;
+        this.size = 0;
+        this.USE_DURATION = true;
         this.SET_TIMEOUT = false;
         this.DO_DELAY = false;
         this.INSTANT_COLOR = true;
@@ -56,16 +60,18 @@ public class Effect implements Cloneable, TimelineEvent {
 
     public Effect(long startTimeMSec,
                   Color startColor, Color endColor, Duration delay, Duration duration, Duration timeout,
-                  boolean TIME_GRADIENT, boolean SET_TIMEOUT, boolean DO_DELAY, boolean INSTANT_COLOR, int id) {
+                  boolean USE_DURATION, boolean SET_TIMEOUT, boolean DO_DELAY, boolean INSTANT_COLOR, int id) {
         this.startColor = startColor;
         this.endColor = endColor;
         this.delay = delay;
         this.duration = duration;
         this.timeout = timeout;
-        this.TIME_GRADIENT = TIME_GRADIENT;
+        this.USE_DURATION = USE_DURATION;
         this.SET_TIMEOUT = SET_TIMEOUT;
         this.DO_DELAY = DO_DELAY;
         this.INSTANT_COLOR = INSTANT_COLOR;
+        this.function = LightingDisplay.Function.DEFAULT;
+        this.size = 0;
         this.upOrSide = false;
         this.direction = false;
         this.speed = 1;
@@ -76,12 +82,28 @@ public class Effect implements Cloneable, TimelineEvent {
         calculateEndTimeMSec();
     }
 
+    public int getSize() {
+        return size;
+    }
+
+    public void setSize(int size) {
+        this.size = size;
+    }
+
+    public LightingDisplay.Function getFunction() {
+        return function;
+    }
+
+    public void setFunction(LightingDisplay.Function function) {
+        this.function = function;
+    }
+
     public void calculateEndTimeMSec() {
 
         // endTimeMSec depends on startTimeMSec, delay, duration, timeout, and bitflags
         this.endTimeMSec = startTimeMSec;
         if (DO_DELAY) this.endTimeMSec += delay.toMillis();
-        if (TIME_GRADIENT) this.endTimeMSec += duration.toMillis();
+        if (USE_DURATION) this.endTimeMSec += duration.toMillis();
         if (SET_TIMEOUT) this.endTimeMSec += timeout.toMillis();
     }
 
@@ -182,12 +204,12 @@ public class Effect implements Cloneable, TimelineEvent {
         calculateEndTimeMSec();
     }
 
-    public boolean isTIME_GRADIENT() {
-        return TIME_GRADIENT;
+    public boolean isUSE_DURATION() {
+        return USE_DURATION;
     }
 
-    public void setTIME_GRADIENT(boolean TIME_GRADIENT) {
-        this.TIME_GRADIENT = TIME_GRADIENT;
+    public void setUSE_DURATION(boolean USE_DURATION) {
+        this.USE_DURATION = USE_DURATION;
         calculateEndTimeMSec();
     }
 

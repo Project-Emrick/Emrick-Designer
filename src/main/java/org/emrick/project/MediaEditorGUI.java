@@ -29,8 +29,6 @@ import java.nio.file.*;
 import java.time.*;
 import java.util.*;
 import java.util.stream.*;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipOutputStream;
 
 
 public class MediaEditorGUI extends Component implements ImportListener, ScrubBarListener, SyncListener,
@@ -84,11 +82,13 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
     private Effect copiedEffect;
     private EffectList selectedEffectType = EffectList.STATIC_COLOR;
     public final int DEFAULT_FUNCTION = 0x1;
-    public final int TIME_GRADIENT = 0x2;
+    public final int USE_DURATION = 0x2;
     public final int SET_TIMEOUT = 0x4;
     public final int DO_DELAY = 0x8;
     public final int INSTANT_COLOR = 0x10;
     public final int PROGRAMMING_MODE = 0x20;
+    public final int USE_COLORS = 0x40;
+    public final int DIRECTION = 0x80;
 
     // RF Trigger
     private RFTriggerGUI rfTriggerGUI;
@@ -2343,13 +2343,16 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                             if (timeAfterEffect(i, e, p.getEffects(), timesMS) == Long.MAX_VALUE) {
                                 flags += SET_TIMEOUT;
                             }
-                            if (e.isTIME_GRADIENT()) {
-                                flags += TIME_GRADIENT;
+                            if (e.isUSE_DURATION()) {
+                                flags += USE_DURATION;
                             }
                             if (e.isINSTANT_COLOR()) {
                                 flags += INSTANT_COLOR;
                             }
-                            out += "Size: 0, ";
+                            if (e.getFunction() == LightingDisplay.Function.DEFAULT) {
+                                flags += DEFAULT_FUNCTION;
+                            }
+                            out += "Size: " + e.getSize() + ", ";
                             out += "Strip_id: " + p.getDeviceId() + ", ";
                             out += "Set_id: " + getEffectTriggerIndex(e, timesMS) + ", ";
                             out += "Flags: " + flags + ", ";
@@ -2368,10 +2371,13 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                                 out += "Delay: 0, ";
                             }
                             out += "Duration: " + (e.getDuration().toMillis()) + ", ";
-                            out += "Function: 0, ";
-                            out += "Timeout: 0\n";
+                            out += "Function: " + e.getFunction().ordinal() + ", ";
+                            out += "Timeout: 0";
+                            if (e.getFunction() == LightingDisplay.Function.ALTERNATING_COLOR) {
+                                out += ", ExtraParameters: " + e.getSpeed();
+                            }
+                            out += "\n";
                         }
-                        out += "\n";
                         bfw.write(out);
                         bfw.flush();
                         bfw.close();

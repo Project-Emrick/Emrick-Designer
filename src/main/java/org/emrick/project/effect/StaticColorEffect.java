@@ -76,7 +76,7 @@ public class StaticColorEffect implements GeneratedEffect {
         effect.setStartColor(this.getStaticColor());
         effect.setDelay(this.getDuration());
         effect.setDO_DELAY(true);
-        effect.setTIME_GRADIENT(false);
+        effect.setUSE_DURATION(false);
         effect.setEffectType(EffectList.STATIC_COLOR);
         effect.setId(this.getId());
         return effect;

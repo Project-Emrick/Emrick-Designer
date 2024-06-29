@@ -95,6 +95,7 @@ public class AlternatingColorEffect implements GeneratedEffect {
         e.setEndColor(color2);
         e.setDuration(duration);
         e.setSpeed(rate);
+        e.setFunction(LightingDisplay.Function.ALTERNATING_COLOR);
         e.setEffectType(EffectList.ALTERNATING_COLOR);
         e.setId(id);
         return e;
@@ -103,50 +104,11 @@ public class AlternatingColorEffect implements GeneratedEffect {
     @Override
     public ArrayList<EffectPerformerMap> generateEffects(ArrayList<Performer> performers) {
         ArrayList<EffectPerformerMap> map = new ArrayList<>();
-        double doubleRate = rate * 2;
-        double count = (double) duration.toMillis() * doubleRate / 1000;
-        int fullLengthCount = (int) count;
-        long packetLength = (long) (1 / doubleRate * 1000);
-        long lengthLastPacket = this.getDuration().toMillis() - (fullLengthCount * packetLength);
-        boolean useLastPacket = lengthLastPacket > 0;
-        ArrayList<Effect> packets = new ArrayList<>();
-        long nextStartTime = this.getStartTime();
-        boolean even = true;
-        for (int i = 0; i < fullLengthCount; i++) {
-            Effect e = new Effect(nextStartTime);
-            e.setDO_DELAY(true);
-            e.setDelay(Duration.ofMillis(packetLength));
-            nextStartTime += packetLength;
-            if (even) {
-                e.setStartColor(color1);
-            } else {
-                e.setStartColor(color2);
-            }
-            e.setEffectType(EffectList.ALTERNATING_COLOR);
-            e.setId(id);
-            e.setGeneratedEffect(this);
-            packets.add(e);
-            even = !even;
-        }
-        if (useLastPacket) {
-            Effect e = new Effect(nextStartTime);
-            e.setDO_DELAY(true);
-            e.setDelay(Duration.ofMillis(lengthLastPacket));
-            if (even) {
-                e.setStartColor(color1);
-            } else {
-                e.setStartColor(color2);
-            }
-            e.setEffectType(EffectList.ALTERNATING_COLOR);
-            e.setId(id);
-            e.setGeneratedEffect(this);
-            packets.add(e);
-        }
+
         for (Performer p : performers) {
-            for (Effect e : packets) {
-                map.add(new EffectPerformerMap(e, p));
-            }
+            map.add(new EffectPerformerMap(generateEffectObj(), p));
         }
+
         return map;
     }
 }

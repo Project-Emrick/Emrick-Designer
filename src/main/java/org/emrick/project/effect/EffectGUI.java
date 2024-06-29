@@ -1328,7 +1328,7 @@ public class EffectGUI implements ActionListener {
         speedField.setText(speedStr);
         angleField.setText(angleStr);
 
-        TIME_GRADIENTBox.setSelected(effect.isTIME_GRADIENT());
+        TIME_GRADIENTBox.setSelected(effect.isUSE_DURATION());
         SET_TIMEOUTBox.setSelected(effect.isSET_TIMEOUT());
         DO_DELAYBox.setSelected(effect.isDO_DELAY());
         INSTANT_COLORBox.setSelected(effect.isINSTANT_COLOR());
@@ -1696,7 +1696,7 @@ public class EffectGUI implements ActionListener {
             applyToEffectMod();
             if (this.effectMod.getEffectType() == EffectList.STATIC_COLOR) {
                 this.effectMod.setDO_DELAY(true);
-                this.effectMod.setTIME_GRADIENT(false);
+                this.effectMod.setUSE_DURATION(false);
             }
             if (this.isNewEffect) effectListener.onCreateEffect(this.effectMod);
             else effectListener.onUpdateEffect(this.effect, this.effectMod);
@@ -1717,7 +1717,7 @@ public class EffectGUI implements ActionListener {
         this.effectMod.setSpeed(Double.parseDouble(speedField.getText()));
         this.effectMod.setAngle(Double.parseDouble(angleField.getText()));
 
-        this.effectMod.setTIME_GRADIENT(this.TIME_GRADIENTBox.isSelected());
+        this.effectMod.setUSE_DURATION(this.TIME_GRADIENTBox.isSelected());
         this.effectMod.setSET_TIMEOUT(this.SET_TIMEOUTBox.isSelected());
         this.effectMod.setDO_DELAY(this.DO_DELAYBox.isSelected());
         this.effectMod.setINSTANT_COLOR(this.INSTANT_COLORBox.isSelected());
