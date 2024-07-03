@@ -30,10 +30,11 @@ public class ImportArchive {
         // ! NOTE ! Assume Working Directory is Emrick-Designer/
         System.out.println("Working Directory = " + System.getProperty("user.dir"));
 
-        // Unzip archive into resources/unzip/ with same archive name w/o .3dz extension.
+        // Unzip into application resources/unzip/ subfolder. Within "AppData" on Windows, "Applications" on Mac
         File archiveFile = new File(archiveSrc);
         String fileNameNoExt = archiveFile.getName().replaceFirst("[.][^.]+$", "");
-        String unzipPath = System.getProperty("user.home") + "/AppData/Local/Emrick Designer/src/main/resources/unzip/" + fileNameNoExt;
+        String unzipPath = PathConverter.pathConverter("src/main/resources/unzip/" + fileNameNoExt);
+
         Unzip.unzip(archiveSrc, unzipPath);
 
         // Parse package.ini file
@@ -110,8 +111,9 @@ public class ImportArchive {
     private void importSurface(String path) {
         System.out.println("Importing surface..." + path);
         BufferedImage image = (BufferedImage) loadImage(path);
-        // Write cropped image to file?
-        //  Crop obtained through trial and error, may change.
+        // Consider writing cropped image to file?
+        //  Crop coordinates were obtained through trial and error, may change
+        assert image != null;
         BufferedImage cropped = image.getSubimage(1102, 578, 2196, 1157);
         importListener.onSurfaceImport(cropped);
     }
