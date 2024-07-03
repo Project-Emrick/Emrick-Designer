@@ -21,9 +21,8 @@ gradle-app.setting
 # JDT-specific (Eclipse Java Development Tools)
 .classpath
 
-# Added
-
-# IntelliJ
-/out/
-
+# Other
 tempPkt.pkt
+
+# MacOS
+**/.DS_store

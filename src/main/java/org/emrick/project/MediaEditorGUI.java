@@ -300,7 +300,8 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
 
         // Import Pyware Project
         JMenuItem importItem = new JMenuItem(FILE_MENU_NEW_PROJECT);
-        importItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_N, ActionEvent.CTRL_MASK));
+        importItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_N,
+                Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx()));
         fileMenu.add(importItem);
         importItem.addActionListener(e -> {
             System.out.println("New Project...");
@@ -312,7 +313,8 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         // Open Emrick Project// TODO: select stuff
         // https://www.codejava.net/java-se/swing/add-file-filter-for-jfilechooser-dialog// TODO: select stuff
         JMenuItem openItem = new JMenuItem(FILE_MENU_OPEN_PROJECT);// TODO: select stuff
-        openItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_O, ActionEvent.CTRL_MASK));// TODO: select stuff
+        openItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_O,
+                Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx()));// TODO: select stuff
         fileMenu.add(openItem);// TODO: select stuff
         openItem.addActionListener(e -> {// TODO: select stuff
             openProjectDialog();// TODO: select stuff
@@ -322,7 +324,8 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
 
         // Save Emrick Project
         JMenuItem saveItem = new JMenuItem(FILE_MENU_SAVE);
-        saveItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S, ActionEvent.CTRL_MASK));
+        saveItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S,
+                Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx()));
         fileMenu.add(saveItem);
         saveItem.addActionListener(e -> {
             saveProjectDialog();
@@ -332,7 +335,8 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
 
         // Export Emrick Packets
         JMenuItem exportItem = new JMenuItem("Export Emrick Packets File");
-        exportItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_E, ActionEvent.CTRL_MASK));
+        exportItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_E,
+                Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx()));
         fileMenu.add(exportItem);
         exportItem.addActionListener(e -> {
             System.out.println("Exporting packets...");
@@ -397,8 +401,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         // Demos
         JMenuItem displayCircleDrill = new JMenuItem("Load Demo Drill Object");
         displayCircleDrill.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_L,
-                                                                 Toolkit.getDefaultToolkit()
-                                                                        .getMenuShortcutKeyMaskEx()));
+                                                                 Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx()));
         fileMenu.add(displayCircleDrill);
         displayCircleDrill.addActionListener(e -> loadDemoDrillObj());
 
@@ -547,8 +550,10 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
 
         JMenuItem groups = new JMenuItem("Show Saved Groups");
         JMenuItem hideGroups = new JMenuItem("Hide Saved Groups");
-        groups.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_G, ActionEvent.CTRL_MASK));
-        hideGroups.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_G, ActionEvent.CTRL_MASK));
+        groups.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_G,
+                Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx()));
+        hideGroups.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_G,
+                Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx()));
         groups.addActionListener(e -> {
             selectedEffectType = EffectList.SHOW_GROUPS;
             updateEffectViewPanel(selectedEffectType);
@@ -588,7 +593,10 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             footballFieldPanel.setShowLabels(!footballFieldPanel.isShowLabels());
             footballFieldPanel.repaint();
         });
-        toggleShowLabels.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_I, ActionEvent.CTRL_MASK));
+
+        
+        toggleShowLabels.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_I,
+                Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx()));
         viewMenu.add(toggleShowLabels);
 
         // Run menu
