@@ -1,9 +1,7 @@
 package org.emrick.project;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
+import java.io.*;
+import java.util.ArrayList;
 import java.util.zip.*;
 
 public class Unzip {
@@ -39,6 +37,30 @@ public class Unzip {
         } catch (IOException e) {
             System.err.println("Error processing zip file: " + archiveSrc);
             e.printStackTrace();
+        }
+    }
+
+    public static void zip(ArrayList<String> files, String dest, boolean delete) {
+        try {
+            ZipOutputStream zos = new ZipOutputStream(new FileOutputStream(dest));
+            for (String file : files) {
+                File f = new File(file);
+                FileInputStream fis = new FileInputStream(f);
+                ZipEntry zipEntry = new ZipEntry(f.getName());
+                zos.putNextEntry(zipEntry);
+                byte[] bytes = new byte[1024];
+                int length;
+                while ((length = fis.read(bytes)) >= 0) {
+                    zos.write(bytes, 0, length);
+                }
+                fis.close();
+                if (delete) {
+                    f.delete();
+                }
+            }
+            zos.close();
+        } catch (IOException ioe) {
+            throw new RuntimeException(ioe);
         }
     }
 }

@@ -2,6 +2,7 @@ package org.emrick.project;
 
 import org.emrick.project.effect.Effect;
 import org.emrick.project.effect.EffectManager;
+import org.emrick.project.effect.LightingDisplay;
 import org.emrick.project.effect.RFTrigger;
 
 import javax.swing.*;
@@ -153,76 +154,11 @@ public class FootballFieldPanel extends JPanel implements RepaintListener {
     protected Color calculateColor(Effect e) {
         long setMS = effectManager.getTimeManager().getSet2MSec().get(currentSet.index).getValue();
         long currMS = currentMS + setMS;
-        if (e.isDO_DELAY()) {
-            if (e.getStartTimeMSec() + e.getDelay().toMillis() > currMS) {
-                if (e.isINSTANT_COLOR()) {
-                    return e.getStartColor();
-                } else {
-                    return Color.black;
-                }
-            }
+
+        switch(e.getFunction()) {
+            case ALTERNATING_COLOR : return LightingDisplay.alternatingColorFunction(e, setMS, currMS);
+            default : return LightingDisplay.defaultLEDFunction(e, setMS, currMS);
         }
-        if (e.isTIME_GRADIENT()) {
-            if (e.getStartTimeMSec() + e.getDelay().toMillis() + e.getDuration().toMillis() >= currMS) {
-                long startGradient = e.getStartTimeMSec() + e.getDelay().toMillis();
-                float shiftProgress = (float) (currMS - startGradient) / (float) e.getDuration().toMillis();
-                float[] hsvs = new float[3];
-                Color.RGBtoHSB(e.getStartColor().getRed(), e.getStartColor().getGreen(), e.getStartColor().getBlue(), hsvs);
-                hsvs[0] *= 360;
-                float startHue = hsvs[0];
-                float[] hsve = new float[3];
-                Color.RGBtoHSB(e.getEndColor().getRed(), e.getEndColor().getGreen(), e.getEndColor().getBlue(), hsve);
-                hsve[0] *= 360;
-                float endHue = hsve[0];
-                if (e.getStartColor().equals(Color.black)) {
-                    hsvs[0] = hsve[0];
-                    startHue = hsvs[0];
-                }
-                if (e.getEndColor().equals(Color.black)) {
-                    hsve[0] = hsvs[0];
-                    endHue = hsve[0];
-                }
-                float h, s, v;
-                if (startHue != endHue) {
-                    boolean clockwise = true;
-                    if (endHue > startHue) {
-                        if (endHue - startHue > 180) {
-                            clockwise = false;
-                        }
-                    } else {
-                        if (startHue - endHue < 180) {
-                            clockwise = false;
-                        }
-                    }
-                    // the math to make this work sucks and probably has redundancies but it works and I refuse to touch it
-                    if (clockwise) {
-                        if (hsve[0] >= hsvs[0]) {
-                            h = ((hsve[0] - hsvs[0]) * shiftProgress + hsvs[0]) % 360;
-                        } else {
-                            h = ((hsve[0] + 360 - hsvs[0]) * shiftProgress + hsvs[0]) % 360;
-                        }
-                    } else {
-                        if (hsve[0] >= hsvs[0]) {
-                            h = ((hsvs[0] + 360 - (hsvs[0] - (hsve[0] - 360)) * shiftProgress)) % 360;
-                        } else {
-                            h = (hsvs[0] - (hsvs[0] - hsve[0]) * shiftProgress) % 360;
-                        }
-                    }
-                } else {
-                    h = hsvs[0];
-                }
-                s = (hsve[1] - hsvs[1]) * shiftProgress + hsvs[1];
-                v = (hsve[2] - hsvs[2]) * shiftProgress + hsvs[2];
-                h /= 360;
-                return new Color(Color.HSBtoRGB(h,s,v));
-            }
-        }
-        if (e.isSET_TIMEOUT()) {
-            if (e.getStartTimeMSec() + e.getDelay().toMillis() + e.getDuration().toMillis() + e.getTimeout().toMillis() > currMS) {
-                return e.getEndColor();
-            }
-        }
-        return Color.black;
     }
 
     @Override
@@ -299,7 +235,7 @@ public class FootballFieldPanel extends JPanel implements RepaintListener {
 
             g.fillRect((int)x-6,(int)y-6,6,12);
             g.fillRect((int)x,(int)y-6,6,12);
-            if (selectedPerformers.get(p.getSymbol()+p.getLabel()) != null) {
+            if (selectedPerformers.get(p.getIdentifier()) != null) {
                 g.setColor(Color.GREEN);
             } else {
                 g.setColor(Color.BLACK);

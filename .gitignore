@@ -22,6 +22,7 @@ gradle-app.setting
 .classpath
 
 # Other
+tempPkt.pkt
 
 # MacOS
 **/.DS_store

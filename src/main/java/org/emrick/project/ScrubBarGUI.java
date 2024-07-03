@@ -65,7 +65,7 @@ public class ScrubBarGUI extends JComponent implements ActionListener {
     private final ImageIcon PAUSE_ICON;
 
     // Frame rate
-    private double fps = 60;
+    private double fps = 30;
     private double time = 0;
     private boolean useFps = false;
     private ArrayList<SyncTimeGUI.Pair> timeSync = null;
@@ -156,12 +156,11 @@ public class ScrubBarGUI extends JComponent implements ActionListener {
         JLabel statusLabel = new JLabel("Set: 0", JLabel.CENTER);
         JLabel timeLabel = new JLabel("0:00.000", JLabel.CENTER);
 
-        String[] playbackFps = { "60 fps", "30 fps", "15 fps", "Count" };
-//        Double[] playbackFps = {60.0, 30.0, 15.0};
+        String[] playbackFps = { "30 fps", "15 fps", "Count" };
         JComboBox<String> fpsChanger = new JComboBox<>(playbackFps);
         this.useFps = true;
         footballFieldPanel.setUseFps(useFps);
-        this.fps = 60.0;
+        this.fps = 30.0;
         fpsChanger.addActionListener(e -> {
             // Added: give user ability to not use FPS option
             String selected = (String) fpsChanger.getSelectedItem();

@@ -80,13 +80,15 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
     private SelectionGroupGUI groupsGUI;
     private Effect currentEffect;
     private Effect copiedEffect;
-    private int selectedEffectType = 2;
+    private EffectList selectedEffectType = EffectList.STATIC_COLOR;
     public final int DEFAULT_FUNCTION = 0x1;
-    public final int TIME_GRADIENT = 0x2;
+    public final int USE_DURATION = 0x2;
     public final int SET_TIMEOUT = 0x4;
     public final int DO_DELAY = 0x8;
     public final int INSTANT_COLOR = 0x10;
     public final int PROGRAMMING_MODE = 0x20;
+    public final int USE_COLORS = 0x40;
+    public final int DIRECTION = 0x80;
 
     // RF Trigger
     private RFTriggerGUI rfTriggerGUI;
@@ -553,14 +555,14 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         hideGroups.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_G,
                 Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx()));
         groups.addActionListener(e -> {
-            selectedEffectType = EffectGUI.SHOW_GROUPS;
+            selectedEffectType = EffectList.SHOW_GROUPS;
             updateEffectViewPanel(selectedEffectType);
             hideGroups.setEnabled(true);
             groups.setEnabled(false);
         });
         editMenu.add(groups);
         hideGroups.addActionListener(e -> {
-            selectedEffectType = EffectGUI.HIDE_GROUPS;
+            selectedEffectType = EffectList.HIDE_GROUPS;
             updateEffectViewPanel(selectedEffectType);
             groups.setEnabled(true);
             hideGroups.setEnabled(false);
@@ -631,6 +633,18 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             server = null;
             stopWebServer.setEnabled(false);
             runWebServer.setEnabled(true);
+
+            File dir = new File(System.getProperty("user.home") + "/AppData/Local/Emrick Designer/tmp/");
+            File[] files = dir.listFiles();
+            for (File f : files) {
+                f.delete();
+            }
+            dir.delete();
+            File f = new File("tempPkt.pkt");
+            if (f.exists()) {
+                f.delete();
+            }
+
         });
         stopShowItem.addActionListener(e -> {
             if (flowViewGUI != null) {
@@ -717,7 +731,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                 currentTutorialIndex = 0;
                 if (currentTutorialIndex < tutorialMessages.length) {
 
-                    // OPen or Create project
+                    // Open or Create project
                     if (currentTutorialIndex == 0) {
                         System.out.println("first one\n");
                         fileMenu.setBorder(BorderFactory.createLineBorder(Color.RED, 2));
@@ -797,6 +811,16 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             public void windowClosing(WindowEvent e) {
                 if (server != null) {
                     server.stop(0);
+                    File dir = new File(System.getProperty("user.home") + "/AppData/Local/Emrick Designer/tmp/");
+                    File[] files = dir.listFiles();
+                    for (File f : files) {
+                        f.delete();
+                    }
+                    dir.delete();
+                    File f = new File("tempPkt.pkt");
+                    if (f.exists()) {
+                        f.delete();
+                    }
                 }
                 if (archivePath != null && drillPath != null) {
                     if (effectManager != null && !effectManager.getUndoStack().isEmpty()) {
@@ -815,6 +839,16 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                         }
                     }
                 }
+                File showDataDir = new File(System.getProperty("user.home") + "/AppData/Local/Emrick Designer/show_data/");
+                showDataDir.mkdirs();
+                File[] cleanFiles = showDataDir.listFiles();
+                for (File f : cleanFiles) {
+                    if (f.isDirectory()) {
+                        deleteDirectory(f);
+                    } else {
+                        f.delete();
+                    }
+                }
                 frame.dispose();
                 super.windowClosing(e);
             }
@@ -826,6 +860,16 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         frame.setLocationRelativeTo(null);
         frame.setVisible(true);
         frame.setTitle("Emrick Designer");
+    }
+
+    private boolean deleteDirectory(File directoryToBeDeleted) {
+        File[] allContents = directoryToBeDeleted.listFiles();
+        if (allContents != null) {
+            for (File file : allContents) {
+                deleteDirectory(file);
+            }
+        }
+        return directoryToBeDeleted.delete();
     }
 
     private JButton getEffectOptionsButton() {
@@ -853,26 +897,47 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
 
         lightMenuPopup.addSeparator();
 
-        JMenuItem fadePattern = new JMenuItem("Create Fade Pattern");
+        JMenuItem fadePattern = new JMenuItem("Create Fade Effect");
         fadePattern.addActionListener(e -> {
-            selectedEffectType = effectGUI.GENERATED_FADE;
+            selectedEffectType = EffectList.GENERATED_FADE;
             updateEffectViewPanel(selectedEffectType);
         });
         lightMenuPopup.add(fadePattern);
 
-        JMenuItem staticColorPattern = new JMenuItem("Create Static Color Pattern");
+        JMenuItem staticColorPattern = new JMenuItem("Create Static Color Effect");
         staticColorPattern.addActionListener(e -> {
-            selectedEffectType = effectGUI.STATIC_COLOR;
+            selectedEffectType = EffectList.STATIC_COLOR;
             updateEffectViewPanel(selectedEffectType);
         });
         lightMenuPopup.add(staticColorPattern);
 
-        JMenuItem wavePattern = new JMenuItem("Create Wave Pattern");
+        JMenuItem wavePattern = new JMenuItem("Create Wave Effect");
         wavePattern.addActionListener(e -> {
-            selectedEffectType = effectGUI.WAVE;
+            selectedEffectType = EffectList.WAVE;
             updateEffectViewPanel(selectedEffectType);
         });
         lightMenuPopup.add(wavePattern);
+
+        JMenuItem alternatingColorPattern = new JMenuItem("Create Alternating Color Effect");
+        alternatingColorPattern.addActionListener(e -> {
+            selectedEffectType = EffectList.ALTERNATING_COLOR;
+            updateEffectViewPanel(selectedEffectType);
+        });
+        lightMenuPopup.add(alternatingColorPattern);
+
+        JMenuItem ripplePattern = new JMenuItem("Create Ripple Effect");
+        ripplePattern.addActionListener(e -> {
+            selectedEffectType = EffectList.RIPPLE;
+            updateEffectViewPanel(selectedEffectType);
+        });
+        lightMenuPopup.add(ripplePattern);
+
+        JMenuItem circleChasePattern = new JMenuItem("Create Circle Chase Effect");
+        circleChasePattern.addActionListener(e -> {
+            selectedEffectType = EffectList.CIRCLE_CHASE;
+            updateEffectViewPanel(selectedEffectType);
+        });
+        lightMenuPopup.add(circleChasePattern);
 
 
         // Button that triggers the popup menu
@@ -907,27 +972,37 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         int port = 8080;
         try {
             File f;
-            if (path.equals("")) {
-                JFileChooser fileChooser = new JFileChooser();
-                fileChooser.setDialogTitle("Select Packets (.pkt) file");
-                fileChooser.setFileFilter(new FileNameExtensionFilter("Emrick Designer Packets File (*.pkt)", "pkt"));
-                fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
-                fileChooser.showOpenDialog(null);
-                f = fileChooser.getSelectedFile();
-            } else {
-                f = new File(path);
+
+            // If a project is loaded, generate the packets from the project and write them to a temp file in project directory.
+            // delete file after server is stopped.
+            if(archivePath == null || drillPath == null) { //if no project open
+                if (path.equals("")) {
+                    JFileChooser fileChooser = new JFileChooser();
+                    fileChooser.setDialogTitle("Select Packets (.pkt) file");
+                    fileChooser.setFileFilter(new FileNameExtensionFilter("Emrick Designer Packets File (*.pkt)", "pkt"));
+                    fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
+                    fileChooser.showOpenDialog(null);
+                    f = fileChooser.getSelectedFile();
+                } else {
+                    f = new File(path);
+                }
             }
+            else{ //there is a project open
+                if (path.equals("")) {
+                    f = new File("tempPkt.pkt");
+                    exportPackets(f);
+                } else {
+                    f = new File(path);
+                }
+            }
+
+            Unzip.unzip(f.getAbsolutePath(), System.getProperty("user.home") + "/AppData/Local/Emrick Designer/tmp/");
+
             server = HttpServer.create(new InetSocketAddress(port), 250);
             System.out.println("server started at " + port);
             System.out.println(server.getAddress());
-            BufferedReader bfr = new BufferedReader(new FileReader(f.getAbsolutePath()));
-            String pkt = "";
-            String line = bfr.readLine();
-            while (line != null) {
-                pkt += line + "\n";
-                line = bfr.readLine();
-            }
-            server.createContext("/", new GetHandler(pkt));
+
+            server.createContext("/", new GetHandler(System.getProperty("user.home") + "/AppData/Local/Emrick Designer/tmp/"));
             server.setExecutor(new ServerExecutor());
             server.start();
         } catch (IOException ioe) {
@@ -969,12 +1044,35 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
     public void loadProject(File path) {
         try {
             // TODO: pdf loading is redundant with project file. fix? - LHD
+
+            File showDataDir = new File(System.getProperty("user.home") + "/AppData/Local/Emrick Designer/show_data/");
+            showDataDir.mkdirs();
+            File[] cleanFiles = showDataDir.listFiles();
+            for (File f : cleanFiles) {
+                if (f.isDirectory()) {
+                    deleteDirectory(f);
+                } else {
+                    f.delete();
+                }
+            }
+            Unzip.unzip(path.getAbsolutePath(), System.getProperty("user.home") + "/AppData/Local/Emrick Designer/show_data/");
+            File[] dataFiles = showDataDir.listFiles();
+            for (File f : dataFiles) {
+                if (!f.isDirectory()) {
+                    if (f.getName().substring(f.getName().lastIndexOf(".")).equals(".json")) {
+                        path = f;
+                    }
+                }
+            }
+
+
             FileReader r = new FileReader(path);
             ProjectFile pf = gson.fromJson(r, ProjectFile.class);
+            r.close();
             ImportArchive ia = new ImportArchive(this);
 
-            archivePath = new File(pf.archivePath);
-            drillPath = new File(pf.drillPath);
+            archivePath = new File(System.getProperty("user.home") + "/AppData/Local/Emrick Designer/show_data/" + pf.archivePath);
+            drillPath = new File(System.getProperty("user.home") + "/AppData/Local/Emrick Designer/show_data/" + pf.drillPath);
 
             ia.fullImport(archivePath.getAbsolutePath(), drillPath.getAbsolutePath());
             footballFieldPanel.drill = pf.drill;
@@ -996,7 +1094,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                 updateEffectViewPanel(selectedEffectType);
             }
 
-        } catch (JsonIOException | JsonSyntaxException | FileNotFoundException e) {
+        } catch (JsonIOException | JsonSyntaxException | IOException e) {
             writeSysMsg("Failed to open to `" + path + "`.");
             throw new RuntimeException(e);
         }
@@ -1702,7 +1800,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             if (p.getEffects().size() != 0) {
                 Effect effect = effectManager.getEffect(p, msec);
                 if (effect != null) {
-                    if (selectedEffectType != EffectGUI.SHOW_GROUPS) {
+                    if (selectedEffectType != EffectList.SHOW_GROUPS) {
                         selectedEffectType = effect.getEffectType();
                     }
                 }
@@ -1771,7 +1869,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         return scrubBarGUI.getFps();
     }
 
-    private void updateEffectViewPanel(int effectType) {
+    private void updateEffectViewPanel(EffectList effectType) {
 
         // No point in updating effect view if can't use effects
         if (effectManager == null) return;
@@ -1787,7 +1885,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         effectViewPanel.repaint();
 
         // Effects
-        if (selectedEffectType != EffectGUI.SHOW_GROUPS) {
+        if (selectedEffectType != EffectList.SHOW_GROUPS) {
             if (footballFieldPanel.selectedPerformers.size() < 1) {
                 currentEffect = null;
                 effectGUI = new EffectGUI(EffectGUI.noPerformerMsg);
@@ -1799,11 +1897,11 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
 
             long currentMSec = timeManager.getCount2MSec().get(footballFieldPanel.getCurrentCount());
             currentEffect = effectManager.getEffectsFromSelectedPerformers(currentMSec);
-            if (selectedEffectType == EffectGUI.HIDE_GROUPS) {
+            if (selectedEffectType == EffectList.HIDE_GROUPS) {
                 if (!currentEffect.equals(new Effect(0))) {
                     selectedEffectType = currentEffect.getEffectType();
                 } else {
-                    selectedEffectType = EffectGUI.STATIC_COLOR;
+                    selectedEffectType = EffectList.STATIC_COLOR;
                 }
 
             }
@@ -1813,19 +1911,38 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                 effectViewPanel.add(effectGUI.getEffectPanel(), BorderLayout.CENTER);
 
                 return;
+            } else if (currentEffect.getEffectType() != EffectList.HIDE_GROUPS) {
+                selectedEffectType = currentEffect.getEffectType();
             }
             if (currentEffect.getGeneratedEffect() != null) {
-                WaveEffect waveEffect = (WaveEffect) currentEffect.getGeneratedEffect();
-                currentEffect = new Effect(waveEffect.getStartTime());
-                currentEffect.setEndTimeMSec(waveEffect.getEndTime());
-                currentEffect.setStartColor(waveEffect.getStaticColor());
-                currentEffect.setEndColor(waveEffect.getWaveColor());
-                currentEffect.setDuration(waveEffect.getDuration());
-                currentEffect.setSpeed(waveEffect.getSpeed());
-                currentEffect.setUpOrSide(waveEffect.isVertical());
-                currentEffect.setDirection(waveEffect.isUpRight());
-                currentEffect.setEffectType(EffectGUI.WAVE);
-                currentEffect.setId(waveEffect.getId());
+                if (currentEffect.getEffectType() == EffectList.WAVE) {
+                    WaveEffect waveEffect = (WaveEffect) currentEffect.getGeneratedEffect();
+                    currentEffect = new Effect(waveEffect.getStartTime());
+                    currentEffect.setEndTimeMSec(waveEffect.getEndTime());
+                    currentEffect.setStartColor(waveEffect.getStaticColor());
+                    currentEffect.setEndColor(waveEffect.getWaveColor());
+                    currentEffect.setDuration(waveEffect.getDuration());
+                    currentEffect.setSpeed(waveEffect.getSpeed());
+                    currentEffect.setUpOrSide(waveEffect.isVertical());
+                    currentEffect.setDirection(waveEffect.isUpRight());
+                    currentEffect.setEffectType(EffectList.WAVE);
+                    currentEffect.setId(waveEffect.getId());
+                } else if (currentEffect.getEffectType() == EffectList.STATIC_COLOR) {
+                    StaticColorEffect staticColorEffect = (StaticColorEffect) currentEffect.getGeneratedEffect();
+                    currentEffect = staticColorEffect.generateEffectObj();
+                } else if (currentEffect.getEffectType() == EffectList.GENERATED_FADE) {
+                    FadeEffect fadeEffect = (FadeEffect) currentEffect.getGeneratedEffect();
+                    currentEffect = fadeEffect.generateEffectObj();
+                } else if (currentEffect.getEffectType() == EffectList.ALTERNATING_COLOR) {
+                    AlternatingColorEffect alternatingColorEffect = (AlternatingColorEffect) currentEffect.getGeneratedEffect();
+                    currentEffect = alternatingColorEffect.generateEffectObj();
+                } else if (currentEffect.getEffectType() == EffectList.RIPPLE) {
+                    RippleEffect rippleEffect = (RippleEffect) currentEffect.getGeneratedEffect();
+                    currentEffect = rippleEffect.generateEffectObj();
+                } else if (currentEffect.getEffectType() == EffectList.CIRCLE_CHASE) {
+                    CircleChaseEffect circleChaseEffect = (CircleChaseEffect) currentEffect.getGeneratedEffect();
+                    currentEffect = circleChaseEffect.generateEffectObj();
+                }
             }
             effectGUI = new EffectGUI(currentEffect, currentMSec, this, selectedEffectType);
             // Add updated data for effect view
@@ -1866,11 +1983,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         for (Map.Entry<String, Performer> selected : footballFieldPanel.selectedPerformers.entrySet()) {
             Performer p = selected.getValue();
             for (Effect e : p.getEffects()) {
-                if (e.getGeneratedEffect() != null) {
-                    effectsSet.add(e.getGeneratedEffect().generateEffectObj());
-                } else {
-                    effectsSet.add(e);
-                }
+                effectsSet.add(e.getGeneratedEffect().generateEffectObj());
             }
         }
         ArrayList<Effect> effectsList = new ArrayList<>(effectsSet);
@@ -1914,24 +2027,48 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
 
     public void saveProject(File path, File archivePath, File drillPath) {
         ProjectFile pf;
+        String aPath = archivePath.getName();
+        String dPath = drillPath.getName();
         if (this.effectManager != null) {
-            pf = new ProjectFile(footballFieldPanel.drill, archivePath.getAbsolutePath(), drillPath.getAbsolutePath(), timeSync, startDelay, count2RFTrigger, effectManager.getIds());
+            pf = new ProjectFile(footballFieldPanel.drill, aPath, dPath, timeSync, startDelay, count2RFTrigger, effectManager.getIds());
         } else {
-            pf = new ProjectFile(footballFieldPanel.drill, archivePath.getAbsolutePath(), drillPath.getAbsolutePath(), timeSync, startDelay, count2RFTrigger, null);
+            pf = new ProjectFile(footballFieldPanel.drill, aPath, dPath, timeSync, startDelay, count2RFTrigger, null);
         }
         String g = gson.toJson(pf);
 
         System.out.println("saving to `" + path + "`");
 //        System.out.println(g);
 
+        String jsonName = path.getName();
+        jsonName = jsonName.substring(0, jsonName.indexOf(".emrick")) + ".json";
+        File dir = new File(System.getProperty("user.home") + "/AppData/Local/Emrick Designer/show_data/");
+        dir.mkdirs();
+        File[] cleanJson = dir.listFiles();
+        for (File f : cleanJson) {
+            if (f.getName().endsWith(".json")) {
+                f.delete();
+            }
+        }
+
         try {
-            FileWriter w = new FileWriter(path);
+            FileWriter w = new FileWriter(System.getProperty("user.home") + "/AppData/Local/Emrick Designer/show_data/" + jsonName);
             w.write(g);
             w.close();
         } catch (IOException e) {
             writeSysMsg("Failed to save to `" + path + "`.");
             throw new RuntimeException(e);
         }
+
+        File showDataDir = new File(System.getProperty("user.home") + "/AppData/Local/Emrick Designer/show_data/");
+        showDataDir.mkdirs();
+        File[] saveFiles = showDataDir.listFiles();
+        ArrayList<String> files = new ArrayList<>();
+        for (File f : saveFiles) {
+            if (!f.isDirectory()) {
+                files.add(f.getAbsolutePath());
+            }
+        }
+        Unzip.zip(files, path.getAbsolutePath(), false);
 
         writeSysMsg("Saved project to `" + path + "`.");
     }
@@ -1971,7 +2108,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             nextTrigger = -1;
         }
         if (effects.get(index+1).getStartTimeMSec() < nextTrigger || nextTrigger == -1) {
-            if (effects.get(index+1).getStartTimeMSec() > e.getEndTimeMSec()) {
+            if (effects.get(index+1).getStartTimeMSec() >= e.getEndTimeMSec()) {
                 return effects.get(index+1).getStartTimeMSec() - e.getEndTimeMSec();
             } else {
                 return Long.MAX_VALUE;
@@ -2020,51 +2157,58 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         Long[] timesMS = new Long[timeMS.size()];
         timesMS = timeMS.toArray(timesMS);
         try {
-            BufferedWriter bfw = new BufferedWriter(new FileWriter(path));
             String out = "";
+            File dir = new File(System.getProperty("user.home") + "/AppData/Local/Emrick Designer/tmp/");
+            dir.mkdirs();
+            ArrayList<String> files = new ArrayList<>();
+            ArrayList<Performer> list0 = new ArrayList<>();
+            ArrayList<Performer> list1 = new ArrayList<>();
+            ArrayList<Performer> list2 = new ArrayList<>();
+            ArrayList<Performer> list3 = new ArrayList<>();
+            ArrayList<Performer> list4 = new ArrayList<>();
+            ArrayList<Performer> list5 = new ArrayList<>();
+            ArrayList<Performer> list6 = new ArrayList<>();
+            ArrayList<Performer> list7 = new ArrayList<>();
             for (int k = 0; k < footballFieldPanel.drill.performers.size(); k++) {
                 Performer p = footballFieldPanel.drill.performers.get(k);
-                if (p.getEffects().size() > 0) {
-                    out += "Pkt_count: " + p.getEffects().size() + ", ";
-                    for (i = 0; i < p.getEffects().size(); i++) {
-                        Effect e = p.getEffects().get(i);
-                        int flags = 0;
-                        if (timeBeforeEffect(i, e, p.getEffects(), timesMS) > 1) {
-                            flags += DO_DELAY;
-                        }
-                        if (timeAfterEffect(i, e, p.getEffects(), timesMS) == Long.MAX_VALUE) {
-                            flags += SET_TIMEOUT;
-                        }
-                        flags += TIME_GRADIENT;
-                        out += "Size: 0, ";
-                        out += "Strip_id: " + p.getDeviceId() + ", ";
-                        out += "Set_id: " + getEffectTriggerIndex(e, timesMS) + ", ";
-                        out += "Flags: " + flags + ", ";
-                        Color startColor = e.getStartColor();
-                        out += "Start_color: " + startColor.getRed() + ", " + startColor.getGreen() + ", " + startColor.getBlue() + ", ";
-                        Color endColor = e.getEndColor();
-                        out += "End_color: " + endColor.getRed() + ", " + endColor.getGreen() + ", " + endColor.getBlue() + ", ";
-                        if ((flags & DO_DELAY) > 0) {
-                            out += "Delay: " + timeBeforeEffect(i, e, p.getEffects(), timesMS) + ", ";
-                        } else {
-                            out += "Delay: 0, ";
-                        }
-                        out += "Duration: " + (e.getEndTimeMSec() - e.getStartTimeMSec()) + ", ";
-                        out += "Function: 0, ";
-                        out += "Timeout: 0\n";
-                        bfw.write(out);
-                        bfw.flush();
-                        out = "";
-                    }
-                    out += "\n";
-                    bfw.write(out);
-                    bfw.flush();
-                    out = "";
+                File curr = new File(System.getProperty("user.home") + "/AppData/Local/Emrick Designer/tmp/" + p.getDeviceId());
+                curr.createNewFile();
+                files.add(curr.getAbsolutePath());
+
+                switch (k % 8) {
+                    case 0: list0.add(p); break;
+                    case 1: list1.add(p); break;
+                    case 2: list2.add(p); break;
+                    case 3: list3.add(p); break;
+                    case 4: list4.add(p); break;
+                    case 5: list5.add(p); break;
+                    case 6: list6.add(p); break;
+                    case 7: list7.add(p); break;
                 }
             }
+            System.out.println(list0.size());
+            Thread[] threads = new Thread[8];
+            threads[0] = new Thread(new PacketExport(list0, timesMS));
+            threads[1] = new Thread(new PacketExport(list1, timesMS));
+            threads[2] = new Thread(new PacketExport(list2, timesMS));
+            threads[3] = new Thread(new PacketExport(list3, timesMS));
+            threads[4] = new Thread(new PacketExport(list4, timesMS));
+            threads[5] = new Thread(new PacketExport(list5, timesMS));
+            threads[6] = new Thread(new PacketExport(list6, timesMS));
+            threads[7] = new Thread(new PacketExport(list7, timesMS));
+            for (i = 0; i < 8; i++) {
+                threads[i].start();
+            }
+            for (i = 0; i < 8; i++) {
+                threads[i].join();
+            }
+            Unzip.zip(files, path.getAbsolutePath(), true);
+            dir.delete();
         }
         catch (IOException ioe) {
             throw new RuntimeException(ioe);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
         }
     }
 
@@ -2162,10 +2306,99 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
 
     @Override
     public void onRFSignal(int i) {
-        if (serialTransmitter != null && scrubBarGUI.isPlaying()) {
+
+        if (serialTransmitter != null) {
             serialTransmitter.writeSet(i);
         }
     }
+
+
+    private class PacketExport implements Runnable {
+        private ArrayList<Performer> performers;
+        private Long[] timesMS;
+        public PacketExport(ArrayList<Performer> performers, Long[] timesMS) {
+            this.performers = performers;
+            this.timesMS = timesMS;
+        }
+
+        @Override
+        public void run() {
+            try {
+                String out = "";
+                int a = 0;
+                for (Performer p : performers) {
+                    a++;
+                    File curr = new File(System.getProperty("user.home") + "/AppData/Local/Emrick Designer/tmp/" + p.getDeviceId());
+
+                    BufferedWriter bfw = new BufferedWriter(new FileWriter(curr));
+
+                    p.sortEffects();
+                    if (p.getEffects().size() > 0) {
+                        out += "Pkt_count: " + p.getEffects().size() + ", ";
+                        for (int i = 0; i < p.getEffects().size(); i++) {
+                            Effect e = p.getEffects().get(i);
+                            int flags = 0;
+                            if (timeBeforeEffect(i, e, p.getEffects(), timesMS) > 1 || e.isDO_DELAY()) {
+                                flags += DO_DELAY;
+                                if (e.isDO_DELAY() && timeBeforeEffect(i, e, p.getEffects(), timesMS) > 1) {
+                                    out += "Size: 0, Strip_id: " + p.getDeviceId() + ", Set_id: " + getEffectTriggerIndex(e, timesMS)
+                                            + ", Flags: 24, Start_color: 0, 0, 0, End_color: 0, 0, 0, Delay: " + timeBeforeEffect(i, e, p.getEffects(), timesMS)
+                                            + ", Duration: 0, Function: 0, Timeout: 0\n";
+                                    int count = Integer.valueOf(out.substring(out.indexOf(" ") + 1, out.indexOf(",")));
+                                    out = out.substring(0, out.indexOf(" ") + 1) + (count + 1) + out.substring(out.indexOf(","));
+                                }
+                            }
+                            if (timeAfterEffect(i, e, p.getEffects(), timesMS) == Long.MAX_VALUE) {
+                                flags += SET_TIMEOUT;
+                            }
+                            if (e.isUSE_DURATION()) {
+                                flags += USE_DURATION;
+                            }
+                            if (e.isINSTANT_COLOR()) {
+                                flags += INSTANT_COLOR;
+                            }
+                            if (e.getFunction() == LightingDisplay.Function.DEFAULT) {
+                                flags += DEFAULT_FUNCTION;
+                            }
+                            out += "Size: " + e.getSize() + ", ";
+                            out += "Strip_id: " + p.getDeviceId() + ", ";
+                            out += "Set_id: " + getEffectTriggerIndex(e, timesMS) + ", ";
+                            out += "Flags: " + flags + ", ";
+                            Color startColor = e.getStartColor();
+                            out += "Start_color: " + startColor.getRed() + ", " + startColor.getGreen() + ", " + startColor.getBlue() + ", ";
+                            Color endColor = e.getEndColor();
+                            out += "End_color: " + endColor.getRed() + ", " + endColor.getGreen() + ", " + endColor.getBlue() + ", ";
+                            if ((flags & DO_DELAY) > 0) {
+                                if (e.isDO_DELAY()) {
+                                    out += "Delay: " + e.getDelay().toMillis() + ", ";
+                                } else {
+                                    out += "Delay: " + timeBeforeEffect(i, e, p.getEffects(), timesMS) + ", ";
+                                }
+
+                            } else {
+                                out += "Delay: 0, ";
+                            }
+                            out += "Duration: " + (e.getDuration().toMillis()) + ", ";
+                            out += "Function: " + e.getFunction().ordinal() + ", ";
+                            out += "Timeout: 0";
+                            if (e.getFunction() == LightingDisplay.Function.ALTERNATING_COLOR) {
+                                out += ", ExtraParameters: " + e.getSpeed();
+                            }
+                            out += "\n";
+                        }
+                        bfw.write(out);
+                        bfw.flush();
+                        bfw.close();
+                        out = "";
+                    }
+                }
+            } catch (IOException ioe) {
+                throw new RuntimeException(ioe);
+            }
+        }
+    }
+
+
 
     /*
         tutorial

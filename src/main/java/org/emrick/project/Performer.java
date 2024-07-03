@@ -35,6 +35,10 @@ public class Performer {
         this.deviceId = Integer.toString(id);
     }
 
+    public void sortEffects() {
+        effects.sort(Comparator.comparingLong(Effect::getStartTimeMSec));
+    }
+
     public Color getColor() {
         return color;
     }

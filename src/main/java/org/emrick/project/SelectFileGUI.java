@@ -241,12 +241,46 @@ public class SelectFileGUI implements ActionListener {
 
                 // TODO: Import Coordinates Pdf and Pyware Archive
 
+                ArrayList<String> files = new ArrayList<>();
+                files.add(archiveFile.getAbsolutePath());
+                files.add(coordsFile.getAbsolutePath());
+                if (csvFile != null) {
+                    files.add(csvFile.getAbsolutePath());
+                }
+                copyFiles(files, System.getProperty("user.home") + "/AppData/Local/Emrick Designer/show_data");
+                archiveFile = new File(System.getProperty("user.home") + "/AppData/Local/Emrick Designer/show_data/" + archiveFile.getName());
+                coordsFile = new File(System.getProperty("user.home") + "/AppData/Local/Emrick Designer/show_data/" + coordsFile.getName());
+                if (csvFile != null) {
+                    csvFile = new File(System.getProperty("user.home") + "/AppData/Local/Emrick Designer/show_data/" + csvFile.getName());
+                }
+
                 importListener.onFileSelect(archiveFile, coordsFile, csvFile);
                 importArchive.fullImport(archiveFile.getAbsolutePath(), coordsFile.getAbsolutePath());
 
                 dialogWindow.dispose();
             }
 
+        }
+    }
+
+    private void copyFiles(ArrayList<String> files, String dir) {
+        try {
+            File directory = new File(dir);
+            directory.mkdirs();
+            for (String file : files) {
+                File f = new File(file);
+                FileInputStream fis = new FileInputStream(f);
+                FileOutputStream fos = new FileOutputStream(directory.getAbsolutePath() + "/" + f.getName());
+                byte[] buf = new byte[1024];
+                while (fis.read(buf) > 0) {
+                    fos.write(buf);
+                    fos.flush();
+                }
+                fis.close();
+                fos.close();
+            }
+        } catch (IOException ioe) {
+            throw new RuntimeException(ioe);
         }
     }
 
