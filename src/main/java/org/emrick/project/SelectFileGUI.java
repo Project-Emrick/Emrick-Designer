@@ -247,11 +247,11 @@ public class SelectFileGUI implements ActionListener {
                 if (csvFile != null) {
                     files.add(csvFile.getAbsolutePath());
                 }
-                copyFiles(files, System.getProperty("user.home") + "/AppData/Local/Emrick Designer/show_data");
-                archiveFile = new File(System.getProperty("user.home") + "/AppData/Local/Emrick Designer/show_data/" + archiveFile.getName());
-                coordsFile = new File(System.getProperty("user.home") + "/AppData/Local/Emrick Designer/show_data/" + coordsFile.getName());
+                copyFiles(files, PathConverter.pathConverter("show_data"));
+                archiveFile = new File(PathConverter.pathConverter("show_data/" + archiveFile.getName()));
+                coordsFile = new File(PathConverter.pathConverter("show_data/" + coordsFile.getName()));
                 if (csvFile != null) {
-                    csvFile = new File(System.getProperty("user.home") + "/AppData/Local/Emrick Designer/show_data/" + csvFile.getName());
+                    csvFile = new File(PathConverter.pathConverter("show_data/" + csvFile.getName()));
                 }
 
                 importListener.onFileSelect(archiveFile, coordsFile, csvFile);

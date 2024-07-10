@@ -1,5 +1,7 @@
 package org.emrick.project.audio;
 
+import org.emrick.project.PathConverter;
+
 import javax.sound.midi.*;
 import javax.sound.sampled.*;
 import javax.swing.*;
@@ -140,9 +142,9 @@ public class AudioPlayer extends Thread {
 
     // For Testing
     public static void main(String[] args) throws InterruptedException {
-        String oggPath = System.getProperty("user.home") + "/AppData/Local/Emrick Designer/src/main/resources/audio/test/Aint No Mountain High Enough.ogg";
-        String midiPath = System.getProperty("user.home") + "/AppData/Local/Emrick Designer/src/main/resources/audio/test/Aint No Mountain High Enough.mid";
-        String wavPath = System.getProperty("user.home") + "/AppData/Local/Emrick Designer/src/main/resources/audio/test/Aint No Mountain High Enough.wav";
+        String oggPath = PathConverter.pathConverter("src/main/resources/audio/test/Aint No Mountain High Enough.ogg");
+        String midiPath = PathConverter.pathConverter("src/main/resources/audio/test/Aint No Mountain High Enough.mid");
+        String wavPath = PathConverter.pathConverter("src/main/resources/audio/test/Aint No Mountain High Enough.wav");
 
         File oggFile = new File(oggPath);
         File midiFile = new File(midiPath);
