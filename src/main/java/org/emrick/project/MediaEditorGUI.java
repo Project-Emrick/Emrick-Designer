@@ -32,7 +32,7 @@ import java.util.stream.*;
 
 
 public class MediaEditorGUI extends Component implements ImportListener, ScrubBarListener, SyncListener,
-        FootballFieldListener, EffectListener, SelectListener, UserAuthListener, RFTriggerListener, RFSignalListener {
+        FootballFieldListener, EffectListener, SelectListener, UserAuthListener, RFTriggerListener, RFSignalListener, RequestCompleteListener {
 
     // String definitions
     public static final String FILE_MENU_NEW_PROJECT = "New Project";
@@ -111,6 +111,9 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
     private int timeAdjustment = 0;
     // Web Server
     private HttpServer server;
+    private String ssid;
+    private String password;
+    private int currentID;
     // Project info
     private File archivePath = null;
     private File drillPath = null;
@@ -222,6 +225,8 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         // Scrub bar cursor starts on first count of drill by default
         useStartDelay = true;
         runningShow = false;
+
+        currentID = 50;
 
         if (!file.equals("")) {
             if (file.endsWith(".emrick")) {
@@ -672,13 +677,13 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             if (option != JOptionPane.OK_OPTION) {
                 return;
             }
-            String ssid = ssidField.getText();
-            char[] password = passwordField.getPassword();
-            String passwordString = new String(password);
+            ssid = ssidField.getText();
+            char[] passwordChar = passwordField.getPassword();
+            password = new String(passwordChar);
 
             SerialTransmitter st = comPortPrompt();
             if (st != null) {
-                st.enterProgMode(ssid, passwordString);
+                st.enterProgMode(ssid, password, currentID);
             }
         });
         flowViewerItem.addActionListener(e -> {
@@ -1002,7 +1007,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             System.out.println("server started at " + port);
             System.out.println(server.getAddress());
 
-            server.createContext("/", new GetHandler(PathConverter.pathConverter("tmp/")));
+            server.createContext("/", new GetHandler(PathConverter.pathConverter("tmp/"), this));
             server.setExecutor(new ServerExecutor());
             server.start();
         } catch (IOException ioe) {
@@ -2310,6 +2315,12 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         if (serialTransmitter != null) {
             serialTransmitter.writeSet(i);
         }
+    }
+
+    @Override
+    public synchronized void onRequestComplete() {
+        currentID++;
+        serialTransmitter.enterProgMode(ssid, password, currentID);
     }
 
 

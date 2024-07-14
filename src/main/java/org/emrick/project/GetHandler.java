@@ -11,15 +11,16 @@ import java.util.Map;
 
 public class GetHandler implements HttpHandler {
     private String pkt;
-    public GetHandler(String pkt) {
+    private RequestCompleteListener requestCompleteListener;
+    public GetHandler(String pkt, RequestCompleteListener requestCompleteListener) {
         this.pkt = pkt;
+        this.requestCompleteListener = requestCompleteListener;
     }
     @Override
     public void handle(HttpExchange exchange) throws IOException {
         Map<String, Object> parameters = new HashMap<String, Object>();
         URI requestedUri = exchange.getRequestURI();
         String query = requestedUri.getRawQuery();
-        System.out.println(query);
         if (query == null) {
             String running = "Server is running";
             exchange.sendResponseHeaders(200, running.length());
@@ -29,6 +30,7 @@ public class GetHandler implements HttpHandler {
             os.close();
             return;
         }
+        System.out.println(query);
         parseQuery(query, parameters);
         String response = "";
 
@@ -47,6 +49,7 @@ public class GetHandler implements HttpHandler {
         os.write(response.getBytes());
         os.flush();
         os.close();
+        requestCompleteListener.onRequestComplete();
     }
 
     public void parseQuery(String query, Map<String, Object> parameters) {
