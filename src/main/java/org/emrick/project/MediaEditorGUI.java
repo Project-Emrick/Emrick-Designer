@@ -460,23 +460,6 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                 return;
             }
 
-            Drill drill = footballFieldPanel.drill;
-
-            for (int i = 0; i < drill.coordinates.size(); i++) {
-                Coordinate c = drill.coordinates.get(i);
-                c.setColor(new Color(0, 0, 0));
-            }
-
-            for (int i = 0; i < drill.performers.size(); i++) {
-                Performer p = drill.performers.get(i);
-                p.setColor(new Color(0, 0, 0));
-                for (int j = 0; j < p.getCoordinates().size(); j++) {
-                    Coordinate c = p.getCoordinates().get(j);
-                    c.setColor(new Color(0, 0, 0));
-                }
-            }
-
-            footballFieldPanel.drill = drill;
             footballFieldPanel.repaint();
             updateTimelinePanel();
             updateEffectViewPanel(selectedEffectType);
@@ -1003,7 +986,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             currentID = 50;
             verificationColor = JColorChooser.showDialog(this, "Select verification color", Color.WHITE);
 
-            String input = JOptionPane.showInputDialog(null, "Enter verification token (leave blank for new token)\nDon't use this feature to program more than 200 units");
+            String input = JOptionPane.showInputDialog(null, "Enter verification token (leave blank for new token)\n\nDon't use this feature to program more than 200 units");
 
             if (input.isEmpty()) {
                 Random r = new Random();
