@@ -114,6 +114,8 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
     private String ssid;
     private String password;
     private int currentID;
+    private int token;
+    private Color verificationColor;
     // Project info
     private File archivePath = null;
     private File drillPath = null;
@@ -615,9 +617,6 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         stopShowItem.setEnabled(false);
         runMenu.add(stopShowItem);
         runMenu.addSeparator();
-        JMenuItem programItem = new JMenuItem("Enter Programming Mode");
-        runMenu.add(programItem);
-        runMenu.addSeparator();
         JMenuItem runWebServer = new JMenuItem("Run Web Server");
         JMenuItem stopWebServer = new JMenuItem("Stop Web Server");
         runMenu.add(runWebServer);
@@ -662,29 +661,6 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             stopShowItem.setEnabled(false);
             runShowItem.setEnabled(true);
             flowViewerItem.setEnabled(true);
-        });
-        programItem.addActionListener(e -> {
-            JTextField ssidField = new JTextField();
-            JPasswordField passwordField = new JPasswordField();
-
-            Object[] inputs = {
-                    new JLabel("WiFi SSID:"), ssidField,
-                    new JLabel("WiFi Password:"), passwordField
-            };
-
-            int option = JOptionPane.showConfirmDialog(null, inputs, "Enter WiFi Credentials", JOptionPane.OK_CANCEL_OPTION);
-
-            if (option != JOptionPane.OK_OPTION) {
-                return;
-            }
-            ssid = ssidField.getText();
-            char[] passwordChar = passwordField.getPassword();
-            password = new String(passwordChar);
-
-            SerialTransmitter st = comPortPrompt();
-            if (st != null) {
-                st.enterProgMode(ssid, password, currentID);
-            }
         });
         flowViewerItem.addActionListener(e -> {
             serialTransmitter = comPortPrompt();
@@ -1025,8 +1001,22 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             server.setExecutor(new ServerExecutor());
             server.start();
             currentID = 50;
+            verificationColor = JColorChooser.showDialog(this, "Select verification color", Color.WHITE);
+
+            String input = JOptionPane.showInputDialog(null, "Enter verification token (leave blank for new token)\nDon't use this feature to program more than 200 units");
+
+            if (input.isEmpty()) {
+                Random r = new Random();
+                token = r.nextInt(0, Integer.MAX_VALUE);
+                JOptionPane.showMessageDialog(null, new JTextArea("The token for this show is: " + token + "\n Save this token in case some boards are not programmed"));
+            } else {
+                token = Integer.parseInt(input);
+                currentID = footballFieldPanel.drill.performers.size();
+            }
+
+
             if (serialTransmitter != null) {
-                serialTransmitter.enterProgMode(ssid, password, currentID);
+                serialTransmitter.enterProgMode(ssid, password, currentID, token, verificationColor);
             }
         } catch (IOException ioe) {
             throw new RuntimeException(ioe);
@@ -2336,7 +2326,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
     @Override
     public synchronized void onRequestComplete() {
         currentID++;
-        serialTransmitter.enterProgMode(ssid, password, currentID);
+        serialTransmitter.enterProgMode(ssid, password, currentID, token, verificationColor);
     }
 
 
