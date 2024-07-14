@@ -213,7 +213,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
 
         // Main frame
         frame = new JFrame("Emrick Designer");
-        Image icon = Toolkit.getDefaultToolkit().getImage(System.getProperty("user.home") + "/AppData/Local/Emrick Designer/src/main/resources/images/icon.png");
+        Image icon = Toolkit.getDefaultToolkit().getImage(PathConverter.pathConverter("src/main/resources/images/icon.png"));
         frame.setIconImage(icon);
 
         // Scrub Bar
@@ -634,7 +634,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             stopWebServer.setEnabled(false);
             runWebServer.setEnabled(true);
 
-            File dir = new File(System.getProperty("user.home") + "/AppData/Local/Emrick Designer/tmp/");
+            File dir = new File(PathConverter.pathConverter("tmp/"));
             File[] files = dir.listFiles();
             for (File f : files) {
                 f.delete();
@@ -811,7 +811,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             public void windowClosing(WindowEvent e) {
                 if (server != null) {
                     server.stop(0);
-                    File dir = new File(System.getProperty("user.home") + "/AppData/Local/Emrick Designer/tmp/");
+                    File dir = new File(PathConverter.pathConverter("tmp/"));
                     File[] files = dir.listFiles();
                     for (File f : files) {
                         f.delete();
@@ -839,7 +839,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                         }
                     }
                 }
-                File showDataDir = new File(System.getProperty("user.home") + "/AppData/Local/Emrick Designer/show_data/");
+                File showDataDir = new File(PathConverter.pathConverter("show_data/"));
                 showDataDir.mkdirs();
                 File[] cleanFiles = showDataDir.listFiles();
                 for (File f : cleanFiles) {
@@ -961,7 +961,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         }
         String port = (String) JOptionPane.showInputDialog(null, "Choose",
                 "Menu", JOptionPane.INFORMATION_MESSAGE,
-                new ImageIcon(System.getProperty("user.home") + "/AppData/Local/Emrick Designer/icon.ico"),
+                new ImageIcon(PathConverter.pathConverter("icon.ico")),
                 allPortNames, allPortNames[0]);
         System.out.println(port);
         System.out.println(st.setSerialPort(port));
@@ -996,13 +996,13 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                 }
             }
 
-            Unzip.unzip(f.getAbsolutePath(), System.getProperty("user.home") + "/AppData/Local/Emrick Designer/tmp/");
+            Unzip.unzip(f.getAbsolutePath(), PathConverter.pathConverter("tmp/"));
 
             server = HttpServer.create(new InetSocketAddress(port), 250);
             System.out.println("server started at " + port);
             System.out.println(server.getAddress());
 
-            server.createContext("/", new GetHandler(System.getProperty("user.home") + "/AppData/Local/Emrick Designer/tmp/"));
+            server.createContext("/", new GetHandler(PathConverter.pathConverter("tmp/")));
             server.setExecutor(new ServerExecutor());
             server.start();
         } catch (IOException ioe) {
@@ -1012,7 +1012,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
 
     public void loadDemoDrillObj() {
         clearDotsFromField();
-        String filePath = System.getProperty("user.home") + "/AppData/Local/Emrick Designer/src/test/java/org/emrick/project/ExpectedPDFOutput.txt";
+        String filePath = PathConverter.pathConverter("src/test/java/org/emrick/project/ExpectedPDFOutput.txt");
         try {
             String DrillString = Files.lines(Paths.get(filePath)).collect(Collectors.joining(System.lineSeparator()));
             //System.out.println("Got drill string");
@@ -1028,7 +1028,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
 
     public void loadTestDrillObj() {
         clearDotsFromField();
-        String filePath = System.getProperty("user.home") + "/AppData/Local/Emrick Designer/src/test/java/org/emrick/project/testDrillParsed.txt";
+        String filePath = PathConverter.pathConverter("src/test/java/org/emrick/project/testDrillParsed.txt");
         try {
             String DrillString = Files.lines(Paths.get(filePath)).collect(Collectors.joining(System.lineSeparator()));
             DrillParser parse1 = new DrillParser();
@@ -1045,7 +1045,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         try {
             // TODO: pdf loading is redundant with project file. fix? - LHD
 
-            File showDataDir = new File(System.getProperty("user.home") + "/AppData/Local/Emrick Designer/show_data/");
+            File showDataDir = new File(PathConverter.pathConverter("show_data/"));
             showDataDir.mkdirs();
             File[] cleanFiles = showDataDir.listFiles();
             for (File f : cleanFiles) {
@@ -1055,7 +1055,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                     f.delete();
                 }
             }
-            Unzip.unzip(path.getAbsolutePath(), System.getProperty("user.home") + "/AppData/Local/Emrick Designer/show_data/");
+            Unzip.unzip(path.getAbsolutePath(), PathConverter.pathConverter("show_data/"));
             File[] dataFiles = showDataDir.listFiles();
             for (File f : dataFiles) {
                 if (!f.isDirectory()) {
@@ -1071,8 +1071,8 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             r.close();
             ImportArchive ia = new ImportArchive(this);
 
-            archivePath = new File(System.getProperty("user.home") + "/AppData/Local/Emrick Designer/show_data/" + pf.archivePath);
-            drillPath = new File(System.getProperty("user.home") + "/AppData/Local/Emrick Designer/show_data/" + pf.drillPath);
+            archivePath = new File(PathConverter.pathConverter("show_data/" + pf.archivePath));
+            drillPath = new File(PathConverter.pathConverter("show_data/" + pf.drillPath));
 
             ia.fullImport(archivePath.getAbsolutePath(), drillPath.getAbsolutePath());
             footballFieldPanel.drill = pf.drill;
@@ -2041,7 +2041,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
 
         String jsonName = path.getName();
         jsonName = jsonName.substring(0, jsonName.indexOf(".emrick")) + ".json";
-        File dir = new File(System.getProperty("user.home") + "/AppData/Local/Emrick Designer/show_data/");
+        File dir = new File(PathConverter.pathConverter("show_data/"));
         dir.mkdirs();
         File[] cleanJson = dir.listFiles();
         for (File f : cleanJson) {
@@ -2051,7 +2051,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         }
 
         try {
-            FileWriter w = new FileWriter(System.getProperty("user.home") + "/AppData/Local/Emrick Designer/show_data/" + jsonName);
+            FileWriter w = new FileWriter(PathConverter.pathConverter("show_data/" + jsonName));
             w.write(g);
             w.close();
         } catch (IOException e) {
@@ -2059,7 +2059,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             throw new RuntimeException(e);
         }
 
-        File showDataDir = new File(System.getProperty("user.home") + "/AppData/Local/Emrick Designer/show_data/");
+        File showDataDir = new File(PathConverter.pathConverter("show_data/"));
         showDataDir.mkdirs();
         File[] saveFiles = showDataDir.listFiles();
         ArrayList<String> files = new ArrayList<>();
@@ -2158,7 +2158,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         timesMS = timeMS.toArray(timesMS);
         try {
             String out = "";
-            File dir = new File(System.getProperty("user.home") + "/AppData/Local/Emrick Designer/tmp/");
+            File dir = new File(PathConverter.pathConverter("tmp/"));
             dir.mkdirs();
             ArrayList<String> files = new ArrayList<>();
             ArrayList<Performer> list0 = new ArrayList<>();
@@ -2171,7 +2171,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             ArrayList<Performer> list7 = new ArrayList<>();
             for (int k = 0; k < footballFieldPanel.drill.performers.size(); k++) {
                 Performer p = footballFieldPanel.drill.performers.get(k);
-                File curr = new File(System.getProperty("user.home") + "/AppData/Local/Emrick Designer/tmp/" + p.getDeviceId());
+                File curr = new File(PathConverter.pathConverter("tmp/" + p.getDeviceId()));
                 curr.createNewFile();
                 files.add(curr.getAbsolutePath());
 
@@ -2328,7 +2328,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                 int a = 0;
                 for (Performer p : performers) {
                     a++;
-                    File curr = new File(System.getProperty("user.home") + "/AppData/Local/Emrick Designer/tmp/" + p.getDeviceId());
+                    File curr = new File(PathConverter.pathConverter("tmp/" + p.getDeviceId()));
 
                     BufferedWriter bfw = new BufferedWriter(new FileWriter(curr));
 
