@@ -106,8 +106,8 @@ public class UserAuthGUI implements ActionListener {
             String enteredCredentials = "("+username+"."+password+")";
             System.out.println(enteredCredentials);
             try {
-                // String credentials = System.getProperty("user.home") + "/AppData/Local/Emrick Designer/src/main/resources/credentials.txt";
-                String credentialString = new String(Files.readAllBytes(Paths.get(System.getProperty("user.home") + "/AppData/Local/Emrick Designer/src/main/resources/credentials.txt")));
+                // String credentials = PathConverter.pathConverter("src/main/resources/credentials.txt");
+                String credentialString = new String(Files.readAllBytes(Paths.get(PathConverter.pathConverter("src/main/resources/credentials.txt"))));
                 System.out.println(credentialString);
                 valids = credentialString.contains(enteredCredentials);
             } catch (IOException IoE) {

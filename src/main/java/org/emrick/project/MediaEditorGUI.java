@@ -32,7 +32,7 @@ import java.util.stream.*;
 
 
 public class MediaEditorGUI extends Component implements ImportListener, ScrubBarListener, SyncListener,
-        FootballFieldListener, EffectListener, SelectListener, UserAuthListener, RFTriggerListener, RFSignalListener {
+        FootballFieldListener, EffectListener, SelectListener, UserAuthListener, RFTriggerListener, RFSignalListener, RequestCompleteListener {
 
     // String definitions
     public static final String FILE_MENU_NEW_PROJECT = "New Project";
@@ -111,6 +111,11 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
     private int timeAdjustment = 0;
     // Web Server
     private HttpServer server;
+    private String ssid;
+    private String password;
+    private int currentID;
+    private int token;
+    private Color verificationColor;
     // Project info
     private File archivePath = null;
     private File drillPath = null;
@@ -213,7 +218,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
 
         // Main frame
         frame = new JFrame("Emrick Designer");
-        Image icon = Toolkit.getDefaultToolkit().getImage(System.getProperty("user.home") + "/AppData/Local/Emrick Designer/src/main/resources/images/icon.png");
+        Image icon = Toolkit.getDefaultToolkit().getImage(PathConverter.pathConverter("src/main/resources/images/icon.png"));
         frame.setIconImage(icon);
 
         // Scrub Bar
@@ -222,6 +227,8 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         // Scrub bar cursor starts on first count of drill by default
         useStartDelay = true;
         runningShow = false;
+
+        currentID = 50;
 
         if (!file.equals("")) {
             if (file.endsWith(".emrick")) {
@@ -304,7 +311,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                 Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx()));
         fileMenu.add(importItem);
         importItem.addActionListener(e -> {
-            System.out.println("New Project...");
+            writeSysMsg("New Project...");
             new SelectFileGUI(frame, this);
         });
 // TODO: select stuff
@@ -339,7 +346,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                 Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx()));
         fileMenu.add(exportItem);
         exportItem.addActionListener(e -> {
-            System.out.println("Exporting packets...");
+            writeSysMsg("Exporting packets...");
             JFileChooser fileChooser = new JFileChooser();
             fileChooser.setDialogTitle("Export Project");
             fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
@@ -350,7 +357,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                 if (!path.endsWith(".pkt")) {
                     path += ".pkt";
                 }
-                System.out.println("Exporting file `" + path + "`.");
+                writeSysMsg("Exporting file `" + path + "`.");
                 exportPackets(new File(path));
             }
         });
@@ -610,9 +617,6 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         stopShowItem.setEnabled(false);
         runMenu.add(stopShowItem);
         runMenu.addSeparator();
-        JMenuItem programItem = new JMenuItem("Enter Programming Mode");
-        runMenu.add(programItem);
-        runMenu.addSeparator();
         JMenuItem runWebServer = new JMenuItem("Run Web Server");
         JMenuItem stopWebServer = new JMenuItem("Stop Web Server");
         runMenu.add(runWebServer);
@@ -634,7 +638,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             stopWebServer.setEnabled(false);
             runWebServer.setEnabled(true);
 
-            File dir = new File(System.getProperty("user.home") + "/AppData/Local/Emrick Designer/tmp/");
+            File dir = new File(PathConverter.pathConverter("tmp/"));
             File[] files = dir.listFiles();
             for (File f : files) {
                 f.delete();
@@ -657,29 +661,6 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             stopShowItem.setEnabled(false);
             runShowItem.setEnabled(true);
             flowViewerItem.setEnabled(true);
-        });
-        programItem.addActionListener(e -> {
-            JTextField ssidField = new JTextField();
-            JPasswordField passwordField = new JPasswordField();
-
-            Object[] inputs = {
-                    new JLabel("WiFi SSID:"), ssidField,
-                    new JLabel("WiFi Password:"), passwordField
-            };
-
-            int option = JOptionPane.showConfirmDialog(null, inputs, "Enter WiFi Credentials", JOptionPane.OK_CANCEL_OPTION);
-
-            if (option != JOptionPane.OK_OPTION) {
-                return;
-            }
-            String ssid = ssidField.getText();
-            char[] password = passwordField.getPassword();
-            String passwordString = new String(password);
-
-            SerialTransmitter st = comPortPrompt();
-            if (st != null) {
-                st.enterProgMode(ssid, passwordString);
-            }
         });
         flowViewerItem.addActionListener(e -> {
             serialTransmitter = comPortPrompt();
@@ -733,7 +714,6 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
 
                     // Open or Create project
                     if (currentTutorialIndex == 0) {
-                        System.out.println("first one\n");
                         fileMenu.setBorder(BorderFactory.createLineBorder(Color.RED, 2));
                         Timer timer = new Timer(1000, new ActionListener() {
                             public void actionPerformed(ActionEvent e) {
@@ -791,7 +771,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
 
         JMenuItem signIn = new JMenuItem("Sign In");
         signIn.addActionListener(e -> {
-            System.out.println("Signing in...");
+            writeSysMsg("Signing in...");
             new UserAuthGUI(frame, this); // This assumes UserAuthGUI sets itself visible
         });
         loginItem.add(signIn);
@@ -811,7 +791,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             public void windowClosing(WindowEvent e) {
                 if (server != null) {
                     server.stop(0);
-                    File dir = new File(System.getProperty("user.home") + "/AppData/Local/Emrick Designer/tmp/");
+                    File dir = new File(PathConverter.pathConverter("tmp/"));
                     File[] files = dir.listFiles();
                     for (File f : files) {
                         f.delete();
@@ -839,7 +819,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                         }
                     }
                 }
-                File showDataDir = new File(System.getProperty("user.home") + "/AppData/Local/Emrick Designer/show_data/");
+                File showDataDir = new File(PathConverter.pathConverter("show_data/"));
                 showDataDir.mkdirs();
                 File[] cleanFiles = showDataDir.listFiles();
                 for (File f : cleanFiles) {
@@ -961,10 +941,8 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         }
         String port = (String) JOptionPane.showInputDialog(null, "Choose",
                 "Menu", JOptionPane.INFORMATION_MESSAGE,
-                new ImageIcon(System.getProperty("user.home") + "/AppData/Local/Emrick Designer/icon.ico"),
+                new ImageIcon(PathConverter.pathConverter("icon.ico")),
                 allPortNames, allPortNames[0]);
-        System.out.println(port);
-        System.out.println(st.setSerialPort(port));
         return st;
     }
 
@@ -995,16 +973,51 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                     f = new File(path);
                 }
             }
+            JTextField ssidField = new JTextField();
+            JPasswordField passwordField = new JPasswordField();
 
-            Unzip.unzip(f.getAbsolutePath(), System.getProperty("user.home") + "/AppData/Local/Emrick Designer/tmp/");
+            Object[] inputs = {
+                    new JLabel("WiFi SSID:"), ssidField,
+                    new JLabel("WiFi Password:"), passwordField
+            };
+
+            int option = JOptionPane.showConfirmDialog(null, inputs, "Enter WiFi Credentials", JOptionPane.OK_CANCEL_OPTION);
+
+            if (option != JOptionPane.OK_OPTION) {
+                return;
+            }
+            ssid = ssidField.getText();
+            char[] passwordChar = passwordField.getPassword();
+            password = new String(passwordChar);
+
+            serialTransmitter = comPortPrompt();
+
+            Unzip.unzip(f.getAbsolutePath(), PathConverter.pathConverter("tmp/"));
 
             server = HttpServer.create(new InetSocketAddress(port), 250);
-            System.out.println("server started at " + port);
-            System.out.println(server.getAddress());
+            writeSysMsg("server started at " + port);
 
-            server.createContext("/", new GetHandler(System.getProperty("user.home") + "/AppData/Local/Emrick Designer/tmp/"));
+            server.createContext("/", new GetHandler(PathConverter.pathConverter("tmp/"), this));
             server.setExecutor(new ServerExecutor());
             server.start();
+            currentID = 50;
+            verificationColor = JColorChooser.showDialog(this, "Select verification color", Color.WHITE);
+
+            String input = JOptionPane.showInputDialog(null, "Enter verification token (leave blank for new token)\nDon't use this feature to program more than 200 units");
+
+            if (input.isEmpty()) {
+                Random r = new Random();
+                token = r.nextInt(0, Integer.MAX_VALUE);
+                JOptionPane.showMessageDialog(null, new JTextArea("The token for this show is: " + token + "\n Save this token in case some boards are not programmed"));
+            } else {
+                token = Integer.parseInt(input);
+                currentID = footballFieldPanel.drill.performers.size();
+            }
+
+
+            if (serialTransmitter != null) {
+                serialTransmitter.enterProgMode(ssid, password, currentID, token, verificationColor);
+            }
         } catch (IOException ioe) {
             throw new RuntimeException(ioe);
         }
@@ -1012,7 +1025,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
 
     public void loadDemoDrillObj() {
         clearDotsFromField();
-        String filePath = System.getProperty("user.home") + "/AppData/Local/Emrick Designer/src/test/java/org/emrick/project/ExpectedPDFOutput.txt";
+        String filePath = PathConverter.pathConverter("src/test/java/org/emrick/project/ExpectedPDFOutput.txt");
         try {
             String DrillString = Files.lines(Paths.get(filePath)).collect(Collectors.joining(System.lineSeparator()));
             //System.out.println("Got drill string");
@@ -1028,7 +1041,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
 
     public void loadTestDrillObj() {
         clearDotsFromField();
-        String filePath = System.getProperty("user.home") + "/AppData/Local/Emrick Designer/src/test/java/org/emrick/project/testDrillParsed.txt";
+        String filePath = PathConverter.pathConverter("src/test/java/org/emrick/project/testDrillParsed.txt");
         try {
             String DrillString = Files.lines(Paths.get(filePath)).collect(Collectors.joining(System.lineSeparator()));
             DrillParser parse1 = new DrillParser();
@@ -1045,7 +1058,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         try {
             // TODO: pdf loading is redundant with project file. fix? - LHD
 
-            File showDataDir = new File(System.getProperty("user.home") + "/AppData/Local/Emrick Designer/show_data/");
+            File showDataDir = new File(PathConverter.pathConverter("show_data/"));
             showDataDir.mkdirs();
             File[] cleanFiles = showDataDir.listFiles();
             for (File f : cleanFiles) {
@@ -1055,7 +1068,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                     f.delete();
                 }
             }
-            Unzip.unzip(path.getAbsolutePath(), System.getProperty("user.home") + "/AppData/Local/Emrick Designer/show_data/");
+            Unzip.unzip(path.getAbsolutePath(), PathConverter.pathConverter("show_data/"));
             File[] dataFiles = showDataDir.listFiles();
             for (File f : dataFiles) {
                 if (!f.isDirectory()) {
@@ -1071,8 +1084,8 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             r.close();
             ImportArchive ia = new ImportArchive(this);
 
-            archivePath = new File(System.getProperty("user.home") + "/AppData/Local/Emrick Designer/show_data/" + pf.archivePath);
-            drillPath = new File(System.getProperty("user.home") + "/AppData/Local/Emrick Designer/show_data/" + pf.drillPath);
+            archivePath = new File(PathConverter.pathConverter("show_data/" + pf.archivePath));
+            drillPath = new File(PathConverter.pathConverter("show_data/" + pf.drillPath));
 
             ia.fullImport(archivePath.getAbsolutePath(), drillPath.getAbsolutePath());
             footballFieldPanel.drill = pf.drill;
@@ -1215,14 +1228,14 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
     ////////////////////////// Sync Listeners //////////////////////////
 
     private void openProjectDialog() {
-        System.out.println("Opening project...");
+        writeSysMsg("Opening project...");
         JFileChooser fileChooser = new JFileChooser();
         fileChooser.setDialogTitle("Open Project");
         fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
         fileChooser.setFileFilter(new FileNameExtensionFilter("Emrick Project Files (*.emrick)","emrick"));
 
         if (fileChooser.showOpenDialog(null) == JFileChooser.APPROVE_OPTION) {
-            System.out.println("Opening file `" + fileChooser.getSelectedFile().getAbsolutePath() + "`.");
+            writeSysMsg("Opening file `" + fileChooser.getSelectedFile().getAbsolutePath() + "`.");
             loadProject(fileChooser.getSelectedFile());
         }
     }
@@ -1234,7 +1247,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             return;
         }
 
-        System.out.println("Saving project...");
+        writeSysMsg("Saving project...");
         JFileChooser fileChooser = new JFileChooser();
         fileChooser.setDialogTitle("Save Project");
         fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
@@ -1246,7 +1259,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             if (!path.endsWith(".emrick")) {
                 path += ".emrick";
             }
-            System.out.println("Saving file `" + path + "`.");
+            writeSysMsg("Saving file `" + path + "`.");
             saveProject(new File(path), archivePath, drillPath);
         }
     }
@@ -1323,7 +1336,6 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             return;
         }
 
-        System.out.println("this.footballFieldPanel.selectedPerformers.size() = " + this.footballFieldPanel.selectedPerformers.size());
         if (this.footballFieldPanel.selectedPerformers.size() > 1) {
             this.effectViewPanel.remove(this.effectGUI.getEffectPanel());
             this.effectViewPanel.revalidate();
@@ -1601,7 +1613,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
 
     @Override
     public void onSync(ArrayList<SyncTimeGUI.Pair> times, float startDelay) {
-        System.out.println("MediaEditorGUI: Got Synced Times");
+        writeSysMsg("Got Synced Times");
 
         this.timeSync = times;
         this.startDelay = startDelay;
@@ -2036,12 +2048,12 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         }
         String g = gson.toJson(pf);
 
-        System.out.println("saving to `" + path + "`");
+        writeSysMsg("saving to `" + path + "`");
 //        System.out.println(g);
 
         String jsonName = path.getName();
         jsonName = jsonName.substring(0, jsonName.indexOf(".emrick")) + ".json";
-        File dir = new File(System.getProperty("user.home") + "/AppData/Local/Emrick Designer/show_data/");
+        File dir = new File(PathConverter.pathConverter("show_data/"));
         dir.mkdirs();
         File[] cleanJson = dir.listFiles();
         for (File f : cleanJson) {
@@ -2051,7 +2063,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         }
 
         try {
-            FileWriter w = new FileWriter(System.getProperty("user.home") + "/AppData/Local/Emrick Designer/show_data/" + jsonName);
+            FileWriter w = new FileWriter(PathConverter.pathConverter("show_data/" + jsonName));
             w.write(g);
             w.close();
         } catch (IOException e) {
@@ -2059,7 +2071,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             throw new RuntimeException(e);
         }
 
-        File showDataDir = new File(System.getProperty("user.home") + "/AppData/Local/Emrick Designer/show_data/");
+        File showDataDir = new File(PathConverter.pathConverter("show_data/"));
         showDataDir.mkdirs();
         File[] saveFiles = showDataDir.listFiles();
         ArrayList<String> files = new ArrayList<>();
@@ -2158,7 +2170,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         timesMS = timeMS.toArray(timesMS);
         try {
             String out = "";
-            File dir = new File(System.getProperty("user.home") + "/AppData/Local/Emrick Designer/tmp/");
+            File dir = new File(PathConverter.pathConverter("tmp/"));
             dir.mkdirs();
             ArrayList<String> files = new ArrayList<>();
             ArrayList<Performer> list0 = new ArrayList<>();
@@ -2171,7 +2183,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             ArrayList<Performer> list7 = new ArrayList<>();
             for (int k = 0; k < footballFieldPanel.drill.performers.size(); k++) {
                 Performer p = footballFieldPanel.drill.performers.get(k);
-                File curr = new File(System.getProperty("user.home") + "/AppData/Local/Emrick Designer/tmp/" + p.getDeviceId());
+                File curr = new File(PathConverter.pathConverter("tmp/" + p.getDeviceId()));
                 curr.createNewFile();
                 files.add(curr.getAbsolutePath());
 
@@ -2186,7 +2198,6 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                     case 7: list7.add(p); break;
                 }
             }
-            System.out.println(list0.size());
             Thread[] threads = new Thread[8];
             threads[0] = new Thread(new PacketExport(list0, timesMS));
             threads[1] = new Thread(new PacketExport(list1, timesMS));
@@ -2312,6 +2323,12 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         }
     }
 
+    @Override
+    public synchronized void onRequestComplete() {
+        currentID++;
+        serialTransmitter.enterProgMode(ssid, password, currentID, token, verificationColor);
+    }
+
 
     private class PacketExport implements Runnable {
         private ArrayList<Performer> performers;
@@ -2328,7 +2345,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                 int a = 0;
                 for (Performer p : performers) {
                     a++;
-                    File curr = new File(System.getProperty("user.home") + "/AppData/Local/Emrick Designer/tmp/" + p.getDeviceId());
+                    File curr = new File(PathConverter.pathConverter("tmp/" + p.getDeviceId()));
 
                     BufferedWriter bfw = new BufferedWriter(new FileWriter(curr));
 

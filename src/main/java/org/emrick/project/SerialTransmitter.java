@@ -2,6 +2,7 @@ package org.emrick.project;
 
 import com.fazecast.jSerialComm.SerialPort;
 
+import java.awt.*;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 
@@ -58,7 +59,7 @@ public class SerialTransmitter {
         sp.closePort();
     }
 
-    public void enterProgMode(String ssid, String password) {
+    public void enterProgMode(String ssid, String password, int id, long token, Color verificationColor) {
         sp.clearRTS();
         sp.clearDTR();
         if (!sp.openPort()) {
@@ -66,10 +67,12 @@ public class SerialTransmitter {
         }
         String str;
         try {
-            str = "p" + InetAddress.getLocalHost().getHostAddress() + "\n" + ssid + "\n" + password + "\n";
+            str = "p" + InetAddress.getLocalHost().getHostAddress() + "\n" + ssid + "\n" + password + "\n" + id + "\n"
+                    + token + "\n" + verificationColor.getRed() + ", " + verificationColor.getBlue() + ", " + verificationColor.getGreen() + "\n";
         } catch (UnknownHostException uhe) {
             throw new RuntimeException(uhe);
         }
+        System.out.println(str);
         byte[] out = str.getBytes();
         sp.writeBytes(out, str.length());
         sp.flushIOBuffers();
