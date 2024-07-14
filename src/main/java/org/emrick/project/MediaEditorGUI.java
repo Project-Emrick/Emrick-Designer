@@ -309,7 +309,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                 Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx()));
         fileMenu.add(importItem);
         importItem.addActionListener(e -> {
-            System.out.println("New Project...");
+            writeSysMsg("New Project...");
             new SelectFileGUI(frame, this);
         });
 // TODO: select stuff
@@ -344,7 +344,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                 Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx()));
         fileMenu.add(exportItem);
         exportItem.addActionListener(e -> {
-            System.out.println("Exporting packets...");
+            writeSysMsg("Exporting packets...");
             JFileChooser fileChooser = new JFileChooser();
             fileChooser.setDialogTitle("Export Project");
             fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
@@ -355,7 +355,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                 if (!path.endsWith(".pkt")) {
                     path += ".pkt";
                 }
-                System.out.println("Exporting file `" + path + "`.");
+                writeSysMsg("Exporting file `" + path + "`.");
                 exportPackets(new File(path));
             }
         });
@@ -738,7 +738,6 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
 
                     // Open or Create project
                     if (currentTutorialIndex == 0) {
-                        System.out.println("first one\n");
                         fileMenu.setBorder(BorderFactory.createLineBorder(Color.RED, 2));
                         Timer timer = new Timer(1000, new ActionListener() {
                             public void actionPerformed(ActionEvent e) {
@@ -796,7 +795,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
 
         JMenuItem signIn = new JMenuItem("Sign In");
         signIn.addActionListener(e -> {
-            System.out.println("Signing in...");
+            writeSysMsg("Signing in...");
             new UserAuthGUI(frame, this); // This assumes UserAuthGUI sets itself visible
         });
         loginItem.add(signIn);
@@ -968,8 +967,6 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                 "Menu", JOptionPane.INFORMATION_MESSAGE,
                 new ImageIcon(PathConverter.pathConverter("icon.ico")),
                 allPortNames, allPortNames[0]);
-        System.out.println(port);
-        System.out.println(st.setSerialPort(port));
         return st;
     }
 
@@ -1000,16 +997,37 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                     f = new File(path);
                 }
             }
+            JTextField ssidField = new JTextField();
+            JPasswordField passwordField = new JPasswordField();
+
+            Object[] inputs = {
+                    new JLabel("WiFi SSID:"), ssidField,
+                    new JLabel("WiFi Password:"), passwordField
+            };
+
+            int option = JOptionPane.showConfirmDialog(null, inputs, "Enter WiFi Credentials", JOptionPane.OK_CANCEL_OPTION);
+
+            if (option != JOptionPane.OK_OPTION) {
+                return;
+            }
+            ssid = ssidField.getText();
+            char[] passwordChar = passwordField.getPassword();
+            password = new String(passwordChar);
+
+            serialTransmitter = comPortPrompt();
 
             Unzip.unzip(f.getAbsolutePath(), PathConverter.pathConverter("tmp/"));
 
             server = HttpServer.create(new InetSocketAddress(port), 250);
-            System.out.println("server started at " + port);
-            System.out.println(server.getAddress());
+            writeSysMsg("server started at " + port);
 
             server.createContext("/", new GetHandler(PathConverter.pathConverter("tmp/"), this));
             server.setExecutor(new ServerExecutor());
             server.start();
+            currentID = 50;
+            if (serialTransmitter != null) {
+                serialTransmitter.enterProgMode(ssid, password, currentID);
+            }
         } catch (IOException ioe) {
             throw new RuntimeException(ioe);
         }
@@ -1220,14 +1238,14 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
     ////////////////////////// Sync Listeners //////////////////////////
 
     private void openProjectDialog() {
-        System.out.println("Opening project...");
+        writeSysMsg("Opening project...");
         JFileChooser fileChooser = new JFileChooser();
         fileChooser.setDialogTitle("Open Project");
         fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
         fileChooser.setFileFilter(new FileNameExtensionFilter("Emrick Project Files (*.emrick)","emrick"));
 
         if (fileChooser.showOpenDialog(null) == JFileChooser.APPROVE_OPTION) {
-            System.out.println("Opening file `" + fileChooser.getSelectedFile().getAbsolutePath() + "`.");
+            writeSysMsg("Opening file `" + fileChooser.getSelectedFile().getAbsolutePath() + "`.");
             loadProject(fileChooser.getSelectedFile());
         }
     }
@@ -1239,7 +1257,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             return;
         }
 
-        System.out.println("Saving project...");
+        writeSysMsg("Saving project...");
         JFileChooser fileChooser = new JFileChooser();
         fileChooser.setDialogTitle("Save Project");
         fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
@@ -1251,7 +1269,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             if (!path.endsWith(".emrick")) {
                 path += ".emrick";
             }
-            System.out.println("Saving file `" + path + "`.");
+            writeSysMsg("Saving file `" + path + "`.");
             saveProject(new File(path), archivePath, drillPath);
         }
     }
@@ -1328,7 +1346,6 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             return;
         }
 
-        System.out.println("this.footballFieldPanel.selectedPerformers.size() = " + this.footballFieldPanel.selectedPerformers.size());
         if (this.footballFieldPanel.selectedPerformers.size() > 1) {
             this.effectViewPanel.remove(this.effectGUI.getEffectPanel());
             this.effectViewPanel.revalidate();
@@ -1606,7 +1623,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
 
     @Override
     public void onSync(ArrayList<SyncTimeGUI.Pair> times, float startDelay) {
-        System.out.println("MediaEditorGUI: Got Synced Times");
+        writeSysMsg("Got Synced Times");
 
         this.timeSync = times;
         this.startDelay = startDelay;
@@ -2041,7 +2058,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         }
         String g = gson.toJson(pf);
 
-        System.out.println("saving to `" + path + "`");
+        writeSysMsg("saving to `" + path + "`");
 //        System.out.println(g);
 
         String jsonName = path.getName();
@@ -2191,7 +2208,6 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                     case 7: list7.add(p); break;
                 }
             }
-            System.out.println(list0.size());
             Thread[] threads = new Thread[8];
             threads[0] = new Thread(new PacketExport(list0, timesMS));
             threads[1] = new Thread(new PacketExport(list1, timesMS));
