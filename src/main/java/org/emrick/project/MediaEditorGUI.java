@@ -230,6 +230,8 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
 
         currentID = 50;
 
+
+        // Delete leftover files from show_data/
         File showDataDir = new File(PathConverter.pathConverter("show_data/"));
         if (showDataDir.exists()) {
             showDataDir.mkdirs();
@@ -426,21 +428,6 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                 parseCsvFileForPerformerDeviceIDs(csvFile);
             }
         });
-
-        fileMenu.addSeparator();
-
-        // Demos
-        JMenuItem displayCircleDrill = new JMenuItem("Load Demo Drill Object");
-        displayCircleDrill.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_L,
-                                                                 Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx()));
-        fileMenu.add(displayCircleDrill);
-        displayCircleDrill.addActionListener(e -> loadDemoDrillObj());
-
-        JMenuItem displayTestDrill = new JMenuItem("Load Test Drill Object");
-        displayTestDrill.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_K,
-                                                               Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx()));
-        fileMenu.add(displayTestDrill);
-        displayTestDrill.addActionListener(e -> loadTestDrillObj());
 
         // Edit menu
         JMenu editMenu = new JMenu("Edit");
@@ -743,33 +730,6 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                 }
 
             }
-//            private void displayNonModalTip(String message) {
-//                JWindow tipWindow = new JWindow(frame);
-//                JPanel contentPane = new JPanel(new BorderLayout());
-//                contentPane.setBorder(BorderFactory.createLineBorder(Color.BLACK, 2));
-//                contentPane.add(new JLabel(message, SwingConstants.CENTER), BorderLayout.CENTER);
-//
-//                JPanel buttonPanel = new JPanel();
-//                JButton nextButton = new JButton("Next");
-//                JButton closeButton = new JButton("Close");
-//
-//                buttonPanel.add(closeButton);
-//                buttonPanel.add(nextButton);
-//                contentPane.add(buttonPanel, BorderLayout.SOUTH);
-//                nextButton.addActionListener(new ActionListener() {
-//                    public void actionPerformed(ActionEvent e) {
-//                        tipWindow.dispose();
-//                    }
-//                });
-//                closeButton.addActionListener(e -> tipWindow.dispose());
-//
-//                tipWindow.setContentPane(contentPane);
-//                tipWindow.setSize(400, 100);
-//                tipWindow.setLocation(frame.getLocationOnScreen().x + (frame.getWidth() - tipWindow.getWidth()) / 2,
-//                        frame.getLocationOnScreen().y + (frame.getHeight() - tipWindow.getHeight()) / 2);
-//                tipWindow.setVisible(true);
-//
-//            }
         });
 
         JMenuItem loginItem = new JMenu("Account");
@@ -861,28 +821,6 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
 
     private JButton getEffectOptionsButton() {
         JPopupMenu lightMenuPopup = new JPopupMenu();
-
-        JMenuItem timeWeatherItem = new JMenuItem("Time & Weather Effects");
-        timeWeatherItem.addActionListener(e -> showTimeWeatherDialog(frame));
-        lightMenuPopup.add(timeWeatherItem);
-
-        lightMenuPopup.addSeparator();
-
-        JMenuItem createGridPattern = new JMenuItem("Create Grid Pattern");
-        createGridPattern.addActionListener(e -> showGridPatternDialog(frame));
-        lightMenuPopup.add(createGridPattern);
-
-        lightMenuPopup.addSeparator();
-
-        JMenuItem lightDescription = new JMenuItem("Create Light Description");
-        lightDescription.addActionListener(e-> showLightDescription(frame));
-        lightMenuPopup.add(lightDescription);
-
-        JMenuItem effectDescription = new JMenuItem("Create Effect Group Descriptions");
-        effectDescription.addActionListener(e-> showEffectGroupDescriptions());
-        lightMenuPopup.add(effectDescription);
-
-        lightMenuPopup.addSeparator();
 
         JMenuItem fadePattern = new JMenuItem("Create Fade Effect");
         fadePattern.addActionListener(e -> {
@@ -1027,37 +965,6 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             }
         } catch (IOException ioe) {
             throw new RuntimeException(ioe);
-        }
-    }
-
-    public void loadDemoDrillObj() {
-        clearDotsFromField();
-        String filePath = PathConverter.pathConverter("src/test/java/org/emrick/project/ExpectedPDFOutput.txt");
-        try {
-            String DrillString = Files.lines(Paths.get(filePath)).collect(Collectors.joining(System.lineSeparator()));
-            //System.out.println("Got drill string");
-            //System.out.println(DrillString);
-            DrillParser parse1 = new DrillParser();
-            Drill drillby = parse1.parseWholeDrill(DrillString);
-            footballFieldPanel.drill = drillby;
-            footballFieldPanel.addSetToField(drillby.sets.get(0));
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
-    public void loadTestDrillObj() {
-        clearDotsFromField();
-        String filePath = PathConverter.pathConverter("src/test/java/org/emrick/project/testDrillParsed.txt");
-        try {
-            String DrillString = Files.lines(Paths.get(filePath)).collect(Collectors.joining(System.lineSeparator()));
-            DrillParser parse1 = new DrillParser();
-            Drill drilltest = parse1.parseWholeDrill(DrillString);
-            footballFieldPanel.drill = drilltest;
-            footballFieldPanel.addSetToField(drilltest.sets.get(0));
-
-        } catch (IOException e) {
-            e.printStackTrace();
         }
     }
 
@@ -1271,135 +1178,10 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         }
     }
 
-    ////////////////////////// Scrub Bar Listeners //////////////////////////
 
-    private void showLightDescription(Frame parentFrame){
-        JDialog dialog = new JDialog(parentFrame, "Light Description", true);
-        dialog.getContentPane().setBackground(Color.WHITE);
-
-        JPanel contentPanel = new JPanel(new BorderLayout(10, 10));
-        contentPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-        contentPanel.setBackground(Color.WHITE);
-
-        JTextArea textArea = new JTextArea(10, 20); // Adjust the size as needed
-        textArea.setLineWrap(true);
-        textArea.setWrapStyleWord(true);
-        JScrollPane scrollPane = new JScrollPane(textArea);
-        scrollPane.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(new Color(221, 221, 221)), // Outer border color
-                BorderFactory.createEmptyBorder(5, 5, 5, 5))); // Inner padding
-
-        textArea.setDocument(new LimitedDocument(5000));
-        JLabel charCountLabel = new JLabel("5000 characters remaining");
-        updateCharCountLabel(charCountLabel, textArea.getText().length(), 5000);
-
-        textArea.getDocument().addDocumentListener(new DocumentListener() {
-            public void insertUpdate(DocumentEvent e) {
-                updateCharCountLabel(charCountLabel, textArea.getText().length(), 5000);
-            }
-
-            public void removeUpdate(DocumentEvent e) {
-                updateCharCountLabel(charCountLabel, textArea.getText().length(), 5000);
-            }
-
-            public void changedUpdate(DocumentEvent e) {
-                updateCharCountLabel(charCountLabel, textArea.getText().length(), 5000);
-            }
-        });
-
-        JButton exportButton = new JButton("Export to PDF");
-        exportButton.setFocusPainted(false);
-        exportButton.setBackground(new Color(32, 136, 203)); // Button background color
-        exportButton.setForeground(Color.WHITE); // Button text color
-
-        contentPanel.add(scrollPane, BorderLayout.CENTER); // Add scroll pane to the center
-        contentPanel.add(charCountLabel, BorderLayout.NORTH); // Add character count label at the top
-        contentPanel.add(exportButton, BorderLayout.SOUTH);
-
-        dialog.setContentPane(contentPanel);
-
-        dialog.setLayout(new BorderLayout());
-        dialog.add(scrollPane, BorderLayout.CENTER);
-        dialog.add(charCountLabel, BorderLayout.NORTH);
-        dialog.add(exportButton, BorderLayout.PAGE_END);
-
-        dialog.setSize(350, 250);
-        dialog.setResizable(false);
-
-        dialog.setLocationRelativeTo(parentFrame);
-
-        exportButton.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent e) {
-                exportToPDF(textArea.getText());
-                dialog.dispose();
-            }
-        });
-
-        dialog.setVisible(true);
-    }
-
-    private void showEffectGroupDescriptions() {
-        if (this.effectManager == null) {
-            return;
-        }
-
-        if (this.footballFieldPanel.selectedPerformers.size() > 1) {
-            this.effectViewPanel.remove(this.effectGUI.getEffectPanel());
-            this.effectViewPanel.revalidate();
-            this.effectViewPanel.repaint();
-
-            this.currentEffect = null;
-
-            String placeholderText = EffectGUI.noPerformerMsg;
-            Map<Performer, Collection<Effect>> selectedEffects = new LinkedHashMap<>();
-
-            for (Performer performer : this.footballFieldPanel.selectedPerformers.values()) {
-                if (performer.getEffects() == null || performer.getEffects().isEmpty()) {
-                    placeholderText = EffectGUI.noEffectGroupMsg;
-                } else {
-                    selectedEffects.put(performer, performer.getEffects());
-                }
-            }
-
-            this.effectGUI = new EffectGUI(placeholderText);
-            if (placeholderText.equals(EffectGUI.noEffectGroupMsg)) {
-                effectGUI.setSelectedEffects(new LinkedHashMap<>());
-            } else {
-                effectGUI.setSelectedEffects(selectedEffects);
-            }
-
-            this.effectViewPanel.add(this.effectGUI.getEffectPanel());
-            this.effectViewPanel.revalidate();
-            this.effectViewPanel.repaint();
-        } else {
-            JOptionPane.showMessageDialog(null,
-                    "Please select multiple performers to use the effect group feature",
-                    "Effect Group: Error", JOptionPane.ERROR_MESSAGE);
-        }
-    }
-
-    private void showGridPatternDialog(JFrame frame) {
-
-        // Show 'Create Grid Pattern' window -- Calculations performed internally.
-        ArrayList<Performer> selectedPerformers = new ArrayList<>(footballFieldPanel.selectedPerformers.values());
-        if (selectedPerformers.size() < 4) {
-            JOptionPane.showMessageDialog(null,
-                    "Please select multiple performers arranged in a grid to use the grid pattern feature",
-                    "Grid Pattern: Error", JOptionPane.ERROR_MESSAGE);
-            return;
-        }
-
-        // Get the current time by using current count
-        long startTimeMSec = timeManager.getCount2MSec().get(footballFieldPanel.getCurrentCount());
-
-        new GridPatternGUI(frame, selectedPerformers, effectManager, startTimeMSec);
-    }
 
     ////////////////////////// Effect Listeners //////////////////////////
 
-    private void updateCharCountLabel(JLabel label, int currentLength, int maxChars) {
-        label.setText((maxChars - currentLength) + " characters remaining");
-    }
 
     private void exportToPDF(String textContent) {
         if (textContent.isEmpty()) {
@@ -1425,62 +1207,6 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         }
     }
 
-    private void showTimeWeatherDialog(Frame parent) {
-        JDialog dialog = new JDialog(parent, "Time & Weather", true);
-        SpinnerDateModel model = new SpinnerDateModel();
-        JSpinner timeSpinner = new JSpinner(model);
-
-        JSpinner.DateEditor timeEditor = new JSpinner.DateEditor(timeSpinner, "HH:mm");
-        timeSpinner.setEditor(timeEditor);
-        timeSpinner.setValue(new Date()); // will only show the current time
-
-        JComboBox<String> weatherComboBox = new JComboBox<>(new String[]{"Clear", "Cloudy", "Rainy", "Snowy"});
-
-        JButton confirmButton = new JButton("Apply");
-        confirmButton.addActionListener(e -> {
-            Date time = (Date) timeSpinner.getValue();
-            String weather = (String) weatherComboBox.getSelectedItem();
-            int transparency = calculateTransparency(time, weather);
-            footballFieldPanel.setEffectTransparency(transparency); // Added
-
-            // TODO: Deprecated, scheduled for removal: manage colors via Coordinate class
-            Drill drill = footballFieldPanel.drill;
-            for (int i = 0; i < drill.coordinates.size(); i++) {
-                Coordinate c = drill.coordinates.get(i);
-                Color originalColor = c.getColor();
-                Color colorWithNewTransparency = new Color(originalColor.getRed(),
-                                                           originalColor.getGreen(),
-                                                           originalColor.getBlue(),
-                                                           transparency);
-                c.setColor(colorWithNewTransparency);
-            }
-            footballFieldPanel.repaint();
-            dialog.dispose();
-        });
-
-        JButton resetButton = new JButton("Reset");
-        resetButton.addActionListener(e -> {
-            footballFieldPanel.setEffectTransparency(255);
-            footballFieldPanel.repaint();
-            dialog.dispose();
-        });
-
-        JPanel timeWeatherPanel = new JPanel(new GridLayout(0, 1, 0, 1));
-        timeWeatherPanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
-
-        timeWeatherPanel.add(new JLabel("Select Time:"));
-        timeWeatherPanel.add(timeSpinner);
-        timeWeatherPanel.add(new JLabel("Select Weather Condition:"));
-        timeWeatherPanel.add(weatherComboBox);
-        timeWeatherPanel.add(new JPanel());
-        timeWeatherPanel.add(resetButton);
-        timeWeatherPanel.add(confirmButton);
-
-        dialog.add(timeWeatherPanel);
-        dialog.pack();
-        dialog.setLocationRelativeTo(parent);
-        dialog.setVisible(true);
-    }
 
     ////////////////////////// Football Field Listeners //////////////////////////
 
