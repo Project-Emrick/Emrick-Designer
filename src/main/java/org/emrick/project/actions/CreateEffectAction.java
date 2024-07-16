@@ -6,21 +6,21 @@ import org.emrick.project.effect.Effect;
 public class CreateEffectAction implements UndoableAction {
 
     private final Effect effect;
-    private final Performer performer;
+    private final LEDStrip ledStrip;
 
-    public CreateEffectAction(Effect effect, Performer performer) {
+    public CreateEffectAction(Effect effect, LEDStrip ledStrip) {
         this.effect = effect;
-        this.performer = performer;
+        this.ledStrip = ledStrip;
     }
 
     @Override
     public void execute() {
-        performer.getEffects().add(effect);
+        ledStrip.getEffects().add(effect);
     }
 
     @Override
     public void undo() {
-        performer.getEffects().remove(effect);
+        ledStrip.getEffects().remove(effect);
     }
 
     @Override

@@ -1,7 +1,8 @@
 package org.emrick.project.effect;
 
+import org.emrick.project.LEDStrip;
 import org.emrick.project.Performer;
-import org.emrick.project.actions.EffectPerformerMap;
+import org.emrick.project.actions.EffectLEDStripMap;
 
 import java.awt.*;
 import java.awt.geom.Point2D;
@@ -138,13 +139,19 @@ public class CircleChaseEffect implements GeneratedEffect {
     }
 
     @Override
-    public ArrayList<EffectPerformerMap> generateEffects(ArrayList<Performer> performers) {
+    public ArrayList<EffectLEDStripMap> generateEffects(ArrayList<LEDStrip> ledStrips) {
         int id = this.getId();
+        ArrayList<Performer> performers = new ArrayList<>();
+        for (LEDStrip ledStrip : ledStrips) {
+            if (!performers.contains(ledStrip.getPerformer())) {
+                performers.add(ledStrip.getPerformer());
+            }
+        }
         double xExtremeL = performers.get(0).currentLocation.getX();
         double xExtremeR = performers.get(0).currentLocation.getX();
         double yExtremeT = performers.get(0).currentLocation.getY();
         double yExtremeB = performers.get(0).currentLocation.getY();
-        ArrayList<EffectPerformerMap> map = new ArrayList<>();
+        ArrayList<EffectLEDStripMap> map = new ArrayList<>();
         for (Performer p : performers) {
             if (p.currentLocation.getX() < xExtremeL) {
                 xExtremeL = p.currentLocation.getX();
@@ -163,10 +170,8 @@ public class CircleChaseEffect implements GeneratedEffect {
         Point2D center = new Point2D.Double((xExtremeL + xExtremeR) / 2, (yExtremeT + yExtremeB) / 2);
 
         long wavePeriod = (long) (1.0/(1.0+this.getSpeed()) * (double) this.getDuration().toMillis());
-        for (Performer p : performers) {
-            if (p.getIdentifier().equals("F2") || p.getIdentifier().equals("^20")) {
-                System.out.println("f2");
-            }
+        for (LEDStrip l : ledStrips) {
+            Performer p = l.getPerformer();
             long waveStartTime = 0;
             double xdiff = (p.currentLocation.getX() - center.getX());
             double ydiff = -(p.currentLocation.getY() - center.getY());
@@ -225,17 +230,17 @@ public class CircleChaseEffect implements GeneratedEffect {
                 s1.setId(id);
                 s1.setEffectType(EffectList.CIRCLE_CHASE);
                 s1.setGeneratedEffect(this);
-                map.add(new EffectPerformerMap(s1, p));
+                map.add(new EffectLEDStripMap(s1, l));
             }
             w1.setId(id);
             w1.setEffectType(EffectList.CIRCLE_CHASE);
             w1.setGeneratedEffect(this);
-            map.add(new EffectPerformerMap(w1, p));
+            map.add(new EffectLEDStripMap(w1, l));
             if (s2 != null) {
                 s2.setId(id);
                 s2.setEffectType(EffectList.CIRCLE_CHASE);
                 s2.setGeneratedEffect(this);
-                map.add(new EffectPerformerMap(s2, p));
+                map.add(new EffectLEDStripMap(s2, l));
             }
         }
         return map;

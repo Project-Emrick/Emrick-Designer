@@ -14,7 +14,6 @@ import org.emrick.project.serde.*;
 import javax.swing.Timer;
 import javax.swing.*;
 import javax.swing.border.*;
-import javax.swing.event.*;
 import javax.swing.filechooser.*;
 import javax.swing.text.*;
 import java.awt.Font;
@@ -28,7 +27,6 @@ import java.net.*;
 import java.nio.file.*;
 import java.time.*;
 import java.util.*;
-import java.util.stream.*;
 
 
 public class MediaEditorGUI extends Component implements ImportListener, ScrubBarListener, SyncListener,
@@ -1002,6 +1000,12 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
 
             ia.fullImport(archivePath.getAbsolutePath(), null);
             footballFieldPanel.drill = pf.drill;
+            footballFieldPanel.drill.performers.sort(Comparator.comparingInt(Performer::getPerformerID));
+            for (LEDStrip ledStrip : footballFieldPanel.drill.ledStrips) {
+                Performer p = footballFieldPanel.drill.performers.get(ledStrip.getPerformerID());
+                ledStrip.setPerformer(p);
+                p.addLEDStrip(ledStrip.getId());
+            }
             footballFieldPanel.setCurrentSet(footballFieldPanel.drill.sets.get(0));
 //            rebuildPageTabCounts();
 //            scrubBarGUI.setReady(true);
@@ -1025,10 +1029,6 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             writeSysMsg("Failed to open to `" + path + "`.");
             throw new RuntimeException(e);
         }
-    }
-
-    public void clearDotsFromField() {
-        footballFieldPanel.clearDots();
     }
 
     /**
@@ -1093,11 +1093,11 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
     private void exportCsvFileForPerformerDeviceIDs(File selectedFile) {
         try (FileWriter fileWriter = new FileWriter(selectedFile)) {
             for (Performer performer : footballFieldPanel.drill.performers) {
-                fileWriter.write((Integer.parseInt(performer.getDeviceId()) * 2) + "");
+                fileWriter.write((performer.getPerformerID() * 2) + "");
                 fileWriter.write(",");
                 fileWriter.write(performer.getIdentifier() + "L");
                 fileWriter.write(System.lineSeparator());
-                fileWriter.write((Integer.parseInt(performer.getDeviceId()) * 2 + 1) + "");
+                fileWriter.write((performer.getPerformerID() * 2 + 1) + "");
                 fileWriter.write(",");
                 fileWriter.write(performer.getIdentifier() + "R");
                 fileWriter.write(System.lineSeparator());
@@ -1124,7 +1124,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                                     .filter(performer -> performer.getIdentifier()
                                             .equals(tmpContent[1].substring(0,tmpContent[1].length()-1)))
                                     .findFirst()
-                                    .ifPresent(performer -> performer.setDeviceId(Integer.toString(Integer.parseInt(tmpContent[0]) / 2)));
+                                    .ifPresent(performer -> performer.setPerformerID(Integer.parseInt(tmpContent[0]) / 2));
                         }
                     }
                 }
@@ -1542,8 +1542,9 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         if (effectManager != null) {
             Performer p = effectManager.getSelectedPerformers().get(0);
             long msec = footballFieldPanel.currentMS;
-            if (p.getEffects().size() != 0) {
-                Effect effect = effectManager.getEffect(p, msec);
+            LEDStrip l = footballFieldPanel.drill.ledStrips.get(p.getLedStrips().get(0));
+            if (l.getEffects().size() != 0) {
+                Effect effect = effectManager.getEffect(l, msec);
                 if (effect != null) {
                     if (selectedEffectType != EffectList.SHOW_GROUPS) {
                         selectedEffectType = effect.getEffectType();
@@ -1651,7 +1652,6 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
 
             }
             if (currentEffect == null) {
-                currentEffect = null;
                 effectGUI = new EffectGUI(EffectGUI.noCommonEffectMsg);
                 effectViewPanel.add(effectGUI.getEffectPanel(), BorderLayout.CENTER);
 
@@ -1727,8 +1727,14 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         HashSet<Effect> effectsSet = new HashSet<>();
         for (Map.Entry<String, Performer> selected : footballFieldPanel.selectedPerformers.entrySet()) {
             Performer p = selected.getValue();
-            for (Effect e : p.getEffects()) {
-                effectsSet.add(e.getGeneratedEffect().generateEffectObj());
+            ArrayList<LEDStrip> ledStrips = new ArrayList<>();
+            for (Integer i : p.getLedStrips()) {
+                ledStrips.add(footballFieldPanel.drill.ledStrips.get(i));
+            }
+            for (LEDStrip ledStrip : ledStrips) {
+                for (Effect e : ledStrip.getEffects()) {
+                    effectsSet.add(e.getGeneratedEffect().generateEffectObj());
+                }
             }
         }
         ArrayList<Effect> effectsList = new ArrayList<>(effectsSet);
@@ -1771,6 +1777,9 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
     public void saveProject(File path, File archivePath) {
         ProjectFile pf;
         String aPath = archivePath.getName();
+        for (LEDStrip ledStrip : footballFieldPanel.drill.ledStrips) {
+            ledStrip.setPerformer(null);
+        }
         if (this.effectManager != null) {
             pf = new ProjectFile(footballFieldPanel.drill, aPath, timeSync, startDelay, count2RFTrigger, effectManager.getIds());
         } else {
@@ -1903,29 +1912,29 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             File dir = new File(PathConverter.pathConverter("tmp/"));
             dir.mkdirs();
             ArrayList<String> files = new ArrayList<>();
-            ArrayList<Performer> list0 = new ArrayList<>();
-            ArrayList<Performer> list1 = new ArrayList<>();
-            ArrayList<Performer> list2 = new ArrayList<>();
-            ArrayList<Performer> list3 = new ArrayList<>();
-            ArrayList<Performer> list4 = new ArrayList<>();
-            ArrayList<Performer> list5 = new ArrayList<>();
-            ArrayList<Performer> list6 = new ArrayList<>();
-            ArrayList<Performer> list7 = new ArrayList<>();
-            for (int k = 0; k < footballFieldPanel.drill.performers.size(); k++) {
-                Performer p = footballFieldPanel.drill.performers.get(k);
-                File curr = new File(PathConverter.pathConverter("tmp/" + p.getDeviceId()));
+            ArrayList<LEDStrip> list0 = new ArrayList<>();
+            ArrayList<LEDStrip> list1 = new ArrayList<>();
+            ArrayList<LEDStrip> list2 = new ArrayList<>();
+            ArrayList<LEDStrip> list3 = new ArrayList<>();
+            ArrayList<LEDStrip> list4 = new ArrayList<>();
+            ArrayList<LEDStrip> list5 = new ArrayList<>();
+            ArrayList<LEDStrip> list6 = new ArrayList<>();
+            ArrayList<LEDStrip> list7 = new ArrayList<>();
+            for (int k = 0; k < footballFieldPanel.drill.ledStrips.size(); k++) {
+                LEDStrip l = footballFieldPanel.drill.ledStrips.get(k);
+                File curr = new File(PathConverter.pathConverter("tmp/" + l.getPerformerID()));
                 curr.createNewFile();
                 files.add(curr.getAbsolutePath());
 
                 switch (k % 8) {
-                    case 0: list0.add(p); break;
-                    case 1: list1.add(p); break;
-                    case 2: list2.add(p); break;
-                    case 3: list3.add(p); break;
-                    case 4: list4.add(p); break;
-                    case 5: list5.add(p); break;
-                    case 6: list6.add(p); break;
-                    case 7: list7.add(p); break;
+                    case 0: list0.add(l); break;
+                    case 1: list1.add(l); break;
+                    case 2: list2.add(l); break;
+                    case 3: list3.add(l); break;
+                    case 4: list4.add(l); break;
+                    case 5: list5.add(l); break;
+                    case 6: list6.add(l); break;
+                    case 7: list7.add(l); break;
                 }
             }
             Thread[] threads = new Thread[8];
@@ -2061,10 +2070,10 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
 
 
     private class PacketExport implements Runnable {
-        private ArrayList<Performer> performers;
+        private ArrayList<LEDStrip> ledStrips;
         private Long[] timesMS;
-        public PacketExport(ArrayList<Performer> performers, Long[] timesMS) {
-            this.performers = performers;
+        public PacketExport(ArrayList<LEDStrip> ledStrips, Long[] timesMS) {
+            this.ledStrips = ledStrips;
             this.timesMS = timesMS;
         }
 
@@ -2073,29 +2082,29 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             try {
                 String out = "";
                 int a = 0;
-                for (Performer p : performers) {
+                for (LEDStrip l : ledStrips) {
                     a++;
-                    File curr = new File(PathConverter.pathConverter("tmp/" + p.getDeviceId()));
+                    File curr = new File(PathConverter.pathConverter("tmp/" + l.getId()));
 
                     BufferedWriter bfw = new BufferedWriter(new FileWriter(curr));
 
-                    p.sortEffects();
-                    if (p.getEffects().size() > 0) {
-                        out += "Pkt_count: " + p.getEffects().size() + ", ";
-                        for (int i = 0; i < p.getEffects().size(); i++) {
-                            Effect e = p.getEffects().get(i);
+                    l.sortEffects();
+                    if (l.getEffects().size() > 0) {
+                        out += "Pkt_count: " + l.getEffects().size() + ", ";
+                        for (int i = 0; i < l.getEffects().size(); i++) {
+                            Effect e = l.getEffects().get(i);
                             int flags = 0;
-                            if (timeBeforeEffect(i, e, p.getEffects(), timesMS) > 1 || e.isDO_DELAY()) {
+                            if (timeBeforeEffect(i, e, l.getEffects(), timesMS) > 1 || e.isDO_DELAY()) {
                                 flags += DO_DELAY;
-                                if (e.isDO_DELAY() && timeBeforeEffect(i, e, p.getEffects(), timesMS) > 1) {
-                                    out += "Size: 0, Strip_id: " + p.getDeviceId() + ", Set_id: " + getEffectTriggerIndex(e, timesMS)
-                                            + ", Flags: 24, Start_color: 0, 0, 0, End_color: 0, 0, 0, Delay: " + timeBeforeEffect(i, e, p.getEffects(), timesMS)
+                                if (e.isDO_DELAY() && timeBeforeEffect(i, e, l.getEffects(), timesMS) > 1) {
+                                    out += "Size: 0, Strip_id: " + l.getPerformerID() + ", Set_id: " + getEffectTriggerIndex(e, timesMS)
+                                            + ", Flags: 24, Start_color: 0, 0, 0, End_color: 0, 0, 0, Delay: " + timeBeforeEffect(i, e, l.getEffects(), timesMS)
                                             + ", Duration: 0, Function: 0, Timeout: 0\n";
                                     int count = Integer.valueOf(out.substring(out.indexOf(" ") + 1, out.indexOf(",")));
                                     out = out.substring(0, out.indexOf(" ") + 1) + (count + 1) + out.substring(out.indexOf(","));
                                 }
                             }
-                            if (timeAfterEffect(i, e, p.getEffects(), timesMS) == Long.MAX_VALUE) {
+                            if (timeAfterEffect(i, e, l.getEffects(), timesMS) == Long.MAX_VALUE) {
                                 flags += SET_TIMEOUT;
                             }
                             if (e.isUSE_DURATION()) {
@@ -2108,7 +2117,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                                 flags += DEFAULT_FUNCTION;
                             }
                             out += "Size: " + e.getSize() + ", ";
-                            out += "Strip_id: " + p.getDeviceId() + ", ";
+                            out += "Strip_id: " + l.getPerformerID() + ", ";
                             out += "Set_id: " + getEffectTriggerIndex(e, timesMS) + ", ";
                             out += "Flags: " + flags + ", ";
                             Color startColor = e.getStartColor();
@@ -2119,7 +2128,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                                 if (e.isDO_DELAY()) {
                                     out += "Delay: " + e.getDelay().toMillis() + ", ";
                                 } else {
-                                    out += "Delay: " + timeBeforeEffect(i, e, p.getEffects(), timesMS) + ", ";
+                                    out += "Delay: " + timeBeforeEffect(i, e, l.getEffects(), timesMS) + ", ";
                                 }
 
                             } else {

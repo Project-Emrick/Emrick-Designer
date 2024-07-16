@@ -136,13 +136,6 @@ public class FootballFieldPanel extends JPanel implements RepaintListener {
         return new Point2D.Double(newX,newY);
     }
 
-    public void clearDots() {
-        for (Performer p : drill.performers) {
-            p.currentLocation = new Point2D.Double(-20,-20);
-        }
-        repaint();
-    }
-
     public double getFieldWidth() {
         return fieldWidth;
     }
@@ -217,23 +210,26 @@ public class FootballFieldPanel extends JPanel implements RepaintListener {
 //            if (selectedPerformers.containsKey(p.getSymbol() + p.getLabel())) {
 //                g.setColor(selectedPerformers.get(p.getSymbol() + p.getLabel()).getColor());
 //            }
+            for (Integer i : p.getLedStrips()) {
+                LEDStrip l = drill.ledStrips.get(i);
 
-            if (effectManager != null) {
-                Effect currentEffect = effectManager.getEffect(p, currMS);
+                if (effectManager != null) {
+                    Effect currentEffect = effectManager.getEffect(l, currMS);
 
-                // No effect is present at the current count
-                if (currentEffect == null) {
-                    g.setColor(new Color(0,0,0, effectTransparency));
-                } else {
-                    Color effectColor = calculateColor(currentEffect); // TODO eventually: Calculate phase of color shift from effect
-                    //System.out.println(effectColor);
-                    Color displayColor = new Color(effectColor.getRed(), effectColor.getGreen(), effectColor.getBlue(), effectTransparency);
-                    g.setColor(displayColor);
+                    // No effect is present at the current count
+                    if (currentEffect == null) {
+                        g.setColor(new Color(0, 0, 0, effectTransparency));
+                    } else {
+                        Color effectColor = calculateColor(currentEffect);
+                        //System.out.println(effectColor);
+                        Color displayColor = new Color(effectColor.getRed(), effectColor.getGreen(), effectColor.getBlue(), effectTransparency);
+                        g.setColor(displayColor);
+                    }
                 }
+
+                g.fillRect((int) x + l.gethOffset(), (int) y + l.getvOffset(), 6, 12);
             }
 
-            g.fillRect((int)x-6,(int)y-6,6,12);
-            g.fillRect((int)x,(int)y-6,6,12);
             if (selectedPerformers.get(p.getIdentifier()) != null) {
                 g.setColor(Color.GREEN);
             } else {

@@ -16,38 +16,12 @@ public class Drill {
     public ArrayList<Performer> performers;
     public ArrayList<Coordinate> coordinates;
     public ArrayList<Set> sets;
+    public ArrayList<LEDStrip> ledStrips;
     public Drill() {
         performers = new ArrayList<>();
         coordinates = new ArrayList<>();
         sets = new ArrayList<>();
-    }
-
-    public void saveDrill(String filename) {
-        try {
-            FileOutputStream fos = new FileOutputStream(filename + "Performers.json");
-            deconstructPerformers();
-            Type perfType = new TypeToken<ArrayList<Performer>>(){}.getType();
-            fos.write(new Gson().toJson(performers, perfType).getBytes());
-            fos.flush();
-            fos.close();
-            fos = new FileOutputStream(filename + "Coordinates.json");
-            Type coordType = new TypeToken<ArrayList<Coordinate>>(){}.getType();
-            fos.write(new Gson().toJson(coordinates, coordType).getBytes());
-            fos.flush();
-            fos.close();
-        }
-        catch (FileNotFoundException fnfe) {
-            fnfe.printStackTrace();
-        }
-        catch (IOException ioe) {
-            ioe.printStackTrace();
-        }
-    }
-
-    public void deconstructPerformers() {
-        for (Performer p : performers) {
-            p.deconstructCoordinates();
-        }
+        ledStrips = new ArrayList<>();
     }
 
     public void loadAllPerformers() {
@@ -76,6 +50,10 @@ public class Drill {
 
     public void addSet(Coordinate coordinate) {
         coordinates.add(coordinate);
+    }
+
+    public void addLedStrip(LEDStrip ledStrip) {
+        ledStrips.add(ledStrip);
     }
 
     public void addPerformer(Performer performer) {

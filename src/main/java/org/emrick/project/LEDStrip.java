@@ -10,12 +10,62 @@ public class LEDStrip {
     private int LEDCount;
     private String label;
     private ArrayList<Effect> effects;
+    private Performer performer;
+    private int performerID;
+    private boolean vertical;
+    private int hOffset;
+    private int vOffset;
 
-    public LEDStrip(int id, int LEDCount, String label, ArrayList<Effect> effects) {
+    public LEDStrip(int id, int LEDCount, String label, Performer performer, boolean vertical, int hOffset, int vOffset) {
         this.id = id;
         this.LEDCount = LEDCount;
         this.label = label;
-        this.effects = effects;
+        this.effects = new ArrayList<>();
+        this.performer = performer;
+        performerID = performer.getPerformerID();
+        this.vertical = vertical;
+        this.hOffset = hOffset;
+        this.vOffset = vOffset;
+    }
+
+    public boolean isVertical() {
+        return vertical;
+    }
+
+    public void setVertical(boolean vertical) {
+        this.vertical = vertical;
+    }
+
+    public int gethOffset() {
+        return hOffset;
+    }
+
+    public void sethOffset(int hOffset) {
+        this.hOffset = hOffset;
+    }
+
+    public int getvOffset() {
+        return vOffset;
+    }
+
+    public void setvOffset(int vOffset) {
+        this.vOffset = vOffset;
+    }
+
+    public int getPerformerID() {
+        return performerID;
+    }
+
+    public void setPerformerID(int performerID) {
+        this.performerID = performerID;
+    }
+
+    public Performer getPerformer() {
+        return performer;
+    }
+
+    public void setPerformer(Performer performer) {
+        this.performer = performer;
     }
 
     public void sortEffects() {

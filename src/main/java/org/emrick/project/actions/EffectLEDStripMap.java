@@ -1,22 +1,23 @@
 package org.emrick.project.actions;
 
+import org.emrick.project.LEDStrip;
 import org.emrick.project.Performer;
 import org.emrick.project.effect.Effect;
 
-public class EffectPerformerMap {
+public class EffectLEDStripMap {
     private Effect oldEffect;
     private Effect effect;
-    private Performer performer;
+    private LEDStrip ledStrip;
 
-    public EffectPerformerMap(Effect effect, Performer performer) {
+    public EffectLEDStripMap(Effect effect, LEDStrip ledStrip) {
         this.effect = effect;
-        this.performer = performer;
+        this.ledStrip = ledStrip;
     }
 
-    public EffectPerformerMap(Effect oldEffect, Effect effect, Performer performer) {
+    public EffectLEDStripMap(Effect oldEffect, Effect effect, LEDStrip ledStrip) {
         this.oldEffect = oldEffect;
         this.effect = effect;
-        this.performer = performer;
+        this.ledStrip = ledStrip;
     }
 
     public Effect getOldEffect() {
@@ -35,11 +36,11 @@ public class EffectPerformerMap {
         this.effect = effect;
     }
 
-    public Performer getPerformer() {
-        return performer;
+    public LEDStrip getLedStrip() {
+        return ledStrip;
     }
 
-    public void setPerformer(Performer performer) {
-        this.performer = performer;
+    public void setLedStrip(LEDStrip ledStrip) {
+        this.ledStrip = ledStrip;
     }
 }

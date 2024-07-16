@@ -2,72 +2,70 @@ package org.emrick.project.actions;
 
 import org.emrick.project.*;
 import org.emrick.project.effect.Effect;
-import org.emrick.project.effect.EffectGUI;
-import org.emrick.project.effect.EffectManager;
 
 import java.util.*;
 
 public class ReplaceEffectsAction implements UndoableAction {
-    private final ArrayList<EffectPerformerMap> map;
+    private final ArrayList<EffectLEDStripMap> map;
 
-    public ReplaceEffectsAction(ArrayList<EffectPerformerMap> map) {
+    public ReplaceEffectsAction(ArrayList<EffectLEDStripMap> map) {
         this.map = map;
     }
 
     @Override
     public void execute() {
         // TODO: Rewrite to remove all effects that match id and then add new effects at the index of first old match
-        ArrayList<Performer> performers = new ArrayList<>();
+        ArrayList<LEDStrip> ledStrips = new ArrayList<>();
         for (int i = 0; i < map.size(); i++) {
-            if (performers.size() > 0) {
-                if (!map.get(i-1).getPerformer().equals(map.get(i).getPerformer())) {
-                    performers.add(map.get(i).getPerformer());
+            if (ledStrips.size() > 0) {
+                if (!map.get(i-1).getLedStrip().equals(map.get(i).getLedStrip())) {
+                    ledStrips.add(map.get(i).getLedStrip());
                 }
             } else {
-                performers.add(map.get(i).getPerformer());
+                ledStrips.add(map.get(i).getLedStrip());
             }
         }
-        addEffects(performers, map);
+        addEffects(ledStrips, map);
     }
 
     @Override
     public void undo() {
-        ArrayList<Performer> performers = new ArrayList<>();
+        ArrayList<LEDStrip> ledStrips = new ArrayList<>();
         for (int i = 0; i < map.size(); i++) {
-            if (performers.size() > 0) {
-                if (!map.get(i-1).getPerformer().equals(map.get(i).getPerformer())) {
-                    performers.add(map.get(i).getPerformer());
+            if (ledStrips.size() > 0) {
+                if (!map.get(i-1).getLedStrip().equals(map.get(i).getLedStrip())) {
+                    ledStrips.add(map.get(i).getLedStrip());
                 }
             } else {
-                performers.add(map.get(i).getPerformer());
+                ledStrips.add(map.get(i).getLedStrip());
             }
         }
 
-        ArrayList<EffectPerformerMap> undoMap = map.get(0).getOldEffect().getGeneratedEffect().generateEffects(performers);
+        ArrayList<EffectLEDStripMap> undoMap = map.get(0).getOldEffect().getGeneratedEffect().generateEffects(ledStrips);
 
-        addEffects(performers, undoMap);
+        addEffects(ledStrips, undoMap);
     }
 
-    private void addEffects(ArrayList<Performer> performers, ArrayList<EffectPerformerMap> undoMap) {
-        int[] addIndexes = new int[performers.size()];
+    private void addEffects(ArrayList<LEDStrip> ledStrips, ArrayList<EffectLEDStripMap> undoMap) {
+        int[] addIndexes = new int[ledStrips.size()];
         int index = 0;
-        for (Performer p : performers) {
+        for (LEDStrip l : ledStrips) {
 
             Effect removeEffect = null;
-            for (int i = 0; i < p.getEffects().size(); i++) {
-                if (p.getEffects().get(i).getId() == undoMap.get(0).getEffect().getId()) {
+            for (int i = 0; i < l.getEffects().size(); i++) {
+                if (l.getEffects().get(i).getId() == undoMap.get(0).getEffect().getId()) {
                     addIndexes[index] = i;
-                    removeEffect = p.getEffects().get(i);
+                    removeEffect = l.getEffects().get(i);
                     break;
                 }
             }
-            while (p.getEffects().remove(removeEffect)){}
+            while (l.getEffects().remove(removeEffect)){}
 
             index++;
         }
-        for (EffectPerformerMap m : undoMap) {
-            int i = performers.indexOf(m.getPerformer());
-            m.getPerformer().getEffects().add(addIndexes[i], m.getEffect());
+        for (EffectLEDStripMap m : undoMap) {
+            int i = ledStrips.indexOf(m.getLedStrip());
+            m.getLedStrip().getEffects().add(addIndexes[i], m.getEffect());
             addIndexes[i]++;
         }
     }
