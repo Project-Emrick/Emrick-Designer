@@ -100,7 +100,9 @@ public class ImportArchive {
         }
 
         // Import drill
-        importDrill(drillSrc);
+        if (drillSrc != null) {
+            importDrill(drillSrc);
+        }
     }
 
     private void importFloorCover(String path) {

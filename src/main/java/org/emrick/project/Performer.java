@@ -15,13 +15,13 @@ public class Performer {
     private ArrayList<Coordinate> coordinates;
     private ArrayList<Effect> effects;
     private String deviceId;
-    private ArrayList<LEDStrip> ledStrips;
+    //private ArrayList<LEDStrip> ledStrips;
 
     public Performer() {
         symbol = "";
         label = 0;
         coordinates = new ArrayList<>();
-        ledStrips = new ArrayList<>();
+        //ledStrips = new ArrayList<>();
         currentLocation = new Point2D.Double(0, 0);
         this.color = Color.BLACK;
         this.effects = new ArrayList<>();
@@ -31,7 +31,7 @@ public class Performer {
         this.color = Color.BLACK;
         this.symbol = symbol;
         this.label = label;
-        ledStrips = new ArrayList<>();
+        //ledStrips = new ArrayList<>();
         coordinates = new ArrayList<>();
         currentLocation = new Point2D.Double(0, 0);
         this.effects = new ArrayList<>();
