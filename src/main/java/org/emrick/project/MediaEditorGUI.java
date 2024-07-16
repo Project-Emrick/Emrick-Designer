@@ -230,6 +230,30 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
 
         currentID = 50;
 
+        File showDataDir = new File(PathConverter.pathConverter("show_data/"));
+        if (showDataDir.exists()) {
+            showDataDir.mkdirs();
+            if (showDataDir.isDirectory()) {
+                if (showDataDir.listFiles().length > 0) {
+                    ArrayList<File> files = new ArrayList<>(Arrays.stream(showDataDir.listFiles()).toList());
+                    int i = 0;
+                    File file1;
+                    while (i < files.size()) {
+                        file1 = files.get(i);
+                        if (file1.isDirectory() && file1.listFiles().length > 0) {
+                            File[] files1 = file1.listFiles();
+                            for (File f1 : files1) {
+                                files.add(i, f1);
+                            }
+                        } else {
+                            file1.delete();
+                            i++;
+                        }
+                    }
+                }
+            }
+        }
+
         if (!file.equals("")) {
             if (file.endsWith(".emrick")) {
                 createAndShowGUI();
@@ -455,7 +479,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             this.effectManager.removeAllEffectsFromAllPerformers();
 
             // TODO: Below is deprecated. Schedule for removal.
-            if (archivePath == null || drillPath == null) {
+            if (archivePath == null) {
                 System.out.println("no project loaded");
                 return;
             }
@@ -520,7 +544,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
 
         JMenuItem selectByCrit = new JMenuItem("Select by Criteria");
         selectByCrit.addActionListener(e -> {
-            if (archivePath == null || drillPath == null) {
+            if (archivePath == null) {
                 System.out.println("no project loaded");
                 return;
             }
@@ -785,7 +809,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                         f.delete();
                     }
                 }
-                if (archivePath != null && drillPath != null) {
+                if (archivePath != null) {
                     if (effectManager != null && !effectManager.getUndoStack().isEmpty()) {
                         int resp = JOptionPane.showConfirmDialog(frame,
                                 "Would you like to save before quitting?",
@@ -936,7 +960,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
 
             // If a project is loaded, generate the packets from the project and write them to a temp file in project directory.
             // delete file after server is stopped.
-            if(archivePath == null || drillPath == null) { //if no project open
+            if(archivePath == null) { //if no project open
                 if (path.equals("")) {
                     JFileChooser fileChooser = new JFileChooser();
                     fileChooser.setDialogTitle("Select Packets (.pkt) file");
@@ -1068,9 +1092,8 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             ImportArchive ia = new ImportArchive(this);
 
             archivePath = new File(PathConverter.pathConverter("show_data/" + pf.archivePath));
-            drillPath = new File(PathConverter.pathConverter("show_data/" + pf.drillPath));
 
-            ia.fullImport(archivePath.getAbsolutePath(), drillPath.getAbsolutePath());
+            ia.fullImport(archivePath.getAbsolutePath(), null);
             footballFieldPanel.drill = pf.drill;
             footballFieldPanel.setCurrentSet(footballFieldPanel.drill.sets.get(0));
 //            rebuildPageTabCounts();
@@ -1086,6 +1109,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                 count2RFTrigger = pf.count2RFTrigger;
                 footballFieldPanel.setCount2RFTrigger(count2RFTrigger);
                 setupEffectView(pf.ids);
+                rebuildPageTabCounts();
                 updateTimelinePanel();
                 updateEffectViewPanel(selectedEffectType);
             }
@@ -1224,7 +1248,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
     }
 
     private void saveProjectDialog() {
-        if (archivePath == null || drillPath == null) {
+        if (archivePath == null) {
             System.out.println("Nothing to save.");
             writeSysMsg("Nothing to save!");
             return;
@@ -1243,7 +1267,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                 path += ".emrick";
             }
             writeSysMsg("Saving file `" + path + "`.");
-            saveProject(new File(path), archivePath, drillPath);
+            saveProject(new File(path), archivePath);
         }
     }
 
@@ -1992,7 +2016,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
     // Don't delete, just unused for now because I don't want my disk space being eaten up
     private void autosaveProject() {
         // we don't have a project open, nothing to save
-        if (archivePath == null || drillPath == null) {
+        if (archivePath == null) {
             return;
         }
 
@@ -2000,7 +2024,6 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         Path dir = Paths.get(userHome.toString(), String.valueOf(time));
         Path jsonDir = Paths.get(dir.toString(), "backup.json");
         Path archiveDir = Paths.get(dir.toString(), archivePath.getName());
-        Path drillDir = Paths.get(dir.toString(), drillPath.getName());
         File backupDir = new File(dir.toUri());
         if (!backupDir.mkdirs()) {
             // TODO: handle error from the backup failing
@@ -2009,25 +2032,23 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
 
         try {
             Files.copy(archivePath.toPath(), archiveDir);
-            Files.copy(drillPath.toPath(), drillDir);
         } catch (IOException e) {
             // TODO: handle error from the backup failing
             System.out.println("MediaEditorGUI autosaveProject(): " + e.getMessage());
             return;
         }
 
-        saveProject(jsonDir.toFile(), archiveDir.toFile(), drillDir.toFile());
+        saveProject(jsonDir.toFile(), archiveDir.toFile());
         writeSysMsg("Autosaved project to `" + jsonDir + "`.");
     }
 
-    public void saveProject(File path, File archivePath, File drillPath) {
+    public void saveProject(File path, File archivePath) {
         ProjectFile pf;
         String aPath = archivePath.getName();
-        String dPath = drillPath.getName();
         if (this.effectManager != null) {
-            pf = new ProjectFile(footballFieldPanel.drill, aPath, dPath, timeSync, startDelay, count2RFTrigger, effectManager.getIds());
+            pf = new ProjectFile(footballFieldPanel.drill, aPath, timeSync, startDelay, count2RFTrigger, effectManager.getIds());
         } else {
-            pf = new ProjectFile(footballFieldPanel.drill, aPath, dPath, timeSync, startDelay, count2RFTrigger, null);
+            pf = new ProjectFile(footballFieldPanel.drill, aPath, timeSync, startDelay, count2RFTrigger, null);
         }
         String g = gson.toJson(pf);
 
