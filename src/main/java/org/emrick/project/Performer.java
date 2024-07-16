@@ -9,7 +9,6 @@ import java.util.*;
 public class Performer {
 
     public Point2D currentLocation;
-    private Color color;
     private String symbol;
     private int label;
     private ArrayList<Coordinate> coordinates;
@@ -23,12 +22,10 @@ public class Performer {
         coordinates = new ArrayList<>();
         //ledStrips = new ArrayList<>();
         currentLocation = new Point2D.Double(0, 0);
-        this.color = Color.BLACK;
         this.effects = new ArrayList<>();
     }
 
     public Performer(String symbol, int label, int id) {
-        this.color = Color.BLACK;
         this.symbol = symbol;
         this.label = label;
         //ledStrips = new ArrayList<>();
@@ -40,14 +37,6 @@ public class Performer {
 
     public void sortEffects() {
         effects.sort(Comparator.comparingLong(Effect::getStartTimeMSec));
-    }
-
-    public Color getColor() {
-        return color;
-    }
-
-    public void setColor(Color color) {
-        this.color = color;
     }
 
     String getDeviceId() {

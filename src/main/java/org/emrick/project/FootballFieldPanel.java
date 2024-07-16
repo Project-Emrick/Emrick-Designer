@@ -218,7 +218,6 @@ public class FootballFieldPanel extends JPanel implements RepaintListener {
 //                g.setColor(selectedPerformers.get(p.getSymbol() + p.getLabel()).getColor());
 //            }
 
-            g.setColor(c1.getColor()); // Default is coordinate color. Remove this?
             if (effectManager != null) {
                 Effect currentEffect = effectManager.getEffect(p, currMS);
 

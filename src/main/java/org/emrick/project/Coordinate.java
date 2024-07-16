@@ -10,7 +10,6 @@ public class Coordinate {
 
     public String id;
 
-    public Color color;
 
     public double getX() {
         return x;
@@ -52,19 +51,12 @@ public class Coordinate {
         this.duration = duration;
     }
 
-    public Color getColor(){
-        return color;
-    }
-    public void setColor(Color newColor){
-        this.color = newColor;
-    }
     public Coordinate() {
         x = 0;
         y = 0;
         set = "";
         duration = 0;
         id = "";
-        color = Color.BLACK;
     }
 
 
@@ -74,7 +66,6 @@ public class Coordinate {
         this.set = set;
         this.duration = duration;
         this.id = id;
-        color = Color.BLACK;
     }
 
     public String toString() {
