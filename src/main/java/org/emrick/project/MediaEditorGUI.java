@@ -1080,13 +1080,30 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         updateTimelinePanel();
     }
 
-//    public void ctrlGroupSelection(Performer[] performers){
-////        whatever selected subgroup:
-////            if all performers are selected:
-////                deselect whole groups
-////            else
-////                select whole groups
-//    }
+    public void ctrlGroupSelection(Performer[] performers){
+        boolean allSelected = true;
+        for(Performer p : performers) {
+            if (!footballFieldPanel.selectedPerformers.containsKey(p.getIdentifier())) {
+                allSelected = false;
+            }
+        }
+        if(allSelected) {
+            for(Performer q : performers) {
+                if (footballFieldPanel.selectedPerformers.containsKey(q.getIdentifier())) {
+                    footballFieldPanel.selectedPerformers.remove(q.getIdentifier());
+                }
+            }
+        }
+        else{
+            for(Performer pe : performers) {
+                if (!footballFieldPanel.selectedPerformers.containsKey(pe.getIdentifier())) {
+                    footballFieldPanel.selectedPerformers.put(pe.getIdentifier(), pe);
+                }
+            }
+        }
+        footballFieldPanel.repaint();
+        updateTimelinePanel();
+    }
 
     @Override
     public Performer[] onSaveGroup() {
@@ -1943,7 +1960,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             ArrayList<LEDStrip> list7 = new ArrayList<>();
             for (int k = 0; k < footballFieldPanel.drill.ledStrips.size(); k++) {
                 LEDStrip l = footballFieldPanel.drill.ledStrips.get(k);
-                File curr = new File(PathConverter.pathConverter("tmp/" + l.getPerformerID()));
+                File curr = new File(PathConverter.pathConverter("tmp/" + l.getId()));
                 curr.createNewFile();
                 files.add(curr.getAbsolutePath());
 

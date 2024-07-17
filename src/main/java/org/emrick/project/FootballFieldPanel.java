@@ -207,9 +207,7 @@ public class FootballFieldPanel extends JPanel implements RepaintListener {
             double x = p.currentLocation.getX();
             double y = p.currentLocation.getY();
 
-//            if (selectedPerformers.containsKey(p.getSymbol() + p.getLabel())) {
-//                g.setColor(selectedPerformers.get(p.getSymbol() + p.getLabel()).getColor());
-//            }
+
             for (Integer i : p.getLedStrips()) {
                 LEDStrip l = drill.ledStrips.get(i);
 
@@ -228,16 +226,13 @@ public class FootballFieldPanel extends JPanel implements RepaintListener {
                 }
 
                 g.fillRect((int) x + l.gethOffset(), (int) y + l.getvOffset(), 6, 12);
+                if (selectedPerformers.get(p.getIdentifier()) != null) {
+                    g.setColor(Color.GREEN);
+                } else {
+                    g.setColor(Color.BLACK);
+                }
+                g.drawRect((int) x + l.gethOffset(), (int) y + l.getvOffset(), 6, 12);
             }
-
-            if (selectedPerformers.get(p.getIdentifier()) != null) {
-                g.setColor(Color.GREEN);
-            } else {
-                g.setColor(Color.BLACK);
-            }
-            g.drawRect((int)x-7,(int)y-7,14,14);
-            g.drawRect((int)x-6,(int)y-6,12,12);
-            g.drawLine((int)x,(int)y-5,(int)x,(int)y+6);
 
             if (showLabels) {
                 g.setFont(new Font("TimesRoman", Font.BOLD, (int) Math.ceil(fieldWidth / 120)));
@@ -367,7 +362,7 @@ public class FootballFieldPanel extends JPanel implements RepaintListener {
                 boolean intersecting = AABB(axmin, aymin, axmax, aymax, bxmin, bymin, bxmax, bymax);
 
                 if (intersecting) {
-                    String key = p.getSymbol() + p.getLabel();
+                    String key = p.getIdentifier();
                     if (isControlDown) {
                         if (selectedPerformers.containsKey(key)) {
                             selectedPerformers.remove(key); // Deselect if already selected

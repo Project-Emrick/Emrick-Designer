@@ -8,4 +8,5 @@ public interface SelectListener {
     void onGroupSelection(Performer[] performers);
     Performer[] onSaveGroup();
     void onUpdateGroup();
+    void ctrlGroupSelection(Performer[] performers);
 }
