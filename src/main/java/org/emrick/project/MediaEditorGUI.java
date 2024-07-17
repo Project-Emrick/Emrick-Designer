@@ -1156,7 +1156,6 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
 
     @Override
     public void onGroupSelection(Performer[] performers) {
-
         footballFieldPanel.selectedPerformers.clear();
         for (Performer p : performers) {
             footballFieldPanel.selectedPerformers.put(p.getSymbol() + p.getLabel(), p);
@@ -1165,13 +1164,30 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         updateTimelinePanel();
     }
 
-//    public void ctrlGroupSelection(Performer[] performers){
-////        whatever selected subgroup:
-////            if all performers are selected:
-////                deselect whole groups
-////            else
-////                select whole groups
-//    }
+    public void ctrlGroupSelection(Performer[] performers){
+        boolean allSelected = true;
+        for(Performer p : performers) {
+            if (!footballFieldPanel.selectedPerformers.containsKey(p.getIdentifier())) {
+                allSelected = false;
+            }
+        }
+        if(allSelected) {
+            for(Performer q : performers) {
+                if (footballFieldPanel.selectedPerformers.containsKey(q.getIdentifier())) {
+                    footballFieldPanel.selectedPerformers.remove(q.getIdentifier());
+                }
+            }
+        }
+        else{
+            for(Performer pe : performers) {
+                if (!footballFieldPanel.selectedPerformers.containsKey(pe.getIdentifier())) {
+                    footballFieldPanel.selectedPerformers.put(pe.getIdentifier(), pe);
+                }
+            }
+        }
+        footballFieldPanel.repaint();
+        updateTimelinePanel();
+    }
 
     @Override
     public Performer[] onSaveGroup() {

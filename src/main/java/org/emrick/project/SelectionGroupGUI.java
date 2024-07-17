@@ -161,33 +161,18 @@ public class SelectionGroupGUI implements ActionListener {
     public void actionPerformed(ActionEvent e) {
         for (SelectionGroup group : groups) {
             if (group.getTitleButton().equals(e.getSource())) {
-//                if(controlHeld) {
-//                    selectListener.ctrlGroupSelection(group.performers);
-//                }
-                selectListener.onGroupSelection(group.performers);
-
+                System.out.println(group.getTitle());
+                if((e.getModifiers() & ActionEvent.CTRL_MASK) != 0) {
+                    selectListener.ctrlGroupSelection(group.performers);
+                    System.out.println("poop");
+                }
+                else{
+                    System.out.println("hm");
+                    selectListener.onGroupSelection(group.performers);
+                }
             }
         }
     }
-
-//    @Override
-//    public void keyTyped(KeyEvent e) {
-//
-//    }
-//
-//    @Override
-//    public void keyPressed(KeyEvent e) {
-//        if(e.isControlDown()){
-//            controlHeld = true;
-//        }
-//    }
-//
-//    @Override
-//    public void keyReleased(KeyEvent e) {
-//        if(e.isControlDown()){
-//            controlHeld = false;
-//        }
-//    }
 
     public class SelectionGroup {
         private Performer[] performers;
