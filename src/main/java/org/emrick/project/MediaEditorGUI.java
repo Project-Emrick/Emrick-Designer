@@ -14,7 +14,6 @@ import org.emrick.project.serde.*;
 import javax.swing.Timer;
 import javax.swing.*;
 import javax.swing.border.*;
-import javax.swing.event.*;
 import javax.swing.filechooser.*;
 import javax.swing.text.*;
 import java.awt.Font;
@@ -28,7 +27,6 @@ import java.net.*;
 import java.nio.file.*;
 import java.time.*;
 import java.util.*;
-import java.util.stream.*;
 
 
 public class MediaEditorGUI extends Component implements ImportListener, ScrubBarListener, SyncListener,
@@ -464,7 +462,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         editMenu.add(removeEffectsForAll);
         removeEffectsForAll.addActionListener(e -> {
             if (this.effectManager == null) return;
-            this.effectManager.removeAllEffectsFromAllPerformers();
+            this.effectManager.removeAllEffectsFromAllLEDStrips();
 
             // TODO: Below is deprecated. Schedule for removal.
             if (archivePath == null) {
@@ -485,7 +483,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         editMenu.add(removeEffectsForSelected);
         removeEffectsForSelected.addActionListener(e -> {
             if (this.effectManager == null) return;
-            this.effectManager.removeAllEffectsFromSelectedPerformers();
+            this.effectManager.removeAllEffectsFromSelectedLEDStrips();
             this.footballFieldPanel.repaint();
             updateTimelinePanel();
             updateEffectViewPanel(selectedEffectType);
@@ -522,7 +520,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                                                                        .getMenuShortcutKeyMaskEx()));
         pasteCopiedEffect.addActionListener(e -> {
             if (this.effectManager == null) return;
-            boolean success = this.effectManager.addEffectToSelectedPerformers(this.copiedEffect);
+            boolean success = this.effectManager.addEffectToSelectedLEDStrips(this.copiedEffect);
             if (success) updateEffectViewPanel(selectedEffectType);
             this.footballFieldPanel.repaint();
         });
@@ -595,11 +593,15 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             footballFieldPanel.setShowLabels(!footballFieldPanel.isShowLabels());
             footballFieldPanel.repaint();
         });
-
-        
         toggleShowLabels.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_I,
                 Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx()));
         viewMenu.add(toggleShowLabels);
+        JCheckBoxMenuItem toggleSelectAllLEDs = new JCheckBoxMenuItem("Select All LEDs");
+        toggleSelectAllLEDs.setState(true);
+        toggleSelectAllLEDs.addActionListener(e -> {
+            footballFieldPanel.setSelectAllLEDs(!footballFieldPanel.isSelectAllLEDs());
+        });
+        viewMenu.add(toggleSelectAllLEDs);
 
         // Run menu
         JMenu runMenu = new JMenu("Run");
@@ -1006,15 +1008,16 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             footballFieldPanel.drill.performers.sort(Comparator.comparingInt(Performer::getPerformerID));
             for (LEDStrip ledStrip : footballFieldPanel.drill.ledStrips) {
                 Performer p = footballFieldPanel.drill.performers.get(ledStrip.getPerformerID());
-                ledStrip.setPerformer(p);
                 p.addLEDStrip(ledStrip.getId());
+                ledStrip.setPerformer(p);
+                System.out.println(ledStrip.getPerformer());
             }
             footballFieldPanel.setCurrentSet(footballFieldPanel.drill.sets.get(0));
 //            rebuildPageTabCounts();
 //            scrubBarGUI.setReady(true);
             footballFieldPanel.repaint();
 
-            groupsGUI.setGroups(pf.selectionGroups);
+            groupsGUI.setGroups(pf.selectionGroups, footballFieldPanel.drill.ledStrips);
             groupsGUI.initializeButtons();
 
             if (pf.timeSync != null && pf.startDelay != null) {
@@ -1063,56 +1066,51 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
 //        footballFieldPanel.selectedPerformers
         for (Performer p : footballFieldPanel.drill.performers) {
             if (labels.contains(p.getLabel()) || symbols.contains(p.getSymbol())) {
-                String key = p.getSymbol() + p.getLabel();
-                footballFieldPanel.selectedPerformers.put(key, p);
+                for (Integer i : p.getLedStrips()) {
+                    LEDStrip l = footballFieldPanel.drill.ledStrips.get(i);
+                    footballFieldPanel.selectedLEDStrips.add(l);
+                }
             }
         }
         footballFieldPanel.repaint();
     }
 
     @Override
-    public void onGroupSelection(Performer[] performers) {
-        footballFieldPanel.selectedPerformers.clear();
-        for (Performer p : performers) {
-            footballFieldPanel.selectedPerformers.put(p.getSymbol() + p.getLabel(), p);
-        }
+    public void onGroupSelection(LEDStrip[] ledStrips) {
+        footballFieldPanel.selectedLEDStrips.clear();
+        footballFieldPanel.selectedLEDStrips.addAll(Arrays.asList(ledStrips));
         footballFieldPanel.repaint();
         updateTimelinePanel();
     }
 
-    public void ctrlGroupSelection(Performer[] performers){
+    @Override
+    public void ctrlGroupSelection(LEDStrip[] ledStrips){
         boolean allSelected = true;
-        for(Performer p : performers) {
-            if (!footballFieldPanel.selectedPerformers.containsKey(p.getIdentifier())) {
+        for(LEDStrip l : ledStrips) {
+            if (!footballFieldPanel.selectedLEDStrips.contains(l)) {
                 allSelected = false;
             }
         }
         if(allSelected) {
-            for(Performer q : performers) {
-                if (footballFieldPanel.selectedPerformers.containsKey(q.getIdentifier())) {
-                    footballFieldPanel.selectedPerformers.remove(q.getIdentifier());
-                }
+            for(LEDStrip l : ledStrips) {
+                footballFieldPanel.selectedLEDStrips.remove(l);
             }
         }
         else{
-            for(Performer pe : performers) {
-                if (!footballFieldPanel.selectedPerformers.containsKey(pe.getIdentifier())) {
-                    footballFieldPanel.selectedPerformers.put(pe.getIdentifier(), pe);
-                }
-            }
+            footballFieldPanel.selectedLEDStrips.addAll(Arrays.asList(ledStrips));
         }
         footballFieldPanel.repaint();
         updateTimelinePanel();
     }
 
     @Override
-    public Performer[] onSaveGroup() {
-        Iterator<Performer> iterator = footballFieldPanel.selectedPerformers.values().iterator();
-        Performer[] performers = new Performer[footballFieldPanel.selectedPerformers.size()];
-        for (int i = 0; i < performers.length; i++) {
-            performers[i] = iterator.next();
+    public LEDStrip[] onSaveGroup() {
+        Iterator<LEDStrip> iterator = footballFieldPanel.selectedLEDStrips.iterator();
+        LEDStrip[] ledStrips = new LEDStrip[footballFieldPanel.selectedLEDStrips.size()];
+        for (int i = 0; i < ledStrips.length; i++) {
+            ledStrips[i] = iterator.next();
         }
-        return performers;
+        return ledStrips;
     }
 
     @Override
@@ -1541,7 +1539,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             showEffectBeforeFirstTriggerError();
             return;
         }
-        boolean successful = this.effectManager.addEffectToSelectedPerformers(effect);
+        boolean successful = this.effectManager.addEffectToSelectedLEDStrips(effect);
         this.footballFieldPanel.repaint();
         if (successful) {
             updateEffectViewPanel(selectedEffectType);
@@ -1551,7 +1549,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
 
     @Override
     public void onUpdateEffect(Effect oldEffect, Effect newEffect) {
-        this.effectManager.replaceEffectForSelectedPerformers(oldEffect, newEffect);
+        this.effectManager.replaceEffectForSelectedLEDStrips(oldEffect, newEffect);
         this.footballFieldPanel.repaint();
         updateEffectViewPanel(selectedEffectType);
         updateTimelinePanel();
@@ -1559,7 +1557,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
 
     @Override
     public void onDeleteEffect(Effect effect) {
-        this.effectManager.removeEffectFromSelectedPerformers(effect);
+        this.effectManager.removeEffectFromSelectedLEDStrips(effect);
         this.footballFieldPanel.repaint();
         updateEffectViewPanel(selectedEffectType);
         updateTimelinePanel();
@@ -1570,9 +1568,8 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
     @Override
     public void onPerformerSelect() {
         if (effectManager != null) {
-            Performer p = effectManager.getSelectedPerformers().get(0);
+            LEDStrip l = effectManager.getSelectedLEDStrips().get(0);
             long msec = footballFieldPanel.currentMS;
-            LEDStrip l = footballFieldPanel.drill.ledStrips.get(p.getLedStrips().get(0));
             if (l.getEffects().size() != 0) {
                 Effect effect = effectManager.getEffect(l, msec);
                 if (effect != null) {
@@ -1662,7 +1659,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
 
         // Effects
         if (selectedEffectType != EffectList.SHOW_GROUPS) {
-            if (footballFieldPanel.selectedPerformers.size() < 1) {
+            if (footballFieldPanel.selectedLEDStrips.isEmpty()) {
                 currentEffect = null;
                 effectGUI = new EffectGUI(EffectGUI.noPerformerMsg);
                 effectViewPanel.add(effectGUI.getEffectPanel(), BorderLayout.CENTER);
@@ -1672,7 +1669,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
 
 
             long currentMSec = timeManager.getCount2MSec().get(footballFieldPanel.getCurrentCount());
-            currentEffect = effectManager.getEffectsFromSelectedPerformers(currentMSec);
+            currentEffect = effectManager.getEffectsFromSelectedLEDStrips(currentMSec);
             if (selectedEffectType == EffectList.HIDE_GROUPS) {
                 if (!currentEffect.equals(new Effect(0))) {
                     selectedEffectType = currentEffect.getEffectType();
@@ -1725,11 +1722,6 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             effectViewPanel.revalidate();
             effectViewPanel.repaint();
         } else {
-            Performer[] performers = new Performer[footballFieldPanel.selectedPerformers.values().size()];
-            Iterator<Performer> iterator = footballFieldPanel.selectedPerformers.values().iterator();
-            for (int i = 0; i < performers.length; i++) {
-                performers[i] = iterator.next();
-            }
             groupsGUI.initializeSelectionPanel();
             JPanel panel = groupsGUI.getSelectionPanel();
             effectViewPanel.add(panel);
@@ -1755,16 +1747,9 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
 
         // Get effects of selected performers, if applicable, else will be null
         HashSet<Effect> effectsSet = new HashSet<>();
-        for (Map.Entry<String, Performer> selected : footballFieldPanel.selectedPerformers.entrySet()) {
-            Performer p = selected.getValue();
-            ArrayList<LEDStrip> ledStrips = new ArrayList<>();
-            for (Integer i : p.getLedStrips()) {
-                ledStrips.add(footballFieldPanel.drill.ledStrips.get(i));
-            }
-            for (LEDStrip ledStrip : ledStrips) {
-                for (Effect e : ledStrip.getEffects()) {
-                    effectsSet.add(e.getGeneratedEffect().generateEffectObj());
-                }
+        for (LEDStrip l : footballFieldPanel.selectedLEDStrips) {
+            for (Effect e : l.getEffects()) {
+                effectsSet.add(e.getGeneratedEffect().generateEffectObj());
             }
         }
         ArrayList<Effect> effectsList = new ArrayList<>(effectsSet);

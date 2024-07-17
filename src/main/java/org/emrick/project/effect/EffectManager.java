@@ -99,19 +99,7 @@ public class EffectManager {
         }
     }
 
-    public boolean addEffect(Effect effect, LEDStrip ledStrip) {
-        if (!isValid(effect, ledStrip)) {
-            showAddEffectErrorDialog(ledStrip);
-            return false;
-        }
-        UndoableAction createEffectAction = new CreateEffectAction(effect, ledStrip);
-        createEffectAction.execute();
-        undoStack.push(createEffectAction);
-        redoStack.clear();
-        return true;
-    }
-
-    public boolean addEffectToSelectedPerformers(Effect effect) {
+    public boolean addEffectToSelectedLEDStrips(Effect effect) {
         int id = 0;
         if (ids.size() > 0) {
             int prev = ids.get(0);
@@ -125,13 +113,7 @@ public class EffectManager {
         if (effect == null)
             return false;
         effect.setId(id);
-        ArrayList<Performer> selectedPerformers = getSelectedPerformers();
-        ArrayList<LEDStrip> ledStrips = new ArrayList<>();
-        for (Performer p : selectedPerformers) {
-            for (Integer i : p.getLedStrips()) {
-                ledStrips.add(footballFieldPanel.drill.ledStrips.get(i));
-            }
-        }
+        ArrayList<LEDStrip> ledStrips = getSelectedLEDStrips();
 
         // Verify ability to add the effect to all selected performers, to avoid adding for some then error-ing out.
         for (LEDStrip ledStrip : ledStrips) {
@@ -162,23 +144,11 @@ public class EffectManager {
                 "Apply Effect: Error", JOptionPane.ERROR_MESSAGE);
     }
 
-    public void removeEffect(Effect effect, LEDStrip ledStrip) {
-        UndoableAction removeEffectAction = new RemoveEffectAction(effect, ledStrip);
-        removeEffectAction.execute();
-        undoStack.push(removeEffectAction);
-        redoStack.clear();
-    }
-
-    public void removeEffectFromSelectedPerformers(Effect effect) {
-        ArrayList<Performer> performers = getSelectedPerformers();
-        if (performers == null) return;
+    public void removeEffectFromSelectedLEDStrips(Effect effect) {
+        ArrayList<LEDStrip> ledStrips = getSelectedLEDStrips();
+        if (ledStrips == null) return;
         ArrayList<EffectLEDStripMap> map = new ArrayList<>();
-        ArrayList<LEDStrip> ledStrips = new ArrayList<>();
-        for (Performer p : performers) {
-            for (Integer i : p.getLedStrips()) {
-                ledStrips.add(footballFieldPanel.drill.ledStrips.get(i));
-            }
-        }
+
         for (LEDStrip ledStrip : ledStrips) {
             map.add(new EffectLEDStripMap(effect, ledStrip));
         }
@@ -188,15 +158,10 @@ public class EffectManager {
         redoStack.clear();
     }
 
-    public void removeAllEffectsFromSelectedPerformers() {
-        ArrayList<Performer> selectedPerformers = getSelectedPerformers();
+    public void removeAllEffectsFromSelectedLEDStrips() {
+        ArrayList<LEDStrip> ledStrips = getSelectedLEDStrips();
         ArrayList<EffectLEDStripMap> map = new ArrayList<>();
-        ArrayList<LEDStrip> ledStrips = new ArrayList<>();
-        for (Performer p : selectedPerformers) {
-            for (Integer i : p.getLedStrips()) {
-                ledStrips.add(footballFieldPanel.drill.ledStrips.get(i));
-            }
-        }
+
         for (LEDStrip ledStrip : ledStrips) {
             for (Effect effect : ledStrip.getEffects()) {
                 map.add(new EffectLEDStripMap(effect, ledStrip));
@@ -208,7 +173,7 @@ public class EffectManager {
         redoStack.clear();
     }
 
-    public void removeAllEffectsFromAllPerformers() {
+    public void removeAllEffectsFromAllLEDStrips() {
         ArrayList<EffectLEDStripMap> map = new ArrayList<>();
         for (LEDStrip ledStrip : this.footballFieldPanel.drill.ledStrips) {
             for (Effect e : ledStrip.getEffects()) {
@@ -221,16 +186,9 @@ public class EffectManager {
         redoStack.clear();
     }
 
-    public void replaceEffectForSelectedPerformers(Effect oldEffect, Effect newEffect) {
-        ArrayList<Performer> performers = getSelectedPerformers();
-        if (performers == null) return;
-
-        ArrayList<LEDStrip> ledStrips = new ArrayList<>();
-        for (Performer p : performers) {
-            for (Integer i : p.getLedStrips()) {
-                ledStrips.add(footballFieldPanel.drill.ledStrips.get(i));
-            }
-        }
+    public void replaceEffectForSelectedLEDStrips(Effect oldEffect, Effect newEffect) {
+        ArrayList<LEDStrip> ledStrips = getSelectedLEDStrips();
+        if (ledStrips == null) return;
 
         ArrayList<EffectLEDStripMap> map = newEffect.getGeneratedEffect().generateEffects(ledStrips);
         for (EffectLEDStripMap m : map) {
@@ -260,19 +218,19 @@ public class EffectManager {
         return null;
     }
 
-    public Effect getEffectsFromSelectedPerformers(long time) {
+    public Effect getEffectsFromSelectedLEDStrips(long time) {
         Effect e = null;
-        for (int i = 0; i < footballFieldPanel.selectedPerformers.values().size(); i++) {
+        for (int i = 0; i < footballFieldPanel.selectedLEDStrips.size(); i++) {
             // This section only works as intended under the assumption that all LED strips
             // for 1 performer contain the same effect
 
-            Performer p = (Performer) footballFieldPanel.selectedPerformers.values().toArray()[i];
+            LEDStrip l = (LEDStrip) footballFieldPanel.selectedLEDStrips.toArray()[i];
 
             if (e == null && i == 0) {
-                e = getEffect(footballFieldPanel.drill.ledStrips.get(p.getLedStrips().get(0)), time);
+                e = getEffect(l, time);
                 break;
             } else {
-                Effect f = getEffect(footballFieldPanel.drill.ledStrips.get(p.getLedStrips().get(0)), time);
+                Effect f = getEffect(l, time);
                 if (e == null) {
                     if (f != null) {
                         return null;
@@ -289,31 +247,13 @@ public class EffectManager {
         }
     }
 
-    /**
-     * For now, assume only one performer is selected. Can change for future.
-     * @return The single selected performer
-     */
-    private Performer getSelectedPerformer() {
-        if (footballFieldPanel.selectedPerformers.size() == 1) {
-
-            // Only works because we know the map has one entry. Also, why are we using a hashmap and not a set for selectedPerformers?
-            Map.Entry<String, Performer> entry = footballFieldPanel.selectedPerformers.entrySet().iterator().next();
-            return entry.getValue();
-        }
-        return null;
-    }
-
-
-
-    public ArrayList<Performer> getSelectedPerformers() {
-        ArrayList<Performer> selectedPerformers = new ArrayList<>();
-        if (footballFieldPanel.selectedPerformers.isEmpty()) {
+    public ArrayList<LEDStrip> getSelectedLEDStrips() {
+        ArrayList<LEDStrip> selectedPerformers = new ArrayList<>();
+        if (footballFieldPanel.selectedLEDStrips.isEmpty()) {
             return selectedPerformers;
         }
 
-        for (Map.Entry<String, Performer> entry : footballFieldPanel.selectedPerformers.entrySet()) {
-            selectedPerformers.add(entry.getValue());
-        }
+        selectedPerformers.addAll(footballFieldPanel.selectedLEDStrips);
         return selectedPerformers;
     }
 
