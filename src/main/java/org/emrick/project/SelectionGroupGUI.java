@@ -159,18 +159,13 @@ public class SelectionGroupGUI implements ActionListener {
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        if ((ActionEvent.CTRL_MASK & e.getModifiers()) != 0) {
-
-        }
         for (SelectionGroup group : groups) {
             if (group.getTitleButton().equals(e.getSource())) {
                 System.out.println(group.getTitle());
                 if((e.getModifiers() & ActionEvent.CTRL_MASK) != 0) {
                     selectListener.ctrlGroupSelection(group.performers);
-                    System.out.println("poop");
                 }
                 else{
-                    System.out.println("hm");
                     selectListener.onGroupSelection(group.performers);
                 }
             }
