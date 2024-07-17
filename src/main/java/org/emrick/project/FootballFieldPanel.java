@@ -11,14 +11,11 @@ import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.awt.geom.Point2D;
 import java.awt.image.BufferedImage;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.Iterator;
+import java.util.*;
 
 public class FootballFieldPanel extends JPanel implements RepaintListener {
     public Drill drill;
-    public HashMap<String,Performer> selectedPerformers;
+    public HashSet<LEDStrip> selectedLEDStrips;
     private double fieldWidth = 720; // Width of the football field
     private double fieldHeight = 360;
     private Point frontSideline50 = new Point(360,360);
@@ -33,13 +30,13 @@ public class FootballFieldPanel extends JPanel implements RepaintListener {
     private boolean showSurfaceImage = true;
     private boolean showFloorCoverImage = true;
 
-    private boolean ctrlHeld = false;
     private Set currentSet;
     private double currentSetRatio = 0.0;
     public long currentMS = 0;
     private int currentCount = 0;
     private int currentSetStartCount = 0;
     private boolean showLabels = false;
+    private boolean selectAllLEDs = true;
 
     // Effects utility
     private final FootballFieldListener footballFieldListener;
@@ -56,7 +53,7 @@ public class FootballFieldPanel extends JPanel implements RepaintListener {
 //        setPreferredSize(new Dimension(fieldWidth + 2*margin, fieldHeight + 2*margin)); // Set preferred size for the drawing area
         setMinimumSize(new Dimension(1042, 548));
         drill = new Drill();
-        selectedPerformers = new HashMap<>();
+        selectedLEDStrips = new HashSet<>();
         this.addMouseMotionListener(new MouseInput(this));
         this.addMouseListener(new MouseInput(this));
         colorChosen = Color.BLACK;
@@ -80,6 +77,14 @@ public class FootballFieldPanel extends JPanel implements RepaintListener {
 
     public void setEffectTransparency(int effectTransparency) {
         this.effectTransparency = effectTransparency;
+    }
+
+    public boolean isSelectAllLEDs() {
+        return selectAllLEDs;
+    }
+
+    public void setSelectAllLEDs(boolean selectAllLEDs) {
+        this.selectAllLEDs = selectAllLEDs;
     }
 
     public HashMap<Integer, RFTrigger> getCount2RFTrigger() {
@@ -223,15 +228,17 @@ public class FootballFieldPanel extends JPanel implements RepaintListener {
                         Color displayColor = new Color(effectColor.getRed(), effectColor.getGreen(), effectColor.getBlue(), effectTransparency);
                         g.setColor(displayColor);
                     }
+                } else {
+                    g.setColor(new Color(0, 0, 0, effectTransparency));
                 }
+                g.fillRect((int) x + l.gethOffset(), (int) y + l.getvOffset(), l.getWidth(), l.getHeight());
 
-                g.fillRect((int) x + l.gethOffset(), (int) y + l.getvOffset(), 6, 12);
-                if (selectedPerformers.get(p.getIdentifier()) != null) {
+                if (selectedLEDStrips.contains(l)) {
                     g.setColor(Color.GREEN);
                 } else {
                     g.setColor(Color.BLACK);
                 }
-                g.drawRect((int) x + l.gethOffset(), (int) y + l.getvOffset(), 6, 12);
+                g.drawRect((int) x + l.gethOffset(), (int) y + l.getvOffset(), l.getWidth(), l.getHeight());
             }
 
             if (showLabels) {
@@ -346,40 +353,62 @@ public class FootballFieldPanel extends JPanel implements RepaintListener {
 
             boolean isControlDown = e.isControlDown();
             if (!isControlDown) {
-                selectedPerformers.clear();
+                selectedLEDStrips.clear();
                 footballFieldListener.onPerformerDeselect();
             }
             boolean select = false;
-            for (Performer p : drill.performers) {
+            HashSet<LEDStrip> ledStripsToChange = new HashSet<>();
+            for (LEDStrip ledStrip : drill.ledStrips) {
+                Performer p = ledStrip.getPerformer();
                 double px = p.currentLocation.getX();
                 double py = p.currentLocation.getY();
 
-                int bxmin = (int) (px - 7);
-                int bymin = (int) (py - 7);
-                int bxmax = (int) (px + 7);
-                int bymax = (int) (py + 7);
-
-                boolean intersecting = AABB(axmin, aymin, axmax, aymax, bxmin, bymin, bxmax, bymax);
+                int bxmin = (int) (px + ledStrip.gethOffset());
+                int bymin = (int) (py + ledStrip.getvOffset());
+                int bxmax = (int) (px + ledStrip.gethOffset() + ledStrip.getWidth());
+                int bymax = (int) (py + ledStrip.getvOffset() + ledStrip.getHeight());
+                boolean intersecting;
+                if (axmax - axmin != 0 || aymax - aymin != 0) {
+                    intersecting = AABB(axmin, aymin, axmax, aymax, bxmin, bymin, bxmax, bymax);
+                } else {
+                    intersecting = (axmin >= bxmin && axmin <= bxmax && aymin >= bymin && aymin <= bymax);
+                }
 
                 if (intersecting) {
-                    String key = p.getIdentifier();
-                    if (isControlDown) {
-                        if (selectedPerformers.containsKey(key)) {
-                            selectedPerformers.remove(key); // Deselect if already selected
-                            footballFieldListener.onPerformerDeselect();
-                        }
-                        else {
-                            selectedPerformers.put(key, p); // Select if not already selected
-                            select = true;
+                    if (selectAllLEDs) {
+                        for (Integer i : p.getLedStrips()) {
+                            LEDStrip l = drill.ledStrips.get(i);
+                            if (isControlDown) {
+                                ledStripsToChange.add(l);
+                                if (!selectedLEDStrips.contains(l)) {
+                                    select = true;
+                                }
+                            } else {
+                                selectedLEDStrips.add(l);
+                                select = true;
+                            }
                         }
                     } else {
-                        selectedPerformers.put(key, p);
-                        select = true;
+                        if (isControlDown) {
+                            ledStripsToChange.add(ledStrip);
+                            if (!selectedLEDStrips.contains(ledStrip)) {
+                                select = true;
+                            }
+                        } else {
+                            selectedLEDStrips.add(ledStrip);
+                            select = true;
+                        }
                     }
                 }
             }
             if (select) {
+                selectedLEDStrips.addAll(ledStripsToChange);
                 footballFieldListener.onPerformerSelect();
+            } else {
+                for (LEDStrip ledStrip : ledStripsToChange) {
+                    selectedLEDStrips.remove(ledStrip);
+                }
+                footballFieldListener.onPerformerDeselect();
             }
             this.repaintListener.onRepaintCall();
         }
@@ -402,9 +431,7 @@ public class FootballFieldPanel extends JPanel implements RepaintListener {
                 int axmin, int aymin, int axmax, int aymax,
                 int bxmin, int bymin, int bxmax, int bymax
         ) {
-            int[] A = {axmin, aymin, axmax, aymax};
-            int[] B = {bxmin, bymin, bxmax, bymax};
-            return !(A[0] >= B[2] || A[2] <= B[0] || A[1] >= B[3] || A[3] <= B[1]);
+            return !(axmin >= bxmax || axmax <= bxmin || aymin >= bymax || aymax <= bymin);
         }
     }
     public void setCurrentSet(Set currentSet) {
@@ -432,7 +459,7 @@ public class FootballFieldPanel extends JPanel implements RepaintListener {
     }
 
     public int getNumSelectedPerformers() {
-        return this.selectedPerformers.size();
+        return this.selectedLEDStrips.size();
     }
 
     public void setFieldWidth(double fieldWidth) {

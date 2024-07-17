@@ -5,8 +5,8 @@ import java.util.HashSet;
 
 public interface SelectListener {
     void onMultiSelect(HashSet<Integer> labels, HashSet<String> symbols);
-    void onGroupSelection(Performer[] performers);
-    Performer[] onSaveGroup();
+    void onGroupSelection(LEDStrip[] ledStrips);
+    LEDStrip[] onSaveGroup();
     void onUpdateGroup();
-    void ctrlGroupSelection(Performer[] performers);
+    void ctrlGroupSelection(LEDStrip[] ledStrips);
 }

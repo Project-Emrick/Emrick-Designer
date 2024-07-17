@@ -138,7 +138,7 @@ public class SelectionGroupGUI implements ActionListener {
         }
     }
 
-    public void addGroup(Performer[] group, String title) {
+    public void addGroup(LEDStrip[] group, String title) {
         groups.add(new SelectionGroup(group, title, this));
     }
 
@@ -146,8 +146,21 @@ public class SelectionGroupGUI implements ActionListener {
         return groups;
     }
 
-    public void setGroups(ArrayList<SelectionGroup> groups) {
+    public void setGroups(ArrayList<SelectionGroup> groups, ArrayList<LEDStrip> ledStrips) {
         this.groups = groups;
+        for (SelectionGroup group : groups) {
+            ArrayList<LEDStrip> copyList = new ArrayList<>(ledStrips);
+            for (LEDStrip ledStrip : group.getLEDStrips()) {
+                for (LEDStrip l : ledStrips) {
+                    if (ledStrip.equals(l)) {
+                        copyList.add(l);
+                    }
+                }
+            }
+            for (int i = 0; i < group.getLEDStrips().length; i++) {
+                group.getLEDStrips()[i] = copyList.get(i);
+            }
+        }
     }
 
     public void initializeButtons(){
@@ -157,27 +170,27 @@ public class SelectionGroupGUI implements ActionListener {
         }
     }
 
+
     @Override
     public void actionPerformed(ActionEvent e) {
         for (SelectionGroup group : groups) {
             if (group.getTitleButton().equals(e.getSource())) {
-                System.out.println(group.getTitle());
                 if((e.getModifiers() & ActionEvent.CTRL_MASK) != 0) {
-                    selectListener.ctrlGroupSelection(group.performers);
+                    selectListener.ctrlGroupSelection(group.ledStrips);
                 }
                 else{
-                    selectListener.onGroupSelection(group.performers);
+                    selectListener.onGroupSelection(group.ledStrips);
                 }
             }
         }
     }
 
     public class SelectionGroup {
-        private Performer[] performers;
+        private LEDStrip[] ledStrips;
         private String title;
         private JButton titleButton;
-        public SelectionGroup(Performer[] performers, String title, ActionListener actionListener) {
-            this.performers = performers;
+        public SelectionGroup(LEDStrip[] ledStrips, String title, ActionListener actionListener) {
+            this.ledStrips = ledStrips;
             this.title = title;
             this.titleButton = new JButton(title);
             titleButton.addActionListener(actionListener);
@@ -188,7 +201,7 @@ public class SelectionGroupGUI implements ActionListener {
             if (this == o) return true;
             if (o == null || getClass() != o.getClass()) return false;
             SelectionGroup that = (SelectionGroup) o;
-            return Arrays.equals(performers, that.performers) && Objects.equals(title, that.title);
+            return Arrays.equals(ledStrips, that.ledStrips) && Objects.equals(title, that.title);
         }
 
 
@@ -196,12 +209,12 @@ public class SelectionGroupGUI implements ActionListener {
             return titleButton;
         }
 
-        public Performer[] getPerformers() {
-            return performers;
+        public LEDStrip[] getLEDStrips() {
+            return ledStrips;
         }
 
-        public void setPerformers(Performer[] performers) {
-            this.performers = performers;
+        public void setLEDStrips(LEDStrip[] ledStrips) {
+            this.ledStrips = ledStrips;
         }
 
         public String getTitle() {
@@ -214,7 +227,7 @@ public class SelectionGroupGUI implements ActionListener {
 
         @Override
         public SelectionGroup clone() {
-            return new SelectionGroup(performers,title, titleButton.getActionListeners()[0]);
+            return new SelectionGroup(ledStrips,title, titleButton.getActionListeners()[0]);
         }
 
         public void setTitleButton(JButton titleButton) {

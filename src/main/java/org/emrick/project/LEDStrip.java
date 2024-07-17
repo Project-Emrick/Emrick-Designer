@@ -4,6 +4,7 @@ import org.emrick.project.effect.Effect;
 
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.Objects;
 
 public class LEDStrip {
     private int id;
@@ -12,28 +13,38 @@ public class LEDStrip {
     private ArrayList<Effect> effects;
     private Performer performer;
     private int performerID;
-    private boolean vertical;
     private int hOffset;
     private int vOffset;
+    private int height;
+    private int width;
 
-    public LEDStrip(int id, int LEDCount, String label, Performer performer, boolean vertical, int hOffset, int vOffset) {
+    public LEDStrip(int id, int LEDCount, String label, Performer performer, int hOffset, int vOffset, int height, int width) {
         this.id = id;
         this.LEDCount = LEDCount;
         this.label = label;
         this.effects = new ArrayList<>();
         this.performer = performer;
         performerID = performer.getPerformerID();
-        this.vertical = vertical;
         this.hOffset = hOffset;
         this.vOffset = vOffset;
+        this.height = height;
+        this.width = width;
     }
 
-    public boolean isVertical() {
-        return vertical;
+    public int getHeight() {
+        return height;
     }
 
-    public void setVertical(boolean vertical) {
-        this.vertical = vertical;
+    public void setHeight(int height) {
+        this.height = height;
+    }
+
+    public int getWidth() {
+        return width;
+    }
+
+    public void setWidth(int width) {
+        this.width = width;
     }
 
     public int gethOffset() {
@@ -66,6 +77,9 @@ public class LEDStrip {
 
     public void setPerformer(Performer performer) {
         this.performer = performer;
+        if (performer != null) {
+            performerID = performer.getPerformerID();
+        }
     }
 
     public void sortEffects() {
@@ -102,5 +116,22 @@ public class LEDStrip {
 
     public void setEffects(ArrayList<Effect> effects) {
         this.effects = effects;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof LEDStrip ledStrip)) return false;
+        return id == ledStrip.id;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hashCode(id);
+    }
+
+    @Override
+    public String toString() {
+        return "LEDStrip: " + label + ", " + id;
     }
 }

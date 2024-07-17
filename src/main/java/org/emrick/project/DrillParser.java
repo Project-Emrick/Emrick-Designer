@@ -117,10 +117,10 @@ public class DrillParser {
             drill.addSet(c);
             performer.addSet(c);
         }
-        LEDStrip l1 = new LEDStrip(drill.ledStrips.size(), 50, performer.getIdentifier() + "L", performer, true, -6, -6);
+        LEDStrip l1 = new LEDStrip(drill.ledStrips.size(), 50, performer.getIdentifier() + "L", performer,  -6, -6, 12, 6);
         drill.ledStrips.add(l1);
         performer.addLEDStrip(l1.getId());
-        LEDStrip l2 = new LEDStrip(drill.ledStrips.size(), 50, performer.getIdentifier() + "L", performer, true, 1, -6);
+        LEDStrip l2 = new LEDStrip(drill.ledStrips.size(), 50, performer.getIdentifier() + "L", performer,  1, -6, 12, 6);
         drill.ledStrips.add(l2);
         performer.addLEDStrip(l2.getId());
         return performer;
