@@ -14,6 +14,7 @@ import org.emrick.project.serde.*;
 import javax.swing.Timer;
 import javax.swing.*;
 import javax.swing.border.*;
+import javax.swing.event.*;
 import javax.swing.filechooser.*;
 import javax.swing.text.*;
 import java.awt.Font;
@@ -27,6 +28,7 @@ import java.net.*;
 import java.nio.file.*;
 import java.time.*;
 import java.util.*;
+import java.util.stream.*;
 
 
 public class MediaEditorGUI extends Component implements ImportListener, ScrubBarListener, SyncListener,
@@ -129,6 +131,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         builder.registerTypeAdapter(SyncTimeGUI.Pair.class, new PairAdapter());
         builder.registerTypeAdapter(Duration.class, new DurationAdapter());
         builder.registerTypeAdapter(GeneratedEffect.class, new GeneratedEffectAdapter());
+        builder.registerTypeAdapter(JButton.class, new JButtonAdapter());
         builder.serializeNulls();
         gson = builder.create();
 
@@ -1011,6 +1014,8 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
 //            scrubBarGUI.setReady(true);
             footballFieldPanel.repaint();
 
+            groupsGUI.setGroups(pf.selectionGroups);
+            groupsGUI.initializeButtons();
 
             if (pf.timeSync != null && pf.startDelay != null) {
                 timeSync = pf.timeSync;
@@ -1074,6 +1079,14 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         footballFieldPanel.repaint();
         updateTimelinePanel();
     }
+
+//    public void ctrlGroupSelection(Performer[] performers){
+////        whatever selected subgroup:
+////            if all performers are selected:
+////                deselect whole groups
+////            else
+////                select whole groups
+//    }
 
     @Override
     public Performer[] onSaveGroup() {
@@ -1776,14 +1789,22 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
 
     public void saveProject(File path, File archivePath) {
         ProjectFile pf;
+
+        ArrayList<SelectionGroupGUI.SelectionGroup> groupsList = new ArrayList<>();
+        for(SelectionGroupGUI.SelectionGroup group: groupsGUI.getGroups()){
+            SelectionGroupGUI.SelectionGroup toAdd = group.clone();
+            toAdd.setTitleButton(null);
+            groupsList.add(toAdd);
+        }
+
         String aPath = archivePath.getName();
         for (LEDStrip ledStrip : footballFieldPanel.drill.ledStrips) {
             ledStrip.setPerformer(null);
         }
         if (this.effectManager != null) {
-            pf = new ProjectFile(footballFieldPanel.drill, aPath, timeSync, startDelay, count2RFTrigger, effectManager.getIds());
+            pf = new ProjectFile(footballFieldPanel.drill, aPath, timeSync, startDelay, count2RFTrigger, effectManager.getIds(), groupsList);
         } else {
-            pf = new ProjectFile(footballFieldPanel.drill, aPath, timeSync, startDelay, count2RFTrigger, null);
+            pf = new ProjectFile(footballFieldPanel.drill, aPath, timeSync, startDelay, count2RFTrigger, null, groupsList);
         }
         String g = gson.toJson(pf);
 
