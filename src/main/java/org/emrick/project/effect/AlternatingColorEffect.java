@@ -1,7 +1,8 @@
 package org.emrick.project.effect;
 
+import org.emrick.project.LEDStrip;
 import org.emrick.project.Performer;
-import org.emrick.project.actions.EffectPerformerMap;
+import org.emrick.project.actions.EffectLEDStripMap;
 
 import java.awt.*;
 import java.time.Duration;
@@ -102,11 +103,11 @@ public class AlternatingColorEffect implements GeneratedEffect {
     }
 
     @Override
-    public ArrayList<EffectPerformerMap> generateEffects(ArrayList<Performer> performers) {
-        ArrayList<EffectPerformerMap> map = new ArrayList<>();
+    public ArrayList<EffectLEDStripMap> generateEffects(ArrayList<LEDStrip> ledStrips) {
+        ArrayList<EffectLEDStripMap> map = new ArrayList<>();
 
-        for (Performer p : performers) {
-            map.add(new EffectPerformerMap(generateEffectObj(), p));
+        for (LEDStrip ledStrip : ledStrips) {
+            map.add(new EffectLEDStripMap(generateEffectObj(), ledStrip));
         }
 
         return map;

@@ -1,10 +1,15 @@
 package org.emrick.project;
 
+import org.emrick.project.effect.Effect;
+
 import javax.swing.*;
 import javax.swing.border.Border;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
+import java.security.Key;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Objects;
@@ -13,6 +18,7 @@ public class SelectionGroupGUI implements ActionListener {
     private ArrayList<SelectionGroup> groups;
     private JPanel selectionPanel;
     private SelectListener selectListener;
+    private boolean controlHeld = false;
     public SelectionGroupGUI(SelectListener selectListener) {
         groups = new ArrayList<>();
         selectionPanel = null;
@@ -144,14 +150,44 @@ public class SelectionGroupGUI implements ActionListener {
         this.groups = groups;
     }
 
+    public void initializeButtons(){
+        for (SelectionGroup group : groups) {
+            group.setTitleButton(new JButton(group.getTitle()));
+            group.getTitleButton().addActionListener(this);
+        }
+    }
+
     @Override
     public void actionPerformed(ActionEvent e) {
         for (SelectionGroup group : groups) {
             if (group.getTitleButton().equals(e.getSource())) {
+//                if(controlHeld) {
+//                    selectListener.ctrlGroupSelection(group.performers);
+//                }
                 selectListener.onGroupSelection(group.performers);
+
             }
         }
     }
+
+//    @Override
+//    public void keyTyped(KeyEvent e) {
+//
+//    }
+//
+//    @Override
+//    public void keyPressed(KeyEvent e) {
+//        if(e.isControlDown()){
+//            controlHeld = true;
+//        }
+//    }
+//
+//    @Override
+//    public void keyReleased(KeyEvent e) {
+//        if(e.isControlDown()){
+//            controlHeld = false;
+//        }
+//    }
 
     public class SelectionGroup {
         private Performer[] performers;
@@ -191,6 +227,15 @@ public class SelectionGroupGUI implements ActionListener {
 
         public void setTitle(String title) {
             this.title = title;
+        }
+
+        @Override
+        public SelectionGroup clone() {
+            return new SelectionGroup(performers,title, titleButton.getActionListeners()[0]);
+        }
+
+        public void setTitleButton(JButton titleButton) {
+            this.titleButton = titleButton;
         }
     }
 }

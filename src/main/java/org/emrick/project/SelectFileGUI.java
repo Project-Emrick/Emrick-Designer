@@ -243,13 +243,11 @@ public class SelectFileGUI implements ActionListener {
 
                 ArrayList<String> files = new ArrayList<>();
                 files.add(archiveFile.getAbsolutePath());
-                files.add(coordsFile.getAbsolutePath());
                 if (csvFile != null) {
                     files.add(csvFile.getAbsolutePath());
                 }
                 copyFiles(files, PathConverter.pathConverter("show_data"));
                 archiveFile = new File(PathConverter.pathConverter("show_data/" + archiveFile.getName()));
-                coordsFile = new File(PathConverter.pathConverter("show_data/" + coordsFile.getName()));
                 if (csvFile != null) {
                     csvFile = new File(PathConverter.pathConverter("show_data/" + csvFile.getName()));
                 }

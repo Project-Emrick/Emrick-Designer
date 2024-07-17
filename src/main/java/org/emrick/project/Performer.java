@@ -1,58 +1,53 @@
 package org.emrick.project;
 
-import org.emrick.project.effect.Effect;
-
-import java.awt.*;
 import java.awt.geom.*;
 import java.util.*;
 
 public class Performer {
 
     public Point2D currentLocation;
-    private Color color;
     private String symbol;
     private int label;
     private ArrayList<Coordinate> coordinates;
-    private ArrayList<Effect> effects;
-    private String deviceId;
+    private int performerID;
+    private ArrayList<Integer> ledStrips;
 
     public Performer() {
         symbol = "";
         label = 0;
         coordinates = new ArrayList<>();
+        ledStrips = new ArrayList<>();
         currentLocation = new Point2D.Double(0, 0);
-        this.color = Color.BLACK;
-        this.effects = new ArrayList<>();
     }
 
     public Performer(String symbol, int label, int id) {
-        this.color = Color.BLACK;
         this.symbol = symbol;
         this.label = label;
+        ledStrips = new ArrayList<>();
         coordinates = new ArrayList<>();
         currentLocation = new Point2D.Double(0, 0);
-        this.effects = new ArrayList<>();
-        this.deviceId = Integer.toString(id);
+        this.performerID = id;
     }
 
-    public void sortEffects() {
-        effects.sort(Comparator.comparingLong(Effect::getStartTimeMSec));
+    public ArrayList<Integer> getLedStrips() {
+        return ledStrips;
     }
 
-    public Color getColor() {
-        return color;
+    public void setLedStrips(ArrayList<Integer> ledStrips) {
+        this.ledStrips = ledStrips;
     }
 
-    public void setColor(Color color) {
-        this.color = color;
+    public void addLEDStrip(int ledStrip) {
+        ledStrips.add(ledStrip);
     }
 
-    String getDeviceId() {
-        return deviceId;
+
+    public int getPerformerID() {
+        return performerID;
     }
 
-    void setDeviceId(String deviceId) {
-        this.deviceId = deviceId;
+    void setPerformerID(int performerID) {
+        this.performerID = performerID;
     }
 
     public void loadCoordinates(ArrayList<Coordinate> coordinates) {
@@ -81,19 +76,8 @@ public class Performer {
         return null;
     }
 
-    public ArrayList<Effect> getEffects() {
-        return effects;
-    }
-
     public void addSet(Coordinate coordinate) {
         coordinates.add(coordinate);
-    }
-
-    /**
-     * MUST BE CALLED BEFORE WRITING PERFORMERS TO FILE
-     */
-    public void deconstructCoordinates() {
-        coordinates = null;
     }
 
     @Override
@@ -101,7 +85,7 @@ public class Performer {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         Performer performer = (Performer) o;
-        return label == performer.label && Objects.equals(symbol, performer.symbol);
+        return performerID == performer.getPerformerID();
     }
 
     @Override
@@ -111,9 +95,6 @@ public class Performer {
 
     public String toString() {
         String out = symbol + label + "\r\n";
-        for (Effect e  : effects) {
-            out += "\t" + e.toString() + "\r\n";
-        }
         return out;
     }
 

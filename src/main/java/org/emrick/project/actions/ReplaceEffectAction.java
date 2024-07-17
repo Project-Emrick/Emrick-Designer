@@ -9,27 +9,27 @@ public class ReplaceEffectAction implements UndoableAction {
 
     private final Effect oldEffect;
     private final Effect newEffect;
-    private final Performer performer;
+    private final LEDStrip ledStrip;
 
-    public ReplaceEffectAction(Effect oldEffect, Effect newEffect, Performer performer) {
+    public ReplaceEffectAction(Effect oldEffect, Effect newEffect, LEDStrip ledStrip) {
         this.oldEffect = oldEffect;
         this.newEffect = newEffect;
-        this.performer = performer;
+        this.ledStrip = ledStrip;
     }
 
     @Override
     public void execute() {
         int indexToReplace = -1;
 
-        for (Effect effect : performer.getEffects()) {
-            int index = performer.getEffects().indexOf(effect);
+        for (Effect effect : ledStrip.getEffects()) {
+            int index = ledStrip.getEffects().indexOf(effect);
             if (Objects.equals(oldEffect, effect)) {
                 indexToReplace = index;
             }
         }
 
         if (indexToReplace != -1) {
-            performer.getEffects().set(indexToReplace, newEffect);
+            ledStrip.getEffects().set(indexToReplace, newEffect);
         }
     }
 
@@ -37,15 +37,15 @@ public class ReplaceEffectAction implements UndoableAction {
     public void undo() {
         int indexToReplace = -1;
 
-        for (Effect effect : performer.getEffects()) {
-            int index = performer.getEffects().indexOf(effect);
+        for (Effect effect : ledStrip.getEffects()) {
+            int index = ledStrip.getEffects().indexOf(effect);
             if (Objects.equals(newEffect, effect)) {
                 indexToReplace = index;
             }
         }
 
         if (indexToReplace != -1) {
-            performer.getEffects().set(indexToReplace, oldEffect);
+            ledStrip.getEffects().set(indexToReplace, oldEffect);
         }
     }
 

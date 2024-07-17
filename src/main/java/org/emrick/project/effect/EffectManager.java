@@ -1,12 +1,12 @@
 package org.emrick.project.effect;
 
 import org.emrick.project.FootballFieldPanel;
+import org.emrick.project.LEDStrip;
 import org.emrick.project.Performer;
 import org.emrick.project.TimeManager;
 import org.emrick.project.actions.*;
 
 import javax.swing.*;
-import java.time.Duration;
 import java.util.*;
 
 public class EffectManager {
@@ -28,16 +28,16 @@ public class EffectManager {
      * Checks if an effect can be validly created. The effect should not overlap with another effect on the given
      * performer, and its start and end times should be in different sets.
      * @param effect The effect to check.
-     * @param performer The performer on which the effect is to be applied.
+     * @param ledStrip The ledStrip on which the effect is to be applied.
      * @return True if valid, false if invalid.
      */
-    public boolean isValid(Effect effect, Performer performer) {
+    public boolean isValid(Effect effect, LEDStrip ledStrip) {
         if (effect == null) return false;
 
         // The effect should not overlap with another effect on the given performer
         long startMSec = effect.getStartTimeMSec();
         long endMSec = effect.getEndTimeMSec();
-        for (Effect exist : performer.getEffects()) {
+        for (Effect exist : ledStrip.getEffects()) {
             if (exist.getEndTimeMSec() < startMSec || endMSec < exist.getStartTimeMSec()) {
                 continue;
             }
@@ -52,18 +52,6 @@ public class EffectManager {
             }
         }
         return true;
-
-//        // The effect's start and end times should not be in different sets
-//        String startTimeSet = "0";
-//        String endTimeSet = "0";
-//        for (Map.Entry<String, Long> entry : timeManager.getSet2MSec()) {
-//            String set = entry.getKey();
-//            long setMSec = entry.getValue();
-//
-//            if (startMSec >= setMSec) startTimeSet = set;
-//            if (endMSec >= setMSec) endTimeSet = set;
-//        }
-//        return startTimeSet.equals(endTimeSet);
     }
 
     /**
@@ -79,12 +67,12 @@ public class EffectManager {
         // Get timestamp in milliseconds for where the RF trigger is to be placed
         long tsMSec = timeManager.getCount2MSec().get(rfTrigger.getCount());
 
-        for (Performer performer : footballFieldPanel.drill.performers) {
-            for (Effect effect : performer.getEffects()) {
+        for (LEDStrip ledStrip : footballFieldPanel.drill.ledStrips) {
+            for (Effect effect : ledStrip.getEffects()) {
                 if (effect.getEndTimeMSec() <= tsMSec || tsMSec <= effect.getStartTimeMSec()) {
                     continue;
                 }
-                showAddRFTriggerErrorDialog(performer);
+                showAddRFTriggerErrorDialog(ledStrip);
                 return false;
             }
         }
@@ -111,42 +99,16 @@ public class EffectManager {
         }
     }
 
-    public boolean addEffect(Effect effect, Performer performer) {
-        if (!isValid(effect, performer)) {
-            showAddEffectErrorDialog(performer);
+    public boolean addEffect(Effect effect, LEDStrip ledStrip) {
+        if (!isValid(effect, ledStrip)) {
+            showAddEffectErrorDialog(ledStrip);
             return false;
         }
-        UndoableAction createEffectAction = new CreateEffectAction(effect, performer);
+        UndoableAction createEffectAction = new CreateEffectAction(effect, ledStrip);
         createEffectAction.execute();
         undoStack.push(createEffectAction);
         redoStack.clear();
         return true;
-    }
-
-    private void addEffect(Effect effect, List<Performer> performers) {
-        ArrayList<EffectPerformerMap> map = new ArrayList<>();
-        for (Performer p : performers) {
-            map.add(new EffectPerformerMap(effect, p));
-        }
-        UndoableAction createEffectsAction = new CreateEffectsAction(map);
-        createEffectsAction.execute();
-        undoStack.push(createEffectsAction);
-        redoStack.clear();
-    }
-
-    /**
-     * Initial idea was that an effect can only be created for one (selected) performer at a time.
-     * addEffectToSelectedPerformer accomplishes exactly this. May become deprecated soon.
-     * @param effect The effect to add to the currently selected performer.
-     * @return true if added successfully, false otherwise.
-     */
-    public boolean addEffectToSelectedPerformer(Effect effect) {
-        Performer performer = getSelectedPerformer();
-        if (performer == null)
-            return false;
-
-        boolean successful = addEffect(effect, performer);
-        return successful;
     }
 
     public boolean addEffectToSelectedPerformers(Effect effect) {
@@ -164,16 +126,22 @@ public class EffectManager {
             return false;
         effect.setId(id);
         ArrayList<Performer> selectedPerformers = getSelectedPerformers();
+        ArrayList<LEDStrip> ledStrips = new ArrayList<>();
+        for (Performer p : selectedPerformers) {
+            for (Integer i : p.getLedStrips()) {
+                ledStrips.add(footballFieldPanel.drill.ledStrips.get(i));
+            }
+        }
 
         // Verify ability to add the effect to all selected performers, to avoid adding for some then error-ing out.
-        for (Performer performer : selectedPerformers) {
-            if (!isValid(effect, performer)) {
-                showAddEffectErrorDialog(performer);
+        for (LEDStrip ledStrip : ledStrips) {
+            if (!isValid(effect, ledStrip)) {
+                showAddEffectErrorDialog(ledStrip);
                 return false;
             }
         }
         ids.add(id);
-        ArrayList<EffectPerformerMap> map = effect.getGeneratedEffect().generateEffects(selectedPerformers);
+        ArrayList<EffectLEDStripMap> map = effect.getGeneratedEffect().generateEffects(ledStrips);
         UndoableAction e = new CreateEffectsAction(map);
         e.execute();
         undoStack.add(e);
@@ -181,21 +149,21 @@ public class EffectManager {
         return true;
     }
 
-    private void showAddRFTriggerErrorDialog(Performer performer) {
+    private void showAddRFTriggerErrorDialog(LEDStrip ledStrip) {
         JOptionPane.showMessageDialog(null,
-                "RF trigger could not be added. Please check for collision with effect(s) on performer " + performer.getIdentifier() + ".",
+                "RF trigger could not be added. Please check for collision with effect(s) on LED strip " + ledStrip.getLabel() + ".",
                 "Create RF Trigger: Error", JOptionPane.ERROR_MESSAGE);
     }
 
-    private void showAddEffectErrorDialog(Performer performer) {
+    private void showAddEffectErrorDialog(LEDStrip ledStrip) {
         JOptionPane.showMessageDialog(null,
-                "Effect could not be applied to performer " + performer.getIdentifier() +
+                "Effect could not be applied to performer " + ledStrip.getLabel() +
                         ". Please check for possible collision with an RF trigger or the performer's other effects.",
                 "Apply Effect: Error", JOptionPane.ERROR_MESSAGE);
     }
 
-    public void removeEffect(Effect effect, Performer performer) {
-        UndoableAction removeEffectAction = new RemoveEffectAction(effect, performer);
+    public void removeEffect(Effect effect, LEDStrip ledStrip) {
+        UndoableAction removeEffectAction = new RemoveEffectAction(effect, ledStrip);
         removeEffectAction.execute();
         undoStack.push(removeEffectAction);
         redoStack.clear();
@@ -204,9 +172,15 @@ public class EffectManager {
     public void removeEffectFromSelectedPerformers(Effect effect) {
         ArrayList<Performer> performers = getSelectedPerformers();
         if (performers == null) return;
-        ArrayList<EffectPerformerMap> map = new ArrayList<>();
-        for (Performer performer : performers) {
-            map.add(new EffectPerformerMap(effect, performer));
+        ArrayList<EffectLEDStripMap> map = new ArrayList<>();
+        ArrayList<LEDStrip> ledStrips = new ArrayList<>();
+        for (Performer p : performers) {
+            for (Integer i : p.getLedStrips()) {
+                ledStrips.add(footballFieldPanel.drill.ledStrips.get(i));
+            }
+        }
+        for (LEDStrip ledStrip : ledStrips) {
+            map.add(new EffectLEDStripMap(effect, ledStrip));
         }
         UndoableAction action = new RemoveEffectsAction(map);
         action.execute();
@@ -214,27 +188,18 @@ public class EffectManager {
         redoStack.clear();
     }
 
-    public void removeAllEffects(Performer performer) {
-        performer.getEffects().clear();
-    }
-
-    /**
-     * The difference between removeAllEffectsFromSelectedPerformer() and removeAllEffectsFromSelectedPerformers() is
-     * that the former only works if there is exactly one performer selected. The latter works for any number of
-     * selected performers. Use based on desired behavior.
-     */
-    public void removeAllEffectsFromSelectedPerformer() {
-        Performer performer = getSelectedPerformer();
-        if (performer == null) return;
-        removeAllEffects(performer);
-    }
-
     public void removeAllEffectsFromSelectedPerformers() {
         ArrayList<Performer> selectedPerformers = getSelectedPerformers();
-        ArrayList<EffectPerformerMap> map = new ArrayList<>();
-        for (Performer performer : selectedPerformers) {
-            for (Effect effect : performer.getEffects()) {
-                map.add(new EffectPerformerMap(effect, performer));
+        ArrayList<EffectLEDStripMap> map = new ArrayList<>();
+        ArrayList<LEDStrip> ledStrips = new ArrayList<>();
+        for (Performer p : selectedPerformers) {
+            for (Integer i : p.getLedStrips()) {
+                ledStrips.add(footballFieldPanel.drill.ledStrips.get(i));
+            }
+        }
+        for (LEDStrip ledStrip : ledStrips) {
+            for (Effect effect : ledStrip.getEffects()) {
+                map.add(new EffectLEDStripMap(effect, ledStrip));
             }
         }
         UndoableAction action = new RemoveEffectsAction(map);
@@ -244,10 +209,10 @@ public class EffectManager {
     }
 
     public void removeAllEffectsFromAllPerformers() {
-        ArrayList<EffectPerformerMap> map = new ArrayList<>();
-        for (Performer performer : this.footballFieldPanel.drill.performers) {
-            for (Effect e : performer.getEffects()) {
-                map.add(new EffectPerformerMap(e, performer));
+        ArrayList<EffectLEDStripMap> map = new ArrayList<>();
+        for (LEDStrip ledStrip : this.footballFieldPanel.drill.ledStrips) {
+            for (Effect e : ledStrip.getEffects()) {
+                map.add(new EffectLEDStripMap(e, ledStrip));
             }
         }
         UndoableAction action = new RemoveEffectsAction(map);
@@ -256,48 +221,19 @@ public class EffectManager {
         redoStack.clear();
     }
 
-    /**
-     * Pseudo-update functionality for effects. Instead of updating the same object, just replace it with an updated version.
-     * For now, when an effect is updated, the start time should not change. This is handled implicitly by EffectGUI.
-     * @param oldEffect The effect to be replaced.
-     * @param newEffect The effect that replaces.
-     * @param performer The associated performer.
-     */
-    public boolean replaceEffect(Effect oldEffect, Effect newEffect, Performer performer) {
-        performer.getEffects().remove(oldEffect);
-
-        // Check that replacement with new effect is still valid
-        if (!isValid(newEffect, performer)) {
-            showAddEffectErrorDialog(performer);
-            performer.getEffects().add(oldEffect); // Put it back
-            return false;
-        }
-        performer.getEffects().add(oldEffect); // Put it back
-        //performer.getEffects().add(newEffect);
-        UndoableAction replaceEffectAction = new ReplaceEffectAction(oldEffect, newEffect, performer);
-        replaceEffectAction.execute();
-        undoStack.push(replaceEffectAction);
-        redoStack.clear();
-        return true;
-    }
-
     public void replaceEffectForSelectedPerformers(Effect oldEffect, Effect newEffect) {
         ArrayList<Performer> performers = getSelectedPerformers();
         if (performers == null) return;
-        ArrayList<Performer> allPerformers = footballFieldPanel.drill.performers;
-        for (int i = 0; i < allPerformers.size(); i++) {
-            for (int j = 0; j < allPerformers.get(i).getEffects().size(); j++) {
-                if (allPerformers.get(i).getEffects().get(j).equals(oldEffect)) {
-                    if (!performers.contains(allPerformers.get(i))) {
-                        performers.add(allPerformers.get(i));
-                    }
-                    break;
-                }
+
+        ArrayList<LEDStrip> ledStrips = new ArrayList<>();
+        for (Performer p : performers) {
+            for (Integer i : p.getLedStrips()) {
+                ledStrips.add(footballFieldPanel.drill.ledStrips.get(i));
             }
         }
 
-        ArrayList<EffectPerformerMap> map = newEffect.getGeneratedEffect().generateEffects(performers);
-        for (EffectPerformerMap m : map) {
+        ArrayList<EffectLEDStripMap> map = newEffect.getGeneratedEffect().generateEffects(ledStrips);
+        for (EffectLEDStripMap m : map) {
             m.setOldEffect(oldEffect);
         }
 
@@ -309,14 +245,14 @@ public class EffectManager {
 
     /**
      * Get the effect based on current count as specified by attribute of FootballFieldPanel.
-     * @param performer The performer of interest.
+     * @param ledStrip The ledStrip of interest.
      * @return The effect at the current count for the given performer. If there is none, return null.
      */
-    public Effect getEffect(Performer performer, long time) {
+    public Effect getEffect(LEDStrip ledStrip, long time) {
         long currentMSec = time;
 
         // Find effect in performer where current millis falls in range of effect start and end time
-        for (Effect effect : performer.getEffects()) {
+        for (Effect effect : ledStrip.getEffects()) {
             if (effect.getStartTimeMSec() <= currentMSec && currentMSec <= effect.getEndTimeMSec()) {
                 return effect;
             }
@@ -324,19 +260,19 @@ public class EffectManager {
         return null;
     }
 
-    public Effect getEffectFromSelectedPerformer(long time) {
-        Performer performer = getSelectedPerformer();
-        if (performer == null) return null;
-        return getEffect(performer, time);
-    }
-
     public Effect getEffectsFromSelectedPerformers(long time) {
         Effect e = null;
         for (int i = 0; i < footballFieldPanel.selectedPerformers.values().size(); i++) {
+            // This section only works as intended under the assumption that all LED strips
+            // for 1 performer contain the same effect
+
+            Performer p = (Performer) footballFieldPanel.selectedPerformers.values().toArray()[i];
+
             if (e == null && i == 0) {
-                e = getEffect((Performer) footballFieldPanel.selectedPerformers.values().toArray()[i], time);
+                e = getEffect(footballFieldPanel.drill.ledStrips.get(p.getLedStrips().get(0)), time);
+                break;
             } else {
-                Effect f = getEffect((Performer) footballFieldPanel.selectedPerformers.values().toArray()[i], time);
+                Effect f = getEffect(footballFieldPanel.drill.ledStrips.get(p.getLedStrips().get(0)), time);
                 if (e == null) {
                     if (f != null) {
                         return null;

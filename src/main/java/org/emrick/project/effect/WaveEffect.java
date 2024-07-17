@@ -1,7 +1,8 @@
 package org.emrick.project.effect;
 
+import org.emrick.project.LEDStrip;
 import org.emrick.project.Performer;
-import org.emrick.project.actions.EffectPerformerMap;
+import org.emrick.project.actions.EffectLEDStripMap;
 
 import java.awt.*;
 import java.time.Duration;
@@ -107,11 +108,17 @@ public class WaveEffect implements GeneratedEffect {
         return EffectList.WAVE;
     }
 
-    public ArrayList<EffectPerformerMap> generateEffects(ArrayList<Performer> performers) {
+    public ArrayList<EffectLEDStripMap> generateEffects(ArrayList<LEDStrip> ledStrips) {
         int id = this.getId();
         double startExtreme;
         double endExtreme;
-        ArrayList<EffectPerformerMap> map = new ArrayList<>();
+        ArrayList<EffectLEDStripMap> map = new ArrayList<>();
+        ArrayList<Performer> performers = new ArrayList<>();
+        for (LEDStrip l : ledStrips) {
+            if (!performers.contains(l.getPerformer())) {
+                performers.add(l.getPerformer());
+            }
+        }
         if (this.isVertical()) {
             startExtreme = performers.get(0).currentLocation.getY();
             endExtreme = performers.get(0).currentLocation.getY();
@@ -155,7 +162,8 @@ public class WaveEffect implements GeneratedEffect {
             }
         }
         long wavePeriod = (long) (1.0/(1.0+this.getSpeed()) * (double) this.getDuration().toMillis());
-        for (Performer p : performers) {
+        for (LEDStrip l : ledStrips) {
+            Performer p = l.getPerformer();
             long waveStartTime = 0;
             double extremeDiff = endExtreme - startExtreme;
             if (this.isVertical()) {
@@ -197,21 +205,21 @@ public class WaveEffect implements GeneratedEffect {
                 s1.setId(id);
                 s1.setEffectType(EffectList.WAVE);
                 s1.setGeneratedEffect(this);
-                map.add(new EffectPerformerMap(s1, p));
+                map.add(new EffectLEDStripMap(s1, l));
             }
             w1.setId(id);
             w1.setEffectType(EffectList.WAVE);
             w1.setGeneratedEffect(this);
-            map.add(new EffectPerformerMap(w1, p));
+            map.add(new EffectLEDStripMap(w1, l));
             w2.setId(id);
             w2.setEffectType(EffectList.WAVE);
             w2.setGeneratedEffect(this);
-            map.add(new EffectPerformerMap(w2, p));
+            map.add(new EffectLEDStripMap(w2, l));
             if (s2 != null) {
                 s2.setId(id);
                 s2.setEffectType(EffectList.WAVE);
                 s2.setGeneratedEffect(this);
-                map.add(new EffectPerformerMap(s2, p));
+                map.add(new EffectLEDStripMap(s2, l));
             }
         }
         return map;

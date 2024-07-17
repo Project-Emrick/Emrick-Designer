@@ -244,7 +244,7 @@ public class ScrubBarGUI extends JComponent implements ActionListener {
                 pastSetTime += timeSync.get(i).getValue();
             }
             time = (float) (topSlider.getValue() - getCurrentSetStart()) / setDuration * setSyncDuration + pastSetTime;
-            scrubBarListener.onTimeChange((long) ((time - pastSetTime) * 1000));
+            scrubBarListener.onTimeChange((long) ((Math.round(time * 1000.0) / 1000.0 - pastSetTime) * 1000));
             double ratio = (time - pastSetTime) / setSyncDuration;
             footballFieldPanel.setCurrentSet(footballFieldPanel.drill.sets.get(getCurrentSetIndex()));
             footballFieldPanel.setCurrentSetRatio(Math.min(ratio, 1));
