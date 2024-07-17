@@ -362,7 +362,7 @@ public class FootballFieldPanel extends JPanel implements RepaintListener {
                 boolean intersecting = AABB(axmin, aymin, axmax, aymax, bxmin, bymin, bxmax, bymax);
 
                 if (intersecting) {
-                    String key = p.getSymbol() + p.getLabel();
+                    String key = p.getIdentifier();
                     if (isControlDown) {
                         if (selectedPerformers.containsKey(key)) {
                             selectedPerformers.remove(key); // Deselect if already selected
