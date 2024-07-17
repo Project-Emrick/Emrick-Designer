@@ -52,6 +52,7 @@ public class Unzip {
                 int length;
                 while ((length = fis.read(bytes)) >= 0) {
                     zos.write(bytes, 0, length);
+                    zos.flush();
                 }
                 fis.close();
                 if (delete) {

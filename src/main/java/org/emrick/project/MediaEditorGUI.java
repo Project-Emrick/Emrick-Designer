@@ -1943,7 +1943,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             ArrayList<LEDStrip> list7 = new ArrayList<>();
             for (int k = 0; k < footballFieldPanel.drill.ledStrips.size(); k++) {
                 LEDStrip l = footballFieldPanel.drill.ledStrips.get(k);
-                File curr = new File(PathConverter.pathConverter("tmp/" + l.getPerformerID()));
+                File curr = new File(PathConverter.pathConverter("tmp/" + l.getId()));
                 curr.createNewFile();
                 files.add(curr.getAbsolutePath());
 

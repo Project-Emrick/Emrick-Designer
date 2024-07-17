@@ -159,6 +159,9 @@ public class SelectionGroupGUI implements ActionListener {
 
     @Override
     public void actionPerformed(ActionEvent e) {
+        if ((ActionEvent.CTRL_MASK & e.getModifiers()) != 0) {
+
+        }
         for (SelectionGroup group : groups) {
             if (group.getTitleButton().equals(e.getSource())) {
 //                if(controlHeld) {
