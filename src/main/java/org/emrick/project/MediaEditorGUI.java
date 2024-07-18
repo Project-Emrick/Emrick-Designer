@@ -221,7 +221,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         frame.setIconImage(icon);
 
         // Scrub Bar
-        scrubBarGUI = new ScrubBarGUI(frame, this, this, footballFieldPanel);
+        scrubBarGUI = new ScrubBarGUI(frame, this, this, footballFieldPanel, audioPlayer);
 
         // Scrub bar cursor starts on first count of drill by default
         useStartDelay = true;
@@ -1384,6 +1384,11 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         footballFieldPanel.setCount2RFTrigger(count2RFTrigger);
 
         setupEffectView(null);
+    }
+    @Override
+    public void onAutoSync(ArrayList<SyncTimeGUI.PairCountMS> counts, float startDelay) {
+        writeSysMsg("Got Synced Times");
+
     }
 
     private void setupEffectView(ArrayList<Integer> ids) {

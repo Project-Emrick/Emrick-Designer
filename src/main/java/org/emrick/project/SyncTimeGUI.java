@@ -1,9 +1,14 @@
 package org.emrick.project;
 
+import org.emrick.project.audio.AudioPlayer;
+
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
+import java.io.File;
 import java.util.*;
 import java.util.List;
 
@@ -46,6 +51,7 @@ public class SyncTimeGUI implements ActionListener {
     private final JPanel bpmPanel;
     private final JPanel timestampPanel;
     private final JPanel durationPanel;
+    private final JPanel tapPanel;
 
     private final JDialog dialogWindow;
     private final JButton cancelButton;
@@ -53,9 +59,17 @@ public class SyncTimeGUI implements ActionListener {
 
     private final SyncListener syncListener;
 
-    public SyncTimeGUI(JFrame parent, SyncListener syncListener, Map<String, Integer> set2Count) {
+    AudioPlayer audioPlayer;
+
+    int currentCount = 0;
+    long prevCountTime = 0;
+    int totalCounts = 0;
+    long currentTime = 0;
+
+    public SyncTimeGUI(JFrame parent, SyncListener syncListener, Map<String, Integer> set2Count, AudioPlayer audioPlayer) {
         this.set2Count = set2Count;
         this.syncListener = syncListener;
+        this.audioPlayer = audioPlayer;
 
         dialogWindow = new JDialog(parent, true);
         dialogWindow.setTitle("Sync Time to Original Drill");
@@ -76,6 +90,10 @@ public class SyncTimeGUI implements ActionListener {
 
         timestampPanel = createTimestampPanel();
         tabbedPane.add("Timestamp", timestampPanel);
+
+        tapPanel = createTapPanel();
+
+
 
         // Cancel/Import buttons
         cancelButton = new JButton("Cancel");
@@ -161,6 +179,78 @@ public class SyncTimeGUI implements ActionListener {
         mainPanel.add(titlePanel, BorderLayout.NORTH);
         mainPanel.add(bpmScrollPane, BorderLayout.CENTER);
 
+        return mainPanel;
+    }
+    private JPanel createTapPanel() {
+        // A main panel for padding
+        JPanel mainPanel = new JPanel(new BorderLayout());
+        mainPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+
+        // Title panel for instructions
+        JPanel titlePanel = new JPanel(new BorderLayout(0, 10));
+
+        JLabel titleLabel = new JLabel("Tap Tempo");
+        titleLabel.setFont(new Font("Arial", Font.BOLD, 14));
+
+        //TODO: Create a string object of the text below
+        JLabel instrLabel = new JLabel("When ready, tap the spacebar at the starting tempo. The audio will start automatically." +
+                " The window will close once all of the show counts have been tapped.");
+
+        JPanel tapTempoPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 5));;
+
+        titlePanel.add(titleLabel, BorderLayout.NORTH);
+        titlePanel.add(tapTempoPanel);
+        titlePanel.add(instrLabel, BorderLayout.SOUTH);
+
+
+
+        //List<Map.Entry<String, Integer>> ptCounts = ScrubBarGUI.sortMap(set2Count);
+
+        //records the number of counts for the entire show
+        for (Map.Entry<String, Integer> entry : set2Count.entrySet() ) {
+            totalCounts += entry.getValue();
+        }
+        ArrayList<PairCountMS> counts = new ArrayList<>(totalCounts);
+
+
+          //time in ms that the last beat occurred
+        tapTempoPanel.addKeyListener(new KeyListener() {
+            @Override
+            public void keyTyped(KeyEvent e) {
+
+            }
+
+            @Override
+            public void keyPressed(KeyEvent e) {
+
+                if (e.getKeyCode()==KeyEvent.VK_SPACE) {
+
+                    if (currentCount == 0) {
+                        prevCountTime = System.currentTimeMillis();
+                        audioPlayer.playAudio(0);
+                        currentCount++;
+
+                    }
+                    else if (currentCount >= (totalCounts - 1)) {
+                        currentTime = System.currentTimeMillis();
+                        counts.set(currentCount - 1, new PairCountMS(currentCount - 1, currentTime - prevCountTime));
+                        syncListener.onAutoSync(counts, 0);
+                        dialogWindow.dispose();
+                    }
+                    else {
+                        currentTime = System.currentTimeMillis();
+                        counts.set(currentCount - 1, new PairCountMS(currentCount - 1, currentTime - prevCountTime));
+                        prevCountTime = currentTime;
+                    }
+                }
+            }
+
+            @Override
+            public void keyReleased(KeyEvent e) {
+
+            }
+
+        });
         return mainPanel;
     }
 
@@ -308,6 +398,23 @@ public class SyncTimeGUI implements ActionListener {
             return value;
         }
     }
+    public static class PairCountMS {
+        private int key;
+        private long value;  //ms to the next count
+
+        public PairCountMS(int key, long value) {
+            this.key = key;
+            this.value = value;
+        }
+
+        public int getKey() {
+            return key;
+        }
+        public long  getValue() {
+            return value;
+        }
+    }
+
 
     @Override
     public void actionPerformed(ActionEvent e) {
@@ -397,7 +504,8 @@ public class SyncTimeGUI implements ActionListener {
         return true;
     }
 
-    private boolean syncByBpm(ArrayList<Pair> times) {
+    private boolean syncByBpm(ArrayList<Pair> times)
+    {
 
         // Check if BPM is consistent (where BPM is only entered for set 1)
         boolean isConsistent = true;
@@ -526,7 +634,6 @@ public class SyncTimeGUI implements ActionListener {
         return true;
     }
 
-    // For testing
     public static void main(String[] args) {
 
         // Run Swing programs on the Event Dispatch Thread (EDT)
@@ -539,6 +646,9 @@ public class SyncTimeGUI implements ActionListener {
                     @Override
                     public void onSync(ArrayList<Pair> times, float startDelay) {
                         System.out.println("dummy onSync() called.");
+                    }
+                    public void onAutoSync(ArrayList<PairCountMS> counts, float startDelay) {
+                        System.out.println("dummy onAutoSync() called.");
                     }
                 };
 
@@ -555,6 +665,7 @@ public class SyncTimeGUI implements ActionListener {
                 dummyData.put("4B", 128);
                 dummyData.put("5", 136);
                 dummyData.put("6", 152);
+                AudioPlayer audioPlayerDummy = new AudioPlayer(new File(""));
 
                 // Lots more data, making sure they fit on GUI
 //                dummyData.put("6A", 168);
@@ -571,7 +682,7 @@ public class SyncTimeGUI implements ActionListener {
 //                dummyData.put("15", 242);
 //                dummyData.put("16", 280);
 
-                new SyncTimeGUI(dummyParent, dummySyncListener, dummyData); // Automatically visible
+                new SyncTimeGUI(dummyParent, dummySyncListener, dummyData, audioPlayerDummy); // Automatically visible
 
 //                SyncTimeGUI syncTimeGUI = new SyncTimeGUI(dummyParent, dummySyncListener, dummyData);
 //                syncTimeGUI.show();

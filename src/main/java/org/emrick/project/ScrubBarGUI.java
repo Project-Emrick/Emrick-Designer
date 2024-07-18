@@ -1,5 +1,7 @@
 package org.emrick.project;
 
+import org.emrick.project.audio.AudioPlayer;
+
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
@@ -28,6 +30,8 @@ public class ScrubBarGUI extends JComponent implements ActionListener {
     // Swing
     private JPanel scrubBarPanel;
     private final JFrame parent;
+
+    private AudioPlayer audioPlayer;
 
     // Status
     private long currTimeMSec;
@@ -70,9 +74,11 @@ public class ScrubBarGUI extends JComponent implements ActionListener {
     private boolean useFps = false;
     private ArrayList<SyncTimeGUI.Pair> timeSync = null;
 
-    public ScrubBarGUI(JFrame parent, ScrubBarListener scrubBarListener, SyncListener syncListener, FootballFieldPanel footballFieldPanel) {
+    public ScrubBarGUI(JFrame parent, ScrubBarListener scrubBarListener, SyncListener syncListener,
+                       FootballFieldPanel footballFieldPanel, AudioPlayer audioPlayer) {
         this.parent = parent;
 
+        this.audioPlayer = audioPlayer;
         // Placeholder. E.g., When Emrick Designer is first opened, no project is loaded.
         this.pageTab2Count = new HashMap<>();
         this.pageTab2Count.put("1", 0);
@@ -543,7 +549,7 @@ public class ScrubBarGUI extends JComponent implements ActionListener {
         }
         else if (e.getSource().equals(syncButton)) {
             if (isReady) {
-                new SyncTimeGUI(parent, syncListener, pageTab2Count);
+                new SyncTimeGUI(parent, syncListener, pageTab2Count, audioPlayer);
             }
         }
         else if (e.getSource().equals(playbackSpeedsBox)) {

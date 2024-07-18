@@ -6,6 +6,9 @@ public class PathConverter {
         if (System.getProperty("os.name").toLowerCase().contains("windows")) {
             return System.getProperty("user.home") + "/AppData/Local/Emrick Designer/" + path;
         }
+        else if (System.getProperty("os.name").toLowerCase().contains("linux")) {
+            return "/Desktop/Emrick-Designer/" + path;
+        }
         else {
             return "/Applications/Emrick Designer.app/" + path;
         }
