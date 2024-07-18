@@ -5,6 +5,7 @@ import com.google.gson.reflect.TypeToken;
 import org.apache.pdfbox.Loader;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.text.PDFTextStripper;
+import org.emrick.project.actions.LEDConfig;
 
 import java.io.*;
 import java.lang.reflect.Type;
@@ -117,12 +118,17 @@ public class DrillParser {
             drill.addSet(c);
             performer.addSet(c);
         }
-        LEDStrip l1 = new LEDStrip(drill.ledStrips.size(), 50, performer.getIdentifier() + "L", performer,  -6, -6, 12, 6);
+        LEDStrip l1 = new LEDStrip(drill.ledStrips.size(), performer,  new LEDConfig());
+        l1.getLedConfig().setLabel("L");
         drill.ledStrips.add(l1);
         performer.addLEDStrip(l1.getId());
-        LEDStrip l2 = new LEDStrip(drill.ledStrips.size(), 50, performer.getIdentifier() + "L", performer,  1, -6, 12, 6);
-        drill.ledStrips.add(l2);
-        performer.addLEDStrip(l2.getId());
+        if (id != 1) {
+            LEDStrip l2 = new LEDStrip(drill.ledStrips.size(), performer, new LEDConfig());
+            l2.getLedConfig().setLabel("R");
+            l2.getLedConfig().sethOffset(1);
+            drill.ledStrips.add(l2);
+            performer.addLEDStrip(l2.getId());
+        }
         return performer;
     }
 

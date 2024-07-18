@@ -231,14 +231,14 @@ public class FootballFieldPanel extends JPanel implements RepaintListener {
                 } else {
                     g.setColor(new Color(0, 0, 0, effectTransparency));
                 }
-                g.fillRect((int) x + l.gethOffset(), (int) y + l.getvOffset(), l.getWidth(), l.getHeight());
+                g.fillRect((int) x + l.getLedConfig().gethOffset(), (int) y + l.getLedConfig().getvOffset(), l.getLedConfig().getWidth(), l.getLedConfig().getHeight());
 
                 if (selectedLEDStrips.contains(l)) {
                     g.setColor(Color.GREEN);
                 } else {
                     g.setColor(Color.BLACK);
                 }
-                g.drawRect((int) x + l.gethOffset(), (int) y + l.getvOffset(), l.getWidth(), l.getHeight());
+                g.drawRect((int) x + l.getLedConfig().gethOffset(), (int) y + l.getLedConfig().getvOffset(), l.getLedConfig().getWidth(), l.getLedConfig().getHeight());
             }
 
             if (showLabels) {
@@ -363,10 +363,10 @@ public class FootballFieldPanel extends JPanel implements RepaintListener {
                 double px = p.currentLocation.getX();
                 double py = p.currentLocation.getY();
 
-                int bxmin = (int) (px + ledStrip.gethOffset());
-                int bymin = (int) (py + ledStrip.getvOffset());
-                int bxmax = (int) (px + ledStrip.gethOffset() + ledStrip.getWidth());
-                int bymax = (int) (py + ledStrip.getvOffset() + ledStrip.getHeight());
+                int bxmin = (int) (px + ledStrip.getLedConfig().gethOffset());
+                int bymin = (int) (py + ledStrip.getLedConfig().getvOffset());
+                int bxmax = (int) (px + ledStrip.getLedConfig().gethOffset() + ledStrip.getLedConfig().getWidth());
+                int bymax = (int) (py + ledStrip.getLedConfig().getvOffset() + ledStrip.getLedConfig().getHeight());
                 boolean intersecting;
                 if (axmax - axmin != 0 || aymax - aymin != 0) {
                     intersecting = AABB(axmin, aymin, axmax, aymax, bxmin, bymin, bxmax, bymax);

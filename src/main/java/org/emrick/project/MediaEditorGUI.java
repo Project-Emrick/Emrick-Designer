@@ -43,6 +43,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
     private final JPanel footballField;
     private final FootballFieldPanel footballFieldPanel;
     private final FootballFieldBackground footballFieldBackground;
+    private LEDConfigurationGUI ledConfigurationGUI;
     // dots
     private final JLabel sysMsg = new JLabel("Welcome to Emrick Designer!", SwingConstants.RIGHT);
     private final Timer clearSysMsg = new Timer(5000, e -> {
@@ -437,10 +438,14 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                                                              Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx()));
         undoColorsItem.addActionListener(e -> {
             //undoColorChange();
-            effectManager.undo();
-            footballFieldPanel.repaint();
-            updateTimelinePanel();
-            updateEffectViewPanel(selectedEffectType);
+            if (ledConfigurationGUI.isShowing()) {
+                ledConfigurationGUI.undo();
+            } else {
+                effectManager.undo();
+                footballFieldPanel.repaint();
+                updateTimelinePanel();
+                updateEffectViewPanel(selectedEffectType);
+            }
         });
         editMenu.add(undoColorsItem);
 
@@ -449,10 +454,14 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                                                              Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx()));
         redoColorsItem.addActionListener(e -> {
             //redoColorChange();
-            effectManager.redo();
-            footballFieldPanel.repaint();
-            updateTimelinePanel();
-            updateEffectViewPanel(selectedEffectType);
+            if (ledConfigurationGUI.isShowing()) {
+                ledConfigurationGUI.redo();
+            } else {
+                effectManager.redo();
+                footballFieldPanel.repaint();
+                updateTimelinePanel();
+                updateEffectViewPanel(selectedEffectType);
+            }
         });
         editMenu.add(redoColorsItem);
 
@@ -1017,6 +1026,8 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
 //            scrubBarGUI.setReady(true);
             footballFieldPanel.repaint();
 
+            ledConfigurationGUI = new LEDConfigurationGUI(footballFieldPanel.drill);
+
             groupsGUI.setGroups(pf.selectionGroups, footballFieldPanel.drill.ledStrips);
             groupsGUI.initializeButtons();
 
@@ -1353,6 +1364,14 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         updateEffectViewPanel(selectedEffectType);
         updateTimelinePanel();
         rebuildPageTabCounts();
+
+
+        ledConfigurationGUI = new LEDConfigurationGUI(footballFieldPanel.drill);
+
+        mainContentPanel.remove(footballField);
+        mainContentPanel.add(ledConfigurationGUI.getScrollPane());
+        mainContentPanel.revalidate();
+        mainContentPanel.repaint();
     }
 
     private void rebuildPageTabCounts() {

@@ -165,25 +165,6 @@ public class FlowViewGUI extends JPanel {
         }
     }
 
-
-    // For testing
-    public static void main(String[] args) {
-        HashMap<Integer, RFTrigger> count2RFTrigger = new HashMap<>();
-        count2RFTrigger.put(0, new RFTrigger(0,0));
-        count2RFTrigger.put(1, new RFTrigger(32, 0));
-        count2RFTrigger.put(2, new RFTrigger(16,0));
-        count2RFTrigger.put(3, new RFTrigger(24, 0));
-        FlowViewGUI flowViewGUI = new FlowViewGUI(count2RFTrigger, null);
-        for (FlowViewItem fvi : flowViewGUI.items) {
-            System.out.println(fvi.getCount());
-        }
-        JFrame jf = new JFrame();
-        jf.setSize(500,500);
-        jf.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        jf.add(flowViewGUI);
-        jf.setVisible(true);
-    }
-
     private class FlowViewItem {
         private int index;
         private int count;

@@ -1,5 +1,6 @@
 package org.emrick.project;
 
+import org.emrick.project.actions.LEDConfig;
 import org.emrick.project.effect.Effect;
 
 import java.util.ArrayList;
@@ -8,59 +9,25 @@ import java.util.Objects;
 
 public class LEDStrip {
     private int id;
-    private int LEDCount;
-    private String label;
     private ArrayList<Effect> effects;
     private Performer performer;
     private int performerID;
-    private int hOffset;
-    private int vOffset;
-    private int height;
-    private int width;
+    private LEDConfig ledConfig;
 
-    public LEDStrip(int id, int LEDCount, String label, Performer performer, int hOffset, int vOffset, int height, int width) {
+    public LEDStrip(int id,  Performer performer, LEDConfig ledConfig) {
         this.id = id;
-        this.LEDCount = LEDCount;
-        this.label = label;
         this.effects = new ArrayList<>();
         this.performer = performer;
+        this.ledConfig = ledConfig;
         performerID = performer.getPerformerID();
-        this.hOffset = hOffset;
-        this.vOffset = vOffset;
-        this.height = height;
-        this.width = width;
     }
 
-    public int getHeight() {
-        return height;
+    public LEDConfig getLedConfig() {
+        return ledConfig;
     }
 
-    public void setHeight(int height) {
-        this.height = height;
-    }
-
-    public int getWidth() {
-        return width;
-    }
-
-    public void setWidth(int width) {
-        this.width = width;
-    }
-
-    public int gethOffset() {
-        return hOffset;
-    }
-
-    public void sethOffset(int hOffset) {
-        this.hOffset = hOffset;
-    }
-
-    public int getvOffset() {
-        return vOffset;
-    }
-
-    public void setvOffset(int vOffset) {
-        this.vOffset = vOffset;
+    public void setLedConfig(LEDConfig ledConfig) {
+        this.ledConfig = ledConfig;
     }
 
     public int getPerformerID() {
@@ -86,28 +53,16 @@ public class LEDStrip {
         effects.sort(Comparator.comparingLong(Effect::getStartTimeMSec));
     }
 
+    public String getLabel() {
+        return performer.getLabel() + ledConfig.getLabel();
+    }
+
     public int getId() {
         return id;
     }
 
     public void setId(int id) {
         this.id = id;
-    }
-
-    public int getLEDCount() {
-        return LEDCount;
-    }
-
-    public void setLEDCount(int LEDCount) {
-        this.LEDCount = LEDCount;
-    }
-
-    public String getLabel() {
-        return label;
-    }
-
-    public void setLabel(String label) {
-        this.label = label;
     }
 
     public ArrayList<Effect> getEffects() {
@@ -132,6 +87,6 @@ public class LEDStrip {
 
     @Override
     public String toString() {
-        return "LEDStrip: " + label + ", " + id;
+        return "LEDStrip: " + ledConfig.getLabel() + ", " + id;
     }
 }
