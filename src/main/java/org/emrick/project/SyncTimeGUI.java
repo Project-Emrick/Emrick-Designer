@@ -215,7 +215,7 @@ public class SyncTimeGUI implements ActionListener {
             totalCounts += entry.getValue();
         }
 
-        counts = new ArrayList<>(totalCounts);
+        counts = new ArrayList<>();
         tapAction = new TapAction();
 
         tapTempoPanel.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke(' '), "tapAction");
@@ -399,6 +399,9 @@ public class SyncTimeGUI implements ActionListener {
     public void actionPerformed(ActionEvent e) {
         if (e.getSource().equals(cancelButton)) {
             dialogWindow.dispose();
+            if (audioPlayer.isAlive()) {
+                audioPlayer.pauseAudio();
+            }
         } else if (e.getSource().equals(syncButton)) {
 
             // This currently expects the text input to be a duration, despite the help text implying it needs to be a timestamp.
@@ -624,13 +627,13 @@ public class SyncTimeGUI implements ActionListener {
                 currentCount++;
             } else if (currentCount >= totalCounts - 1) {
                 currentTime = System.currentTimeMillis();
-                counts.set(currentCount - 1, new PairCountMS(currentCount - 1, currentTime - prevCountTime));
+                counts.add(new PairCountMS(currentCount - 1, currentTime - prevCountTime));
                 currentCount = 0;
                 dialogWindow.dispose();
             }
             else {
                 currentTime = System.currentTimeMillis();
-                counts.set(currentCount - 1, new PairCountMS(currentCount - 1, currentTime - prevCountTime));
+                counts.add(new PairCountMS(currentCount - 1, currentTime - prevCountTime));
                 prevCountTime = currentTime;
             }
         }
