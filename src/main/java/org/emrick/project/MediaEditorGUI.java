@@ -1386,11 +1386,6 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
 
         setupEffectView(null);
     }
-    @Override
-    public void onAutoSync(ArrayList<SyncTimeGUI.PairCountMS> counts, float startDelay) {
-        writeSysMsg("Got Synced Times");
-
-    }
 
     private void setupEffectView(ArrayList<Integer> ids) {
 
