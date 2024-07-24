@@ -222,6 +222,9 @@ public class SyncTimeGUI implements ActionListener {
         tapTempoPanel.getInputMap().put(KeyStroke.getKeyStroke("SPACE"), "tapAction");
         tapTempoPanel.getActionMap().put("tapAction", tapAction);
 
+        mainPanel.add(titlePanel);
+        mainPanel.add(tapTempoPanel);
+
 
           //time in ms that the last beat occurred
 
