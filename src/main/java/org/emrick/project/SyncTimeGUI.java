@@ -12,6 +12,8 @@ import java.io.File;
 import java.util.*;
 import java.util.List;
 
+import static java.awt.event.KeyEvent.VK_SPACE;
+
 public class SyncTimeGUI implements ActionListener {
 
     private static boolean IS_DEBUG = false;
@@ -220,6 +222,8 @@ public class SyncTimeGUI implements ActionListener {
 
         tapTempoPanel.getInputMap().put(KeyStroke.getKeyStroke("SPACE"), "tapAction");
         tapTempoPanel.getActionMap().put("tapAction", tapAction);
+
+        tapTempoPanel.add(new JLabel("TAP HERE"));
 
         mainPanel.add(titlePanel, BorderLayout.NORTH);
         mainPanel.add(tapTempoPanel, BorderLayout.SOUTH);
@@ -613,6 +617,8 @@ public class SyncTimeGUI implements ActionListener {
 
         @Override
         public void actionPerformed(ActionEvent e) {
+
+            System.out.println("COUNT = " + currentCount);
             if (currentCount == 0) {
                 prevCountTime = System.currentTimeMillis();
                 audioPlayer.playAudio(0);
