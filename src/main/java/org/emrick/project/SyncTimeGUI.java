@@ -65,8 +65,12 @@ public class SyncTimeGUI implements ActionListener {
     long prevCountTime = 0;
     int totalCounts = 0;
     long currentTime = 0;
+    ArrayList<PairCountMS> counts;
 
-    public SyncTimeGUI(JFrame parent, SyncListener syncListener, Map<String, Integer> set2Count, AudioPlayer audioPlayer) {
+
+    Action tapAction;
+
+    public SyncTimeGUI(JFrame parent, SyncListener syncListener, Map<String, Integer> set2Count, AudioPlayer audioPlayer)   {
         this.set2Count = set2Count;
         this.syncListener = syncListener;
         this.audioPlayer = audioPlayer;
@@ -90,6 +94,7 @@ public class SyncTimeGUI implements ActionListener {
 
         timestampPanel = createTimestampPanel();
         tabbedPane.add("Timestamp", timestampPanel);
+
 
         tapPanel = createTapPanel();
 
@@ -196,7 +201,7 @@ public class SyncTimeGUI implements ActionListener {
         JLabel instrLabel = new JLabel("When ready, tap the spacebar at the starting tempo. The audio will start automatically." +
                 " The window will close once all of the show counts have been tapped.");
 
-        JPanel tapTempoPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 5));;
+        JPanel tapTempoPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 5));
 
         titlePanel.add(titleLabel, BorderLayout.NORTH);
         titlePanel.add(tapTempoPanel);
@@ -210,47 +215,15 @@ public class SyncTimeGUI implements ActionListener {
         for (Map.Entry<String, Integer> entry : set2Count.entrySet() ) {
             totalCounts += entry.getValue();
         }
-        ArrayList<PairCountMS> counts = new ArrayList<>(totalCounts);
+        counts = new ArrayList<>(totalCounts);
+        tapAction = new TapAction();
+
+        tapTempoPanel.getInputMap().put(KeyStroke.getKeyStroke("SPACE"), "tapAction");
+        tapTempoPanel.getActionMap().put("tapAction", tapAction);
 
 
           //time in ms that the last beat occurred
-        tapTempoPanel.addKeyListener(new KeyListener() {
-            @Override
-            public void keyTyped(KeyEvent e) {
 
-            }
-
-            @Override
-            public void keyPressed(KeyEvent e) {
-
-                if (e.getKeyCode()==KeyEvent.VK_SPACE) {
-
-                    if (currentCount == 0) {
-                        prevCountTime = System.currentTimeMillis();
-                        audioPlayer.playAudio(0);
-                        currentCount++;
-
-                    }
-                    else if (currentCount >= (totalCounts - 1)) {
-                        currentTime = System.currentTimeMillis();
-                        counts.set(currentCount - 1, new PairCountMS(currentCount - 1, currentTime - prevCountTime));
-                        syncListener.onAutoSync(counts, 0);
-                        dialogWindow.dispose();
-                    }
-                    else {
-                        currentTime = System.currentTimeMillis();
-                        counts.set(currentCount - 1, new PairCountMS(currentCount - 1, currentTime - prevCountTime));
-                        prevCountTime = currentTime;
-                    }
-                }
-            }
-
-            @Override
-            public void keyReleased(KeyEvent e) {
-
-            }
-
-        });
         return mainPanel;
     }
 
@@ -633,6 +606,31 @@ public class SyncTimeGUI implements ActionListener {
 
         return true;
     }
+    public class TapAction extends AbstractAction {
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            if (currentCount == 0) {
+                prevCountTime = System.currentTimeMillis();
+                audioPlayer.playAudio(0);
+                currentCount++;
+            } else if (currentCount >= totalCounts - 1) {
+                currentTime = System.currentTimeMillis();
+                counts.set(currentCount - 1, new PairCountMS(currentCount - 1, currentTime - prevCountTime));
+                currentCount = 0;
+                dialogWindow.dispose();
+            }
+            else {
+                currentTime = System.currentTimeMillis();
+                counts.set(currentCount - 1, new PairCountMS(currentCount - 1, currentTime - prevCountTime));
+                prevCountTime = currentTime;
+            }
+        }
+    }
+
+
+
+
 
     public static void main(String[] args) {
 
