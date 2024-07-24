@@ -214,7 +214,7 @@ public class SyncTimeGUI implements ActionListener {
         for (Map.Entry<String, Integer> entry : ptCounts) {
             totalCounts += entry.getValue();
         }
-
+        System.out.println(totalCounts);
         counts = new ArrayList<>();
         tapAction = new TapAction();
 
@@ -630,11 +630,15 @@ public class SyncTimeGUI implements ActionListener {
                 counts.add(new PairCountMS(currentCount - 1, currentTime - prevCountTime));
                 currentCount = 0;
                 dialogWindow.dispose();
+                if (audioPlayer.isAlive()) {
+                    audioPlayer.pauseAudio();
+                }
             }
             else {
                 currentTime = System.currentTimeMillis();
                 counts.add(new PairCountMS(currentCount - 1, currentTime - prevCountTime));
                 prevCountTime = currentTime;
+                currentCount++;
             }
         }
     }
