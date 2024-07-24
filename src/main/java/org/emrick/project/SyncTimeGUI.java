@@ -97,6 +97,7 @@ public class SyncTimeGUI implements ActionListener {
 
 
         tapPanel = createTapPanel();
+        tabbedPane.add("Tap", tapPanel);
 
 
 
