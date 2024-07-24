@@ -209,14 +209,12 @@ public class SyncTimeGUI implements ActionListener {
         titlePanel.add(titleLabel, BorderLayout.NORTH);
         titlePanel.add(instrLabel, BorderLayout.SOUTH);
 
+        List<Map.Entry<String, Integer>> ptCounts = ScrubBarGUI.sortMap(set2Count);
 
-
-        //List<Map.Entry<String, Integer>> ptCounts = ScrubBarGUI.sortMap(set2Count);
-
-        //records the number of counts for the entire show
-        for (Map.Entry<String, Integer> entry : set2Count.entrySet() ) {
+        for (Map.Entry<String, Integer> entry : ptCounts) {
             totalCounts += entry.getValue();
         }
+
         counts = new ArrayList<>(totalCounts);
         tapAction = new TapAction();
 
