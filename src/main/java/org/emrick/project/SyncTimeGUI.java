@@ -220,13 +220,15 @@ public class SyncTimeGUI implements ActionListener {
         counts = new ArrayList<>(totalCounts);
         tapAction = new TapAction();
 
-        tapTempoPanel.getInputMap().put(KeyStroke.getKeyStroke("SPACE"), "tapAction");
+        tapTempoPanel.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke(' '), "tapAction");
         tapTempoPanel.getActionMap().put("tapAction", tapAction);
 
         tapTempoPanel.add(new JLabel("TAP HERE"));
+        tapTempoPanel.setFocusable(true);
 
         mainPanel.add(titlePanel, BorderLayout.NORTH);
         mainPanel.add(tapTempoPanel, BorderLayout.SOUTH);
+        System.out.println("Panel Created");
 
 
           //time in ms that the last beat occurred

@@ -69,7 +69,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
 
     // Audio Components
     //  May want to abstract this away into some DrillPlayer class in the future
-    private AudioPlayer audioPlayer;
+    public AudioPlayer audioPlayer;
     private boolean canSeekAudio = true;
 
     // Effect
@@ -2180,6 +2180,10 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                 throw new RuntimeException(ioe);
             }
         }
+    }
+
+    public AudioPlayer getAudioPlayer() {
+        return audioPlayer;
     }
 
 
