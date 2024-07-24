@@ -723,6 +723,12 @@ public class ScrubBarGUI extends JComponent implements ActionListener {
             }
         });
     }
+    public void setAudioPlayer(AudioPlayer audioPlayer) {
+        this.audioPlayer = audioPlayer;
+    }
+    public AudioPlayer getAudioPlayer() {
+        return audioPlayer;
+    }
 
     public JButton getSyncButton() {
         return syncButton;

@@ -221,7 +221,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         frame.setIconImage(icon);
 
         // Scrub Bar
-        scrubBarGUI = new ScrubBarGUI(frame, this, this, footballFieldPanel, audioPlayer);
+        scrubBarGUI = new ScrubBarGUI(frame, this, this, footballFieldPanel, getAudioPlayer());
 
         // Scrub bar cursor starts on first count of drill by default
         useStartDelay = true;
@@ -1341,6 +1341,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
     public void onAudioImport(File audioFile) {
         // Playing or pausing audio is done through the AudioPlayer service class
         audioPlayer = new AudioPlayer(audioFile);
+        scrubBarGUI.setAudioPlayer(audioPlayer);
     }
 
     @Override

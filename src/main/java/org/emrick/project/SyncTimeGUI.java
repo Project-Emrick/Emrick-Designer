@@ -228,7 +228,6 @@ public class SyncTimeGUI implements ActionListener {
 
         mainPanel.add(titlePanel, BorderLayout.NORTH);
         mainPanel.add(tapTempoPanel, BorderLayout.SOUTH);
-        System.out.println("Panel Created");
 
 
           //time in ms that the last beat occurred
