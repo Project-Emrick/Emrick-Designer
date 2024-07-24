@@ -205,7 +205,6 @@ public class SyncTimeGUI implements ActionListener {
         JPanel tapTempoPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 5));
 
         titlePanel.add(titleLabel, BorderLayout.NORTH);
-        titlePanel.add(tapTempoPanel);
         titlePanel.add(instrLabel, BorderLayout.SOUTH);
 
 
@@ -222,8 +221,8 @@ public class SyncTimeGUI implements ActionListener {
         tapTempoPanel.getInputMap().put(KeyStroke.getKeyStroke("SPACE"), "tapAction");
         tapTempoPanel.getActionMap().put("tapAction", tapAction);
 
-        mainPanel.add(titlePanel);
-        mainPanel.add(tapTempoPanel);
+        mainPanel.add(titlePanel, BorderLayout.NORTH);
+        mainPanel.add(tapTempoPanel, BorderLayout.SOUTH);
 
 
           //time in ms that the last beat occurred
