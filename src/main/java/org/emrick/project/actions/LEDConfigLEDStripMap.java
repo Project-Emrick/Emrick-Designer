@@ -2,12 +2,12 @@ package org.emrick.project.actions;
 
 import org.emrick.project.LEDStrip;
 
-public class ConfigLEDStripMap {
+public class LEDConfigLEDStripMap {
     private LEDStrip ledStrip;
     private LEDConfig newConfig;
     private LEDConfig oldConfig;
 
-    public ConfigLEDStripMap(LEDStrip ledStrip, LEDConfig newConfig, LEDConfig oldConfig) {
+    public LEDConfigLEDStripMap(LEDStrip ledStrip, LEDConfig newConfig, LEDConfig oldConfig) {
         this.ledStrip = ledStrip;
         this.newConfig = newConfig;
         this.oldConfig = oldConfig;

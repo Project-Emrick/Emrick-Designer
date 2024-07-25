@@ -30,7 +30,8 @@ import java.util.*;
 
 
 public class MediaEditorGUI extends Component implements ImportListener, ScrubBarListener, SyncListener,
-        FootballFieldListener, EffectListener, SelectListener, UserAuthListener, RFTriggerListener, RFSignalListener, RequestCompleteListener {
+        FootballFieldListener, EffectListener, SelectListener, UserAuthListener, RFTriggerListener, RFSignalListener, RequestCompleteListener,
+        LEDConfigListener{
 
     // String definitions
     public static final String FILE_MENU_NEW_PROJECT = "New Project";
@@ -427,6 +428,23 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                 exportItem.setEnabled(true);
                 parseCsvFileForPerformerDeviceIDs(csvFile);
             }
+        });
+
+        fileMenu.addSeparator();
+
+        // Edit Configuration
+        JMenuItem editConfigItem = new JMenuItem("Edit LED Configuration");
+        fileMenu.add(editConfigItem);
+        editConfigItem.addActionListener(e -> {
+            ledConfigurationGUI = new LEDConfigurationGUI(footballFieldPanel.drill, this);
+            if (footballField.isShowing()) {
+                mainContentPanel.remove(footballField);
+            } else {
+                mainContentPanel.remove(flowViewGUI);
+            }
+            mainContentPanel.add(ledConfigurationGUI);
+            mainContentPanel.revalidate();
+            mainContentPanel.repaint();
         });
 
         // Edit menu
@@ -1015,18 +1033,20 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             ia.fullImport(archivePath.getAbsolutePath(), null);
             footballFieldPanel.drill = pf.drill;
             footballFieldPanel.drill.performers.sort(Comparator.comparingInt(Performer::getPerformerID));
+            for (Performer p : footballFieldPanel.drill.performers) {
+                p.setLedStrips(new ArrayList<>());
+            }
             for (LEDStrip ledStrip : footballFieldPanel.drill.ledStrips) {
                 Performer p = footballFieldPanel.drill.performers.get(ledStrip.getPerformerID());
                 p.addLEDStrip(ledStrip.getId());
                 ledStrip.setPerformer(p);
-                System.out.println(ledStrip.getPerformer());
             }
             footballFieldPanel.setCurrentSet(footballFieldPanel.drill.sets.get(0));
 //            rebuildPageTabCounts();
 //            scrubBarGUI.setReady(true);
             footballFieldPanel.repaint();
 
-            ledConfigurationGUI = new LEDConfigurationGUI(footballFieldPanel.drill);
+            ledConfigurationGUI = new LEDConfigurationGUI(footballFieldPanel.drill, this);
 
             groupsGUI.setGroups(pf.selectionGroups, footballFieldPanel.drill.ledStrips);
             groupsGUI.initializeButtons();
@@ -1366,10 +1386,10 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         rebuildPageTabCounts();
 
 
-        ledConfigurationGUI = new LEDConfigurationGUI(footballFieldPanel.drill);
+        ledConfigurationGUI = new LEDConfigurationGUI(footballFieldPanel.drill, this);
 
         mainContentPanel.remove(footballField);
-        mainContentPanel.add(ledConfigurationGUI.getScrollPane());
+        mainContentPanel.add(ledConfigurationGUI);
         mainContentPanel.revalidate();
         mainContentPanel.repaint();
     }
@@ -2108,6 +2128,14 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
     public synchronized void onRequestComplete() {
         currentID++;
         serialTransmitter.enterProgMode(ssid, password, currentID, token, verificationColor);
+    }
+
+    @Override
+    public void onExitConfig() {
+        mainContentPanel.remove(ledConfigurationGUI);
+        mainContentPanel.add(footballField);
+        mainContentPanel.revalidate();
+        mainContentPanel.repaint();
     }
 
 

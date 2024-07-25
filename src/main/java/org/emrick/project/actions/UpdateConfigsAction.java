@@ -1,29 +1,29 @@
 package org.emrick.project.actions;
 
-import org.emrick.project.LEDStrip;
+import org.emrick.project.LEDConfigurationGUI;
 
-import java.io.ObjectInputFilter;
 import java.util.ArrayList;
 
 public class UpdateConfigsAction implements UndoableAction {
-    private ArrayList<ConfigLEDStripMap> configLEDStripMaps;
+    private ArrayList<PerformerConfigMap> performerConfigMaps;
 
-    public UpdateConfigsAction(ArrayList<ConfigLEDStripMap> configLEDStripMaps) {
-        this.configLEDStripMaps = configLEDStripMaps;
+    public UpdateConfigsAction(ArrayList<PerformerConfigMap> performerConfigMaps) {
+        this.performerConfigMaps = performerConfigMaps;
     }
 
     @Override
     public void execute() {
-        for (ConfigLEDStripMap configLEDStripMap : configLEDStripMaps) {
-            configLEDStripMap.getLedStrip().setLedConfig(configLEDStripMap.getNewConfig());
-
+        for (PerformerConfigMap performerConfigMap : performerConfigMaps) {
+            LEDConfigurationGUI.PerformerConfigPanel performerConfigPanel = performerConfigMap.getPerformerConfigPanel();
+            performerConfigPanel.pasteConfig(performerConfigMap.getNewPerformerConfig());
         }
     }
 
     @Override
     public void undo() {
-        for (ConfigLEDStripMap configLEDStripMap : configLEDStripMaps) {
-            configLEDStripMap.getLedStrip().setLedConfig(configLEDStripMap.getOldConfig());
+        for (PerformerConfigMap performerConfigMap : performerConfigMaps) {
+            LEDConfigurationGUI.PerformerConfigPanel performerConfigPanel = performerConfigMap.getPerformerConfigPanel();
+            performerConfigPanel.pasteConfig(performerConfigMap.getOldPerformerConfig());
         }
     }
 

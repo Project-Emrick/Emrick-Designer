@@ -1,9 +1,6 @@
 package org.emrick.project;
 
-import org.emrick.project.actions.ConfigLEDStripMap;
-import org.emrick.project.actions.LEDConfig;
-import org.emrick.project.actions.UndoableAction;
-import org.emrick.project.actions.UpdateConfigsAction;
+import org.emrick.project.actions.*;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -14,17 +11,22 @@ import java.util.Stack;
 public class LEDConfigurationGUI extends JPanel {
     private Drill drill;
     private JScrollPane scrollPane;
+    private JPanel scrollablePanel;
+    private JPanel bottomBar;
     private ArrayList<PerformerConfigPanel> performerConfigPanels;
-    private BoxLayout boxLayout;
     private Stack<UndoableAction> undoStack = new Stack<>();
     private Stack<UndoableAction> redoStack = new Stack<>();
     private PerformerConfig copiedConfig = null;
+    private LEDConfigListener ledConfigListener;
 
-    public LEDConfigurationGUI(Drill drill) {
+    public LEDConfigurationGUI(Drill drill, LEDConfigListener ledConfigListener) {
         this.drill = drill;
         this.performerConfigPanels = new ArrayList<>();
-        this.setBackground(new Color(0, 0, 0, 0));
-        this.boxLayout = new BoxLayout(this, BoxLayout.Y_AXIS);
+        this.scrollablePanel = new JPanel();
+        scrollablePanel.setBackground(new Color(0, 0, 0, 0));
+        this.bottomBar = new JPanel();
+        this.setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
+        this.ledConfigListener = ledConfigListener;
         initializeLEDConfigPanel();
     }
 
@@ -32,22 +34,78 @@ public class LEDConfigurationGUI extends JPanel {
         for (Performer p : drill.performers) {
             performerConfigPanels.add(new PerformerConfigPanel(p, drill.ledStrips));
         }
-        this.setLayout(boxLayout);
+        scrollablePanel.setLayout(new BoxLayout(scrollablePanel, BoxLayout.Y_AXIS));
         Border innerBorder = BorderFactory.createTitledBorder("LED View Configuration");
         Border outerBorder = BorderFactory.createEmptyBorder(5, 5, 5, 5);
 
-        this.setBorder(BorderFactory.createCompoundBorder(outerBorder, innerBorder));
+        scrollablePanel.setBorder(BorderFactory.createCompoundBorder(outerBorder, innerBorder));
         for (int i = 0; i < performerConfigPanels.size(); i++) {
             PerformerConfigPanel pc = performerConfigPanels.get(i);
             pc.initializePerformerConfigPanel();
-            this.add(pc);
+            scrollablePanel.add(pc);
         }
-        scrollPane = new JScrollPane(this);
+        scrollPane = new JScrollPane(scrollablePanel);
         scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
         scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
         scrollPane.getVerticalScrollBar().setUnitIncrement(20);
         scrollPane.setBackground(new Color(0, 0, 0, 0));
         scrollPane.setVisible(true);
+        // this listener gets rid of some nasty visual bugs, however it also introduces some lag when using the scroll wheel
+        scrollPane.getVerticalScrollBar().addAdjustmentListener(e -> {
+            reinitializeLEDConfigPanel();
+        });
+
+        JButton selectAllButton = new JButton("Select All");
+
+        JButton deselectAllButton = new JButton("Deselect All");
+
+        selectAllButton.addActionListener(e -> {
+            for (PerformerConfigPanel pc : performerConfigPanels) {
+                pc.selected = true;
+            }
+            reinitializeLEDConfigPanel();
+            deselectAllButton.setEnabled(true);
+            selectAllButton.setEnabled(false);
+        });
+
+        deselectAllButton.addActionListener(e -> {
+            for (PerformerConfigPanel pc : performerConfigPanels) {
+                pc.selected = false;
+            }
+            reinitializeLEDConfigPanel();
+            selectAllButton.setEnabled(true);
+            deselectAllButton.setEnabled(false);
+
+        });
+
+        JButton pasteToSelectedButton = new JButton("Paste To Selected");
+
+        JButton pasteToAllButton = new JButton("Paste To All");
+
+        JButton setSelectedToDefaultButton = new JButton("Set Selected To Default");
+
+        JButton setAllToDefaultButton = new JButton("Set All to Default");
+
+        JButton exitConfigButton = new JButton("Exit");
+        exitConfigButton.addActionListener(e -> ledConfigListener.onExitConfig());
+
+
+        bottomBar.setLayout(new BoxLayout(bottomBar, BoxLayout.X_AXIS));
+
+        bottomBar.add(selectAllButton);
+        bottomBar.add(deselectAllButton);
+        bottomBar.add(pasteToSelectedButton);
+        bottomBar.add(pasteToAllButton);
+        bottomBar.add(setSelectedToDefaultButton);
+        bottomBar.add(setAllToDefaultButton);
+        bottomBar.add(exitConfigButton);
+
+        bottomBar.setPreferredSize(new Dimension(10000, 50));
+        bottomBar.setMinimumSize(new Dimension(600, 50));
+
+        this.add(scrollPane);
+        this.add(bottomBar);
+        this.setVisible(true);
     }
     public void reinitializeLEDConfigPanel() {
         for (PerformerConfigPanel pc : performerConfigPanels) {
@@ -106,6 +164,11 @@ public class LEDConfigurationGUI extends JPanel {
         return ids.get(ids.size()-1);
     }
 
+    public int getPrevID(int id) {
+        Performer prev = drill.performers.get(id - 1);
+        return prev.getLedStrips().get(prev.getLedStrips().size()-1);
+    }
+
     public void addLEDStrip(LEDStrip ledStrip) {
         boolean incrementing = false;
         int id = ledStrip.getId();
@@ -140,15 +203,17 @@ public class LEDConfigurationGUI extends JPanel {
     }
 
     public void removeLEDStrip(LEDStrip ledStrip) {
-        drill.ledStrips.remove(ledStrip);
         for (int i = drill.performers.size()-1; i >= 0; i--) {
+            if (i == 1) {
+                System.out.println("break");
+            }
+
             Performer p = drill.performers.get(i);
             boolean found = false;
             for (int j = 0; j < p.getLedStrips().size(); j++) {
                 try {
-                    LEDStrip l = drill.ledStrips.get(p.getLedStrips().get(j) - 1);
-                    System.out.println(l.getId());
-                    if (l.getId() <= ledStrip.getId()) {
+                    LEDStrip l = drill.ledStrips.get(p.getLedStrips().get(j));
+                    if (l.getId() == ledStrip.getId()) {
                         p.getLedStrips().remove(j);
                         j--;
                         found = true;
@@ -160,6 +225,7 @@ public class LEDConfigurationGUI extends JPanel {
                 } catch (IndexOutOfBoundsException e) {
                     if (ledStrip.getId() == 0) {
                         p.getLedStrips().remove(j);
+                        j--;
                     }
                 }
             }
@@ -167,53 +233,7 @@ public class LEDConfigurationGUI extends JPanel {
                 break;
             }
         }
-    }
-
-
-    public static void main(String[] args) {
-        JFrame frame = new JFrame("LED Configuration");
-        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        frame.setSize(800,500);
-        Drill drill = new Drill();
-        drill.performers.add(new Performer("a", 1, 0));
-        drill.ledStrips.add(new LEDStrip(0, drill.performers.get(0), new LEDConfig()));
-        drill.ledStrips.add(new LEDStrip(1, drill.performers.get(0), new LEDConfig()));
-        drill.ledStrips.get(1).getLedConfig().sethOffset(1);
-        drill.performers.add(new Performer("a", 2, 1));
-        drill.ledStrips.add(new LEDStrip(2, drill.performers.get(1), new LEDConfig()));
-        drill.ledStrips.add(new LEDStrip(3, drill.performers.get(1), new LEDConfig()));
-        drill.ledStrips.get(3).getLedConfig().sethOffset(1);
-        drill.performers.add(new Performer("a", 3, 2));
-        drill.ledStrips.add(new LEDStrip(4, drill.performers.get(2), new LEDConfig()));
-        drill.ledStrips.add(new LEDStrip(5, drill.performers.get(2), new LEDConfig()));
-        drill.ledStrips.get(5).getLedConfig().sethOffset(1);
-        drill.performers.add(new Performer("a", 4, 3));
-        drill.ledStrips.add(new LEDStrip(6, drill.performers.get(3), new LEDConfig()));
-        drill.ledStrips.add(new LEDStrip(7, drill.performers.get(3), new LEDConfig()));
-        drill.ledStrips.get(7).getLedConfig().sethOffset(1);
-        drill.performers.add(new Performer("a", 5, 4));
-        drill.ledStrips.add(new LEDStrip(8, drill.performers.get(4), new LEDConfig()));
-        drill.ledStrips.get(0).getLedConfig().setLabel("L");
-        drill.ledStrips.get(1).getLedConfig().setLabel("R");
-        drill.ledStrips.get(2).getLedConfig().setLabel("L");
-        drill.ledStrips.get(3).getLedConfig().setLabel("R");
-        drill.ledStrips.get(4).getLedConfig().setLabel("L");
-        drill.ledStrips.get(5).getLedConfig().setLabel("R");
-        drill.ledStrips.get(6).getLedConfig().setLabel("L");
-        drill.ledStrips.get(7).getLedConfig().setLabel("R");
-        drill.ledStrips.get(8).getLedConfig().setLabel("L");
-        drill.performers.get(0).addLEDStrip(0);
-        drill.performers.get(0).addLEDStrip(1);
-        drill.performers.get(1).addLEDStrip(2);
-        drill.performers.get(1).addLEDStrip(3);
-        drill.performers.get(2).addLEDStrip(4);
-        drill.performers.get(2).addLEDStrip(5);
-        drill.performers.get(3).addLEDStrip(6);
-        drill.performers.get(3).addLEDStrip(7);
-        drill.performers.get(4).addLEDStrip(8);
-        LEDConfigurationGUI ledConfigurationGUI = new LEDConfigurationGUI(drill);
-        frame.add(ledConfigurationGUI.getScrollPane());
-        frame.setVisible(true);
+        drill.ledStrips.remove(ledStrip);
     }
 
     public class PerformerConfigPanel extends JPanel {
@@ -222,7 +242,7 @@ public class LEDConfigurationGUI extends JPanel {
         private JPanel performerPanel;
         private ArrayList<LEDStrip> ledStrips;
         private boolean showLEDs = false;
-        private boolean selected = false;
+        public boolean selected = false;
         private int edit = -1;
 
         public PerformerConfigPanel(Performer performer, ArrayList<LEDStrip> ledStrips) {
@@ -279,7 +299,7 @@ public class LEDConfigurationGUI extends JPanel {
             hideLedsBtn.addActionListener(e -> {
                 showLEDs = !showLEDs;
                 this.setPreferredSize(new Dimension(800, 60));
-                this.setMinimumSize(new Dimension(600, 85 * ledStrips.size()));
+                this.setMinimumSize(new Dimension(600, 60));
                 this.setMaximumSize(new Dimension(800, 60));
                 reinitializeLEDConfigPanel();
             });
@@ -295,19 +315,43 @@ public class LEDConfigurationGUI extends JPanel {
 
             JButton pasteConfigBtn = new JButton("Paste Config");
             pasteConfigBtn.addActionListener(e -> {
-                pasteConfig();
+                ArrayList<PerformerConfigMap> performerConfigMaps = new ArrayList<>();
+                ArrayList<LEDConfig> configs = new ArrayList<>();
+                for (LEDStrip l : ledStrips) {
+                    configs.add(l.getLedConfig());
+                }
+                PerformerConfig oldPerformerConfig = new PerformerConfig(configs);
+                performerConfigMaps.add(new PerformerConfigMap(oldPerformerConfig, copiedConfig, this));
+                UpdateConfigsAction updateConfigsAction = new UpdateConfigsAction(performerConfigMaps);
+                undoStack.push(updateConfigsAction);
+                redoStack.clear();
+                updateConfigsAction.execute();
             });
 
             JButton defaultConfigBtn = new JButton("Default Config");
             defaultConfigBtn.addActionListener(e -> {
                 PerformerConfig tmp = copiedConfig;
-                ArrayList<LEDConfig> configs = new ArrayList<>();
-                configs.add(new LEDConfig());
-                configs.add(new LEDConfig());
-                configs.get(1).setLabel("R");
-                configs.get(1).sethOffset(1);
-                copiedConfig = new PerformerConfig(configs);
-                pasteConfig();
+
+
+                ArrayList<PerformerConfigMap> performerConfigMaps = new ArrayList<>();
+                ArrayList<LEDConfig> defaultConfigs = new ArrayList<>();
+                defaultConfigs.add(new LEDConfig());
+                defaultConfigs.add(new LEDConfig());
+                defaultConfigs.get(1).setLabel("R");
+                defaultConfigs.get(1).sethOffset(1);
+                PerformerConfig defaultPerformerConfig = new PerformerConfig(defaultConfigs);
+
+                ArrayList<LEDConfig> oldConfigs = new ArrayList<>();
+                for (LEDStrip l : ledStrips) {
+                    oldConfigs.add(l.getLedConfig());
+                }
+                PerformerConfig oldPerformerConfig = new PerformerConfig(oldConfigs);
+                performerConfigMaps.add(new PerformerConfigMap(oldPerformerConfig, defaultPerformerConfig, this));
+                UpdateConfigsAction updateConfigsAction = new UpdateConfigsAction(performerConfigMaps);
+                undoStack.push(updateConfigsAction);
+                redoStack.clear();
+                updateConfigsAction.execute();
+
                 copiedConfig = tmp;
             });
 
@@ -323,12 +367,15 @@ public class LEDConfigurationGUI extends JPanel {
             performerPanel.add(copyConfigBtn);
             performerPanel.add(pasteConfigBtn);
             performerPanel.add(defaultConfigBtn);
-            performerPanel.add(drawLEDs);
+            if (!ledStrips.isEmpty()) {
+                performerPanel.add(drawLEDs);
+            }
 
             this.add(performerPanel);
 
-            if (showLEDs) {
+            if (showLEDs && !ledStrips.isEmpty()) {
                 for (int y = 0; y < ledStrips.size(); y++) {
+                    // TODO: add an add button
                     LEDStrip ledStrip = ledStrips.get(y);
                     JPanel ledStripPanel = new JPanel();
                     ledStripPanel.setLayout(new BoxLayout(ledStripPanel, BoxLayout.X_AXIS));
@@ -395,13 +442,43 @@ public class LEDConfigurationGUI extends JPanel {
                         newConfig.sethOffset(Integer.parseInt(hOffsetField.getText()));
                         newConfig.setvOffset(Integer.parseInt(vOffsetField.getText()));
                         LEDConfig oldConfig = ledStrip.getLedConfig();
-                        ArrayList<ConfigLEDStripMap> configLEDStripMaps = new ArrayList<>();
-                        configLEDStripMaps.add(new ConfigLEDStripMap(ledStrip, newConfig, oldConfig));
-                        UpdateConfigsAction updateConfigsAction = new UpdateConfigsAction(configLEDStripMaps);
+                        ArrayList<LEDConfigLEDStripMap> LEDConfigLEDStripMaps = new ArrayList<>();
+                        LEDConfigLEDStripMaps.add(new LEDConfigLEDStripMap(ledStrip, newConfig, oldConfig));
+                        UpdateConfigAction updateConfigAction = new UpdateConfigAction(LEDConfigLEDStripMaps);
+                        undoStack.push(updateConfigAction);
+                        redoStack.clear();
+                        updateConfigAction.execute();
+
+                        reinitializeLEDConfigPanel();
+                    });
+
+                    JButton deleteButton = new JButton("Delete");
+                    deleteButton.addActionListener(e -> {
+                        ArrayList<PerformerConfigMap> performerConfigMaps = new ArrayList<>();
+                        ArrayList<LEDConfig> deleteConfigs = new ArrayList<>();
+                        for (LEDStrip l : ledStrips) {
+                            if (!l.equals(ledStrip)) {
+                                deleteConfigs.add(l.getLedConfig());
+                            }
+                        }
+                        PerformerConfig deletePerformerConfig = new PerformerConfig(deleteConfigs);
+
+                        ArrayList<LEDConfig> oldConfigs = new ArrayList<>();
+                        for (LEDStrip l : ledStrips) {
+                            oldConfigs.add(l.getLedConfig());
+                        }
+                        PerformerConfig oldPerformerConfig = new PerformerConfig(oldConfigs);
+                        performerConfigMaps.add(new PerformerConfigMap(oldPerformerConfig, deletePerformerConfig, this));
+                        UpdateConfigsAction updateConfigsAction = new UpdateConfigsAction(performerConfigMaps);
                         undoStack.push(updateConfigsAction);
                         redoStack.clear();
                         updateConfigsAction.execute();
 
+                        if (showLEDs) {
+                            this.setPreferredSize(new Dimension(10000, 85 * ledStrips.size()));
+                            this.setMinimumSize(new Dimension(600, 85 * ledStrips.size()));
+                            this.setMaximumSize(new Dimension(10000, 85 * ledStrips.size()));
+                        }
                         reinitializeLEDConfigPanel();
                     });
 
@@ -421,6 +498,7 @@ public class LEDConfigurationGUI extends JPanel {
                     ledStripPanel.add(vOffsetLabel);
                     ledStripPanel.add(vOffsetField);
                     ledStripPanel.add(applyButton);
+                    ledStripPanel.add(deleteButton);
 
                     this.add(ledStripPanel);
                 }
@@ -430,24 +508,36 @@ public class LEDConfigurationGUI extends JPanel {
             }
         }
 
-        public void pasteConfig() {
+        public void pasteConfig(PerformerConfig performerConfig) {
             // TODO: Make this undoable
 
-            if (copiedConfig != null) {
+            if (performerConfig != null) {
                 int i;
-                for (i = 0; i < Math.min(ledStrips.size(), copiedConfig.getLedConfigs().size()); i++) {
-                    ledStrips.get(i).setLedConfig(copiedConfig.getLedConfigs().get(i));
+                for (i = 0; i < Math.min(ledStrips.size(), performerConfig.getLedConfigs().size()); i++) {
+                    ledStrips.get(i).setLedConfig(performerConfig.getLedConfigs().get(i));
                 }
 
-                while (ledStrips.size() > copiedConfig.getLedConfigs().size()) {
+                while (ledStrips.size() > performerConfig.getLedConfigs().size()) {
                     removeLEDStrip(ledStrips.get(i));
                     ledStrips.remove(ledStrips.get(i));
                 }
 
-                while (ledStrips.size() < copiedConfig.getLedConfigs().size()) {
-                    LEDStrip newLEDStrip = new LEDStrip(performer.getLedStrips().get(performer.getLedStrips().size()-1)+1, performer, copiedConfig.getLedConfigs().get(i));
-                    ledStrips.add(newLEDStrip);
+                while (ledStrips.size() < performerConfig.getLedConfigs().size()) {
+                    LEDStrip newLEDStrip;
+
+                    if (ledStrips.isEmpty()) {
+                        if (performer.getPerformerID() == 0) {
+                            newLEDStrip = new LEDStrip(0, performer, performerConfig.getLedConfigs().get(i));
+                        } else {
+                            int id = getPrevID(performer.getPerformerID());
+                            newLEDStrip = new LEDStrip(id, performer, performerConfig.getLedConfigs().get(i));
+                        }
+                    } else {
+                        newLEDStrip = new LEDStrip(performer.getLedStrips().get(performer.getLedStrips().size()-1)+1, performer, performerConfig.getLedConfigs().get(i));
+                    }
+
                     addLEDStrip(newLEDStrip);
+                    ledStrips.add(newLEDStrip);
                     i++;
                 }
 
@@ -456,7 +546,6 @@ public class LEDConfigurationGUI extends JPanel {
                     this.setPreferredSize(new Dimension(10000, 85 * ledStrips.size()));
                     this.setMinimumSize(new Dimension(600, 85 * ledStrips.size()));
                     this.setMaximumSize(new Dimension(10000, 85 * ledStrips.size()));
-                    System.out.println(ledStrips.size());
                 }
                 reinitializeLEDConfigPanel();
             }
