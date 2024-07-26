@@ -14,7 +14,7 @@ public class LEDConfig {
         width = 6;
         hOffset = -6;
         vOffset = -6;
-        label = "L";
+        label = "";
     }
 
     public LEDConfig(int ledCount, int height, int width, int hOffset, int vOffset, String label) {

@@ -6,9 +6,11 @@ import java.util.ArrayList;
 
 public class UpdateConfigsAction implements UndoableAction {
     private ArrayList<PerformerConfigMap> performerConfigMaps;
+    private LEDConfigurationGUI ledConfigurationGUI;
 
-    public UpdateConfigsAction(ArrayList<PerformerConfigMap> performerConfigMaps) {
+    public UpdateConfigsAction(ArrayList<PerformerConfigMap> performerConfigMaps, LEDConfigurationGUI ledConfigurationGUI) {
         this.performerConfigMaps = performerConfigMaps;
+        this.ledConfigurationGUI = ledConfigurationGUI;
     }
 
     @Override
@@ -17,6 +19,9 @@ public class UpdateConfigsAction implements UndoableAction {
             LEDConfigurationGUI.PerformerConfigPanel performerConfigPanel = performerConfigMap.getPerformerConfigPanel();
             performerConfigPanel.pasteConfig(performerConfigMap.getNewPerformerConfig());
         }
+        if (ledConfigurationGUI != null) {
+            ledConfigurationGUI.reinitializeLEDConfigPanel();
+        }
     }
 
     @Override
@@ -24,6 +29,9 @@ public class UpdateConfigsAction implements UndoableAction {
         for (PerformerConfigMap performerConfigMap : performerConfigMaps) {
             LEDConfigurationGUI.PerformerConfigPanel performerConfigPanel = performerConfigMap.getPerformerConfigPanel();
             performerConfigPanel.pasteConfig(performerConfigMap.getOldPerformerConfig());
+        }
+        if (ledConfigurationGUI != null) {
+            ledConfigurationGUI.reinitializeLEDConfigPanel();
         }
     }
 
