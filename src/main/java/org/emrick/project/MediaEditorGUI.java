@@ -7,6 +7,7 @@ import com.itextpdf.text.Document;
 import com.itextpdf.text.*;
 import com.itextpdf.text.pdf.*;
 import com.sun.net.httpserver.HttpServer;
+import org.emrick.project.actions.LEDConfig;
 import org.emrick.project.audio.*;
 import org.emrick.project.effect.*;
 import org.emrick.project.serde.*;
@@ -30,7 +31,8 @@ import java.util.*;
 
 
 public class MediaEditorGUI extends Component implements ImportListener, ScrubBarListener, SyncListener,
-        FootballFieldListener, EffectListener, SelectListener, UserAuthListener, RFTriggerListener, RFSignalListener, RequestCompleteListener {
+        FootballFieldListener, EffectListener, SelectListener, UserAuthListener, RFTriggerListener, RFSignalListener, RequestCompleteListener,
+        LEDConfigListener{
 
     // String definitions
     public static final String FILE_MENU_NEW_PROJECT = "New Project";
@@ -43,6 +45,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
     private final JPanel footballField;
     private final FootballFieldPanel footballFieldPanel;
     private final FootballFieldBackground footballFieldBackground;
+    private LEDConfigurationGUI ledConfigurationGUI;
     // dots
     private final JLabel sysMsg = new JLabel("Welcome to Emrick Designer!", SwingConstants.RIGHT);
     private final Timer clearSysMsg = new Timer(5000, e -> {
@@ -423,9 +426,25 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                 File selectedFile = fileChooser.getSelectedFile();
                 System.out.println("CSV     | Selected file: " + selectedFile.getAbsoluteFile());
                 csvFile = selectedFile;
-                exportItem.setEnabled(true);
                 parseCsvFileForPerformerDeviceIDs(csvFile);
             }
+        });
+
+        fileMenu.addSeparator();
+
+        // Edit Configuration
+        JMenuItem editConfigItem = new JMenuItem("Edit LED Configuration");
+        fileMenu.add(editConfigItem);
+        editConfigItem.addActionListener(e -> {
+            ledConfigurationGUI = new LEDConfigurationGUI(footballFieldPanel.drill, this);
+            if (footballField.isShowing()) {
+                mainContentPanel.remove(footballField);
+            } else {
+                mainContentPanel.remove(flowViewGUI);
+            }
+            mainContentPanel.add(ledConfigurationGUI);
+            mainContentPanel.revalidate();
+            mainContentPanel.repaint();
         });
 
         // Edit menu
@@ -437,10 +456,14 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                                                              Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx()));
         undoColorsItem.addActionListener(e -> {
             //undoColorChange();
-            effectManager.undo();
-            footballFieldPanel.repaint();
-            updateTimelinePanel();
-            updateEffectViewPanel(selectedEffectType);
+            if (ledConfigurationGUI.isShowing()) {
+                ledConfigurationGUI.undo();
+            } else {
+                effectManager.undo();
+                footballFieldPanel.repaint();
+                updateTimelinePanel();
+                updateEffectViewPanel(selectedEffectType);
+            }
         });
         editMenu.add(undoColorsItem);
 
@@ -449,10 +472,14 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                                                              Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx()));
         redoColorsItem.addActionListener(e -> {
             //redoColorChange();
-            effectManager.redo();
-            footballFieldPanel.repaint();
-            updateTimelinePanel();
-            updateEffectViewPanel(selectedEffectType);
+            if (ledConfigurationGUI.isShowing()) {
+                ledConfigurationGUI.redo();
+            } else {
+                effectManager.redo();
+                footballFieldPanel.repaint();
+                updateTimelinePanel();
+                updateEffectViewPanel(selectedEffectType);
+            }
         });
         editMenu.add(redoColorsItem);
 
@@ -1006,16 +1033,20 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             ia.fullImport(archivePath.getAbsolutePath(), null);
             footballFieldPanel.drill = pf.drill;
             footballFieldPanel.drill.performers.sort(Comparator.comparingInt(Performer::getPerformerID));
+            for (Performer p : footballFieldPanel.drill.performers) {
+                p.setLedStrips(new ArrayList<>());
+            }
             for (LEDStrip ledStrip : footballFieldPanel.drill.ledStrips) {
                 Performer p = footballFieldPanel.drill.performers.get(ledStrip.getPerformerID());
                 p.addLEDStrip(ledStrip.getId());
                 ledStrip.setPerformer(p);
-                System.out.println(ledStrip.getPerformer());
             }
             footballFieldPanel.setCurrentSet(footballFieldPanel.drill.sets.get(0));
 //            rebuildPageTabCounts();
 //            scrubBarGUI.setReady(true);
             footballFieldPanel.repaint();
+
+            ledConfigurationGUI = new LEDConfigurationGUI(footballFieldPanel.drill, this);
 
             groupsGUI.setGroups(pf.selectionGroups, footballFieldPanel.drill.ledStrips);
             groupsGUI.initializeButtons();
@@ -1120,50 +1151,117 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
 
     private void exportCsvFileForPerformerDeviceIDs(File selectedFile) {
         try (FileWriter fileWriter = new FileWriter(selectedFile)) {
+            fileWriter.write("Performer Label,LED ID,LED Label,LED Count,Height,Width,Horizontal Offset,VerticalOffset");
+            fileWriter.write("\n");
+            fileWriter.flush();
             for (Performer performer : footballFieldPanel.drill.performers) {
-                fileWriter.write((performer.getPerformerID() * 2) + "");
-                fileWriter.write(",");
-                fileWriter.write(performer.getIdentifier() + "L");
-                fileWriter.write(System.lineSeparator());
-                fileWriter.write((performer.getPerformerID() * 2 + 1) + "");
-                fileWriter.write(",");
-                fileWriter.write(performer.getIdentifier() + "R");
-                fileWriter.write(System.lineSeparator());
+                fileWriter.write(performer.getIdentifier());
+                fileWriter.write("\n");
+                fileWriter.flush();
+                for (Integer i : performer.getLedStrips()) {
+                    LEDStrip l = footballFieldPanel.drill.ledStrips.get(i);
+                    fileWriter.write(",");
+                    fileWriter.write(Integer.toString(l.getId()));
+                    fileWriter.write(",");
+                    fileWriter.write(performer.getIdentifier() + l.getLedConfig().getLabel());
+                    fileWriter.write(",");
+                    fileWriter.write(Integer.toString(l.getLedConfig().getLEDCount()));
+                    fileWriter.write(",");
+                    fileWriter.write(Integer.toString(l.getLedConfig().getHeight()));
+                    fileWriter.write(",");
+                    fileWriter.write(Integer.toString(l.getLedConfig().getWidth()));
+                    fileWriter.write(",");
+                    fileWriter.write(Integer.toString(l.getLedConfig().gethOffset()));
+                    fileWriter.write(",");
+                    fileWriter.write(Integer.toString(l.getLedConfig().getvOffset()));
+                    fileWriter.write("\n");
+                    fileWriter.flush();
+                }
             }
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
     }
 
-    private void parseCsvFileForPerformerDeviceIDs(File inputFile) {
-        try (var fileReader = new FileReader(inputFile); var bufferReader = new BufferedReader(fileReader)) {
-            String temp = "";
-            //read file
-            int linesCount = 0;
-            while ((temp = bufferReader.readLine()) != null) {
-                if (!temp.contains(",")) {
-                    continue;
-                }
-                String[] tmpContent = temp.split(",");
-                for (String s : tmpContent) {
-                    if (!s.trim().isEmpty()) {
-                        if (tmpContent[1].contains("L")) {
-                            footballFieldPanel.drill.performers.stream()
-                                    .filter(performer -> performer.getIdentifier()
-                                            .equals(tmpContent[1].substring(0,tmpContent[1].length()-1)))
-                                    .findFirst()
-                                    .ifPresent(performer -> performer.setPerformerID(Integer.parseInt(tmpContent[0]) / 2));
-                        }
-                    }
-                }
-                linesCount = linesCount + 1;
+    private void applyDefaultLEDConfiguration() {
+        footballFieldPanel.drill.performers.sort(new Comparator<Performer>() {
+            @Override
+            public int compare(Performer o1, Performer o2) {
+                return o1.getIdentifier().compareTo(o2.getIdentifier());
             }
+        });
+        int id = 0;
+        footballFieldPanel.drill.ledStrips = new ArrayList<>();
+        for (Performer p : footballFieldPanel.drill.performers) {
+            LEDConfig c1 = new LEDConfig();
+            c1.setLabel("L");
+            LEDConfig c2 = new LEDConfig();
+            c2.setLabel("R");
+            c2.sethOffset(1);
+            LEDStrip l1 = new LEDStrip(id, p, c1);
+            id++;
+            LEDStrip l2 = new LEDStrip(id, p, c2);
+            id++;
+            p.setLedStrips(new ArrayList<>());
+            p.getLedStrips().add(l1.getId());
+            p.getLedStrips().add(l2.getId());
+            footballFieldPanel.drill.ledStrips.add(l1);
+            footballFieldPanel.drill.ledStrips.add(l2);
+        }
+    }
 
-            if (linesCount != footballFieldPanel.drill.performers.size()) {
-                exportCsvFileForPerformerDeviceIDs(inputFile);
+    private void parseCsvFileForPerformerDeviceIDs(File inputFile) {
+        try {
+            BufferedReader reader = new BufferedReader(new FileReader(inputFile));
+            String line = reader.readLine();
+            if (line != null) {
+                line = reader.readLine();
             }
-        } catch (IOException e) {
-            throw new RuntimeException(e);
+            Performer currPerformer = null;
+            ArrayList<Performer> newPerformerList = new ArrayList<>();
+            ArrayList<LEDStrip> newLedStripList = new ArrayList<>();
+            int currStripID = 0;
+            int currPerformerID = 0;
+
+            // Very strange buffered reader bug occurs for large csv files
+            // The current code works so don't touch it unless major changes need to happen
+            while (line != null) {
+                System.out.println(line);
+                if (!line.startsWith(",")) {
+                    String[] tmp = line.split(",");
+                    try {
+                        if (footballFieldPanel.drill.performers.size() == 0) {
+                            break;
+                        }
+                        currPerformer = footballFieldPanel.drill.performers.stream().filter(p -> p.getIdentifier().equals(tmp[0])).findFirst().get();
+                        footballFieldPanel.drill.performers.remove(currPerformer);
+                        currPerformer.setLedStrips(new ArrayList<>());
+                        currPerformer.setPerformerID(currPerformerID);
+                        currPerformerID++;
+                        newPerformerList.add(currPerformer);
+                    } catch (NoSuchElementException e) {
+                        // TODO: show error message and prompt for a new csv file
+                        throw new RuntimeException(e);
+                    }
+                } else {
+                    String[] tmp = line.split(",");
+                    String label = tmp[2];
+                    int ledCount = Integer.parseInt(tmp[3]);
+                    int height = Integer.parseInt(tmp[4]);
+                    int width = Integer.parseInt(tmp[5]);
+                    int hOffset = Integer.parseInt(tmp[6]);
+                    int vOffset = Integer.parseInt(tmp[7]);
+                    LEDStrip ledStrip = new LEDStrip(currStripID, currPerformer, new LEDConfig(ledCount, height, width, hOffset, vOffset, label));
+                    currStripID++;
+                    newLedStripList.add(ledStrip);
+                    currPerformer.getLedStrips().add(ledStrip.getId());
+                }
+                line = reader.readLine();
+            }
+            footballFieldPanel.drill.performers = newPerformerList;
+            footballFieldPanel.drill.ledStrips = newLedStripList;
+        } catch (IOException ioe) {
+            throw new RuntimeException(ioe);
         }
     }
 
@@ -1347,12 +1445,25 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
     public void onDrillImport(String drill) {
         String text = DrillParser.extractText(drill);
         footballFieldPanel.drill = DrillParser.parseWholeDrill(text);
+        if (csvFile != null) {
+            parseCsvFileForPerformerDeviceIDs(csvFile);
+        } else {
+            applyDefaultLEDConfiguration();
+        }
         footballFieldPanel.addSetToField(footballFieldPanel.drill.sets.get(0));
         count2RFTrigger = new HashMap<>();
         footballFieldPanel.setCount2RFTrigger(count2RFTrigger);
         updateEffectViewPanel(selectedEffectType);
         updateTimelinePanel();
         rebuildPageTabCounts();
+
+
+        ledConfigurationGUI = new LEDConfigurationGUI(footballFieldPanel.drill, this);
+
+        mainContentPanel.remove(footballField);
+        mainContentPanel.add(ledConfigurationGUI);
+        mainContentPanel.revalidate();
+        mainContentPanel.repaint();
     }
 
     private void rebuildPageTabCounts() {
@@ -2089,6 +2200,14 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
     public synchronized void onRequestComplete() {
         currentID++;
         serialTransmitter.enterProgMode(ssid, password, currentID, token, verificationColor);
+    }
+
+    @Override
+    public void onExitConfig() {
+        mainContentPanel.remove(ledConfigurationGUI);
+        mainContentPanel.add(footballField);
+        mainContentPanel.revalidate();
+        mainContentPanel.repaint();
     }
 
 

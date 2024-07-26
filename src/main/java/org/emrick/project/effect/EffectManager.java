@@ -133,13 +133,13 @@ public class EffectManager {
 
     private void showAddRFTriggerErrorDialog(LEDStrip ledStrip) {
         JOptionPane.showMessageDialog(null,
-                "RF trigger could not be added. Please check for collision with effect(s) on LED strip " + ledStrip.getLabel() + ".",
+                "RF trigger could not be added. Please check for collision with effect(s) on LED strip " + ledStrip.getLedConfig().getLabel() + ".",
                 "Create RF Trigger: Error", JOptionPane.ERROR_MESSAGE);
     }
 
     private void showAddEffectErrorDialog(LEDStrip ledStrip) {
         JOptionPane.showMessageDialog(null,
-                "Effect could not be applied to performer " + ledStrip.getLabel() +
+                "Effect could not be applied to performer " + ledStrip.getLedConfig().getLabel() +
                         ". Please check for possible collision with an RF trigger or the performer's other effects.",
                 "Apply Effect: Error", JOptionPane.ERROR_MESSAGE);
     }
