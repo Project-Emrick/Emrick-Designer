@@ -1226,6 +1226,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             // Very strange buffered reader bug occurs for large csv files
             // The current code works so don't touch it unless major changes need to happen
             while (line != null) {
+                System.out.println(line);
                 if (!line.startsWith(",")) {
                     String[] tmp = line.split(",");
                     try {
@@ -1239,6 +1240,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                         currPerformerID++;
                         newPerformerList.add(currPerformer);
                     } catch (NoSuchElementException e) {
+                        // TODO: show error message and prompt for a new csv file
                         throw new RuntimeException(e);
                     }
                 } else {
