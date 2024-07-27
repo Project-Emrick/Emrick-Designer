@@ -932,6 +932,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                 "Menu", JOptionPane.INFORMATION_MESSAGE,
                 new ImageIcon(PathConverter.pathConverter("icon.ico")),
                 allPortNames, allPortNames[0]);
+        st.setSerialPort(port);
         return st;
     }
 
