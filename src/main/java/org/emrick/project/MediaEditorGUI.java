@@ -682,7 +682,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                 f.delete();
             }
             dir.delete();
-            File f = new File("tempPkt.pkt");
+            File f = new File(PathConverter.pathConverter("tempPkt.pkt", false));
             if (f.exists()) {
                 f.delete();
             }
