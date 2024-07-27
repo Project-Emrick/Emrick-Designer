@@ -99,7 +99,6 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
     private FlowViewGUI flowViewGUI;
 
     // Time keeping
-    // TODO: save this
     private TimeManager timeManager;
     private ArrayList<SyncTimeGUI.Pair> timeSync = null;
     private boolean useStartDelay; // If we are at the first count of the first set, useStartDelay = true
@@ -117,6 +116,10 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
     private int currentID;
     private int token;
     private Color verificationColor;
+    private Timer noRequestTimer;
+    private ArrayList<Integer> requestIDs;
+    private JMenuItem runWebServer;
+    private JMenuItem stopWebServer;
     // Project info
     private File archivePath = null;
     private File drillPath = null;
@@ -257,6 +260,10 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                 }
             }
         }
+
+        noRequestTimer = new Timer(5000, e -> {
+           onRequestComplete(-1);
+        });
 
         if (!file.equals("")) {
             if (file.endsWith(".emrick")) {
@@ -641,8 +648,8 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         stopShowItem.setEnabled(false);
         runMenu.add(stopShowItem);
         runMenu.addSeparator();
-        JMenuItem runWebServer = new JMenuItem("Run Web Server");
-        JMenuItem stopWebServer = new JMenuItem("Stop Web Server");
+        runWebServer = new JMenuItem("Run Web Server");
+        stopWebServer = new JMenuItem("Stop Web Server");
         runMenu.add(runWebServer);
         runMenu.add(stopWebServer);
         if (server == null) {
@@ -658,7 +665,9 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         });
         stopWebServer.addActionListener(e -> {
             server.stop(0);
+            noRequestTimer.stop();
             server = null;
+            requestIDs = null;
             stopWebServer.setEnabled(false);
             runWebServer.setEnabled(true);
 
@@ -788,6 +797,11 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             public void windowClosing(WindowEvent e) {
                 if (server != null) {
                     server.stop(0);
+                    server = null;
+                    noRequestTimer.stop();
+                    requestIDs = null;
+                    runWebServer.setEnabled(true);
+                    stopWebServer.setEnabled(false);
                     File dir = new File(PathConverter.pathConverter("tmp/"));
                     File[] files = dir.listFiles();
                     for (File f : files) {
@@ -971,11 +985,12 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
 
             server = HttpServer.create(new InetSocketAddress(port), 250);
             writeSysMsg("server started at " + port);
+            requestIDs = new ArrayList<>();
 
             server.createContext("/", new GetHandler(PathConverter.pathConverter("tmp/"), this));
             server.setExecutor(new ServerExecutor());
             server.start();
-            currentID = 50;
+            currentID = Math.min(50, footballFieldPanel.drill.ledStrips.size());
             verificationColor = JColorChooser.showDialog(this, "Select verification color", Color.WHITE);
 
             String input = JOptionPane.showInputDialog(null, "Enter verification token (leave blank for new token)\n\nDon't use this feature to program more than 200 units");
@@ -989,10 +1004,10 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                 currentID = footballFieldPanel.drill.performers.size();
             }
 
-
             if (serialTransmitter != null) {
                 serialTransmitter.enterProgMode(ssid, password, currentID, token, verificationColor);
             }
+            noRequestTimer.start();
         } catch (IOException ioe) {
             throw new RuntimeException(ioe);
         }
@@ -2197,9 +2212,35 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
     }
 
     @Override
-    public synchronized void onRequestComplete() {
-        currentID++;
-        serialTransmitter.enterProgMode(ssid, password, currentID, token, verificationColor);
+    public synchronized void onRequestComplete(int id) {
+        if (id != -1) {
+            requestIDs.add(id);
+        }
+
+        int highestID = footballFieldPanel.drill.ledStrips.size() - 1;
+        if (currentID < highestID) {
+            currentID++;
+        }
+        noRequestTimer.stop();
+
+        boolean allReceived = true;
+        for (LEDStrip l : footballFieldPanel.drill.ledStrips) {
+            if (!requestIDs.contains(l.getId())) {
+                allReceived = false;
+                break;
+            }
+        }
+        if (!allReceived) {
+            serialTransmitter.enterProgMode(ssid, password, currentID, token, verificationColor);
+            noRequestTimer.setDelay(5000);
+            noRequestTimer.start();
+        } else {
+            server.stop(0);
+            runWebServer.setEnabled(true);
+            stopWebServer.setEnabled(false);
+            server = null;
+            requestIDs = null;
+        }
     }
 
     @Override

@@ -49,7 +49,7 @@ public class GetHandler implements HttpHandler {
         os.write(response.getBytes());
         os.flush();
         os.close();
-        requestCompleteListener.onRequestComplete();
+        requestCompleteListener.onRequestComplete(Integer.parseInt((String) parameters.get("id")));
     }
 
     public void parseQuery(String query, Map<String, Object> parameters) {
