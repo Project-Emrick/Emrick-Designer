@@ -114,6 +114,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
     private String ssid;
     private String password;
     private int currentID;
+    private static int MAX_CONNECTIONS = 50;
     private int token;
     private Color verificationColor;
     private Timer noRequestTimer;
@@ -233,7 +234,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         useStartDelay = true;
         runningShow = false;
 
-        currentID = 50;
+        currentID = MAX_CONNECTIONS;
 
 
         // Delete leftover files from show_data/
@@ -991,7 +992,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             server.createContext("/", new GetHandler(PathConverter.pathConverter("tmp/"), this));
             server.setExecutor(new ServerExecutor());
             server.start();
-            currentID = Math.min(50, footballFieldPanel.drill.ledStrips.size());
+            currentID = Math.min(MAX_CONNECTIONS, footballFieldPanel.drill.ledStrips.size());
             verificationColor = JColorChooser.showDialog(this, "Select verification color", Color.WHITE);
 
             String input = JOptionPane.showInputDialog(null, "Enter verification token (leave blank for new token)\n\nDon't use this feature to program more than 200 units");
