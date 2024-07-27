@@ -9,7 +9,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
-
+// TODO: remove
 public class UserAuthGUI implements ActionListener {
     private JTextField usernameField;
     private JTextField passwordField;
@@ -107,7 +107,7 @@ public class UserAuthGUI implements ActionListener {
             System.out.println(enteredCredentials);
             try {
                 // String credentials = PathConverter.pathConverter("src/main/resources/credentials.txt");
-                String credentialString = new String(Files.readAllBytes(Paths.get(PathConverter.pathConverter("src/main/resources/credentials.txt"))));
+                String credentialString = new String(Files.readAllBytes(Paths.get(PathConverter.pathConverter("res/credentials.txt", true))));
                 System.out.println(credentialString);
                 valids = credentialString.contains(enteredCredentials);
             } catch (IOException IoE) {

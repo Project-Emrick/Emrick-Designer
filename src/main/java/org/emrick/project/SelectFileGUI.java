@@ -246,10 +246,10 @@ public class SelectFileGUI implements ActionListener {
                 if (csvFile != null) {
                     files.add(csvFile.getAbsolutePath());
                 }
-                copyFiles(files, PathConverter.pathConverter("show_data"));
-                archiveFile = new File(PathConverter.pathConverter("show_data/" + archiveFile.getName()));
+                copyFiles(files, PathConverter.pathConverter("show_data", false));
+                archiveFile = new File(PathConverter.pathConverter("show_data/" + archiveFile.getName(), false));
                 if (csvFile != null) {
-                    csvFile = new File(PathConverter.pathConverter("show_data/" + csvFile.getName()));
+                    csvFile = new File(PathConverter.pathConverter("show_data/" + csvFile.getName(), false));
                 }
 
                 importListener.onFileSelect(archiveFile, coordsFile, csvFile);

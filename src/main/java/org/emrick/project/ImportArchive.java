@@ -33,7 +33,7 @@ public class ImportArchive {
         // Unzip into application resources/unzip/ subfolder. Within "AppData" on Windows, "Applications" on Mac
         File archiveFile = new File(archiveSrc);
         String fileNameNoExt = archiveFile.getName().replaceFirst("[.][^.]+$", "");
-        String unzipPath = PathConverter.pathConverter("show_data/" + fileNameNoExt);
+        String unzipPath = PathConverter.pathConverter("show_data/" + fileNameNoExt, false);
 
         Unzip.unzip(archiveSrc, unzipPath);
 

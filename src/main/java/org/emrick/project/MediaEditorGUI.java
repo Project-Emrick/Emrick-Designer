@@ -224,7 +224,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
 
         // Main frame
         frame = new JFrame("Emrick Designer");
-        Image icon = Toolkit.getDefaultToolkit().getImage(PathConverter.pathConverter("src/main/resources/images/icon.png"));
+        Image icon = Toolkit.getDefaultToolkit().getImage(PathConverter.pathConverter("res/images/icon.png", true));
         frame.setIconImage(icon);
 
         // Scrub Bar
@@ -236,9 +236,13 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
 
         currentID = MAX_CONNECTIONS;
 
+        // Make sure user dir exists
+        File userDir = new File(PathConverter.pathConverter("", false));
+        userDir.mkdirs();
+
 
         // Delete leftover files from show_data/
-        File showDataDir = new File(PathConverter.pathConverter("show_data/"));
+        File showDataDir = new File(PathConverter.pathConverter("show_data/", false));
         if (showDataDir.exists()) {
             showDataDir.mkdirs();
             if (showDataDir.isDirectory()) {
@@ -672,7 +676,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             stopWebServer.setEnabled(false);
             runWebServer.setEnabled(true);
 
-            File dir = new File(PathConverter.pathConverter("tmp/"));
+            File dir = new File(PathConverter.pathConverter("tmp/", false));
             File[] files = dir.listFiles();
             for (File f : files) {
                 f.delete();
@@ -803,7 +807,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                     requestIDs = null;
                     runWebServer.setEnabled(true);
                     stopWebServer.setEnabled(false);
-                    File dir = new File(PathConverter.pathConverter("tmp/"));
+                    File dir = new File(PathConverter.pathConverter("tmp/", false));
                     File[] files = dir.listFiles();
                     for (File f : files) {
                         f.delete();
@@ -831,7 +835,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                         }
                     }
                 }
-                File showDataDir = new File(PathConverter.pathConverter("show_data/"));
+                File showDataDir = new File(PathConverter.pathConverter("show_data/", false));
                 showDataDir.mkdirs();
                 File[] cleanFiles = showDataDir.listFiles();
                 for (File f : cleanFiles) {
@@ -931,7 +935,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         }
         String port = (String) JOptionPane.showInputDialog(null, "Choose",
                 "Menu", JOptionPane.INFORMATION_MESSAGE,
-                new ImageIcon(PathConverter.pathConverter("icon.ico")),
+                new ImageIcon(PathConverter.pathConverter("icon.ico", true)),
                 allPortNames, allPortNames[0]);
         st.setSerialPort(port);
         return st;
@@ -958,7 +962,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             }
             else{ //there is a project open
                 if (path.equals("")) {
-                    f = new File("tempPkt.pkt");
+                    f = new File(PathConverter.pathConverter("tempPkt.pkt", false));
                     exportPackets(f);
                 } else {
                     f = new File(path);
@@ -983,13 +987,13 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
 
             serialTransmitter = comPortPrompt();
 
-            Unzip.unzip(f.getAbsolutePath(), PathConverter.pathConverter("tmp/"));
+            Unzip.unzip(f.getAbsolutePath(), PathConverter.pathConverter("tmp/", false));
 
             server = HttpServer.create(new InetSocketAddress(port), 250);
             writeSysMsg("server started at " + port);
             requestIDs = new ArrayList<>();
 
-            server.createContext("/", new GetHandler(PathConverter.pathConverter("tmp/"), this));
+            server.createContext("/", new GetHandler(PathConverter.pathConverter("tmp/", false), this));
             server.setExecutor(new ServerExecutor());
             server.start();
             currentID = Math.min(MAX_CONNECTIONS, footballFieldPanel.drill.ledStrips.size());
@@ -1019,7 +1023,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         try {
             // TODO: pdf loading is redundant with project file. fix? - LHD
 
-            File showDataDir = new File(PathConverter.pathConverter("show_data/"));
+            File showDataDir = new File(PathConverter.pathConverter("show_data/", false));
             showDataDir.mkdirs();
             File[] cleanFiles = showDataDir.listFiles();
             for (File f : cleanFiles) {
@@ -1029,7 +1033,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                     f.delete();
                 }
             }
-            Unzip.unzip(path.getAbsolutePath(), PathConverter.pathConverter("show_data/"));
+            Unzip.unzip(path.getAbsolutePath(), PathConverter.pathConverter("show_data/", false));
             File[] dataFiles = showDataDir.listFiles();
             for (File f : dataFiles) {
                 if (!f.isDirectory()) {
@@ -1045,7 +1049,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             r.close();
             ImportArchive ia = new ImportArchive(this);
 
-            archivePath = new File(PathConverter.pathConverter("show_data/" + pf.archivePath));
+            archivePath = new File(PathConverter.pathConverter("show_data/" + pf.archivePath, false));
 
             ia.fullImport(archivePath.getAbsolutePath(), null);
             footballFieldPanel.drill = pf.drill;
@@ -1943,7 +1947,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
 
         String jsonName = path.getName();
         jsonName = jsonName.substring(0, jsonName.indexOf(".emrick")) + ".json";
-        File dir = new File(PathConverter.pathConverter("show_data/"));
+        File dir = new File(PathConverter.pathConverter("show_data/", false));
         dir.mkdirs();
         File[] cleanJson = dir.listFiles();
         for (File f : cleanJson) {
@@ -1953,7 +1957,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         }
 
         try {
-            FileWriter w = new FileWriter(PathConverter.pathConverter("show_data/" + jsonName));
+            FileWriter w = new FileWriter(PathConverter.pathConverter("show_data/" + jsonName, false));
             w.write(g);
             w.close();
         } catch (IOException e) {
@@ -1961,7 +1965,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             throw new RuntimeException(e);
         }
 
-        File showDataDir = new File(PathConverter.pathConverter("show_data/"));
+        File showDataDir = new File(PathConverter.pathConverter("show_data/", false));
         showDataDir.mkdirs();
         File[] saveFiles = showDataDir.listFiles();
         ArrayList<String> files = new ArrayList<>();
@@ -2060,7 +2064,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         timesMS = timeMS.toArray(timesMS);
         try {
             String out = "";
-            File dir = new File(PathConverter.pathConverter("tmp/"));
+            File dir = new File(PathConverter.pathConverter("tmp/", false));
             dir.mkdirs();
             ArrayList<String> files = new ArrayList<>();
             ArrayList<LEDStrip> list0 = new ArrayList<>();
@@ -2073,7 +2077,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             ArrayList<LEDStrip> list7 = new ArrayList<>();
             for (int k = 0; k < footballFieldPanel.drill.ledStrips.size(); k++) {
                 LEDStrip l = footballFieldPanel.drill.ledStrips.get(k);
-                File curr = new File(PathConverter.pathConverter("tmp/" + l.getId()));
+                File curr = new File(PathConverter.pathConverter("tmp/" + l.getId(), false));
                 curr.createNewFile();
                 files.add(curr.getAbsolutePath());
 
@@ -2269,7 +2273,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                 int a = 0;
                 for (LEDStrip l : ledStrips) {
                     a++;
-                    File curr = new File(PathConverter.pathConverter("tmp/" + l.getId()));
+                    File curr = new File(PathConverter.pathConverter("tmp/" + l.getId(), false));
 
                     BufferedWriter bfw = new BufferedWriter(new FileWriter(curr));
 

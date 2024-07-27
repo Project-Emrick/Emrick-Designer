@@ -139,26 +139,4 @@ public class AudioPlayer extends Thread {
     public void run() {
         // Suppress warning "Instantiating a 'AudioPlayer' with default 'run()' method "
     }
-
-    // For Testing
-    public static void main(String[] args) throws InterruptedException {
-        String oggPath = PathConverter.pathConverter("src/main/resources/audio/test/Aint No Mountain High Enough.ogg");
-        String midiPath = PathConverter.pathConverter("src/main/resources/audio/test/Aint No Mountain High Enough.mid");
-        String wavPath = PathConverter.pathConverter("src/main/resources/audio/test/Aint No Mountain High Enough.wav");
-
-        File oggFile = new File(oggPath);
-        File midiFile = new File(midiPath);
-        File wavFile = new File(wavPath);
-
-        AudioPlayer audioPlayer = new AudioPlayer(oggFile);
-        audioPlayer.initialize();
-        audioPlayer.playAudio();
-
-//        Thread.sleep(3000); // Testing stop audio
-//        audioPlayer.stopAudio();
-
-        // Audio is played on a Daemon thread, which depends on the main thread existing.
-        //  Sequencer (MIDI) thread persists despite main thread.
-        JOptionPane.showMessageDialog(null, "Click OK to stop main thread, thereby killing WAV/OGG audio.");
-    }
 }

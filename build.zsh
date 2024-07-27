@@ -10,13 +10,13 @@
 #echo BUILD COMPLETE
 
 
-VERSION="7.27.2"
+VERSION="7.27.3"
 DIR="./build/dist/$VERSION/Emrick Designer.app"
 NAME="Emrick Designer"
 
 ./gradlew clean
 ./gradlew jpackage
 
-cp -r ./src "$DIR/src/"
+cp -r ./src/main/resources "$DIR/res/"
 echo "File Copied"
 jpackage --type dmg --app-image "$DIR" --name "$NAME" --app-version "$VERSION" -d "./build/dist" --file-associations "FAemrick.properties" --file-associations "FApacket.properties" --mac-package-name "$NAME"
