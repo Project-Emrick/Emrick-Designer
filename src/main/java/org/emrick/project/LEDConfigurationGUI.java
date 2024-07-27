@@ -300,13 +300,13 @@ public class LEDConfigurationGUI extends JPanel {
 
             Performer p = drill.performers.get(i);
             boolean found = false;
-            for (int j = 0; j < p.getLedStrips().size(); j++) {
+            for (int j = p.getLedStrips().size() - 1; j >= 0; j--) {
                 try {
                     LEDStrip l = drill.ledStrips.get(p.getLedStrips().get(j));
                     if (l.getId() == ledStrip.getId()) {
                         p.getLedStrips().remove(j);
-                        j--;
                         found = true;
+                        j--;
                         break;
                     } else if (l.getId() >= ledStrip.getId()) {
                         l.setId(p.getLedStrips().get(j) - 1);
@@ -406,9 +406,9 @@ public class LEDConfigurationGUI extends JPanel {
                 this.setMaximumSize(new Dimension(800, 60));
                 performerPanel.add(showLedsBtn);
             } else {
-                this.setPreferredSize(new Dimension(10000, 85 * ledStrips.size()+25));
-                this.setMinimumSize(new Dimension(600, 85 * ledStrips.size()+25));
-                this.setMaximumSize(new Dimension(10000, 85 * ledStrips.size()+25));
+                this.setPreferredSize(new Dimension(10000, 85 * ledStrips.size()+60));
+                this.setMinimumSize(new Dimension(600, 85 * ledStrips.size()+60));
+                this.setMaximumSize(new Dimension(10000, 85 * ledStrips.size()+60));
                 performerPanel.add(hideLedsBtn);
             }
             performerPanel.add(copyConfigBtn);
@@ -418,7 +418,7 @@ public class LEDConfigurationGUI extends JPanel {
 
             this.add(performerPanel);
 
-            if (showLEDs && !ledStrips.isEmpty()) {
+            if (showLEDs) {
                 for (int y = 0; y < ledStrips.size(); y++) {
                     // TODO: add an add button
                     LEDStrip ledStrip = ledStrips.get(y);
