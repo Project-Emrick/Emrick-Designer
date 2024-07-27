@@ -261,7 +261,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             }
         }
 
-        noRequestTimer = new Timer(5000, e -> {
+        noRequestTimer = new Timer(25000, e -> {
            onRequestComplete(-1);
         });
 
@@ -2232,7 +2232,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         }
         if (!allReceived) {
             serialTransmitter.enterProgMode(ssid, password, currentID, token, verificationColor);
-            noRequestTimer.setDelay(5000);
+            noRequestTimer.setDelay(25000);
             noRequestTimer.start();
         } else {
             server.stop(0);
