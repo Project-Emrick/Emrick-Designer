@@ -14,16 +14,16 @@ import java.util.regex.Pattern;
 public class ScrubBarGUI extends JComponent implements ActionListener {
 
     // String definitions
-    private static final String PATH_SYNC_ICON = PathConverter.pathConverter("src/main/resources/images/scrub/time_sync_flaticon.png");
-    private static final String PATH_PREV_SET_ICON = PathConverter.pathConverter("src/main/resources/images/scrub/prev_set_flaticon.png");
-    private static final String PATH_NEXT_SET_ICON = PathConverter.pathConverter("src/main/resources/images/scrub/next_set_flaticon.png");
-    public static final String PATH_PLAY_ICON = PathConverter.pathConverter("src/main/resources/images/scrub/play_flaticon.png");
-    private static final String PATH_PAUSE_ICON = PathConverter.pathConverter("src/main/resources/images/scrub/pause_flaticon.png");
-    private static final String PATH_PREV_COUNT_ICON = PathConverter.pathConverter("src/main/resources/images/scrub/prev_count_flaticon.png");
-    private static final String PATH_NEXT_COUNT_ICON = PathConverter.pathConverter("src/main/resources/images/scrub/next_count_flaticon.png");
-    private static final String PATH_AUDIO_ICON = PathConverter.pathConverter("src/main/resources/images/scrub/audio_flaticon.png");
-    private static final String PATH_FAST_PLAY_ICON = PathConverter.pathConverter("src/main/resources/images/scrub/fast_play_flaticon.png");
-    private static final String PATH_FULL_PLAY_ICON = PathConverter.pathConverter("src/main/resources/images/scrub/double_arrow_flaticon.png");
+    private static final String PATH_SYNC_ICON = PathConverter.pathConverter("res/images/scrub/time_sync_flaticon.png", true);
+    private static final String PATH_PREV_SET_ICON = PathConverter.pathConverter("res/images/scrub/prev_set_flaticon.png", true);
+    private static final String PATH_NEXT_SET_ICON = PathConverter.pathConverter("res/images/scrub/next_set_flaticon.png", true);
+    public static final String PATH_PLAY_ICON = PathConverter.pathConverter("res/images/scrub/play_flaticon.png", true);
+    private static final String PATH_PAUSE_ICON = PathConverter.pathConverter("res/images/scrub/pause_flaticon.png", true);
+    private static final String PATH_PREV_COUNT_ICON = PathConverter.pathConverter("res/images/scrub/prev_count_flaticon.png", true);
+    private static final String PATH_NEXT_COUNT_ICON = PathConverter.pathConverter("res/images/scrub/next_count_flaticon.png", true);
+    private static final String PATH_AUDIO_ICON = PathConverter.pathConverter("res/images/scrub/audio_flaticon.png", true);
+    private static final String PATH_FAST_PLAY_ICON = PathConverter.pathConverter("res/images/scrub/fast_play_flaticon.png", true);
+    private static final String PATH_FULL_PLAY_ICON = PathConverter.pathConverter("res/images/scrub/double_arrow_flaticon.png", true);
 
     // Swing
     private JPanel scrubBarPanel;
