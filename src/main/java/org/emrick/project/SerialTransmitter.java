@@ -68,7 +68,7 @@ public class SerialTransmitter {
         String str;
         try {
             str = "p" + InetAddress.getLocalHost().getHostAddress() + "\n" + ssid + "\n" + password + "\n" + id + "\n"
-                    + token + "\n" + verificationColor.getRed() + ", " + verificationColor.getGreen() + ", " + verificationColor.getBlue() + "\n";
+                    + token + "\n" + verificationColor.getRed() + "\n" + verificationColor.getGreen() + "\n" + verificationColor.getBlue() + "\n";
         } catch (UnknownHostException uhe) {
             throw new RuntimeException(uhe);
         }
