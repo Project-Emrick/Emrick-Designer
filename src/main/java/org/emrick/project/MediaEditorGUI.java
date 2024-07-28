@@ -1747,7 +1747,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
     @Override
     public void onResizeBackground() {
         footballFieldPanel.setFieldHeight(footballFieldBackground.getFieldHeight());
-        footballFieldPanel.setFieldWidth(footballFieldBackground.getFieldWidth());
+        footballFieldPanel.setFieldWidth(footballFieldBackground.getFieldWidth() * 5.0/6.0);
         footballFieldPanel.setFrontSideline50(footballFieldBackground.getFrontSideline50());
         footballFieldPanel.repaint();
     }

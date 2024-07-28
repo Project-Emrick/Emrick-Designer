@@ -116,7 +116,7 @@ public class ImportArchive {
         // Consider writing cropped image to file?
         //  Crop coordinates were obtained through trial and error, may change
         assert image != null;
-        BufferedImage cropped = image.getSubimage(1102, 578, 2196, 1157);
+        BufferedImage cropped = image.getSubimage(878, 580, 2640, 1155);
         importListener.onSurfaceImport(cropped);
     }
 
