@@ -263,29 +263,6 @@ public class FootballFieldPanel extends JPanel implements RepaintListener {
         this.colorChosen = color;
     }
 
-    // Draw image while maintaining aspect ratio (don't let field stretch/compress)
-    private void drawBetterImage(Graphics g, BufferedImage image) {
-        assert image != null;
-
-        // Calculate the best width and height to maintain aspect ratio
-        double widthRatio = (double) getWidth() / image.getWidth();
-        double heightRatio = (double) getHeight() / image.getHeight();
-        double ratio = Math.min(widthRatio, heightRatio);
-
-        int width = (int) (image.getWidth() * ratio);
-        int height = (int) (image.getHeight() * ratio);
-
-        this.fieldWidth = (image.getWidth() * ratio);
-        this.fieldHeight = (image.getHeight() * ratio);
-
-        // Center the image
-        int x = (getWidth() - width) / 2;
-        int y = (getHeight() - height) / 2;
-        frontSideline50 = new Point(x + (int)fieldWidth / 2,y + (int)fieldHeight);
-
-        g.drawImage(image, x, y, width, height, this);
-    }
-
     public boolean isShowLabels() {
         return showLabels;
     }
