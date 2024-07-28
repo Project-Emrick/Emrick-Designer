@@ -65,17 +65,18 @@ public class SyncTimeGUI implements ActionListener {
 
     int currentCount = 0;
     long prevCountTime = 0;
-    int totalCounts = 0;
+    int totalCounts;
     long currentTime = 0;
     ArrayList<PairCountMS> counts;
 
 
     Action tapAction;
 
-    public SyncTimeGUI(JFrame parent, SyncListener syncListener, Map<String, Integer> set2Count, AudioPlayer audioPlayer)   {
+    public SyncTimeGUI(JFrame parent, SyncListener syncListener, Map<String, Integer> set2Count, AudioPlayer audioPlayer, int totalCounts)   {
         this.set2Count = set2Count;
         this.syncListener = syncListener;
         this.audioPlayer = audioPlayer;
+        this.totalCounts = totalCounts;
 
         dialogWindow = new JDialog(parent, true);
         dialogWindow.setTitle("Sync Time to Original Drill");
@@ -695,7 +696,7 @@ public class SyncTimeGUI implements ActionListener {
 //                dummyData.put("15", 242);
 //                dummyData.put("16", 280);
 
-                new SyncTimeGUI(dummyParent, dummySyncListener, dummyData, audioPlayerDummy); // Automatically visible
+                new SyncTimeGUI(dummyParent, dummySyncListener, dummyData, audioPlayerDummy, 0); // Automatically visible
 
 //                SyncTimeGUI syncTimeGUI = new SyncTimeGUI(dummyParent, dummySyncListener, dummyData);
 //                syncTimeGUI.show();

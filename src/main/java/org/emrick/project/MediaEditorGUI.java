@@ -1359,12 +1359,22 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
     private void rebuildPageTabCounts() {
         Map<String, Integer> pageTabCounts = new HashMap<>();
         int startCount = 0;
+        int totalCounts = 0;
+        int index = 0;
         for (Set s : footballFieldPanel.drill.sets) {
             startCount += s.duration;
             pageTabCounts.put(s.label, startCount);
+
+            //record total counts in the show
+            if (index == (footballFieldPanel.drill.sets.size() - 1)) {
+                totalCounts = startCount + s.duration;
+            }
+            index++;
         }
 
-        scrubBarGUI.updatePageTabCounts(pageTabCounts);
+
+
+        scrubBarGUI.updatePageTabCounts(pageTabCounts, totalCounts);
         buildScrubBarPanel();
 
         // At the point of import process, the project is ready to sync
@@ -1385,11 +1395,6 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         footballFieldPanel.setCount2RFTrigger(count2RFTrigger);
 
         setupEffectView(null);
-    }
-    @Override
-    public void onAutoSync(ArrayList<SyncTimeGUI.PairCountMS> counts, float startDelay) {
-        writeSysMsg("Got Synced Times");
-
     }
 
     private void setupEffectView(ArrayList<Integer> ids) {
