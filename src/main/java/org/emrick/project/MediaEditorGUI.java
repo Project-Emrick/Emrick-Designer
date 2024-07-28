@@ -1359,18 +1359,12 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
     private void rebuildPageTabCounts() {
         Map<String, Integer> pageTabCounts = new HashMap<>();
         int startCount = 0;
-        int totalCounts = 0;
-        int index = 0;
+        int totalCounts;
         for (Set s : footballFieldPanel.drill.sets) {
             startCount += s.duration;
             pageTabCounts.put(s.label, startCount);
-
-            //record total counts in the show
-            if (index == (footballFieldPanel.drill.sets.size() - 1)) {
-                totalCounts = startCount + s.duration;
-            }
-            index++;
         }
+        totalCounts = startCount;
 
 
 

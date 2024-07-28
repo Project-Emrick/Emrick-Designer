@@ -210,11 +210,7 @@ public class SyncTimeGUI implements ActionListener {
         titlePanel.add(titleLabel, BorderLayout.NORTH);
         titlePanel.add(instrLabel, BorderLayout.SOUTH);
 
-        List<Map.Entry<String, Integer>> ptCounts = ScrubBarGUI.sortMap(set2Count);
 
-        for (Map.Entry<String, Integer> entry : ptCounts) {
-            totalCounts += entry.getValue();
-        }
         System.out.println(totalCounts);
         counts = new ArrayList<>();
         tapAction = new TapAction();
@@ -621,7 +617,7 @@ public class SyncTimeGUI implements ActionListener {
         @Override
         public void actionPerformed(ActionEvent e) {
 
-            System.out.println("COUNT = " + currentCount);
+            System.out.println(prevCountTime + " ms");
             if (currentCount == 0) {
                 prevCountTime = System.currentTimeMillis();
                 audioPlayer.playAudio(0);
