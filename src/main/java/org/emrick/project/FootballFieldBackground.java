@@ -96,7 +96,6 @@ public class FootballFieldBackground extends JPanel {
         int x = (getWidth() - width) / 2;
         if (heightRatio == ratio) {
             x = (int) ((double) width / 12.0 * 6.0 / 5.0);
-            System.out.println(x);
             width = (int)((double) width * 1.004); // idk why this is necessary but it is. the math checks out without it but idk
         }
 
