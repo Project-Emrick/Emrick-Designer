@@ -61,6 +61,7 @@ public class ScrubBarGUI extends JComponent implements ActionListener {
     private int currSetStartCount;
     private int currSetEndCount;
     private final FootballFieldPanel footballFieldPanel;
+    private int totalCounts; //total counts in the show
 
     // Listener
     private final ScrubBarListener scrubBarListener;
@@ -99,9 +100,10 @@ public class ScrubBarGUI extends JComponent implements ActionListener {
         initialize();
     }
 
-    public void updatePageTabCounts(Map<String, Integer> pageTabCounts) {
+    public void updatePageTabCounts(Map<String, Integer> pageTabCounts, int totalCounts) {
 
         this.pageTab2Count = pageTabCounts;
+        this.totalCounts = totalCounts;
 
         // Because SyncTimeGUI depends on pageTabCounts, update it as well
 //        syncTimeGUI = new SyncTimeGUI(pageTabCounts);
@@ -549,7 +551,7 @@ public class ScrubBarGUI extends JComponent implements ActionListener {
         }
         else if (e.getSource().equals(syncButton)) {
             if (isReady) {
-                new SyncTimeGUI(parent, syncListener, pageTab2Count, audioPlayer);
+                new SyncTimeGUI(parent, syncListener, pageTab2Count, audioPlayer, totalCounts);
             }
         }
         else if (e.getSource().equals(playbackSpeedsBox)) {
