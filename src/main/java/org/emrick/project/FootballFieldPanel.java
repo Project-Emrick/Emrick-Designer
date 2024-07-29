@@ -314,6 +314,8 @@ public class FootballFieldPanel extends JPanel implements RepaintListener {
             selecting = true;
             selectStartX = e.getX();
             selectStartY = e.getY();
+            selectEndX = e.getX();
+            selectEndY = e.getY();
         }
         @Override
         public void mouseReleased(MouseEvent e) {
