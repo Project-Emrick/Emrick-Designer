@@ -615,15 +615,15 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         JCheckBoxMenuItem toggleFloorCoverImage = new JCheckBoxMenuItem("Show Floor Cover Image");
         toggleFloorCoverImage.setState(true);
         toggleFloorCoverImage.addActionListener(e -> {
-            footballFieldPanel.setShowFloorCoverImage(!footballFieldPanel.getShowFloorCoverImage());
-            footballFieldPanel.repaint();
+            footballFieldBackground.setShowFloorCoverImage(!footballFieldBackground.isShowFloorCoverImage());
+            footballFieldBackground.repaint();
         });
         viewMenu.add(toggleFloorCoverImage);
         JCheckBoxMenuItem toggleSurfaceImage = new JCheckBoxMenuItem("Show Surface Image");
         toggleSurfaceImage.setState(true);
         toggleSurfaceImage.addActionListener(e -> {
-            footballFieldPanel.setShowSurfaceImage(!footballFieldPanel.getShowSurfaceImage());
-            footballFieldPanel.repaint();
+            footballFieldBackground.setShowSurfaceImage(!footballFieldBackground.isShowSurfaceImage());
+            footballFieldBackground.repaint();
         });
         viewMenu.add(toggleSurfaceImage);
         JCheckBoxMenuItem toggleShowLabels = new JCheckBoxMenuItem("Show Drill IDs");
