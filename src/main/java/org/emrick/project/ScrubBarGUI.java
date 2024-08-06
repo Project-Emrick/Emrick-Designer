@@ -209,7 +209,7 @@ public class ScrubBarGUI extends JComponent implements ActionListener {
 //                    }
 //                }
 
-                footballFieldPanel.setCurrentSet(footballFieldPanel.drill.sets.get(getCurrentSetIndex()));
+                scrubBarListener.onSetChange(getCurrentSetIndex());
                 footballFieldPanel.setCurrentSetStartCount(getCurrentSetStart());
                 footballFieldPanel.setCurrentCount(val);
 
@@ -246,7 +246,7 @@ public class ScrubBarGUI extends JComponent implements ActionListener {
             time = (float) (topSlider.getValue() - getCurrentSetStart()) / setDuration * setSyncDuration + pastSetTime;
             scrubBarListener.onTimeChange((long) ((Math.round(time * 1000.0) / 1000.0 - pastSetTime) * 1000));
             double ratio = (time - pastSetTime) / setSyncDuration;
-            footballFieldPanel.setCurrentSet(footballFieldPanel.drill.sets.get(getCurrentSetIndex()));
+            scrubBarListener.onSetChange(getCurrentSetIndex());
             footballFieldPanel.setCurrentSetRatio(Math.min(ratio, 1));
             footballFieldPanel.repaint();
         }
@@ -269,7 +269,7 @@ public class ScrubBarGUI extends JComponent implements ActionListener {
         topSlider.setValue(getCurrentSetStart() + (int) Math.floor(setCount));
         scrubBarListener.onTimeChange((long) ((time - pastSetTime) * 1000));
 
-        footballFieldPanel.setCurrentSet(footballFieldPanel.drill.sets.get(getCurrentSetIndex()));
+        scrubBarListener.onSetChange(getCurrentSetIndex());
         footballFieldPanel.setCurrentSetRatio(Math.min(ratio, 1));
         footballFieldPanel.repaint();
 

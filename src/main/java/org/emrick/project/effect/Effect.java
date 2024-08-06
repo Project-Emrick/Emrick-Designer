@@ -6,6 +6,7 @@ import javax.swing.*;
 import javax.swing.border.Border;
 import java.awt.*;
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.Objects;
 
 public class Effect implements Cloneable, TimelineEvent {
@@ -27,6 +28,7 @@ public class Effect implements Cloneable, TimelineEvent {
     private int id;
     private LightingDisplay.Function function;
     private int size;
+    private ArrayList<Color> chaseSequence;
 
     // Bitflags
     private boolean USE_DURATION;
@@ -55,6 +57,7 @@ public class Effect implements Cloneable, TimelineEvent {
         this.angle = 0;
         this.effectType = EffectList.HIDE_GROUPS;
         this.id = -1;
+        this.chaseSequence = new ArrayList<>();
         calculateEndTimeMSec();
     }
 
@@ -79,6 +82,7 @@ public class Effect implements Cloneable, TimelineEvent {
         this.startTimeMSec = startTimeMSec;
         this.effectType = EffectList.HIDE_GROUPS;
         this.id = id;
+        this.chaseSequence = new ArrayList<>();
         calculateEndTimeMSec();
     }
 
@@ -119,6 +123,14 @@ public class Effect implements Cloneable, TimelineEvent {
             }
         }
         return generatedEffect;
+    }
+
+    public ArrayList<Color> getChaseSequence() {
+        return chaseSequence;
+    }
+
+    public void setChaseSequence(ArrayList<Color> chaseSequence) {
+        this.chaseSequence = chaseSequence;
     }
 
     public double getAngle() {

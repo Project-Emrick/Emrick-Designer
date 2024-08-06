@@ -6,4 +6,5 @@ public interface ScrubBarListener {
     long onScrub();
     void onSpeedChange(float playbackSpeed);
     void onTimeChange(long time);
+    void onSetChange(int setIndex);
 }

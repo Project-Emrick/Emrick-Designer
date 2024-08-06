@@ -98,6 +98,8 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
 
     private FlowViewGUI flowViewGUI;
 
+    private LEDStripViewGUI ledStripViewGUI;
+
     // Time keeping
     private TimeManager timeManager;
     private ArrayList<SyncTimeGUI.Pair> timeSync = null;
@@ -642,6 +644,29 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         });
         viewMenu.add(toggleSelectAllLEDs);
 
+        viewMenu.addSeparator();
+
+        JCheckBoxMenuItem showIndividualView = new JCheckBoxMenuItem("Show Individual View");
+        showIndividualView.setSelected(false);
+        showIndividualView.addActionListener(e -> {
+            if (showIndividualView.isSelected()) {
+                ArrayList<LEDStrip> ledStrips = new ArrayList<>(footballFieldPanel.selectedLEDStrips);
+                ledStripViewGUI = new LEDStripViewGUI(ledStrips, effectManager);
+                ledStripViewGUI.setCurrentMS(footballFieldPanel.currentMS);
+                ledStripViewGUI.setCurrentSet(footballFieldPanel.getCurrentSet());
+                mainContentPanel.remove(footballField);
+                mainContentPanel.add(ledStripViewGUI);
+                mainContentPanel.revalidate();
+                mainContentPanel.repaint();
+            } else {
+                mainContentPanel.remove(ledStripViewGUI);
+                mainContentPanel.add(footballField);
+                mainContentPanel.revalidate();
+                mainContentPanel.repaint();
+            }
+        });
+        viewMenu.add(showIndividualView);
+
         // Run menu
         JMenu runMenu = new JMenu("Run");
         menuBar.add(runMenu);
@@ -1062,7 +1087,9 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                 p.addLEDStrip(ledStrip.getId());
                 ledStrip.setPerformer(p);
             }
+            ledStripViewGUI = new LEDStripViewGUI(new ArrayList<>(), effectManager);
             footballFieldPanel.setCurrentSet(footballFieldPanel.drill.sets.get(0));
+            ledStripViewGUI.setCurrentSet(footballFieldPanel.drill.sets.get(0));
 //            rebuildPageTabCounts();
 //            scrubBarGUI.setReady(true);
             footballFieldPanel.repaint();
@@ -1602,6 +1629,13 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
     @Override
     public void onTimeChange(long time) {
         footballFieldPanel.currentMS = time;
+        ledStripViewGUI.setCurrentMS(time);
+    }
+
+    @Override
+    public void onSetChange(int setIndex) {
+        footballFieldPanel.setCurrentSet(footballFieldPanel.drill.sets.get(setIndex));
+        ledStripViewGUI.setCurrentSet(footballFieldPanel.drill.sets.get(setIndex));
     }
 
     private void updateRFTriggerButton() {
