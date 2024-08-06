@@ -1,12 +1,16 @@
 package org.emrick.project.effect;
 
+import org.emrick.project.LEDStrip;
+
 import java.awt.*;
+import java.util.ArrayList;
 
 public class LightingDisplay {
 
     public enum Function {
         DEFAULT,
-        ALTERNATING_COLOR
+        ALTERNATING_COLOR,
+        CHASE
     }
 
     public static Color defaultLEDFunction(Effect e, long setMS, long currMS) {
@@ -104,5 +108,48 @@ public class LightingDisplay {
             }
         }
         return Color.black;
+    }
+
+    public static ArrayList<Color> chaseFunction(Effect e, LEDStrip l, long setMS, long currMS) {
+        ArrayList<Color> colors = new ArrayList<>();
+        if (e.getStartTimeMSec() + e.getDuration().toMillis() >= currMS) {
+            double percent = (currMS - e.getStartTimeMSec()) / (1.0 / e.getSpeed() * 1000.0);
+            int tick = (int)percent % e.getChaseSequence().size();
+            for (int i = 0; i < l.getLedConfig().getLEDCount(); i++) {
+                // TODO: test to see if this logic needs reversed
+                if (e.isDirection()) {
+                    int positive = tick - i;
+                    while (positive < 0) {
+                        positive += e.getChaseSequence().size();
+                    }
+                    colors.add(e.getChaseSequence().get(positive % e.getChaseSequence().size()));
+                } else {
+                    colors.add(e.getChaseSequence().get((tick+i) % e.getChaseSequence().size()));
+                }
+            }
+        }
+
+        if (e.isSET_TIMEOUT()) {
+            if (e.getStartTimeMSec() + e.getDelay().toMillis() + e.getDuration().toMillis() + e.getTimeout().toMillis() > currMS) {
+                double percent = (e.getEndTimeMSec() - e.getStartTimeMSec()) / (1.0 / e.getSpeed() * 1000.0);
+                int tick = (int)percent % e.getChaseSequence().size();
+                for (int i = 0; i < l.getLedConfig().getLEDCount(); i++) {
+                    if (e.isDirection()) {
+                        colors.add(e.getChaseSequence().get((tick+i) % e.getChaseSequence().size()));
+                    } else {
+                        int positive = tick - i;
+                        while (positive < 0) {
+                            positive += e.getChaseSequence().size();
+                        }
+                        colors.add(e.getChaseSequence().get((tick - i) % e.getChaseSequence().size()));
+                    }
+                }
+            } else {
+                for (int i = 0; i < l.getLedConfig().getLEDCount(); i++) {
+                    colors.add(Color.black);
+                }
+            }
+        }
+        return colors;
     }
 }

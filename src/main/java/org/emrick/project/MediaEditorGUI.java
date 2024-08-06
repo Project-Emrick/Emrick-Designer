@@ -98,6 +98,8 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
 
     private FlowViewGUI flowViewGUI;
 
+    private LEDStripViewGUI ledStripViewGUI;
+
     // Time keeping
     private TimeManager timeManager;
     private ArrayList<SyncTimeGUI.Pair> timeSync = null;
@@ -642,6 +644,31 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         });
         viewMenu.add(toggleSelectAllLEDs);
 
+        viewMenu.addSeparator();
+
+        JCheckBoxMenuItem showIndividualView = new JCheckBoxMenuItem("Show Individual View");
+        showIndividualView.setSelected(false);
+        showIndividualView.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_L,
+                Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx()));
+        showIndividualView.addActionListener(e -> {
+            if (showIndividualView.isSelected()) {
+                ArrayList<LEDStrip> ledStrips = new ArrayList<>(footballFieldPanel.selectedLEDStrips);
+                ledStripViewGUI = new LEDStripViewGUI(ledStrips, effectManager);
+                ledStripViewGUI.setCurrentMS(footballFieldPanel.currentMS);
+                ledStripViewGUI.setCurrentSet(footballFieldPanel.getCurrentSet());
+                mainContentPanel.remove(footballField);
+                mainContentPanel.add(ledStripViewGUI);
+                mainContentPanel.revalidate();
+                mainContentPanel.repaint();
+            } else {
+                mainContentPanel.remove(ledStripViewGUI);
+                mainContentPanel.add(footballField);
+                mainContentPanel.revalidate();
+                mainContentPanel.repaint();
+            }
+        });
+        viewMenu.add(showIndividualView);
+
         // Run menu
         JMenu runMenu = new JMenu("Run");
         menuBar.add(runMenu);
@@ -913,6 +940,13 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         });
         lightMenuPopup.add(circleChasePattern);
 
+        JMenuItem chasePattern = new JMenuItem("Create Chase Effect");
+        chasePattern.addActionListener(e -> {
+            selectedEffectType = EffectList.CHASE;
+            updateEffectViewPanel(selectedEffectType);
+        });
+        lightMenuPopup.add(chasePattern);
+
 
         // Button that triggers the popup menu
         JButton lightButton = new JButton("Effect Options");
@@ -1021,7 +1055,6 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
 
     public void loadProject(File path) {
         try {
-            // TODO: pdf loading is redundant with project file. fix? - LHD
 
             File showDataDir = new File(PathConverter.pathConverter("show_data/", false));
             showDataDir.mkdirs();
@@ -1062,7 +1095,9 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                 p.addLEDStrip(ledStrip.getId());
                 ledStrip.setPerformer(p);
             }
+            ledStripViewGUI = new LEDStripViewGUI(new ArrayList<>(), effectManager);
             footballFieldPanel.setCurrentSet(footballFieldPanel.drill.sets.get(0));
+            ledStripViewGUI.setCurrentSet(footballFieldPanel.drill.sets.get(0));
 //            rebuildPageTabCounts();
 //            scrubBarGUI.setReady(true);
             footballFieldPanel.repaint();
@@ -1212,8 +1247,11 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             }
         });
         int id = 0;
+        int pid = 0;
         footballFieldPanel.drill.ledStrips = new ArrayList<>();
         for (Performer p : footballFieldPanel.drill.performers) {
+            p.setPerformerID(pid);
+            pid++;
             LEDConfig c1 = new LEDConfig();
             c1.setLabel("L");
             LEDConfig c2 = new LEDConfig();
@@ -1602,6 +1640,13 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
     @Override
     public void onTimeChange(long time) {
         footballFieldPanel.currentMS = time;
+        ledStripViewGUI.setCurrentMS(time);
+    }
+
+    @Override
+    public void onSetChange(int setIndex) {
+        footballFieldPanel.setCurrentSet(footballFieldPanel.drill.sets.get(setIndex));
+        ledStripViewGUI.setCurrentSet(footballFieldPanel.drill.sets.get(setIndex));
     }
 
     private void updateRFTriggerButton() {
@@ -1672,7 +1717,11 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             return;
         }
         boolean successful = this.effectManager.addEffectToSelectedLEDStrips(effect);
-        this.footballFieldPanel.repaint();
+        if (ledStripViewGUI.isShowing()) {
+            ledStripViewGUI.repaint();
+        } else {
+            this.footballFieldPanel.repaint();
+        }
         if (successful) {
             updateEffectViewPanel(selectedEffectType);
             updateTimelinePanel();
@@ -1682,7 +1731,11 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
     @Override
     public void onUpdateEffect(Effect oldEffect, Effect newEffect) {
         this.effectManager.replaceEffectForSelectedLEDStrips(oldEffect, newEffect);
-        this.footballFieldPanel.repaint();
+        if (ledStripViewGUI.isShowing()) {
+            ledStripViewGUI.repaint();
+        } else {
+            this.footballFieldPanel.repaint();
+        }
         updateEffectViewPanel(selectedEffectType);
         updateTimelinePanel();
     }
@@ -1690,9 +1743,22 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
     @Override
     public void onDeleteEffect(Effect effect) {
         this.effectManager.removeEffectFromSelectedLEDStrips(effect);
-        this.footballFieldPanel.repaint();
+        if (ledStripViewGUI.isShowing()) {
+            ledStripViewGUI.repaint();
+        } else {
+            this.footballFieldPanel.repaint();
+        }
         updateEffectViewPanel(selectedEffectType);
         updateTimelinePanel();
+    }
+
+    @Override
+    public void onUpdateEffectPanel(Effect effect, boolean isNew) {
+        this.effectViewPanel.remove(effectGUI.getEffectPanel());
+        effectGUI = new EffectGUI(effect, effect.getStartTimeMSec(), this, effect.getEffectType(), isNew);
+        this.effectViewPanel.add(effectGUI.getEffectPanel());
+        this.effectViewPanel.revalidate();
+        this.effectViewPanel.repaint();
     }
 
     ////////////////////////// Football Field Listeners //////////////////////////
@@ -1846,9 +1912,12 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                 } else if (currentEffect.getEffectType() == EffectList.CIRCLE_CHASE) {
                     CircleChaseEffect circleChaseEffect = (CircleChaseEffect) currentEffect.getGeneratedEffect();
                     currentEffect = circleChaseEffect.generateEffectObj();
+                } else if (currentEffect.getEffectType() == EffectList.CHASE) {
+                    ChaseEffect chaseEffect = (ChaseEffect) currentEffect.getGeneratedEffect();
+                    currentEffect = chaseEffect.generateEffectObj();
                 }
             }
-            effectGUI = new EffectGUI(currentEffect, currentMSec, this, selectedEffectType);
+            effectGUI = new EffectGUI(currentEffect, currentMSec, this, selectedEffectType, false);
             // Add updated data for effect view
             effectViewPanel.add(effectGUI.getEffectPanel(), BorderLayout.CENTER);
             effectViewPanel.revalidate();
@@ -2328,6 +2397,12 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                             out += "Timeout: 0";
                             if (e.getFunction() == LightingDisplay.Function.ALTERNATING_COLOR) {
                                 out += ", ExtraParameters: " + e.getSpeed();
+                            }
+                            if (e.getFunction() == LightingDisplay.Function.CHASE) {
+                                out += ", ExtraParameters: " + e.getChaseSequence().size() + "," + e.getSpeed();
+                                for (Color c : e.getChaseSequence()) {
+                                    out += "," + c.getRed() + "," + c.getGreen() + "," + c.getBlue();
+                                }
                             }
                             out += "\n";
                         }

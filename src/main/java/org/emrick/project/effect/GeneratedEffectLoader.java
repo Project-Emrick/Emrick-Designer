@@ -24,4 +24,8 @@ public class GeneratedEffectLoader {
     public static CircleChaseEffect generateCircleChaseEffectFromEffect(Effect e) {
         return new CircleChaseEffect(e.getStartTimeMSec(), e.getEndTimeMSec(), e.getStartColor(), e.getEndColor(), e.getDuration(), e.isDirection(), e.getAngle(), e.getSpeed(), e.getId());
     }
+
+    public static ChaseEffect generateChaseEffectFromEffect(Effect e) {
+        return new ChaseEffect(e.getStartTimeMSec(), e.getEndTimeMSec(), e.getChaseSequence(), e.getDuration(), e.isDirection(), e.getSpeed(), e.getId());
+    }
 }

@@ -8,5 +8,6 @@ public enum EffectList {
     ALTERNATING_COLOR,
     RIPPLE,
     WAVE,
-    CIRCLE_CHASE
+    CIRCLE_CHASE,
+    CHASE
 }
