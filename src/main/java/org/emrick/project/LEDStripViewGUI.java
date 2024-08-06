@@ -7,8 +7,8 @@ import org.emrick.project.effect.EffectManager;
 import org.emrick.project.effect.LightingDisplay;
 
 import javax.swing.*;
+import javax.swing.border.Border;
 import java.awt.*;
-import java.time.Duration;
 import java.util.ArrayList;
 
 public class LEDStripViewGUI extends JPanel {
@@ -25,10 +25,18 @@ public class LEDStripViewGUI extends JPanel {
         this.ledDisplays = new ArrayList<>();
         this.currentMS = 0;
         this.effectManager = effectManager;
+        Border innerBorder = BorderFactory.createTitledBorder("LED Strip Viewer");
+        Border outerBorder = BorderFactory.createEmptyBorder(5, 5, 5, 5);
+
+        this.setBorder(BorderFactory.createCompoundBorder(outerBorder, innerBorder));
         for (LEDStrip ledStrip : ledStrips) {
             LEDDisplay ledDisplay = new LEDDisplay(ledStrip);
             this.ledDisplays.add(ledDisplay);
             this.add(ledDisplay);
+        }
+        if (ledDisplays.isEmpty()) {
+            JLabel ledStripLabel = new JLabel("No LED Strips selected. Go back and select LED strips to use this menu");
+            this.add(ledStripLabel);
         }
     }
 

@@ -648,6 +648,8 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
 
         JCheckBoxMenuItem showIndividualView = new JCheckBoxMenuItem("Show Individual View");
         showIndividualView.setSelected(false);
+        showIndividualView.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_L,
+                Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx()));
         showIndividualView.addActionListener(e -> {
             if (showIndividualView.isSelected()) {
                 ArrayList<LEDStrip> ledStrips = new ArrayList<>(footballFieldPanel.selectedLEDStrips);
