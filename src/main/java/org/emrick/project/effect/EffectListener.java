@@ -7,4 +7,5 @@ public interface EffectListener {
     void onCreateEffect(Effect effect);
     void onUpdateEffect(Effect oldEffect, Effect newEffect);
     void onDeleteEffect(Effect effect);
+    void onUpdateEffectPanel(Effect effect, boolean isNew);
 }

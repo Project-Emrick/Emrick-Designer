@@ -938,6 +938,13 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         });
         lightMenuPopup.add(circleChasePattern);
 
+        JMenuItem chasePattern = new JMenuItem("Create Chase Effect");
+        chasePattern.addActionListener(e -> {
+            selectedEffectType = EffectList.CHASE;
+            updateEffectViewPanel(selectedEffectType);
+        });
+        lightMenuPopup.add(chasePattern);
+
 
         // Button that triggers the popup menu
         JButton lightButton = new JButton("Effect Options");
@@ -1706,7 +1713,11 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             return;
         }
         boolean successful = this.effectManager.addEffectToSelectedLEDStrips(effect);
-        this.footballFieldPanel.repaint();
+        if (ledStripViewGUI.isShowing()) {
+            ledStripViewGUI.repaint();
+        } else {
+            this.footballFieldPanel.repaint();
+        }
         if (successful) {
             updateEffectViewPanel(selectedEffectType);
             updateTimelinePanel();
@@ -1716,7 +1727,11 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
     @Override
     public void onUpdateEffect(Effect oldEffect, Effect newEffect) {
         this.effectManager.replaceEffectForSelectedLEDStrips(oldEffect, newEffect);
-        this.footballFieldPanel.repaint();
+        if (ledStripViewGUI.isShowing()) {
+            ledStripViewGUI.repaint();
+        } else {
+            this.footballFieldPanel.repaint();
+        }
         updateEffectViewPanel(selectedEffectType);
         updateTimelinePanel();
     }
@@ -1724,9 +1739,22 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
     @Override
     public void onDeleteEffect(Effect effect) {
         this.effectManager.removeEffectFromSelectedLEDStrips(effect);
-        this.footballFieldPanel.repaint();
+        if (ledStripViewGUI.isShowing()) {
+            ledStripViewGUI.repaint();
+        } else {
+            this.footballFieldPanel.repaint();
+        }
         updateEffectViewPanel(selectedEffectType);
         updateTimelinePanel();
+    }
+
+    @Override
+    public void onUpdateEffectPanel(Effect effect, boolean isNew) {
+        this.effectViewPanel.remove(effectGUI.getEffectPanel());
+        effectGUI = new EffectGUI(effect, effect.getStartTimeMSec(), this, effect.getEffectType(), isNew);
+        this.effectViewPanel.add(effectGUI.getEffectPanel());
+        this.effectViewPanel.revalidate();
+        this.effectViewPanel.repaint();
     }
 
     ////////////////////////// Football Field Listeners //////////////////////////
@@ -1880,9 +1908,12 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                 } else if (currentEffect.getEffectType() == EffectList.CIRCLE_CHASE) {
                     CircleChaseEffect circleChaseEffect = (CircleChaseEffect) currentEffect.getGeneratedEffect();
                     currentEffect = circleChaseEffect.generateEffectObj();
+                } else if (currentEffect.getEffectType() == EffectList.CHASE) {
+                    ChaseEffect chaseEffect = (ChaseEffect) currentEffect.getGeneratedEffect();
+                    currentEffect = chaseEffect.generateEffectObj();
                 }
             }
-            effectGUI = new EffectGUI(currentEffect, currentMSec, this, selectedEffectType);
+            effectGUI = new EffectGUI(currentEffect, currentMSec, this, selectedEffectType, false);
             // Add updated data for effect view
             effectViewPanel.add(effectGUI.getEffectPanel(), BorderLayout.CENTER);
             effectViewPanel.revalidate();

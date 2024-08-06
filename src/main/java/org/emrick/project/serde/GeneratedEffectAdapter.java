@@ -9,6 +9,7 @@ import org.emrick.project.effect.*;
 import java.awt.*;
 import java.io.IOException;
 import java.time.Duration;
+import java.util.ArrayList;
 
 public class GeneratedEffectAdapter extends TypeAdapter<GeneratedEffect> {
     @Override
@@ -189,6 +190,32 @@ public class GeneratedEffectAdapter extends TypeAdapter<GeneratedEffect> {
             writer.name("effectType");
             writer.value(circleChaseEffect.getEffectType().ordinal());
             writer.endObject();
+        } else if (generatedEffect.getEffectType() == EffectList.CHASE) {
+            ChaseEffect chaseEffect = (ChaseEffect) generatedEffect;
+            writer.beginObject();
+            writer.name("startTime");
+            writer.value(chaseEffect.getStartTime());
+            writer.name("endTime");
+            writer.value(chaseEffect.getEndTime());
+            for (int i = 0; i < chaseEffect.getChaseSequence().size(); i++) {
+                writer.name("colorR" + i);
+                writer.value(chaseEffect.getChaseSequence().get(i).getRed());
+                writer.name("colorG" + i);
+                writer.value(chaseEffect.getChaseSequence().get(i).getGreen());
+                writer.name("colorB" + i);
+                writer.value(chaseEffect.getChaseSequence().get(i).getBlue());
+            }
+            writer.name("duration");
+            writer.value(chaseEffect.getDuration().toMillis());
+            writer.name("speed");
+            writer.value(chaseEffect.getSpeed());
+            writer.name("clockwise");
+            writer.value(chaseEffect.isClockwise());
+            writer.name("id");
+            writer.value(chaseEffect.getId());
+            writer.name("effectType");
+            writer.value(chaseEffect.getEffectType().ordinal());
+            writer.endObject();
         } else {
             writer.nullValue();
         }
@@ -226,6 +253,7 @@ public class GeneratedEffectAdapter extends TypeAdapter<GeneratedEffect> {
         Integer id = null;
         String fieldname = null;
         Integer effectType = null;
+        ArrayList<Color> chaseSequence = null;
         if (reader.peek().equals(JsonToken.NULL)) {
             reader.nextNull();
             return null;
@@ -297,6 +325,20 @@ public class GeneratedEffectAdapter extends TypeAdapter<GeneratedEffect> {
                 clockwise = Boolean.valueOf(reader.nextBoolean());
             } else if ("angle".equals(fieldname)) {
                 angle = Double.valueOf(reader.nextDouble());
+            } else if (isChaseSequenceMember(fieldname)) {
+                Integer data = Integer.valueOf(reader.nextInt());
+                int index = Integer.parseInt(fieldname.substring(6));
+                if (chaseSequence == null) {
+                    chaseSequence = new ArrayList<>();
+                }
+                while (chaseSequence.size() <= index) {
+                    chaseSequence.add(new Color(0,0,0));
+                }
+                switch (fieldname.charAt(5)) {
+                    case 'R': chaseSequence.set(index, new Color(data, chaseSequence.get(index).getGreen(), chaseSequence.get(index).getBlue())); break;
+                    case 'G': chaseSequence.set(index, new Color(chaseSequence.get(index).getRed(), data, chaseSequence.get(index).getBlue())); break;
+                    case 'B': chaseSequence.set(index, new Color(chaseSequence.get(index).getRed(), chaseSequence.get(index).getGreen(), data)); break;
+                }
             }
         }
         reader.endObject();
@@ -475,10 +517,38 @@ public class GeneratedEffectAdapter extends TypeAdapter<GeneratedEffect> {
                         new Color(startColorR, startColorG, startColorB),
                         new Color(endColorR, endColorG, endColorB),
                         Duration.ofMillis(duration), clockwise, angle, speed, id);
+            } else if (effectType == EffectList.CHASE.ordinal()) {
+                if (startTime == null) {
+                    throw new IOException("failed to get startTime component for GeneratedEffect");
+                } else if (endTime == null) {
+                    throw new IOException("failed to get endTime component for GeneratedEffect");
+                } else if (duration == null) {
+                    throw new IOException("failed to get duration component for GeneratedEffect");
+                } else if (clockwise == null) {
+                    throw new IOException("failed to get clockwise component for GeneratedEffect");
+                } else if (id == null) {
+                    throw new IOException("failed to get id component for GeneratedEffect");
+                } else if (speed == null) {
+                    throw new IOException("failed to get speed component for GeneratedEffect");
+                } else if (chaseSequence == null) {
+                    throw new IOException("failed to get chase sequence component for GeneratedEffect");
+                }
+                return new ChaseEffect(startTime, endTime, chaseSequence, Duration.ofMillis(duration), clockwise, speed, id);
             }
         }  else {
             throw new IOException("failed to get effectType component for GeneratedEffect");
         }
         return null;
+    }
+
+    private boolean isChaseSequenceMember(String str) {
+        if (str == null) {
+            return false;
+        }
+
+        if (str.startsWith("colorR") || str.startsWith("colorG") || str.startsWith("colorB")) {
+            return Integer.parseInt(str.substring(6)) >= 0;
+        }
+        return false;
     }
 }

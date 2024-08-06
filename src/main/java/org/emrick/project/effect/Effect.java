@@ -120,6 +120,7 @@ public class Effect implements Cloneable, TimelineEvent {
                 case ALTERNATING_COLOR: generatedEffect = GeneratedEffectLoader.generateAlternatingColorEffectFromEffect(this); break;
                 case RIPPLE: generatedEffect = GeneratedEffectLoader.generateRippleEffectFromEffect(this); break;
                 case CIRCLE_CHASE: generatedEffect = GeneratedEffectLoader.generateCircleChaseEffectFromEffect(this); break;
+                case CHASE: generatedEffect = GeneratedEffectLoader.generateChaseEffectFromEffect(this);
             }
         }
         return generatedEffect;
@@ -325,6 +326,7 @@ public class Effect implements Cloneable, TimelineEvent {
             case RIPPLE: timeLineLabel = "Ripple"; break;
             case WAVE: timeLineLabel = "Wave"; break;
             case CIRCLE_CHASE: timeLineLabel = "Circle Chase"; break;
+            case CHASE: timeLineLabel = "Chase"; break;
             default : timeLineLabel = "Default Pattern"; break;
         }
 

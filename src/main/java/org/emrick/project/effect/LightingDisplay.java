@@ -117,13 +117,13 @@ public class LightingDisplay {
             for (int i = 0; i < l.getLedConfig().getLEDCount(); i++) {
                 // TODO: test to see if this logic needs reversed
                 if (e.isDirection()) {
-                    colors.add(e.getChaseSequence().get((tick+i) % e.getChaseSequence().size()));
-                } else {
                     int positive = tick - i;
                     while (positive < 0) {
                         positive += e.getChaseSequence().size();
                     }
                     colors.add(e.getChaseSequence().get(positive % e.getChaseSequence().size()));
+                } else {
+                    colors.add(e.getChaseSequence().get((tick+i) % e.getChaseSequence().size()));
                 }
             }
         }
