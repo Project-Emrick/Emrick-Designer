@@ -9,7 +9,8 @@ public class LightingDisplay {
 
     public enum Function {
         DEFAULT,
-        ALTERNATING_COLOR
+        ALTERNATING_COLOR,
+        CHASE
     }
 
     public static Color defaultLEDFunction(Effect e, long setMS, long currMS) {

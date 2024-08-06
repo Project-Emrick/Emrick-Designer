@@ -2396,6 +2396,12 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                             if (e.getFunction() == LightingDisplay.Function.ALTERNATING_COLOR) {
                                 out += ", ExtraParameters: " + e.getSpeed();
                             }
+                            if (e.getFunction() == LightingDisplay.Function.CHASE) {
+                                out += ", ExtraParameters: " + e.getChaseSequence().size() + "," + e.getSpeed();
+                                for (Color c : e.getChaseSequence()) {
+                                    out += "," + c.getRed() + "," + c.getGreen() + "," + c.getBlue();
+                                }
+                            }
                             out += "\n";
                         }
                         bfw.write(out);

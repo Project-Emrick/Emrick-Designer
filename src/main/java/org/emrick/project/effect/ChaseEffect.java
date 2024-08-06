@@ -15,6 +15,7 @@ public class ChaseEffect implements GeneratedEffect {
     private boolean clockwise;
     private double speed;
     private int id;
+    private LightingDisplay.Function function = LightingDisplay.Function.CHASE;
 
     public ChaseEffect(long startTime, long endTime, ArrayList<Color> chaseSequence, Duration duration, boolean clockwise, double speed, int id) {
         this.startTime = startTime;
@@ -24,6 +25,14 @@ public class ChaseEffect implements GeneratedEffect {
         this.clockwise = clockwise;
         this.speed = speed;
         this.id = id;
+    }
+
+    public LightingDisplay.Function getFunction() {
+        return function;
+    }
+
+    public void setFunction(LightingDisplay.Function function) {
+        this.function = function;
     }
 
     public long getStartTime() {
@@ -96,6 +105,7 @@ public class ChaseEffect implements GeneratedEffect {
         e.setDirection(clockwise);
         e.setSpeed(speed);
         e.setId(id);
+        e.setFunction(function);
         return e;
     }
 
