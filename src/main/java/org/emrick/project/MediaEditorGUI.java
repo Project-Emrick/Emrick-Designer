@@ -1055,7 +1055,6 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
 
     public void loadProject(File path) {
         try {
-            // TODO: pdf loading is redundant with project file. fix? - LHD
 
             File showDataDir = new File(PathConverter.pathConverter("show_data/", false));
             showDataDir.mkdirs();
@@ -1248,8 +1247,11 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             }
         });
         int id = 0;
+        int pid = 0;
         footballFieldPanel.drill.ledStrips = new ArrayList<>();
         for (Performer p : footballFieldPanel.drill.performers) {
+            p.setPerformerID(pid);
+            pid++;
             LEDConfig c1 = new LEDConfig();
             c1.setLabel("L");
             LEDConfig c2 = new LEDConfig();
