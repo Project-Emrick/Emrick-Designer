@@ -5,6 +5,8 @@ import org.emrick.project.effect.RFTrigger;
 import javax.swing.*;
 import javax.swing.border.Border;
 import java.awt.*;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -13,11 +15,26 @@ import java.util.Iterator;
 public class FlowViewGUI extends JPanel {
     private ArrayList<FlowViewItem> items;
     private RFSignalListener rfSignalListener;
+    int currentTrigger;
+
     public FlowViewGUI(HashMap<Integer, RFTrigger> count2RFTrigger, RFSignalListener rfSignalListener) {
-        super();
-        this.setLayout(new GridBagLayout());
+        this.setLayout(new BoxLayout(this,BoxLayout.Y_AXIS)); //new layout
         this.rfSignalListener = rfSignalListener;
         Iterator<RFTrigger> iterator = count2RFTrigger.values().iterator();
+        currentTrigger = 0;
+
+        this.addKeyListener(new KeyListener() { //When spacebar is hit, move to next trigger
+            @Override
+            public void keyTyped(KeyEvent e) {
+                System.out.println(++currentTrigger);
+                rfSignalListener.onRFSignal(currentTrigger);
+            }
+
+            @Override
+            public void keyPressed(KeyEvent e){}
+            @Override
+            public void keyReleased(KeyEvent e) {}
+        });
         items = new ArrayList<>();
         int i = 0;
         while(iterator.hasNext()) {
@@ -32,137 +49,9 @@ public class FlowViewGUI extends JPanel {
             fvi.generateLabels();
             i++;
         }
-        GridBagConstraints gc = new GridBagConstraints();
-        Border innerBorder = BorderFactory.createTitledBorder("Flow Viewer");
-        Border outerBorder = BorderFactory.createEmptyBorder(5, 5, 5, 5);
 
-        this.setBorder(BorderFactory.createCompoundBorder(outerBorder, innerBorder));
+        
 
-        Insets spacedInsets = new Insets(0, 0, 0, 20);
-        Insets noSpacedInsets = new Insets(0, 0, 0, 0);
-
-        gc.weightx = 1;
-        gc.weighty = 0.2;
-
-        gc.gridx = 0;
-        gc.gridy = 0;
-        gc.fill = GridBagConstraints.BOTH;
-        gc.anchor = GridBagConstraints.WEST;
-        gc.insets = noSpacedInsets;
-        this.add(new JLabel("Index"), gc);
-
-        gc.weightx = 1;
-        gc.weighty = 0.2;
-
-        gc.gridx = 1;
-        gc.gridy = 0;
-        gc.fill = GridBagConstraints.BOTH;
-        gc.anchor = GridBagConstraints.WEST;
-        gc.insets = noSpacedInsets;
-        this.add(new JLabel("Count"), gc);
-
-        gc.weightx = 1;
-        gc.weighty = 0.2;
-
-        gc.gridx = 2;
-        gc.gridy = 0;
-        gc.fill = GridBagConstraints.BOTH;
-        gc.anchor = GridBagConstraints.WEST;
-        gc.insets = noSpacedInsets;
-        this.add(new JLabel("Title"), gc);
-
-        gc.weightx = 1;
-        gc.weighty = 0.2;
-
-        gc.gridx = 3;
-        gc.gridy = 0;
-        gc.fill = GridBagConstraints.BOTH;
-        gc.anchor = GridBagConstraints.WEST;
-        gc.insets = noSpacedInsets;
-        this.add(new JLabel("Description"), gc);
-
-        gc.weightx = 1;
-        gc.weighty = 0.2;
-
-        gc.gridx = 4;
-        gc.gridy = 0;
-        gc.fill = GridBagConstraints.BOTH;
-        gc.anchor = GridBagConstraints.WEST;
-        gc.insets = noSpacedInsets;
-        this.add(new JLabel("Cue"), gc);
-
-        gc.weightx = 1;
-        gc.weighty = 0.2;
-
-        gc.gridx = 5;
-        gc.gridy = 0;
-        gc.fill = GridBagConstraints.BOTH;
-        gc.anchor = GridBagConstraints.WEST;
-        gc.insets = noSpacedInsets;
-        this.add(new JLabel("Execute"), gc);
-
-        for (i = 0; i < items.size(); i++) {
-            gc.weightx = 1;
-            gc.weighty = 0.2;
-
-            gc.gridx = 0;
-            gc.gridy = i+1;
-            gc.fill = GridBagConstraints.BOTH;
-            gc.anchor = GridBagConstraints.WEST;
-            gc.insets = noSpacedInsets;
-            this.add(items.get(i).indexLabel, gc);
-
-            gc.weightx = 1;
-            gc.weighty = 0.2;
-
-            gc.gridx = 1;
-            gc.gridy = i+1;
-            gc.fill = GridBagConstraints.BOTH;
-            gc.anchor = GridBagConstraints.WEST;
-            gc.insets = noSpacedInsets;
-            this.add(items.get(i).countLabel, gc);
-
-            gc.weightx = 1;
-            gc.weighty = 0.2;
-
-            gc.gridx = 2;
-            gc.gridy = i+1;
-            gc.fill = GridBagConstraints.BOTH;
-            gc.anchor = GridBagConstraints.WEST;
-            gc.insets = noSpacedInsets;
-            this.add(items.get(i).titleLabel, gc);
-
-            gc.weightx = 1;
-            gc.weighty = 0.2;
-
-            gc.gridx = 3;
-            gc.gridy = i+1;
-            gc.fill = GridBagConstraints.BOTH;
-            gc.anchor = GridBagConstraints.WEST;
-            gc.insets = noSpacedInsets;
-            this.add(items.get(i).descriptionLabel, gc);
-
-            gc.weightx = 1;
-            gc.weighty = 0.2;
-
-            gc.gridx = 4;
-            gc.gridy = i+1;
-            gc.fill = GridBagConstraints.BOTH;
-            gc.anchor = GridBagConstraints.WEST;
-            gc.insets = noSpacedInsets;
-            this.add(items.get(i).cueLabel, gc);
-
-            gc.weightx = 1;
-            gc.weighty = 0.2;
-
-            gc.gridx = 5;
-            gc.gridy = i+1;
-            gc.fill = GridBagConstraints.BOTH;
-            gc.anchor = GridBagConstraints.WEST;
-            gc.insets = noSpacedInsets;
-            this.add(items.get(i).getExecuteButton(), gc);
-
-        }
     }
 
     private class FlowViewItem {
@@ -187,6 +76,7 @@ public class FlowViewGUI extends JPanel {
             ImageIcon i = new ImageIcon(ScrubBarGUI.PATH_PLAY_ICON);
             executeButton.setIcon(new ImageIcon(i.getImage().getScaledInstance(16,16, Image.SCALE_SMOOTH)));
             executeButton.addActionListener(e -> {
+                currentTrigger = index;
                 System.out.println(index);
                 rfSignalListener.onRFSignal(index);
             });
@@ -308,7 +198,6 @@ public class FlowViewGUI extends JPanel {
         public void setCue(String cue) {
             this.cue = cue;
         }
-
 
     }
 }

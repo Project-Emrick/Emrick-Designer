@@ -933,10 +933,14 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         for (int i = 0; i < allPorts.length; i++) {
             allPortNames[i] = allPorts[i].getDescriptivePortName();
         }
-        String port = (String) JOptionPane.showInputDialog(null, "Choose",
-                "Menu", JOptionPane.INFORMATION_MESSAGE,
-                new ImageIcon(PathConverter.pathConverter("icon.ico", true)),
-                allPortNames, allPortNames[0]);
+        String port = "";
+        if (allPortNames.length>0){
+            port = (String) JOptionPane.showInputDialog(null, "Choose",
+                    "Menu", JOptionPane.INFORMATION_MESSAGE,
+                    new ImageIcon(PathConverter.pathConverter("icon.ico", true)),
+                    allPortNames, allPortNames[0]);
+        }
+
         st.setSerialPort(port);
         return st;
     }

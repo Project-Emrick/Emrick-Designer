@@ -17,7 +17,9 @@ public class SerialTransmitter {
             }
         }
         if (sp == null) {
-            sp = SerialPort.getCommPorts()[0];
+            if (SerialPort.getCommPorts().length>0){
+                sp = SerialPort.getCommPorts()[0];
+            }
         }
     }
 
