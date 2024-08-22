@@ -1840,6 +1840,11 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         return scrubBarGUI.getFps();
     }
 
+    @Override
+    public boolean isPlaying() {
+        return scrubBarGUI.isPlaying();
+    }
+
     private void updateEffectViewPanel(EffectList effectType) {
 
         // No point in updating effect view if can't use effects
@@ -2282,6 +2287,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
     public void onRFSignal(int i) {
 
         if (serialTransmitter != null) {
+
             serialTransmitter.writeSet(i);
         }
     }
