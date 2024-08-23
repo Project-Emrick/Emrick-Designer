@@ -101,6 +101,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
     private boolean runningShow;
 
     private FlowViewGUI flowViewGUI;
+    private boolean isLightBoardMode;
 
     private LEDStripViewGUI ledStripViewGUI;
 
@@ -685,6 +686,8 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         runMenu.add(runShowItem);
         JMenuItem flowViewerItem = new JMenuItem("Run Show via Flow View");
         runMenu.add(flowViewerItem);
+        JMenuItem lightBoardFlowViewerItem = new JMenuItem("Run Light Board via View");
+        runMenu.add(lightBoardFlowViewerItem);
         JMenuItem stopShowItem = new JMenuItem("Stop show");
         stopShowItem.setEnabled(false);
         runMenu.add(stopShowItem);
@@ -746,14 +749,17 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             stopShowItem.setEnabled(false);
             runShowItem.setEnabled(true);
             flowViewerItem.setEnabled(true);
+            lightBoardFlowViewerItem.setEnabled(true);
         });
         flowViewerItem.addActionListener(e -> {
+            isLightBoardMode = false;
             serialTransmitter = comPortPrompt();
             if (serialTransmitter == null) {
                 return;
             }
             runShowItem.setEnabled(false);
             flowViewerItem.setEnabled(false);
+            lightBoardFlowViewerItem.setEnabled(false);
             stopShowItem.setEnabled(true);
             flowViewGUI = new FlowViewGUI(count2RFTrigger, this);
             mainContentPanel.remove(footballField);
@@ -761,6 +767,24 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             mainContentPanel.revalidate();
             mainContentPanel.repaint();
         });
+
+        lightBoardFlowViewerItem.addActionListener(e -> {
+            isLightBoardMode = true;
+            serialTransmitter = comPortPrompt();
+            if (serialTransmitter == null) {
+                return;
+            }
+            runShowItem.setEnabled(false);
+            flowViewerItem.setEnabled(false);
+            lightBoardFlowViewerItem.setEnabled(false);
+            stopShowItem.setEnabled(true);
+            flowViewGUI = new FlowViewGUI(count2RFTrigger, this);
+            mainContentPanel.remove(footballField);
+            mainContentPanel.add(flowViewGUI);
+            mainContentPanel.revalidate();
+            mainContentPanel.repaint();
+        });
+
         runShowItem.addActionListener(e -> {
             serialTransmitter = comPortPrompt();
 
@@ -2347,7 +2371,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
 
         if (serialTransmitter != null) {
 
-            serialTransmitter.writeSet(i);
+            serialTransmitter.writeSet(i, isLightBoardMode);
         }
     }
 

@@ -46,13 +46,19 @@ public class SerialTransmitter {
         return sp;
     }
 
-    public void writeSet(int set) {
+    public void writeSet(int set, boolean isLightBoardMode) {
         sp.clearRTS();
         sp.clearDTR();
         if (!sp.openPort()) {
             System.out.println("Port is busy");
         }
-        String str = "s" + set + "\n";
+        String str;
+        if (isLightBoardMode) {
+            str = "b";
+        } else {
+            str = "s";
+        }
+        str += set + "\n";
         byte[] out = str.getBytes();
         sp.writeBytes(out, str.length());
         sp.flushIOBuffers();
