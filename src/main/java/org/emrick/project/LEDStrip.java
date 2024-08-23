@@ -54,7 +54,7 @@ public class LEDStrip {
     }
 
     public String getLabel() {
-        return performer.getLabel() + ledConfig.getLabel();
+        return performer.getIdentifier() + ledConfig.getLabel();
     }
 
     public int getId() {
