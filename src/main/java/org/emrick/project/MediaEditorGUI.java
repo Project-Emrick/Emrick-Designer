@@ -123,12 +123,15 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
     private ArrayList<Integer> requestIDs;
     private JMenuItem runWebServer;
     private JMenuItem stopWebServer;
+    private ProgrammingTracker programmingTracker;
+    private JProgressBar programmingProgressBar;
     // Project info
     private File archivePath = null;
     private File drillPath = null;
     private File csvFile;
     private Border originalBorder;  // To store the original border of the highlighted component
     private SerialTransmitter serialTransmitter;
+    JFrame webServerFrame;
 
     public MediaEditorGUI(String file) {
         // serde setup
@@ -1043,6 +1046,26 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                 token = Integer.parseInt(input);
                 currentID = footballFieldPanel.drill.performers.size();
             }
+            webServerFrame = new JFrame("Board Programming Tracker");
+            webServerFrame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+            webServerFrame.setSize(800, 600);
+            webServerFrame.setIconImage(Toolkit.getDefaultToolkit().getImage(PathConverter.pathConverter("res/images/icon.png", true)));
+            programmingTracker = new ProgrammingTracker(footballFieldPanel.drill.ledStrips, requestIDs);
+            JScrollPane scrollPane = new JScrollPane(programmingTracker);
+            JPanel fullPanel = new JPanel();
+            fullPanel.setLayout(new BoxLayout(fullPanel, BoxLayout.Y_AXIS));
+            fullPanel.add(scrollPane);
+
+            programmingProgressBar = new JProgressBar(0, footballFieldPanel.drill.ledStrips.size());
+            programmingProgressBar.setValue(0);
+            programmingProgressBar.setPreferredSize(new Dimension(300, 40));
+            programmingProgressBar.setMaximumSize(new Dimension(300, 40));
+            programmingProgressBar.setMinimumSize(new Dimension(300, 40));
+            programmingProgressBar.setString(programmingProgressBar.getValue() + "/" + programmingProgressBar.getMaximum());
+            programmingProgressBar.setStringPainted(true);
+            fullPanel.add(programmingProgressBar);
+            webServerFrame.add(fullPanel);
+            webServerFrame.setVisible(true);
 
             if (serialTransmitter != null) {
                 serialTransmitter.enterProgMode(ssid, password, currentID, token, verificationColor);
@@ -1717,7 +1740,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             return;
         }
         boolean successful = this.effectManager.addEffectToSelectedLEDStrips(effect);
-        if (ledStripViewGUI.isShowing()) {
+        if (ledStripViewGUI != null && ledStripViewGUI.isShowing()) {
             ledStripViewGUI.repaint();
         } else {
             this.footballFieldPanel.repaint();
@@ -1759,6 +1782,11 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         this.effectViewPanel.add(effectGUI.getEffectPanel());
         this.effectViewPanel.revalidate();
         this.effectViewPanel.repaint();
+    }
+
+    @Override
+    public TimeManager onTimeRequired() {
+        return timeManager;
     }
 
     ////////////////////////// Football Field Listeners //////////////////////////
@@ -2296,6 +2324,12 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
     public synchronized void onRequestComplete(int id) {
         if (id != -1) {
             requestIDs.add(id);
+            programmingProgressBar.setValue(requestIDs.size());
+            programmingProgressBar.setString(programmingProgressBar.getValue() + "/" + programmingProgressBar.getMaximum());
+            programmingProgressBar.setStringPainted(true);
+            programmingTracker.addCompletedStrip(id);
+            programmingTracker.revalidate();
+            programmingTracker.repaint();
         }
 
         int highestID = footballFieldPanel.drill.ledStrips.size() - 1;
@@ -2330,6 +2364,96 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         mainContentPanel.add(footballField);
         mainContentPanel.revalidate();
         mainContentPanel.repaint();
+    }
+
+    private class ProgrammingTracker extends JPanel {
+        private ArrayList<LEDStrip> allStrips;
+        private ArrayList<Integer> completedStrips;
+        private ArrayList<ProgrammableItem> items;
+
+        public ProgrammingTracker(ArrayList<LEDStrip> allStrips, ArrayList<Integer> completedStrips) {
+            this.allStrips = allStrips;
+            this.completedStrips = completedStrips;
+            items = new ArrayList<ProgrammableItem>();
+            this.setLayout(new GridLayout(20, allStrips.size() / 20+1));
+            for (LEDStrip l : allStrips) {
+                ProgrammableItem item = new ProgrammableItem(l);
+                items.add(item);
+                this.add(item);
+            }
+            for (Integer l : completedStrips) {
+                setItemCompleted(l);
+            }
+        }
+
+        public ArrayList<LEDStrip> getAllStrips() {
+            return allStrips;
+        }
+
+        public void setAllStrips(ArrayList<LEDStrip> allStrips) {
+            this.allStrips = allStrips;
+        }
+
+        public ArrayList<Integer> getCompletedStrips() {
+            return completedStrips;
+        }
+
+        public void setCompletedStrips(ArrayList<Integer> completedStrips) {
+            this.completedStrips = completedStrips;
+        }
+
+        public void addCompletedStrip(Integer ledStrip) {
+            completedStrips.add(ledStrip);
+            setItemCompleted(ledStrip);
+        }
+
+        private void setItemCompleted(Integer ledStrip) {
+            for (ProgrammableItem item : items) {
+                if (item.getLedStrip().getId() == ledStrip) {
+                    item.setProgrammed(true);
+                }
+            }
+        }
+
+        private class ProgrammableItem extends JPanel {
+            private LEDStrip ledStrip;
+            private boolean programmed;
+
+            public ProgrammableItem(LEDStrip ledStrip) {
+                this.ledStrip = ledStrip;
+                this.programmed = false;
+                this.setMaximumSize(new Dimension(50, 50));
+                this.setPreferredSize(new Dimension(50, 50));
+                this.setMinimumSize(new Dimension(50, 50));
+            }
+
+            @Override
+            public void paintComponent(Graphics g) {
+                super.paintComponent(g);
+                if (programmed) {
+                    g.setColor(Color.GREEN);
+                } else {
+                    g.setColor(Color.RED);
+                }
+                g.drawString(ledStrip.getLabel(), 15, 15);
+            }
+
+            public LEDStrip getLedStrip() {
+                return ledStrip;
+            }
+
+            public void setLedStrip(LEDStrip ledStrip) {
+                this.ledStrip = ledStrip;
+            }
+
+            public boolean isProgrammed() {
+                return programmed;
+            }
+
+            public void setProgrammed(boolean programmed) {
+                this.programmed = programmed;
+            }
+        }
     }
 
 
