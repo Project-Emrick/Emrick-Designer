@@ -950,9 +950,7 @@ public class EffectGUI implements ActionListener {
                 int durationCounts = Integer.parseInt(durationField.getText());
                 long durationMsec = timeManager.getCount2MSec().get(startCount + durationCounts) - effectMod.getStartTimeMSec() - 1;
                 String durationText = Long.toString(durationMsec);
-                System.out.println("Before: " + durationText);
                 durationText = durationText.substring(0, durationText.length() - 3) + "." + durationText.substring(durationText.length() - 3);
-                System.out.println("After: " + durationText);
                 durationField.setText(durationText);
                 liveUpdateEndTime();
             } else if (durationTypeSelect.getSelectedItem().equals("Counts") && durationType.equals("Seconds")) {
