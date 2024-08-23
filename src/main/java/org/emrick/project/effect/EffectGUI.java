@@ -148,7 +148,17 @@ public class EffectGUI implements ActionListener {
     private void setupGUI() {
         this.effectPanel = new JPanel();
         this.effectPanel.setLayout(new BoxLayout(this.effectPanel, BoxLayout.Y_AXIS));
-        Border innerBorder = BorderFactory.createTitledBorder("Chase Effect");
+        String effectTitle = "";
+        switch (effectType) {
+            case GENERATED_FADE -> effectTitle = "Fade Effect";
+            case STATIC_COLOR -> effectTitle = "Static Color Effect";
+            case WAVE -> effectTitle = "Wave Effect";
+            case ALTERNATING_COLOR -> effectTitle = "Alternating Color Effect";
+            case RIPPLE -> effectTitle = "Ripple Effect";
+            case CIRCLE_CHASE -> effectTitle = "Circle Chase Effect";
+            case CHASE -> effectTitle = "Chase Effect";
+        }
+        Border innerBorder = BorderFactory.createTitledBorder(effectTitle);
         Border outerBorder = BorderFactory.createEmptyBorder(5, 5, 5, 5);
 
         this.effectPanel.setBorder(BorderFactory.createCompoundBorder(outerBorder, innerBorder));
@@ -300,147 +310,69 @@ public class EffectGUI implements ActionListener {
 
         durationField.getDocument().addDocumentListener(getDocumentListener());
 
+        durationTypeSelect.addActionListener(this);
+
         applyBtn.addActionListener(this);
         deleteBtn.addActionListener(this);
 
-        Border innerBorder = BorderFactory.createTitledBorder("Wave Effect");
-        Border outerBorder = BorderFactory.createEmptyBorder(5, 5, 5, 5);
-
-        this.effectPanel.setBorder(BorderFactory.createCompoundBorder(outerBorder, innerBorder));
-
-        this.effectPanel.setLayout(new GridBagLayout());
-
-        GridBagConstraints gc = new GridBagConstraints();
-
-        Insets spacedInsets = new Insets(0, 0, 0, 5);
-        Insets noSpacedInsets = new Insets(0, 0, 0, 0);
 
         //////////////// 0th Row ////////////////
-
-        gc.weightx = 1;
-        gc.weighty = 0.2;
-
-        gc.gridx = 0;
-        gc.gridy = 0;
-        gc.fill = GridBagConstraints.NONE;
-        gc.anchor = GridBagConstraints.LINE_END;
-        gc.insets = spacedInsets;
-        this.effectPanel.add(startTimeLabel, gc);
-
-        gc.gridx = 1;
-        gc.gridy = 0;
-        gc.anchor = GridBagConstraints.LINE_START;
-        gc.insets = spacedInsets;
-        this.effectPanel.add(endTimeLabel, gc);
+        JComponent[] currentComponents = new JComponent[2];
+        currentComponents[0] = startTimeLabel;
+        currentComponents[1] = endTimeLabel;
+        panelComponents.add(currentComponents);
 
         //////////////// 1st Row ////////////////
+        currentComponents = new JComponent[2];
+        currentComponents[0] = new JLabel("Set count by: ");
+        setComponentSize(durationTypeSelect, 100, 25);
+        currentComponents[1] = durationTypeSelect;
+        panelComponents.add(currentComponents);
 
-        gc.weightx = 1;
-        gc.weighty = 0.1;
-
-        gc.gridx = 0; // Horizontally, left to right
-        gc.gridy = 1; // Vertically, top to bottom
-        gc.anchor = GridBagConstraints.LINE_END;
-        gc.insets = spacedInsets;
-        this.effectPanel.add(staticColorLabel, gc);
-
-        gc.gridx = 1;
-        gc.gridy = 1;
-        gc.anchor = GridBagConstraints.LINE_START;
-        gc.insets = noSpacedInsets;
-        this.effectPanel.add(startColorBtn, gc);
+        //////////////// 1st Row ////////////////
+        currentComponents = new JComponent[2];
+        currentComponents[0] = staticColorLabel;
+        setComponentSize(startColorBtn, 20, 20);
+        currentComponents[1] = startColorBtn;
+        panelComponents.add(currentComponents);
 
         //////////////// 2nd Row ////////////////
-
-        gc.weightx = 1;
-        gc.weighty = 0.1;
-
-        gc.gridx = 0; // Horizontally, left to right
-        gc.gridy = 2; // Vertically, top to bottom
-        gc.anchor = GridBagConstraints.LINE_END;
-        gc.insets = spacedInsets;
-        this.effectPanel.add(waveColorLabel, gc);
-
-        gc.gridx = 1;
-        gc.gridy = 2;
-        gc.anchor = GridBagConstraints.LINE_START;
-        gc.insets = noSpacedInsets;
-        this.effectPanel.add(endColorBtn, gc);
+        currentComponents = new JComponent[2];
+        currentComponents[0] = waveColorLabel;
+        setComponentSize(endColorBtn, 20, 20);
+        currentComponents[1] = endColorBtn;
+        panelComponents.add(currentComponents);
 
         //////////////// 3rd Row ////////////////
-
-        gc.weightx = 1;
-        gc.weighty = 0.1;
-
-        gc.gridx = 0;
-        gc.gridy = 3;
-        gc.anchor = GridBagConstraints.LINE_END;
-        gc.insets = spacedInsets;
-        this.effectPanel.add(durationLabel, gc);
-
-        gc.gridx = 1;
-        gc.gridy = 3;
-        gc.anchor = GridBagConstraints.LINE_START;
-        gc.insets = noSpacedInsets;
-        this.effectPanel.add(durationField, gc);
-
+        currentComponents = new JComponent[2];
+        currentComponents[0] = durationLabel;
+        setComponentSize(durationField, 100, 25);
+        currentComponents[1] = durationField;
+        panelComponents.add(currentComponents);
 
         //////////////// 4th Row ////////////////
-
-        gc.weightx = 1;
-        gc.weighty = 0.1;
-
-        gc.gridx = 0;
-        gc.gridy = 4;
-        gc.anchor = GridBagConstraints.LINE_END;
-        gc.insets = spacedInsets;
-        this.effectPanel.add(speedLabel, gc);
-
-        gc.gridx = 1;
-        gc.gridy = 4;
-        gc.anchor = GridBagConstraints.LINE_START;
-        gc.insets = noSpacedInsets;
-        this.effectPanel.add(speedField, gc);
+        currentComponents = new JComponent[2];
+        currentComponents[0] = speedLabel;
+        setComponentSize(speedField, 100, 25);
+        currentComponents[1] = speedField;
 
         //////////////// 5th Row ////////////////
-
-        gc.weightx = 1;
-        gc.weighty = 0.1;
-
-        gc.gridx = 0;
-        gc.gridy = 5;
-        gc.anchor = GridBagConstraints.LINE_END;
-        this.effectPanel.add(upOrSideBox, gc);
+        currentComponents = new JComponent[1];
+        currentComponents[0] = upOrSideBox;
+        panelComponents.add(currentComponents);
 
         //////////////// 6th Row ////////////////
-
-        gc.weightx = 1;
-        gc.weighty = 0.1;
-
-        gc.gridx = 0;
-        gc.gridy = 6;
-        gc.anchor = GridBagConstraints.LINE_END;
-        this.effectPanel.add(directionBox, gc);
+        currentComponents = new JComponent[1];
+        currentComponents[0] = directionBox;
+        panelComponents.add(currentComponents);
 
         //////////////// Apply or Delete Buttons ////////////////
+        currentComponents = new JComponent[2];
+        currentComponents[0] = deleteBtn;
+        currentComponents[1] = applyBtn;
+        panelComponents.add(currentComponents);
 
-        gc.weightx = 1;
-        gc.weighty = 2.0;
-
-        gc.gridx = 0;
-        gc.gridy = 7;
-        gc.anchor = GridBagConstraints.FIRST_LINE_END;
-        gc.insets = new Insets(0, 0, 0, 5);
-        this.effectPanel.add(deleteBtn, gc);
-
-        gc.weightx = 1;
-        gc.weighty = 2.0;
-
-        gc.gridx = 1;
-        gc.gridy = 7;
-        gc.insets = new Insets(0, 5, 0, 0);
-        gc.anchor = GridBagConstraints.FIRST_LINE_START;
-        this.effectPanel.add(applyBtn, gc);
+        setupGUI();
 
         // If effect exists, load pattern on gui
         loadEffectToGUI(this.effectMod);
@@ -459,155 +391,79 @@ public class EffectGUI implements ActionListener {
 
         durationField.getDocument().addDocumentListener(getDocumentListener());
 
+        durationTypeSelect.addActionListener(this);
+
         applyBtn.addActionListener(this);
         deleteBtn.addActionListener(this);
 
-        Border innerBorder = BorderFactory.createTitledBorder("Circle Chase Effect");
-        Border outerBorder = BorderFactory.createEmptyBorder(5, 5, 5, 5);
-
-        this.effectPanel.setBorder(BorderFactory.createCompoundBorder(outerBorder, innerBorder));
-
-        this.effectPanel.setLayout(new GridBagLayout());
-
-        GridBagConstraints gc = new GridBagConstraints();
-
-        Insets spacedInsets = new Insets(0, 0, 0, 5);
-        Insets noSpacedInsets = new Insets(0, 0, 0, 0);
-
         //////////////// 0th Row ////////////////
 
-        gc.weightx = 1;
-        gc.weighty = 0.2;
+        JComponent[] currentComponents = new JComponent[2];
+        currentComponents[0] = startTimeLabel;
+        currentComponents[1] = endTimeLabel;
+        panelComponents.add(currentComponents);
 
-        gc.gridx = 0;
-        gc.gridy = 0;
-        gc.fill = GridBagConstraints.NONE;
-        gc.anchor = GridBagConstraints.LINE_END;
-        gc.insets = spacedInsets;
-        this.effectPanel.add(startTimeLabel, gc);
-
-        gc.gridx = 1;
-        gc.gridy = 0;
-        gc.anchor = GridBagConstraints.LINE_START;
-        gc.insets = spacedInsets;
-        this.effectPanel.add(endTimeLabel, gc);
+        //////////////// 1st Row ////////////////
+        currentComponents = new JComponent[2];
+        currentComponents[0] = new JLabel("Set count by: ");
+        setComponentSize(durationTypeSelect, 100, 25);
+        currentComponents[1] = durationTypeSelect;
+        panelComponents.add(currentComponents);
 
         //////////////// 1st Row ////////////////
 
-        gc.weightx = 1;
-        gc.weighty = 0.1;
-
-        gc.gridx = 0; // Horizontally, left to right
-        gc.gridy = 1; // Vertically, top to bottom
-        gc.anchor = GridBagConstraints.LINE_END;
-        gc.insets = spacedInsets;
-        this.effectPanel.add(startColorLabel, gc);
-
-        gc.gridx = 1;
-        gc.gridy = 1;
-        gc.anchor = GridBagConstraints.LINE_START;
-        gc.insets = noSpacedInsets;
-        this.effectPanel.add(startColorBtn, gc);
+        currentComponents = new JComponent[2];
+        currentComponents[0] = staticColorLabel;
+        setComponentSize(startColorBtn, 20, 20);
+        currentComponents[1] = startColorBtn;
+        panelComponents.add(currentComponents);
 
         //////////////// 2nd Row ////////////////
 
-        gc.weightx = 1;
-        gc.weighty = 0.1;
-
-        gc.gridx = 0; // Horizontally, left to right
-        gc.gridy = 2; // Vertically, top to bottom
-        gc.anchor = GridBagConstraints.LINE_END;
-        gc.insets = spacedInsets;
-        this.effectPanel.add(endColorLabel, gc);
-
-        gc.gridx = 1;
-        gc.gridy = 2;
-        gc.anchor = GridBagConstraints.LINE_START;
-        gc.insets = noSpacedInsets;
-        this.effectPanel.add(endColorBtn, gc);
+        currentComponents = new JComponent[2];
+        currentComponents[0] = endColorLabel;
+        setComponentSize(endColorBtn, 20, 20);
+        currentComponents[1] = endColorBtn;
+        panelComponents.add(currentComponents);
 
         //////////////// 3rd Row ////////////////
 
-        gc.weightx = 1;
-        gc.weighty = 0.1;
-
-        gc.gridx = 0;
-        gc.gridy = 3;
-        gc.anchor = GridBagConstraints.LINE_END;
-        gc.insets = spacedInsets;
-        this.effectPanel.add(durationLabel, gc);
-
-        gc.gridx = 1;
-        gc.gridy = 3;
-        gc.anchor = GridBagConstraints.LINE_START;
-        gc.insets = noSpacedInsets;
-        this.effectPanel.add(durationField, gc);
-
+        currentComponents = new JComponent[2];
+        currentComponents[0] = durationLabel;
+        setComponentSize(durationField, 100, 25);
+        currentComponents[1] = durationField;
+        panelComponents.add(currentComponents);
 
         //////////////// 4th Row ////////////////
 
-        gc.weightx = 1;
-        gc.weighty = 0.1;
-
-        gc.gridx = 0;
-        gc.gridy = 4;
-        gc.anchor = GridBagConstraints.LINE_END;
-        gc.insets = spacedInsets;
-        this.effectPanel.add(speedLabel, gc);
-
-        gc.gridx = 1;
-        gc.gridy = 4;
-        gc.anchor = GridBagConstraints.LINE_START;
-        gc.insets = noSpacedInsets;
-        this.effectPanel.add(speedField, gc);
+        currentComponents = new JComponent[2];
+        currentComponents[0] = speedLabel;
+        setComponentSize(speedField, 100, 25);
+        currentComponents[1] = speedField;
+        panelComponents.add(currentComponents);
 
         //////////////// 5th Row ////////////////
 
-        gc.weightx = 1;
-        gc.weighty = 0.1;
-
-        gc.gridx = 0;
-        gc.gridy = 5;
-        gc.anchor = GridBagConstraints.LINE_END;
-        gc.insets = spacedInsets;
-        this.effectPanel.add(angleLabel, gc);
-
-        gc.gridx = 1;
-        gc.gridy = 5;
-        gc.anchor = GridBagConstraints.LINE_START;
-        gc.insets = noSpacedInsets;
-        this.effectPanel.add(angleField, gc);
+        currentComponents = new JComponent[2];
+        currentComponents[0] = angleLabel;
+        setComponentSize(angleField, 100, 25);
+        currentComponents[1] = angleField;
+        panelComponents.add(currentComponents);
 
         //////////////// 6th Row ////////////////
 
-        gc.weightx = 1;
-        gc.weighty = 0.1;
-
-        gc.gridx = 0;
-        gc.gridy = 6;
-        gc.anchor = GridBagConstraints.LINE_END;
-        this.effectPanel.add(clockwiseBox, gc);
-
+        currentComponents = new JComponent[1];
+        currentComponents[0] = clockwiseBox;
+        panelComponents.add(currentComponents);
 
         //////////////// Apply or Delete Buttons ////////////////
 
-        gc.weightx = 1;
-        gc.weighty = 2.0;
+        currentComponents = new JComponent[2];
+        currentComponents[0] = deleteBtn;
+        currentComponents[1] = applyBtn;
+        panelComponents.add(currentComponents);
 
-        gc.gridx = 0;
-        gc.gridy = 7;
-        gc.anchor = GridBagConstraints.FIRST_LINE_END;
-        gc.insets = new Insets(0, 0, 0, 5);
-        this.effectPanel.add(deleteBtn, gc);
-
-        gc.weightx = 1;
-        gc.weighty = 2.0;
-
-        gc.gridx = 1;
-        gc.gridy = 7;
-        gc.insets = new Insets(0, 5, 0, 0);
-        gc.anchor = GridBagConstraints.FIRST_LINE_START;
-        this.effectPanel.add(applyBtn, gc);
+        setupGUI();
 
         // If effect exists, load pattern on gui
         loadEffectToGUI(this.effectMod);
@@ -626,147 +482,68 @@ public class EffectGUI implements ActionListener {
 
         durationField.getDocument().addDocumentListener(getDocumentListener());
 
+        durationTypeSelect.addActionListener(this);
+
         applyBtn.addActionListener(this);
         deleteBtn.addActionListener(this);
 
-        Border innerBorder = BorderFactory.createTitledBorder("Ripple Effect");
-        Border outerBorder = BorderFactory.createEmptyBorder(5, 5, 5, 5);
-
-        this.effectPanel.setBorder(BorderFactory.createCompoundBorder(outerBorder, innerBorder));
-
-        this.effectPanel.setLayout(new GridBagLayout());
-
-        GridBagConstraints gc = new GridBagConstraints();
-
-        Insets spacedInsets = new Insets(0, 0, 0, 5);
-        Insets noSpacedInsets = new Insets(0, 0, 0, 0);
-
         //////////////// 0th Row ////////////////
-
-        gc.weightx = 1;
-        gc.weighty = 0.2;
-
-        gc.gridx = 0;
-        gc.gridy = 0;
-        gc.fill = GridBagConstraints.NONE;
-        gc.anchor = GridBagConstraints.LINE_END;
-        gc.insets = spacedInsets;
-        this.effectPanel.add(startTimeLabel, gc);
-
-        gc.gridx = 1;
-        gc.gridy = 0;
-        gc.anchor = GridBagConstraints.LINE_START;
-        gc.insets = spacedInsets;
-        this.effectPanel.add(endTimeLabel, gc);
+        JComponent[] currentComponents = new JComponent[2];
+        currentComponents[0] = startTimeLabel;
+        currentComponents[1] = endTimeLabel;
+        panelComponents.add(currentComponents);
 
         //////////////// 1st Row ////////////////
+        currentComponents = new JComponent[2];
+        currentComponents[0] = new JLabel("Set count by: ");
+        setComponentSize(durationTypeSelect, 100, 25);
+        currentComponents[1] = durationTypeSelect;
+        panelComponents.add(currentComponents);
 
-        gc.weightx = 1;
-        gc.weighty = 0.1;
-
-        gc.gridx = 0; // Horizontally, left to right
-        gc.gridy = 1; // Vertically, top to bottom
-        gc.anchor = GridBagConstraints.LINE_END;
-        gc.insets = spacedInsets;
-        this.effectPanel.add(startColorLabel, gc);
-
-        gc.gridx = 1;
-        gc.gridy = 1;
-        gc.anchor = GridBagConstraints.LINE_START;
-        gc.insets = noSpacedInsets;
-        this.effectPanel.add(startColorBtn, gc);
+        //////////////// 1st Row ////////////////
+        currentComponents = new JComponent[2];
+        currentComponents[0] = staticColorLabel;
+        setComponentSize(startColorBtn, 20, 20);
+        currentComponents[1] = startColorBtn;
+        panelComponents.add(currentComponents);
 
         //////////////// 2nd Row ////////////////
-
-        gc.weightx = 1;
-        gc.weighty = 0.1;
-
-        gc.gridx = 0; // Horizontally, left to right
-        gc.gridy = 2; // Vertically, top to bottom
-        gc.anchor = GridBagConstraints.LINE_END;
-        gc.insets = spacedInsets;
-        this.effectPanel.add(endColorLabel, gc);
-
-        gc.gridx = 1;
-        gc.gridy = 2;
-        gc.anchor = GridBagConstraints.LINE_START;
-        gc.insets = noSpacedInsets;
-        this.effectPanel.add(endColorBtn, gc);
+        currentComponents = new JComponent[2];
+        currentComponents[0] = endColorLabel;
+        setComponentSize(endColorBtn, 20, 20);
+        currentComponents[1] = endColorBtn;
+        panelComponents.add(currentComponents);
 
         //////////////// 3rd Row ////////////////
-
-        gc.weightx = 1;
-        gc.weighty = 0.1;
-
-        gc.gridx = 0;
-        gc.gridy = 3;
-        gc.anchor = GridBagConstraints.LINE_END;
-        gc.insets = spacedInsets;
-        this.effectPanel.add(durationLabel, gc);
-
-        gc.gridx = 1;
-        gc.gridy = 3;
-        gc.anchor = GridBagConstraints.LINE_START;
-        gc.insets = noSpacedInsets;
-        this.effectPanel.add(durationField, gc);
-
+        currentComponents = new JComponent[2];
+        currentComponents[0] = durationLabel;
+        setComponentSize(durationField, 100, 25);
+        currentComponents[1] = durationField;
+        panelComponents.add(currentComponents);
 
         //////////////// 4th Row ////////////////
-
-        gc.weightx = 1;
-        gc.weighty = 0.1;
-
-        gc.gridx = 0;
-        gc.gridy = 4;
-        gc.anchor = GridBagConstraints.LINE_END;
-        gc.insets = spacedInsets;
-        this.effectPanel.add(speedLabel, gc);
-
-        gc.gridx = 1;
-        gc.gridy = 4;
-        gc.anchor = GridBagConstraints.LINE_START;
-        gc.insets = noSpacedInsets;
-        this.effectPanel.add(speedField, gc);
+        currentComponents = new JComponent[2];
+        currentComponents[0] = speedLabel;
+        setComponentSize(speedField, 100, 25);
+        currentComponents[1] = speedField;
 
         //////////////// 5th Row ////////////////
-
-        gc.weightx = 1;
-        gc.weighty = 0.1;
-
-        gc.gridx = 0;
-        gc.gridy = 5;
-        gc.anchor = GridBagConstraints.LINE_END;
-        this.effectPanel.add(upOrSideBox, gc);
+        currentComponents = new JComponent[1];
+        currentComponents[0] = upOrSideBox;
+        panelComponents.add(currentComponents);
 
         //////////////// 6th Row ////////////////
-
-        gc.weightx = 1;
-        gc.weighty = 0.1;
-
-        gc.gridx = 0;
-        gc.gridy = 6;
-        gc.anchor = GridBagConstraints.LINE_END;
-        this.effectPanel.add(directionBox, gc);
+        currentComponents = new JComponent[1];
+        currentComponents[0] = directionBox;
+        panelComponents.add(currentComponents);
 
         //////////////// Apply or Delete Buttons ////////////////
+        currentComponents = new JComponent[2];
+        currentComponents[0] = deleteBtn;
+        currentComponents[1] = applyBtn;
+        panelComponents.add(currentComponents);
 
-        gc.weightx = 1;
-        gc.weighty = 2.0;
-
-        gc.gridx = 0;
-        gc.gridy = 7;
-        gc.anchor = GridBagConstraints.FIRST_LINE_END;
-        gc.insets = new Insets(0, 0, 0, 5);
-        this.effectPanel.add(deleteBtn, gc);
-
-        gc.weightx = 1;
-        gc.weighty = 2.0;
-
-        gc.gridx = 1;
-        gc.gridy = 7;
-        gc.insets = new Insets(0, 5, 0, 0);
-        gc.anchor = GridBagConstraints.FIRST_LINE_START;
-        this.effectPanel.add(applyBtn, gc);
+        setupGUI();
 
         // If effect exists, load pattern on gui
         loadEffectToGUI(this.effectMod);
@@ -782,92 +559,45 @@ public class EffectGUI implements ActionListener {
 
         durationField.getDocument().addDocumentListener(getDocumentListener());
 
+        durationTypeSelect.addActionListener(this);
+
         applyBtn.addActionListener(this);
         deleteBtn.addActionListener(this);
 
-        Border innerBorder = BorderFactory.createTitledBorder("Static Color Effect");
-        Border outerBorder = BorderFactory.createEmptyBorder(5, 5, 5, 5);
-
-        this.effectPanel.setBorder(BorderFactory.createCompoundBorder(outerBorder, innerBorder));
-
-        this.effectPanel.setLayout(new GridBagLayout());
-
-        GridBagConstraints gc = new GridBagConstraints();
-
-        Insets spacedInsets = new Insets(0, 0, 0, 5);
-        Insets noSpacedInsets = new Insets(0, 0, 0, 0);
-
         //////////////// 0th Row ////////////////
-
-        gc.weightx = 1;
-        gc.weighty = 0.2;
-
-        gc.gridx = 0;
-        gc.gridy = 0;
-        gc.fill = GridBagConstraints.NONE;
-        gc.anchor = GridBagConstraints.LINE_END;
-        gc.insets = spacedInsets;
-        this.effectPanel.add(startTimeLabel, gc);
-
-        gc.gridx = 1;
-        gc.gridy = 0;
-        gc.anchor = GridBagConstraints.LINE_START;
-        gc.insets = spacedInsets;
-        this.effectPanel.add(endTimeLabel, gc);
+        JComponent[] currentComponents = new JComponent[2];
+        currentComponents[0] = startTimeLabel;
+        currentComponents[1] = endTimeLabel;
+        panelComponents.add(currentComponents);
 
         //////////////// 1st Row ////////////////
+        currentComponents = new JComponent[2];
+        currentComponents[0] = new JLabel("Set count by: ");
+        setComponentSize(durationTypeSelect, 100, 25);
+        currentComponents[1] = durationTypeSelect;
+        panelComponents.add(currentComponents);
 
-        gc.weightx = 1;
-        gc.weighty = 0.1;
-
-        gc.gridx = 0; // Horizontally, left to right
-        gc.gridy = 1; // Vertically, top to bottom
-        gc.anchor = GridBagConstraints.LINE_END;
-        gc.insets = spacedInsets;
-        this.effectPanel.add(startColorLabel, gc);
-
-        gc.gridx = 1;
-        gc.gridy = 1;
-        gc.anchor = GridBagConstraints.LINE_START;
-        gc.insets = noSpacedInsets;
-        this.effectPanel.add(startColorBtn, gc);
+        //////////////// 1st Row ////////////////
+        currentComponents = new JComponent[2];
+        currentComponents[0] = staticColorLabel;
+        setComponentSize(startColorBtn, 20, 20);
+        currentComponents[1] = startColorBtn;
+        panelComponents.add(currentComponents);
 
         //////////////// 2nd Row ////////////////
-
-        gc.weightx = 1;
-        gc.weighty = 0.1;
-
-        gc.gridx = 0;
-        gc.gridy = 2;
-        gc.anchor = GridBagConstraints.LINE_END;
-        gc.insets = spacedInsets;
-        this.effectPanel.add(durationLabel, gc);
-
-        gc.gridx = 1;
-        gc.gridy = 2;
-        gc.anchor = GridBagConstraints.LINE_START;
-        gc.insets = noSpacedInsets;
-        this.effectPanel.add(delayField, gc);
+        currentComponents = new JComponent[2];
+        currentComponents[0] = durationLabel;
+        setComponentSize(delayField, 100, 25);
+        currentComponents[1] = delayField;
+        panelComponents.add(currentComponents);
 
         //////////////// Apply or Delete Buttons ////////////////
+        currentComponents = new JComponent[2];
+        currentComponents[0] = deleteBtn;
+        currentComponents[1] = applyBtn;
+        panelComponents.add(currentComponents);
 
-        gc.weightx = 1;
-        gc.weighty = 2.0;
-
-        gc.gridx = 0;
-        gc.gridy = 3;
-        gc.anchor = GridBagConstraints.FIRST_LINE_END;
-        gc.insets = new Insets(0, 0, 0, 5);
-        this.effectPanel.add(deleteBtn, gc);
-
-        gc.weightx = 1;
-        gc.weighty = 2.0;
-
-        gc.gridx = 1;
-        gc.gridy = 3;
-        gc.insets = new Insets(0, 5, 0, 0);
-        gc.anchor = GridBagConstraints.FIRST_LINE_START;
-        this.effectPanel.add(applyBtn, gc);
+        setupGUI();
 
         // If effect exists, load pattern on gui
         loadEffectToGUI(this.effectMod);
@@ -886,110 +616,52 @@ public class EffectGUI implements ActionListener {
 
         durationField.getDocument().addDocumentListener(getDocumentListener());
 
+        durationTypeSelect.addActionListener(this);
+
         applyBtn.addActionListener(this);
         deleteBtn.addActionListener(this);
 
-        Border innerBorder = BorderFactory.createTitledBorder("Fade Effect");
-        Border outerBorder = BorderFactory.createEmptyBorder(5, 5, 5, 5);
-
-        this.effectPanel.setBorder(BorderFactory.createCompoundBorder(outerBorder, innerBorder));
-
-        this.effectPanel.setLayout(new GridBagLayout());
-
-        GridBagConstraints gc = new GridBagConstraints();
-
-        Insets spacedInsets = new Insets(0, 0, 0, 5);
-        Insets noSpacedInsets = new Insets(0, 0, 0, 0);
-
         //////////////// 0th Row ////////////////
-
-        gc.weightx = 1;
-        gc.weighty = 0.2;
-
-        gc.gridx = 0;
-        gc.gridy = 0;
-        gc.fill = GridBagConstraints.NONE;
-        gc.anchor = GridBagConstraints.LINE_END;
-        gc.insets = spacedInsets;
-        this.effectPanel.add(startTimeLabel, gc);
-
-        gc.gridx = 1;
-        gc.gridy = 0;
-        gc.anchor = GridBagConstraints.LINE_START;
-        gc.insets = spacedInsets;
-        this.effectPanel.add(endTimeLabel, gc);
+        JComponent[] currentComponents = new JComponent[2];
+        currentComponents[0] = startTimeLabel;
+        currentComponents[1] = endTimeLabel;
+        panelComponents.add(currentComponents);
 
         //////////////// 1st Row ////////////////
+        currentComponents = new JComponent[2];
+        currentComponents[0] = new JLabel("Set count by: ");
+        setComponentSize(durationTypeSelect, 100, 25);
+        currentComponents[1] = durationTypeSelect;
+        panelComponents.add(currentComponents);
 
-        gc.weightx = 1;
-        gc.weighty = 0.1;
-
-        gc.gridx = 0; // Horizontally, left to right
-        gc.gridy = 1; // Vertically, top to bottom
-        gc.anchor = GridBagConstraints.LINE_END;
-        gc.insets = spacedInsets;
-        this.effectPanel.add(startColorLabel, gc);
-
-        gc.gridx = 1;
-        gc.gridy = 1;
-        gc.anchor = GridBagConstraints.LINE_START;
-        gc.insets = noSpacedInsets;
-        this.effectPanel.add(startColorBtn, gc);
+        //////////////// 1st Row ////////////////
+        currentComponents = new JComponent[2];
+        currentComponents[0] = staticColorLabel;
+        setComponentSize(startColorBtn, 20, 20);
+        currentComponents[1] = startColorBtn;
+        panelComponents.add(currentComponents);
 
         //////////////// 2nd Row ////////////////
-
-        gc.weightx = 1;
-        gc.weighty = 0.1;
-
-        gc.gridx = 0;
-        gc.gridy = 2;
-        gc.anchor = GridBagConstraints.LINE_END;
-        gc.insets = spacedInsets;
-        this.effectPanel.add(endColorLabel, gc);
-
-        gc.gridx = 1;
-        gc.gridy = 2;
-        gc.anchor = GridBagConstraints.LINE_START;
-        gc.insets = noSpacedInsets;
-        this.effectPanel.add(endColorBtn, gc);
-
+        currentComponents = new JComponent[2];
+        currentComponents[0] = endColorLabel;
+        setComponentSize(endColorBtn, 20, 20);
+        currentComponents[1] = endColorBtn;
+        panelComponents.add(currentComponents);
 
         //////////////// 3rd Row ////////////////
-
-        gc.weightx = 1;
-        gc.weighty = 0.1;
-
-        gc.gridx = 0;
-        gc.gridy = 3;
-        gc.anchor = GridBagConstraints.LINE_END;
-        gc.insets = spacedInsets;
-        this.effectPanel.add(durationLabel, gc);
-
-        gc.gridx = 1;
-        gc.gridy = 3;
-        gc.anchor = GridBagConstraints.LINE_START;
-        gc.insets = noSpacedInsets;
-        this.effectPanel.add(durationField, gc);
+        currentComponents = new JComponent[2];
+        currentComponents[0] = durationLabel;
+        setComponentSize(durationField, 100, 25);
+        currentComponents[1] = durationField;
+        panelComponents.add(currentComponents);
 
         //////////////// Apply or Delete Buttons ////////////////
+        currentComponents = new JComponent[2];
+        currentComponents[0] = deleteBtn;
+        currentComponents[1] = applyBtn;
+        panelComponents.add(currentComponents);
 
-        gc.weightx = 1;
-        gc.weighty = 2.0;
-
-        gc.gridx = 0;
-        gc.gridy = 4;
-        gc.anchor = GridBagConstraints.FIRST_LINE_END;
-        gc.insets = new Insets(0, 0, 0, 5);
-        this.effectPanel.add(deleteBtn, gc);
-
-        gc.weightx = 1;
-        gc.weighty = 2.0;
-
-        gc.gridx = 1;
-        gc.gridy = 4;
-        gc.insets = new Insets(0, 5, 0, 0);
-        gc.anchor = GridBagConstraints.FIRST_LINE_START;
-        this.effectPanel.add(applyBtn, gc);
+        setupGUI();
 
         // If effect exists, load pattern on gui
         loadEffectToGUI(this.effectMod);
@@ -1008,128 +680,59 @@ public class EffectGUI implements ActionListener {
 
         durationField.getDocument().addDocumentListener(getDocumentListener());
 
+        durationTypeSelect.addActionListener(this);
+
         applyBtn.addActionListener(this);
         deleteBtn.addActionListener(this);
 
-        Border innerBorder = BorderFactory.createTitledBorder("Alternating Color Effect");
-        Border outerBorder = BorderFactory.createEmptyBorder(5, 5, 5, 5);
-
-        this.effectPanel.setBorder(BorderFactory.createCompoundBorder(outerBorder, innerBorder));
-
-        this.effectPanel.setLayout(new GridBagLayout());
-
-        GridBagConstraints gc = new GridBagConstraints();
-
-        Insets spacedInsets = new Insets(0, 0, 0, 5);
-        Insets noSpacedInsets = new Insets(0, 0, 0, 0);
-
         //////////////// 0th Row ////////////////
-
-        gc.weightx = 1;
-        gc.weighty = 0.2;
-
-        gc.gridx = 0;
-        gc.gridy = 0;
-        gc.fill = GridBagConstraints.NONE;
-        gc.anchor = GridBagConstraints.LINE_END;
-        gc.insets = spacedInsets;
-        this.effectPanel.add(startTimeLabel, gc);
-
-        gc.gridx = 1;
-        gc.gridy = 0;
-        gc.anchor = GridBagConstraints.LINE_START;
-        gc.insets = spacedInsets;
-        this.effectPanel.add(endTimeLabel, gc);
+        JComponent[] currentComponents = new JComponent[2];
+        currentComponents[0] = startTimeLabel;
+        currentComponents[1] = endTimeLabel;
+        panelComponents.add(currentComponents);
 
         //////////////// 1st Row ////////////////
+        currentComponents = new JComponent[2];
+        currentComponents[0] = new JLabel("Set count by: ");
+        setComponentSize(durationTypeSelect, 100, 25);
+        currentComponents[1] = durationTypeSelect;
+        panelComponents.add(currentComponents);
 
-        gc.weightx = 1;
-        gc.weighty = 0.1;
-
-        gc.gridx = 0; // Horizontally, left to right
-        gc.gridy = 1; // Vertically, top to bottom
-        gc.anchor = GridBagConstraints.LINE_END;
-        gc.insets = spacedInsets;
-        this.effectPanel.add(color1Label, gc);
-
-        gc.gridx = 1;
-        gc.gridy = 1;
-        gc.anchor = GridBagConstraints.LINE_START;
-        gc.insets = noSpacedInsets;
-        this.effectPanel.add(startColorBtn, gc);
+        //////////////// 1st Row ////////////////
+        currentComponents = new JComponent[2];
+        currentComponents[0] = color1Label;
+        setComponentSize(startColorBtn, 20, 20);
+        currentComponents[1] = startColorBtn;
+        panelComponents.add(currentComponents);
 
         //////////////// 2nd Row ////////////////
-
-        gc.weightx = 1;
-        gc.weighty = 0.1;
-
-        gc.gridx = 0;
-        gc.gridy = 2;
-        gc.anchor = GridBagConstraints.LINE_END;
-        gc.insets = spacedInsets;
-        this.effectPanel.add(color2Label, gc);
-
-        gc.gridx = 1;
-        gc.gridy = 2;
-        gc.anchor = GridBagConstraints.LINE_START;
-        gc.insets = noSpacedInsets;
-        this.effectPanel.add(endColorBtn, gc);
-
+        currentComponents = new JComponent[2];
+        currentComponents[0] = color2Label;
+        setComponentSize(endColorBtn, 20, 20);
+        currentComponents[1] = endColorBtn;
+        panelComponents.add(currentComponents);
 
         //////////////// 3rd Row ////////////////
-
-        gc.weightx = 1;
-        gc.weighty = 0.1;
-
-        gc.gridx = 0;
-        gc.gridy = 3;
-        gc.anchor = GridBagConstraints.LINE_END;
-        gc.insets = spacedInsets;
-        this.effectPanel.add(durationLabel, gc);
-
-        gc.gridx = 1;
-        gc.gridy = 3;
-        gc.anchor = GridBagConstraints.LINE_START;
-        gc.insets = noSpacedInsets;
-        this.effectPanel.add(durationField, gc);
-
+        currentComponents = new JComponent[2];
+        currentComponents[0] = durationLabel;
+        setComponentSize(durationField, 100, 25);
+        currentComponents[1] = durationField;
+        panelComponents.add(currentComponents);
 
         //////////////// 4th Row ////////////////
-
-        gc.weightx = 1;
-        gc.weighty = 0.1;
-
-        gc.gridx = 0;
-        gc.gridy = 4;
-        gc.anchor = GridBagConstraints.LINE_END;
-        gc.insets = spacedInsets;
-        this.effectPanel.add(rateLabel, gc);
-
-        gc.gridx = 1;
-        gc.gridy = 4;
-        gc.anchor = GridBagConstraints.LINE_START;
-        gc.insets = noSpacedInsets;
-        this.effectPanel.add(speedField, gc);
+        currentComponents = new JComponent[2];
+        currentComponents[0] = rateLabel;
+        setComponentSize(speedField, 100, 25);
+        currentComponents[1] = speedField;
+        panelComponents.add(currentComponents);
 
         //////////////// Apply or Delete Buttons ////////////////
+        currentComponents = new JComponent[2];
+        currentComponents[0] = deleteBtn;
+        currentComponents[1] = applyBtn;
+        panelComponents.add(currentComponents);
 
-        gc.weightx = 1;
-        gc.weighty = 2.0;
-
-        gc.gridx = 0;
-        gc.gridy = 5;
-        gc.anchor = GridBagConstraints.FIRST_LINE_END;
-        gc.insets = new Insets(0, 0, 0, 5);
-        this.effectPanel.add(deleteBtn, gc);
-
-        gc.weightx = 1;
-        gc.weighty = 2.0;
-
-        gc.gridx = 1;
-        gc.gridy = 5;
-        gc.insets = new Insets(0, 5, 0, 0);
-        gc.anchor = GridBagConstraints.FIRST_LINE_START;
-        this.effectPanel.add(applyBtn, gc);
+        setupGUI();
 
         // If effect exists, load pattern on gui
         loadEffectToGUI(this.effectMod);
