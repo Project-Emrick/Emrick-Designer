@@ -559,8 +559,6 @@ public class EffectGUI implements ActionListener {
 
         durationField.getDocument().addDocumentListener(getDocumentListener());
 
-        durationTypeSelect.addActionListener(this);
-
         applyBtn.addActionListener(this);
         deleteBtn.addActionListener(this);
 
@@ -568,13 +566,6 @@ public class EffectGUI implements ActionListener {
         JComponent[] currentComponents = new JComponent[2];
         currentComponents[0] = startTimeLabel;
         currentComponents[1] = endTimeLabel;
-        panelComponents.add(currentComponents);
-
-        //////////////// 1st Row ////////////////
-        currentComponents = new JComponent[2];
-        currentComponents[0] = new JLabel("Set count by: ");
-        setComponentSize(durationTypeSelect, 100, 25);
-        currentComponents[1] = durationTypeSelect;
         panelComponents.add(currentComponents);
 
         //////////////// 1st Row ////////////////
@@ -944,7 +935,6 @@ public class EffectGUI implements ActionListener {
                 this.endColorBtn.setBackground(selectedColor);
             }
         } else if (e.getSource().equals(this.durationTypeSelect)) {
-            System.out.println("SelectedItem: " + durationTypeSelect.getSelectedItem() + ", Duration Type: " + durationType);
             if (durationTypeSelect.getSelectedItem().equals("Seconds") && durationType.equals("Counts")) {
                 durationType = "Seconds";
                 TimeManager timeManager = effectListener.onTimeRequired();
