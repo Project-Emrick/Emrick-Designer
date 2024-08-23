@@ -2355,6 +2355,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             stopWebServer.setEnabled(false);
             server = null;
             requestIDs = null;
+            webServerFrame.dispose();
         }
     }
 
