@@ -1065,6 +1065,18 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             programmingProgressBar.setStringPainted(true);
             fullPanel.add(programmingProgressBar);
             webServerFrame.add(fullPanel);
+            webServerFrame.addWindowListener(new WindowAdapter() {
+                @Override
+                public void windowClosing(WindowEvent e) {
+                    server.stop(0);
+                    runWebServer.setEnabled(true);
+                    stopWebServer.setEnabled(false);
+                    server = null;
+                    requestIDs = null;
+
+                    super.windowClosing(e);
+                }
+            });
             webServerFrame.setVisible(true);
 
             if (serialTransmitter != null) {
