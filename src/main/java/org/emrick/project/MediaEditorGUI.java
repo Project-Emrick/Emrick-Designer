@@ -1761,6 +1761,11 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         this.effectViewPanel.repaint();
     }
 
+    @Override
+    public TimeManager onTimeRequired() {
+        return timeManager;
+    }
+
     ////////////////////////// Football Field Listeners //////////////////////////
 
     @Override
