@@ -90,6 +90,10 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
     public final int PROGRAMMING_MODE = 0x20;
     public final int USE_COLORS = 0x40;
     public final int DIRECTION = 0x80;
+    public final int LIGHT_BOARD = 0x100;
+    public final int CONTINUOUS = 0x200;
+    public final int VERIFY = 0x400;
+    public final int CHECK_LR = 0x800;
 
     // RF Trigger
     private RFTriggerGUI rfTriggerGUI;
@@ -97,6 +101,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
     private boolean runningShow;
 
     private FlowViewGUI flowViewGUI;
+    private boolean isLightBoardMode;
 
     private LEDStripViewGUI ledStripViewGUI;
 
@@ -122,9 +127,11 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
     private Timer noRequestTimer;
     private ArrayList<Integer> requestIDs;
     private JMenuItem runWebServer;
+    private JMenuItem runLightBoardWebServer;
     private JMenuItem stopWebServer;
     private ProgrammingTracker programmingTracker;
     private JProgressBar programmingProgressBar;
+    private boolean lightBoardMode;
     // Project info
     private File archivePath = null;
     private File drillPath = null;
@@ -280,7 +287,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                 createAndShowGUI();
                 loadProject(new File(file));
             } else {
-                runServer(file);
+                runServer(file, false);
                 createAndShowGUI();
             }
         } else {
@@ -679,23 +686,35 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         runMenu.add(runShowItem);
         JMenuItem flowViewerItem = new JMenuItem("Run Show via Flow View");
         runMenu.add(flowViewerItem);
+        JMenuItem lightBoardFlowViewerItem = new JMenuItem("Run Light Board via View");
+        runMenu.add(lightBoardFlowViewerItem);
         JMenuItem stopShowItem = new JMenuItem("Stop show");
         stopShowItem.setEnabled(false);
         runMenu.add(stopShowItem);
         runMenu.addSeparator();
         runWebServer = new JMenuItem("Run Web Server");
+        runLightBoardWebServer = new JMenuItem("Run Light Board Web Server");
         stopWebServer = new JMenuItem("Stop Web Server");
         runMenu.add(runWebServer);
+        runMenu.add(runLightBoardWebServer);
         runMenu.add(stopWebServer);
         if (server == null) {
             stopWebServer.setEnabled(false);
         } else {
             runWebServer.setEnabled(false);
+            runLightBoardWebServer.setEnabled(false);
         }
 
         runWebServer.addActionListener(e -> {
-            runServer("");
+            runServer("", false);
             runWebServer.setEnabled(false);
+            runLightBoardWebServer.setEnabled(false);
+            stopWebServer.setEnabled(true);
+        });
+        runLightBoardWebServer.addActionListener(e -> {
+            runServer("", true);
+            runWebServer.setEnabled(false);
+            runLightBoardWebServer.setEnabled(false);
             stopWebServer.setEnabled(true);
         });
         stopWebServer.addActionListener(e -> {
@@ -705,6 +724,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             requestIDs = null;
             stopWebServer.setEnabled(false);
             runWebServer.setEnabled(true);
+            runLightBoardWebServer.setEnabled(true);
 
             File dir = new File(PathConverter.pathConverter("tmp/", false));
             File[] files = dir.listFiles();
@@ -729,14 +749,17 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             stopShowItem.setEnabled(false);
             runShowItem.setEnabled(true);
             flowViewerItem.setEnabled(true);
+            lightBoardFlowViewerItem.setEnabled(true);
         });
         flowViewerItem.addActionListener(e -> {
+            isLightBoardMode = false;
             serialTransmitter = comPortPrompt();
             if (serialTransmitter == null) {
                 return;
             }
             runShowItem.setEnabled(false);
             flowViewerItem.setEnabled(false);
+            lightBoardFlowViewerItem.setEnabled(false);
             stopShowItem.setEnabled(true);
             flowViewGUI = new FlowViewGUI(count2RFTrigger, this);
             mainContentPanel.remove(footballField);
@@ -744,6 +767,24 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             mainContentPanel.revalidate();
             mainContentPanel.repaint();
         });
+
+        lightBoardFlowViewerItem.addActionListener(e -> {
+            isLightBoardMode = true;
+            serialTransmitter = comPortPrompt();
+            if (serialTransmitter == null) {
+                return;
+            }
+            runShowItem.setEnabled(false);
+            flowViewerItem.setEnabled(false);
+            lightBoardFlowViewerItem.setEnabled(false);
+            stopShowItem.setEnabled(true);
+            flowViewGUI = new FlowViewGUI(count2RFTrigger, this);
+            mainContentPanel.remove(footballField);
+            mainContentPanel.add(flowViewGUI);
+            mainContentPanel.revalidate();
+            mainContentPanel.repaint();
+        });
+
         runShowItem.addActionListener(e -> {
             serialTransmitter = comPortPrompt();
 
@@ -978,11 +1019,10 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         return st;
     }
 
-    public void runServer(String path) {
+    public void runServer(String path, boolean lightBoard) {
         int port = 8080;
         try {
             File f;
-
             // If a project is loaded, generate the packets from the project and write them to a temp file in project directory.
             // delete file after server is stopped.
             if(archivePath == null) { //if no project open
@@ -1070,17 +1110,20 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                 public void windowClosing(WindowEvent e) {
                     server.stop(0);
                     runWebServer.setEnabled(true);
+                    runLightBoardWebServer.setEnabled(true);
                     stopWebServer.setEnabled(false);
                     server = null;
                     requestIDs = null;
+                    noRequestTimer.stop();
 
                     super.windowClosing(e);
                 }
             });
             webServerFrame.setVisible(true);
+            lightBoardMode = lightBoard;
 
             if (serialTransmitter != null) {
-                serialTransmitter.enterProgMode(ssid, password, currentID, token, verificationColor);
+                serialTransmitter.enterProgMode(ssid, password, currentID, token, verificationColor, lightBoardMode);
             }
             noRequestTimer.start();
         } catch (IOException ioe) {
@@ -2328,7 +2371,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
 
         if (serialTransmitter != null) {
 
-            serialTransmitter.writeSet(i);
+            serialTransmitter.writeSet(i, isLightBoardMode);
         }
     }
 
@@ -2358,7 +2401,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             }
         }
         if (!allReceived) {
-            serialTransmitter.enterProgMode(ssid, password, currentID, token, verificationColor);
+            serialTransmitter.enterProgMode(ssid, password, currentID, token, verificationColor, lightBoardMode);
             noRequestTimer.setDelay(25000);
             noRequestTimer.start();
         } else {

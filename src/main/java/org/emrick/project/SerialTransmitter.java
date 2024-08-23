@@ -46,28 +46,39 @@ public class SerialTransmitter {
         return sp;
     }
 
-    public void writeSet(int set) {
-        sp.clearRTS();
-        sp.clearDTR();
-        if (!sp.openPort()) {
-            System.out.println("Port is busy");
-        }
-        String str = "s" + set + "\n";
-        byte[] out = str.getBytes();
-        sp.writeBytes(out, str.length());
-        sp.flushIOBuffers();
-        sp.closePort();
-    }
-
-    public void enterProgMode(String ssid, String password, int id, long token, Color verificationColor) {
+    public void writeSet(int set, boolean isLightBoardMode) {
         sp.clearRTS();
         sp.clearDTR();
         if (!sp.openPort()) {
             System.out.println("Port is busy");
         }
         String str;
+        if (isLightBoardMode) {
+            str = "b";
+        } else {
+            str = "s";
+        }
+        str += set + "\n";
+        byte[] out = str.getBytes();
+        sp.writeBytes(out, str.length());
+        sp.flushIOBuffers();
+        sp.closePort();
+    }
+
+    public void enterProgMode(String ssid, String password, int id, long token, Color verificationColor, boolean mode) {
+        sp.clearRTS();
+        sp.clearDTR();
+        if (!sp.openPort()) {
+            System.out.println("Port is busy");
+        }
+        String str;
+        if (mode) {
+            str = "l";
+        } else {
+            str = "p";
+        }
         try {
-            str = "p" + InetAddress.getLocalHost().getHostAddress() + "\n" + ssid + "\n" + password + "\n" + id + "\n"
+            str += InetAddress.getLocalHost().getHostAddress() + "\n" + ssid + "\n" + password + "\n" + id + "\n"
                     + token + "\n" + verificationColor.getRed() + "\n" + verificationColor.getGreen() + "\n" + verificationColor.getBlue() + "\n";
         } catch (UnknownHostException uhe) {
             throw new RuntimeException(uhe);

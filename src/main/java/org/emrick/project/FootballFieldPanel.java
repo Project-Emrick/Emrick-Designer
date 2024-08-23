@@ -189,63 +189,64 @@ public class FootballFieldPanel extends JPanel implements RepaintListener {
 
         // Draw performers with their colors
         for (Performer p : drill.performers) {
-            Coordinate c1 = p.getCoordinateFromSet(currentSet.label);
-            if (currentSet.index < drill.sets.size() - 1) {
-                Coordinate c2 = p.getCoordinateFromSet(drill.sets.get(currentSet.index + 1).label);
-                if (c1.x == c2.x && c1.y == c2.y) {
+            if (!p.getLedStrips().isEmpty()) {
+                Coordinate c1 = p.getCoordinateFromSet(currentSet.label);
+                if (currentSet.index < drill.sets.size() - 1) {
+                    Coordinate c2 = p.getCoordinateFromSet(drill.sets.get(currentSet.index + 1).label);
+                    if (c1.x == c2.x && c1.y == c2.y) {
+                        p.currentLocation = dotToPoint(c1.x, c1.y);
+                    } else {
+                        if (useFps) {
+                            p.currentLocation = dotToPoint(
+                                    (c2.x - c1.x) * currentSetRatio + c1.x,
+                                    (c2.y - c1.y) * currentSetRatio + c1.y
+                            );
+                        } else {
+                            int duration = drill.sets.get(currentSet.index + 1).duration;
+                            p.currentLocation = dotToPoint((c2.x - c1.x) * (double) (currentCount - currentSetStartCount) /
+                                    duration + c1.x, (c2.y - c1.y) * (double) (currentCount - currentSetStartCount) / duration + c1.y);
+                        }
+                    }
+                } else {
                     p.currentLocation = dotToPoint(c1.x, c1.y);
-                } else {
-                    if (useFps) {
-                        p.currentLocation = dotToPoint(
-                                (c2.x - c1.x) * currentSetRatio + c1.x,
-                                (c2.y - c1.y) * currentSetRatio + c1.y
-                        );
-                    } else {
-                        int duration = drill.sets.get(currentSet.index + 1).duration;
-                        p.currentLocation = dotToPoint((c2.x - c1.x) * (double) (currentCount - currentSetStartCount) /
-                                duration + c1.x, (c2.y - c1.y) * (double) (currentCount - currentSetStartCount) / duration + c1.y);
-                    }
                 }
-            } else {
-                p.currentLocation = dotToPoint(c1.x, c1.y);
-            }
-            double x = p.currentLocation.getX();
-            double y = p.currentLocation.getY();
+                double x = p.currentLocation.getX();
+                double y = p.currentLocation.getY();
 
 
-            for (Integer i : p.getLedStrips()) {
-                LEDStrip l = drill.ledStrips.get(i);
+                for (Integer i : p.getLedStrips()) {
+                    LEDStrip l = drill.ledStrips.get(i);
 
-                if (effectManager != null) {
-                    Effect currentEffect = effectManager.getEffect(l, currMS);
+                    if (effectManager != null) {
+                        Effect currentEffect = effectManager.getEffect(l, currMS);
 
-                    // No effect is present at the current count
-                    if (currentEffect == null) {
+                        // No effect is present at the current count
+                        if (currentEffect == null) {
+                            g.setColor(new Color(0, 0, 0, effectTransparency));
+                        } else {
+                            Color effectColor = calculateColor(currentEffect);
+                            //System.out.println(effectColor);
+                            Color displayColor = new Color(effectColor.getRed(), effectColor.getGreen(), effectColor.getBlue(), effectTransparency);
+                            g.setColor(displayColor);
+                        }
+                    } else {
                         g.setColor(new Color(0, 0, 0, effectTransparency));
-                    } else {
-                        Color effectColor = calculateColor(currentEffect);
-                        //System.out.println(effectColor);
-                        Color displayColor = new Color(effectColor.getRed(), effectColor.getGreen(), effectColor.getBlue(), effectTransparency);
-                        g.setColor(displayColor);
                     }
-                } else {
-                    g.setColor(new Color(0, 0, 0, effectTransparency));
+                    g.fillRect((int) x + l.getLedConfig().gethOffset(), (int) y + l.getLedConfig().getvOffset(), l.getLedConfig().getWidth(), l.getLedConfig().getHeight());
+
+                    if (selectedLEDStrips.contains(l)) {
+                        g.setColor(Color.GREEN);
+                    } else {
+                        g.setColor(Color.BLACK);
+                    }
+                    g.drawRect((int) x + l.getLedConfig().gethOffset(), (int) y + l.getLedConfig().getvOffset(), l.getLedConfig().getWidth(), l.getLedConfig().getHeight());
                 }
-                g.fillRect((int) x + l.getLedConfig().gethOffset(), (int) y + l.getLedConfig().getvOffset(), l.getLedConfig().getWidth(), l.getLedConfig().getHeight());
 
-                if (selectedLEDStrips.contains(l)) {
-                    g.setColor(Color.GREEN);
-                } else {
-                    g.setColor(Color.BLACK);
+                if (showLabels) {
+                    g.setFont(new Font("TimesRoman", Font.BOLD, (int) Math.ceil(fieldWidth / 120)));
+                    g.drawString(p.getIdentifier(), (int) x - 7, (int) y + 16);
                 }
-                g.drawRect((int) x + l.getLedConfig().gethOffset(), (int) y + l.getLedConfig().getvOffset(), l.getLedConfig().getWidth(), l.getLedConfig().getHeight());
             }
-
-            if (showLabels) {
-                g.setFont(new Font("TimesRoman", Font.BOLD, (int) Math.ceil(fieldWidth / 120)));
-                g.drawString(p.getIdentifier(), (int) x - 7, (int) y + 16);
-            }
-
         }
 
         if (selecting) {
