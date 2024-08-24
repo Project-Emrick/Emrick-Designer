@@ -120,6 +120,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
     private HttpServer server;
     private String ssid;
     private String password;
+    private int port;
     private int currentID;
     private static int MAX_CONNECTIONS = 50;
     private int token;
@@ -698,6 +699,11 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         runMenu.add(runWebServer);
         runMenu.add(runLightBoardWebServer);
         runMenu.add(stopWebServer);
+        runMenu.addSeparator();
+        JMenuItem verifyShowItem = new JMenuItem("Verify Show");
+        runMenu.add(verifyShowItem);
+        JMenuItem verifyLightBoardItem = new JMenuItem("Verify Light Board");
+        runMenu.add(verifyLightBoardItem);
         if (server == null) {
             stopWebServer.setEnabled(false);
         } else {
@@ -796,6 +802,20 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             runShowItem.setEnabled(false);
             flowViewerItem.setEnabled(false);
             stopShowItem.setEnabled(true);
+        });
+
+        verifyShowItem.addActionListener(e -> {
+            SerialTransmitter st = comPortPrompt();
+            if (st == null) return;
+
+            st.writeToSerialPort("v");
+        });
+
+        verifyLightBoardItem.addActionListener(e -> {
+            SerialTransmitter st = comPortPrompt();
+            if (st == null) return;
+
+            st.writeToSerialPort("w");
         });
 
         // Help menu
@@ -1020,7 +1040,6 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
     }
 
     public void runServer(String path, boolean lightBoard) {
-        int port = 8080;
         try {
             File f;
             // If a project is loaded, generate the packets from the project and write them to a temp file in project directory.
@@ -1047,10 +1066,12 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             }
             JTextField ssidField = new JTextField();
             JPasswordField passwordField = new JPasswordField();
+            JTextField portField = new JTextField("8080");
 
             Object[] inputs = {
                     new JLabel("WiFi SSID:"), ssidField,
-                    new JLabel("WiFi Password:"), passwordField
+                    new JLabel("WiFi Password:"), passwordField,
+                    new JLabel("Server Port:"), portField
             };
 
             int option = JOptionPane.showConfirmDialog(null, inputs, "Enter WiFi Credentials", JOptionPane.OK_CANCEL_OPTION);
@@ -1061,6 +1082,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             ssid = ssidField.getText();
             char[] passwordChar = passwordField.getPassword();
             password = new String(passwordChar);
+            port = Integer.parseInt(portField.getText());
 
             serialTransmitter = comPortPrompt();
 
@@ -1123,7 +1145,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             lightBoardMode = lightBoard;
 
             if (serialTransmitter != null) {
-                serialTransmitter.enterProgMode(ssid, password, currentID, token, verificationColor, lightBoardMode);
+                serialTransmitter.enterProgMode(ssid, password, port, currentID, token, verificationColor, lightBoardMode);
             }
             noRequestTimer.start();
         } catch (IOException ioe) {
@@ -2401,12 +2423,13 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             }
         }
         if (!allReceived) {
-            serialTransmitter.enterProgMode(ssid, password, currentID, token, verificationColor, lightBoardMode);
+            serialTransmitter.enterProgMode(ssid, password, port, currentID, token, verificationColor, lightBoardMode);
             noRequestTimer.setDelay(25000);
             noRequestTimer.start();
         } else {
             server.stop(0);
             runWebServer.setEnabled(true);
+            runLightBoardWebServer.setEnabled(true);
             stopWebServer.setEnabled(false);
             server = null;
             requestIDs = null;

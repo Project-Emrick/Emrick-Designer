@@ -65,7 +65,7 @@ public class SerialTransmitter {
         sp.closePort();
     }
 
-    public void enterProgMode(String ssid, String password, int id, long token, Color verificationColor, boolean mode) {
+    public void enterProgMode(String ssid, String password, int port, int id, long token, Color verificationColor, boolean mode) {
         sp.clearRTS();
         sp.clearDTR();
         if (!sp.openPort()) {
@@ -78,7 +78,7 @@ public class SerialTransmitter {
             str = "p";
         }
         try {
-            str += InetAddress.getLocalHost().getHostAddress() + "\n" + ssid + "\n" + password + "\n" + id + "\n"
+            str += InetAddress.getLocalHost().getHostAddress() + "\n" + ssid + "\n" + password + "\n" + port + "\n" + id + "\n"
                     + token + "\n" + verificationColor.getRed() + "\n" + verificationColor.getGreen() + "\n" + verificationColor.getBlue() + "\n";
         } catch (UnknownHostException uhe) {
             throw new RuntimeException(uhe);
