@@ -491,6 +491,10 @@ public class SyncTimeGUI implements ActionListener {
         float totalTime = 0; //seconds
         for (Map.Entry<String, Integer> set : ptCounts) {
             for (int j = 0; j < set.getValue(); j++) {
+                if (counts.size() == i) {
+                    //less taps than counts
+                    break;
+                }
                 totalTime += counts.get(i).getValue() * 1000; //get value in ms and convert to seconds
             }
             times.add(new Pair(set.getKey(), totalTime));
