@@ -495,7 +495,7 @@ public class SyncTimeGUI implements ActionListener {
                     //less taps than counts
                     break;
                 }
-                totalTime += counts.get(i).getValue() * 1000; //get value in ms and convert to seconds
+                totalTime += ((float) (counts.get(i).getValue())) / 1000.0; //get value in ms and convert to seconds
             }
             times.add(new Pair(set.getKey(), totalTime));
         }
