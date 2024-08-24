@@ -698,6 +698,11 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         runMenu.add(runWebServer);
         runMenu.add(runLightBoardWebServer);
         runMenu.add(stopWebServer);
+        runMenu.addSeparator();
+        JMenuItem verifyShowItem = new JMenuItem("Verify Show");
+        runMenu.add(verifyShowItem);
+        JMenuItem verifyLightBoardItem = new JMenuItem("Verify Light Board");
+        runMenu.add(verifyLightBoardItem);
         if (server == null) {
             stopWebServer.setEnabled(false);
         } else {
@@ -796,6 +801,20 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             runShowItem.setEnabled(false);
             flowViewerItem.setEnabled(false);
             stopShowItem.setEnabled(true);
+        });
+
+        verifyShowItem.addActionListener(e -> {
+            SerialTransmitter st = comPortPrompt();
+            if (st == null) return;
+
+            st.writeToSerialPort("v");
+        });
+
+        verifyLightBoardItem.addActionListener(e -> {
+            SerialTransmitter st = comPortPrompt();
+            if (st == null) return;
+
+            st.writeToSerialPort("w");
         });
 
         // Help menu
@@ -2407,6 +2426,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         } else {
             server.stop(0);
             runWebServer.setEnabled(true);
+            runLightBoardWebServer.setEnabled(true);
             stopWebServer.setEnabled(false);
             server = null;
             requestIDs = null;
