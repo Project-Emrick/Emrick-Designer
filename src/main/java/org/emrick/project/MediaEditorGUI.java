@@ -279,6 +279,17 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             }
         }
 
+        // Delete leftover files from packet export
+        File tmpDir = new File(PathConverter.pathConverter("tmp/", false));
+        if (tmpDir.exists()) {
+            tmpDir.mkdirs();
+            deleteDirectory(tmpDir);
+        }
+        File tmppkt = new File(PathConverter.pathConverter("tempPkt.pkt", false));
+        if (tmppkt.exists()) {
+            tmppkt.delete();
+        }
+
         noRequestTimer = new Timer(25000, e -> {
            onRequestComplete(-1);
         });
@@ -724,25 +735,8 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             stopWebServer.setEnabled(true);
         });
         stopWebServer.addActionListener(e -> {
-            server.stop(0);
-            noRequestTimer.stop();
-            server = null;
-            requestIDs = null;
-            stopWebServer.setEnabled(false);
-            runWebServer.setEnabled(true);
-            runLightBoardWebServer.setEnabled(true);
-
-            File dir = new File(PathConverter.pathConverter("tmp/", false));
-            File[] files = dir.listFiles();
-            for (File f : files) {
-                f.delete();
-            }
-            dir.delete();
-            File f = new File(PathConverter.pathConverter("tempPkt.pkt", false));
-            if (f.exists()) {
-                f.delete();
-            }
-
+            stopServer();
+            webServerFrame.dispose();
         });
         stopShowItem.addActionListener(e -> {
             if (flowViewGUI != null) {
@@ -892,22 +886,8 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             @Override
             public void windowClosing(WindowEvent e) {
                 if (server != null) {
-                    server.stop(0);
-                    server = null;
-                    noRequestTimer.stop();
-                    requestIDs = null;
-                    runWebServer.setEnabled(true);
-                    stopWebServer.setEnabled(false);
-                    File dir = new File(PathConverter.pathConverter("tmp/", false));
-                    File[] files = dir.listFiles();
-                    for (File f : files) {
-                        f.delete();
-                    }
-                    dir.delete();
-                    File f = new File("tempPkt.pkt");
-                    if (f.exists()) {
-                        f.delete();
-                    }
+                    stopServer();
+                    webServerFrame.dispose();
                 }
                 if (archivePath != null) {
                     if (effectManager != null && !effectManager.getUndoStack().isEmpty()) {
@@ -1039,6 +1019,27 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         return st;
     }
 
+    public void stopServer() {
+        server.stop(0);
+        noRequestTimer.stop();
+        server = null;
+        requestIDs = null;
+        stopWebServer.setEnabled(false);
+        runWebServer.setEnabled(true);
+        runLightBoardWebServer.setEnabled(true);
+
+        File dir = new File(PathConverter.pathConverter("tmp/", false));
+        File[] files = dir.listFiles();
+        for (File f : files) {
+            f.delete();
+        }
+        dir.delete();
+        File f = new File(PathConverter.pathConverter("tempPkt.pkt", false));
+        if (f.exists()) {
+            f.delete();
+        }
+    }
+
     public void runServer(String path, boolean lightBoard) {
         try {
             File f;
@@ -1130,13 +1131,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             webServerFrame.addWindowListener(new WindowAdapter() {
                 @Override
                 public void windowClosing(WindowEvent e) {
-                    server.stop(0);
-                    runWebServer.setEnabled(true);
-                    runLightBoardWebServer.setEnabled(true);
-                    stopWebServer.setEnabled(false);
-                    server = null;
-                    requestIDs = null;
-                    noRequestTimer.stop();
+                    stopServer();
 
                     super.windowClosing(e);
                 }
