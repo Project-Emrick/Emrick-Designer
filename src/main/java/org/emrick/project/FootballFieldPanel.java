@@ -237,7 +237,7 @@ public class FootballFieldPanel extends JPanel implements RepaintListener {
                     if (selectedLEDStrips.contains(l)) {
                         g.setColor(Color.GREEN);
                     } else {
-                        g.setColor(Color.BLACK);
+                        g.setColor(Color.WHITE);
                     }
                     g.drawRect((int) x + l.getLedConfig().gethOffset(), (int) y + l.getLedConfig().getvOffset(), l.getLedConfig().getWidth(), l.getLedConfig().getHeight());
                 }
