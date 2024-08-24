@@ -421,7 +421,9 @@ public class SyncTimeGUI implements ActionListener {
             else if (tabbedPane.getSelectedComponent().equals(timestampPanel)) {
                 isSuccess = syncByTimestamp(times);
             }
-
+            else if (tabbedPane.getSelectedComponent().equals((tapPanel))) {
+                isSuccess = syncByTap(times);
+            }
             if (isSuccess) {
                 syncListener.onSync(times, startDelay);
                 dialogWindow.dispose();
@@ -478,6 +480,20 @@ public class SyncTimeGUI implements ActionListener {
             // Time in seconds
             //  Time is duration for the set.
             times.add(new Pair(set, time));
+        }
+
+        return true;
+    }
+    private boolean syncByTap(ArrayList<Pair> times) {
+
+        List<Map.Entry<String, Integer>> ptCounts = ScrubBarGUI.sortMap(set2Count);
+        int i = 0;
+        float totalTime = 0; //seconds
+        for (Map.Entry<String, Integer> set : ptCounts) {
+            for (int j = 0; j < set.getValue(); j++) {
+                totalTime += counts.get(i).getValue() * 1000; //get value in ms and convert to seconds
+            }
+            times.add(new Pair(set.getKey(), totalTime));
         }
 
         return true;
@@ -626,7 +642,6 @@ public class SyncTimeGUI implements ActionListener {
                 currentTime = System.currentTimeMillis();
                 counts.add(new PairCountMS(currentCount - 1, currentTime - prevCountTime));
                 currentCount = 0;
-                dialogWindow.dispose();
                 if (audioPlayer.isAlive()) {
                     audioPlayer.pauseAudio();
                 }

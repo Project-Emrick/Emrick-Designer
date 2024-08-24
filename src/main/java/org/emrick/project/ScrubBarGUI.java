@@ -517,7 +517,7 @@ public class ScrubBarGUI extends JComponent implements ActionListener {
     }
 
     @Override
-    public void actionPerformed(ActionEvent e) {
+    public void actionPerformed(ActionEvent e)   {
 
         if (e.getSource().equals(playPauseButton)) {
             if (!isReady) {
