@@ -488,22 +488,34 @@ public class SyncTimeGUI implements ActionListener {
     private boolean syncByTap(ArrayList<Pair> times) {
 
         List<Map.Entry<String, Integer>> ptCounts = ScrubBarGUI.sortMap(set2Count);
+        ptCounts.sort(Map.Entry.comparingByKey());
         int i = 0;
         float totalTime = 0; //seconds
-        for (Map.Entry<String, Integer> set : ptCounts) {
-            if (set.getValue() == 0) { //first set
-                continue;
-            }
-            for (int j = 0; j < set.getValue(); j++) {
-                if (counts.size() == i) {
-                    //less taps than counts
-                    break;
+        for (int j = 0; j < ptCounts.size(); j++) {
+            if (j == ptCounts.size() -1) {
+                for (int k = 0; k < totalCounts - ptCounts.get(j).getValue(); k++) {
+                    if (counts.size() == i) {
+                        //less taps than counts
+                        break;
+                    }
+                    //System.out.println((float) counts.get(i).getValue() / 1000.0);
+                    totalTime += ((float) (counts.get(i).getValue())) / 1000.0; //get value in ms and convert to seconds
+                    i++;
                 }
-                System.out.println((float) (counts.get(i).getValue()) / 1000.0);
-                totalTime += ((float) (counts.get(i).getValue())) / 1000.0; //get value in ms and convert to seconds
             }
-            System.out.println(totalTime);
-            times.add(new Pair(set.getKey(), totalTime));
+            else {
+                for (int k = 0; k < ptCounts.get(j + 1).getValue() - ptCounts.get(j).getValue(); k++) {
+                    if (counts.size() == i) {
+                        //less taps than counts
+                        break;
+                    }
+                    //System.out.println((float) counts.get(i).getValue() / 1000.0);
+                    totalTime += ((float) (counts.get(i).getValue())) / 1000.0; //get value in ms and convert to seconds
+                    i++;
+                }
+            }
+            //System.out.println("Length of set " + ptCounts.get(j).getKey() + " is " + totalTime);
+            times.add(new Pair(ptCounts.get(j).getKey(), totalTime));
             totalTime = 0;
         }
 
@@ -644,7 +656,7 @@ public class SyncTimeGUI implements ActionListener {
         @Override
         public void actionPerformed(ActionEvent e) {
 
-            System.out.println(prevCountTime + " ms");
+            //System.out.println(prevCountTime + " ms");
             if (currentCount == 0) {
                 prevCountTime = System.currentTimeMillis();
                 audioPlayer.playAudio(0);
@@ -670,6 +682,7 @@ public class SyncTimeGUI implements ActionListener {
             else {
                 currentTime = System.currentTimeMillis();
                 counts.add(new PairCountMS(currentCount - 1, currentTime - prevCountTime));
+                //System.out.println(currentTime - prevCountTime);
                 prevCountTime = currentTime;
                 currentCount++;
             }
