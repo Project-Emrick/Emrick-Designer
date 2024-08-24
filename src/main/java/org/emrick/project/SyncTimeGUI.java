@@ -9,6 +9,7 @@ import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.io.File;
+import java.lang.reflect.Array;
 import java.util.*;
 import java.util.List;
 
@@ -490,14 +491,20 @@ public class SyncTimeGUI implements ActionListener {
         int i = 0;
         float totalTime = 0; //seconds
         for (Map.Entry<String, Integer> set : ptCounts) {
+            if (set.getValue() == 0) { //first set
+                continue;
+            }
             for (int j = 0; j < set.getValue(); j++) {
                 if (counts.size() == i) {
                     //less taps than counts
                     break;
                 }
+                System.out.println((float) (counts.get(i).getValue()) / 1000.0);
                 totalTime += ((float) (counts.get(i).getValue())) / 1000.0; //get value in ms and convert to seconds
             }
+            System.out.println(totalTime);
             times.add(new Pair(set.getKey(), totalTime));
+            totalTime = 0;
         }
 
         return true;
@@ -648,6 +655,16 @@ public class SyncTimeGUI implements ActionListener {
                 currentCount = 0;
                 if (audioPlayer.isAlive()) {
                     audioPlayer.pauseAudio();
+                }
+                ArrayList<Pair> times = new ArrayList<>();
+                boolean isSuccess = true;
+                isSuccess = syncByTap(times);
+                if (isSuccess) {
+                    syncListener.onSync(times, 0);
+                    dialogWindow.dispose();
+                }
+                else {
+                    System.out.println("Womp womp");
                 }
             }
             else {
