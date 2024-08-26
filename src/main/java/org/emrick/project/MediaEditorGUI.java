@@ -710,11 +710,6 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         runMenu.add(runWebServer);
         runMenu.add(runLightBoardWebServer);
         runMenu.add(stopWebServer);
-        runMenu.addSeparator();
-        JMenuItem verifyShowItem = new JMenuItem("Verify Show");
-        runMenu.add(verifyShowItem);
-        JMenuItem verifyLightBoardItem = new JMenuItem("Verify Light Board");
-        runMenu.add(verifyLightBoardItem);
         if (server == null) {
             stopWebServer.setEnabled(false);
         } else {
@@ -753,7 +748,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         });
         flowViewerItem.addActionListener(e -> {
             isLightBoardMode = false;
-            serialTransmitter = comPortPrompt();
+            serialTransmitter = comPortPrompt("Transmitter");
             if (serialTransmitter == null) {
                 return;
             }
@@ -770,7 +765,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
 
         lightBoardFlowViewerItem.addActionListener(e -> {
             isLightBoardMode = true;
-            serialTransmitter = comPortPrompt();
+            serialTransmitter = comPortPrompt("Transmitter");
             if (serialTransmitter == null) {
                 return;
             }
@@ -786,7 +781,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         });
 
         runShowItem.addActionListener(e -> {
-            serialTransmitter = comPortPrompt();
+            serialTransmitter = comPortPrompt("Transmitter");
 
             if (serialTransmitter == null) {
                 return;
@@ -798,18 +793,62 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             stopShowItem.setEnabled(true);
         });
 
+        JMenu hardwareMenu = new JMenu("Hardware");
+        menuBar.add(hardwareMenu);
+        JMenuItem verifyShowItem = new JMenuItem("Verify Show");
+        hardwareMenu.add(verifyShowItem);
+        JMenuItem verifyLightBoardItem = new JMenuItem("Verify Light Board");
+        hardwareMenu.add(verifyLightBoardItem);
+        hardwareMenu.addSeparator();
+        JMenuItem modifyBoardItem = new JMenuItem("Modify Board");
+        hardwareMenu.add(modifyBoardItem);
+
         verifyShowItem.addActionListener(e -> {
-            SerialTransmitter st = comPortPrompt();
+            SerialTransmitter st = comPortPrompt("Transmitter");
             if (st == null) return;
 
             st.writeToSerialPort("v");
         });
 
         verifyLightBoardItem.addActionListener(e -> {
-            SerialTransmitter st = comPortPrompt();
+            SerialTransmitter st = comPortPrompt("Transmitter");
             if (st == null) return;
 
             st.writeToSerialPort("w");
+        });
+
+        modifyBoardItem.addActionListener(e -> {
+           SerialTransmitter st = comPortPrompt("Receiver");
+
+           JTextField boardIDField = new JTextField();
+           JCheckBox boardIDEnable = new JCheckBox("Write new Board ID");
+           boardIDEnable.setSelected(false);
+           JTextField ledCountField = new JTextField();
+           JCheckBox enableLedCount = new JCheckBox("Write new LED Count");
+           enableLedCount.setSelected(false);
+
+           Object[] inputs = {
+                   new JLabel("Board ID: "), boardIDField, boardIDEnable,
+                   new JLabel("LED Count: "), ledCountField, enableLedCount
+           };
+
+           int option = JOptionPane.showConfirmDialog(null, inputs, "Enter board parameters:", JOptionPane.OK_CANCEL_OPTION);
+           if (option == JOptionPane.OK_OPTION) {
+               if (boardIDEnable.isSelected()) {
+                   st.writeBoardID(boardIDField.getText());
+                   try {
+                       Thread.sleep(5000);
+                   } catch (InterruptedException ex) {
+                       throw new RuntimeException(ex);
+                   }
+                   System.out.println("done");
+               }
+               System.out.println("passed");
+               if (enableLedCount.isSelected()) {
+                   System.out.println("started");
+                   st.writeLEDCount(ledCountField.getText());
+               }
+           }
         });
 
         // Help menu
@@ -1004,7 +1043,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         return lightButton;
     }
 
-    public SerialTransmitter comPortPrompt() {
+    public SerialTransmitter comPortPrompt(String type) {
         SerialTransmitter st = new SerialTransmitter();
         SerialPort[] allPorts = SerialTransmitter.getPortNames();
         String[] allPortNames = new String[allPorts.length];
@@ -1014,7 +1053,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         }
         String port = "";
         for (int i = 0; i < allPortNames.length; i++) {
-            if (st.getBoardType(allPortNames[i]).equals("Transmitter")) {
+            if (st.getBoardType(allPortNames[i]).equals(type)) {
                 if (port.isEmpty()) {
                     port = allPortNames[i];
                 } else {
@@ -1102,7 +1141,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             password = new String(passwordChar);
             port = Integer.parseInt(portField.getText());
 
-            serialTransmitter = comPortPrompt();
+            serialTransmitter = comPortPrompt("Transmitter");
 
             Unzip.unzip(f.getAbsolutePath(), PathConverter.pathConverter("tmp/", false));
 

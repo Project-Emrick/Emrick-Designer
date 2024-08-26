@@ -58,6 +58,54 @@ public class SerialTransmitter {
         this.type = type;
     }
 
+    public void writeBoardID(String boardID) {
+        String query = "b" + boardID + "\n";
+        sp.setDTR();
+        sp.setRTS();
+        if (!sp.openPort()) {
+            System.out.println("Port is busy");
+            return;
+        }
+        sp.closePort();
+        sp.clearDTR();
+        sp.clearRTS();
+        sp.openPort();
+        sp.flushIOBuffers();
+        try {
+            Thread.sleep(1000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        byte[] out = query.getBytes();
+        sp.writeBytes(out, query.length());
+        sp.flushIOBuffers();
+        sp.closePort();
+    }
+
+    public void writeLEDCount(String ledCount) {
+        String query = "l" + ledCount + "\n";
+        sp.setDTR();
+        sp.setRTS();
+        if (!sp.openPort()) {
+            System.out.println("Port is busy");
+            return;
+        }
+        sp.closePort();
+        sp.clearDTR();
+        sp.clearRTS();
+        sp.openPort();
+        sp.flushIOBuffers();
+        try {
+            Thread.sleep(1000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        byte[] out = query.getBytes();
+        sp.writeBytes(out, query.length());
+        sp.flushIOBuffers();
+        sp.closePort();
+    }
+
     public String getBoardType(String port) {
         SerialPort[] allPorts = SerialPort.getCommPorts();
         SerialPort s = null;
@@ -86,7 +134,7 @@ public class SerialTransmitter {
                 }
                 s.writeBytes(query.getBytes(), query.length());
                 byte[] buf = new byte[100];
-                s.setComPortTimeouts(SerialPort.TIMEOUT_READ_SEMI_BLOCKING, 250, 0);
+                s.setComPortTimeouts(SerialPort.TIMEOUT_READ_SEMI_BLOCKING, 1000, 0);
                 int read = s.readBytes(buf, 100);
                 s.closePort();
                 if (read > 0) {
