@@ -72,7 +72,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
 
     // Audio Components
     //  May want to abstract this away into some DrillPlayer class in the future
-    private AudioPlayer audioPlayer;
+    public AudioPlayer audioPlayer;
     private boolean canSeekAudio = true;
 
     // Effect
@@ -241,7 +241,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         frame.setIconImage(icon);
 
         // Scrub Bar
-        scrubBarGUI = new ScrubBarGUI(frame, this, this, footballFieldPanel);
+        scrubBarGUI = new ScrubBarGUI(frame, this, this, footballFieldPanel, getAudioPlayer());
 
         // Scrub bar cursor starts on first count of drill by default
         useStartDelay = true;
@@ -1662,6 +1662,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
     public void onAudioImport(File audioFile) {
         // Playing or pausing audio is done through the AudioPlayer service class
         audioPlayer = new AudioPlayer(audioFile);
+        scrubBarGUI.setAudioPlayer(audioPlayer);
     }
 
     @Override
@@ -1692,12 +1693,16 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
     private void rebuildPageTabCounts() {
         Map<String, Integer> pageTabCounts = new HashMap<>();
         int startCount = 0;
+        int totalCounts;
         for (Set s : footballFieldPanel.drill.sets) {
             startCount += s.duration;
             pageTabCounts.put(s.label, startCount);
         }
+        totalCounts = startCount;
 
-        scrubBarGUI.updatePageTabCounts(pageTabCounts);
+
+
+        scrubBarGUI.updatePageTabCounts(pageTabCounts, totalCounts);
         buildScrubBarPanel();
 
         // At the point of import process, the project is ready to sync
@@ -2689,6 +2694,10 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                 throw new RuntimeException(ioe);
             }
         }
+    }
+
+    public AudioPlayer getAudioPlayer() {
+        return audioPlayer;
     }
 
 
