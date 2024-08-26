@@ -1008,13 +1008,30 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         SerialTransmitter st = new SerialTransmitter();
         SerialPort[] allPorts = SerialTransmitter.getPortNames();
         String[] allPortNames = new String[allPorts.length];
+        writeSysMsg("Attempting to find Emrick Hardware");
         for (int i = 0; i < allPorts.length; i++) {
             allPortNames[i] = allPorts[i].getDescriptivePortName();
         }
-        String port = (String) JOptionPane.showInputDialog(null, "Choose",
-                "Menu", JOptionPane.INFORMATION_MESSAGE,
-                new ImageIcon(PathConverter.pathConverter("icon.ico", true)),
-                allPortNames, allPortNames[0]);
+        String port = "";
+        for (int i = 0; i < allPortNames.length; i++) {
+            if (st.getBoardType(allPortNames[i]).equals("Transmitter")) {
+                if (port.isEmpty()) {
+                    port = allPortNames[i];
+                } else {
+                    port = "";
+                    break;
+                }
+            }
+        }
+
+        if (port.isEmpty()) {
+            port = (String) JOptionPane.showInputDialog(null, "Choose",
+                    "Menu", JOptionPane.INFORMATION_MESSAGE,
+                    new ImageIcon(PathConverter.pathConverter("icon.ico", true)),
+                    allPortNames, allPortNames[0]);
+        } else {
+            writeSysMsg("Found Emrick Hardware at: " + port);
+        }
         st.setSerialPort(port);
         return st;
     }

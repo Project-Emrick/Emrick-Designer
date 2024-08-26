@@ -8,13 +8,16 @@ import java.net.UnknownHostException;
 
 public class SerialTransmitter {
     private SerialPort sp;
+    private String type;
     public SerialTransmitter() {
         SerialPort[] sps = SerialPort.getCommPorts();
         for (SerialPort s : sps) {
             if (s.getDescriptivePortName().toLowerCase().contains("cp210x")) {
                 sp = s;
+                type = getBoardType(sp.getDescriptivePortName());
                 break;
             }
+            type = "";
         }
         if (sp == null) {
             sp = SerialPort.getCommPorts()[0];
@@ -36,6 +39,7 @@ public class SerialTransmitter {
         if (s != null) {
             if (s.getDescriptivePortName().toLowerCase().contains("cp210x")) {
                 sp = s;
+                type = getBoardType(sp.getDescriptivePortName());
                 return true;
             }
         }
@@ -44,6 +48,60 @@ public class SerialTransmitter {
 
     public SerialPort getSerialPort() {
         return sp;
+    }
+
+    public String getType() {
+        return type;
+    }
+
+    public void setType(String type) {
+        this.type = type;
+    }
+
+    public String getBoardType(String port) {
+        SerialPort[] allPorts = SerialPort.getCommPorts();
+        SerialPort s = null;
+        for (SerialPort p : allPorts) {
+            if (p.getDescriptivePortName().equals(port)) {
+                s = p;
+            }
+        }
+
+        if (s != null) {
+            if (s.getDescriptivePortName().toLowerCase().contains("cp210x")) {
+                String query = "q";
+                if (!s.openPort()) {
+                    System.out.println("Port is busy");
+                    return "";
+                }
+                s.closePort();
+                s.clearDTR();
+                s.clearRTS();
+                s.openPort();
+                s.flushIOBuffers();
+                try {
+                    Thread.sleep(1000);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+                s.writeBytes(query.getBytes(), query.length());
+                byte[] buf = new byte[100];
+                s.setComPortTimeouts(SerialPort.TIMEOUT_READ_SEMI_BLOCKING, 250, 0);
+                int read = s.readBytes(buf, 100);
+                s.closePort();
+                if (read > 0) {
+                    char type = (char) buf[read-1];
+                    String out;
+                    switch (type) {
+                        case 'r' : out = "Receiver"; break;
+                        case 't' : out = "Transmitter"; break;
+                        default : out = "";
+                    }
+                    return out;
+                }
+            }
+        }
+        return "";
     }
 
     public void writeSet(int set, boolean isLightBoardMode) {
