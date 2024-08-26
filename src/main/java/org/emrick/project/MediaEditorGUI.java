@@ -133,6 +133,13 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
     private ProgrammingTracker programmingTracker;
     private JProgressBar programmingProgressBar;
     private boolean lightBoardMode;
+    // Flow viewer
+    private JMenuItem runShowItem;
+    private JMenuItem flowViewerItem;
+    private JMenuItem lightBoardFlowViewerItem;
+    private JMenuItem stopShowItem;
+
+    private JCheckBoxMenuItem showIndividualView;
     // Project info
     private File archivePath = null;
     private File drillPath = null;
@@ -234,6 +241,8 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         fieldScrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
         footballFieldBackground = new FootballFieldBackground(this);
         footballField = new JPanel();
+
+        flowViewGUI = new FlowViewGUI(new HashMap<>(), this);
 
         // Main frame
         frame = new JFrame("Emrick Designer");
@@ -475,8 +484,11 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             ledConfigurationGUI = new LEDConfigurationGUI(footballFieldPanel.drill, this);
             if (footballField.isShowing()) {
                 mainContentPanel.remove(footballField);
-            } else {
-                mainContentPanel.remove(flowViewGUI);
+            } else if (flowViewGUI.isShowing()) {
+                removeFlowViewer();
+            } else if (ledStripViewGUI.isShowing()) {
+                showIndividualView.setState(false);
+                mainContentPanel.remove(ledStripViewGUI);
             }
             mainContentPanel.add(ledConfigurationGUI);
             mainContentPanel.revalidate();
@@ -568,10 +580,6 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                                               JOptionPane.WARNING_MESSAGE);
                 return;
             }
-            JOptionPane.showMessageDialog(frame,
-                                          "Effect copied.",
-                                          "Copy Effect: Success",
-                                          JOptionPane.INFORMATION_MESSAGE);
             this.copiedEffect = this.currentEffect;
         });
         editMenu.add(copyCurrentEffect);
@@ -668,7 +676,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
 
         viewMenu.addSeparator();
 
-        JCheckBoxMenuItem showIndividualView = new JCheckBoxMenuItem("Show Individual View");
+        showIndividualView = new JCheckBoxMenuItem("Show Individual View");
         showIndividualView.setSelected(false);
         showIndividualView.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_L,
                 Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx()));
@@ -678,7 +686,13 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                 ledStripViewGUI = new LEDStripViewGUI(ledStrips, effectManager);
                 ledStripViewGUI.setCurrentMS(footballFieldPanel.currentMS);
                 ledStripViewGUI.setCurrentSet(footballFieldPanel.getCurrentSet());
-                mainContentPanel.remove(footballField);
+                if (footballField.isShowing()) {
+                    mainContentPanel.remove(footballField);
+                } else if (ledConfigurationGUI.isShowing()) {
+                    mainContentPanel.remove(ledConfigurationGUI);
+                } else if (flowViewGUI.isShowing()) {
+                    removeFlowViewer();
+                }
                 mainContentPanel.add(ledStripViewGUI);
                 mainContentPanel.revalidate();
                 mainContentPanel.repaint();
@@ -691,16 +705,17 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         });
         viewMenu.add(showIndividualView);
 
+
         // Run menu
         JMenu runMenu = new JMenu("Run");
         menuBar.add(runMenu);
-        JMenuItem runShowItem = new JMenuItem("Run Show Linked to Viewport");
+        runShowItem = new JMenuItem("Run Show Linked to Viewport");
         runMenu.add(runShowItem);
-        JMenuItem flowViewerItem = new JMenuItem("Run Show via Flow View");
+        flowViewerItem = new JMenuItem("Run Show via Flow View");
         runMenu.add(flowViewerItem);
-        JMenuItem lightBoardFlowViewerItem = new JMenuItem("Run Light Board via View");
+        lightBoardFlowViewerItem = new JMenuItem("Run Light Board via View");
         runMenu.add(lightBoardFlowViewerItem);
-        JMenuItem stopShowItem = new JMenuItem("Stop show");
+        stopShowItem = new JMenuItem("Stop show");
         stopShowItem.setEnabled(false);
         runMenu.add(stopShowItem);
         runMenu.addSeparator();
@@ -757,7 +772,14 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             lightBoardFlowViewerItem.setEnabled(false);
             stopShowItem.setEnabled(true);
             flowViewGUI = new FlowViewGUI(count2RFTrigger, this);
-            mainContentPanel.remove(footballField);
+            if (footballField.isShowing()) {
+                mainContentPanel.remove(footballField);
+            } else if (ledStripViewGUI.isShowing()) {
+                showIndividualView.setState(false);
+                mainContentPanel.remove(ledStripViewGUI);
+            } else if (ledConfigurationGUI.isShowing()) {
+                mainContentPanel.remove(ledConfigurationGUI);
+            }
             mainContentPanel.add(flowViewGUI);
             mainContentPanel.revalidate();
             mainContentPanel.repaint();
@@ -774,7 +796,14 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             lightBoardFlowViewerItem.setEnabled(false);
             stopShowItem.setEnabled(true);
             flowViewGUI = new FlowViewGUI(count2RFTrigger, this);
-            mainContentPanel.remove(footballField);
+            if (footballField.isShowing()) {
+                mainContentPanel.remove(footballField);
+            } else if (ledStripViewGUI.isShowing()) {
+                showIndividualView.setState(false);
+                mainContentPanel.remove(ledStripViewGUI);
+            } else if (ledConfigurationGUI.isShowing()) {
+                mainContentPanel.remove(ledConfigurationGUI);
+            }
             mainContentPanel.add(flowViewGUI);
             mainContentPanel.revalidate();
             mainContentPanel.repaint();
@@ -1086,6 +1115,14 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         }
         st.setSerialPort(port);
         return st;
+    }
+
+    public void removeFlowViewer() {
+        mainContentPanel.remove(flowViewGUI);
+        runShowItem.setEnabled(true);
+        flowViewerItem.setEnabled(true);
+        lightBoardFlowViewerItem.setEnabled(true);
+        stopShowItem.setEnabled(false);
     }
 
     public void stopServer() {
