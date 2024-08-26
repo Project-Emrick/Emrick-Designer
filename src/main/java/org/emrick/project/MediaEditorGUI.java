@@ -799,6 +799,8 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         hardwareMenu.add(verifyShowItem);
         JMenuItem verifyLightBoardItem = new JMenuItem("Verify Light Board");
         hardwareMenu.add(verifyLightBoardItem);
+        JMenuItem wirelessCheck = new JMenuItem("Wireless Check");
+        hardwareMenu.add(wirelessCheck);
         hardwareMenu.addSeparator();
         JMenuItem modifyBoardItem = new JMenuItem("Modify Board");
         hardwareMenu.add(modifyBoardItem);
@@ -815,6 +817,13 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             if (st == null) return;
 
             st.writeToSerialPort("w");
+        });
+
+        wirelessCheck.addActionListener(e -> {
+           SerialTransmitter st = comPortPrompt("Transmitter");
+           if (st == null) return;
+
+           st.writeToSerialPort("c");
         });
 
         modifyBoardItem.addActionListener(e -> {
@@ -848,11 +857,8 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                    } catch (InterruptedException ex) {
                        throw new RuntimeException(ex);
                    }
-                   System.out.println("done");
                }
-               System.out.println("passed");
                if (enableLedCount.isSelected()) {
-                   System.out.println("started");
                    st.writeLEDCount(ledCountField.getText());
                }
            }
