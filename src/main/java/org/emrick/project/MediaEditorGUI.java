@@ -1723,6 +1723,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         footballFieldPanel.setCount2RFTrigger(count2RFTrigger);
 
         setupEffectView(null);
+        ledStripViewGUI = new LEDStripViewGUI(new ArrayList<>(), effectManager);
     }
 
     private void setupEffectView(ArrayList<Integer> ids) {
