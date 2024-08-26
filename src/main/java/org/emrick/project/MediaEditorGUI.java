@@ -72,7 +72,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
 
     // Audio Components
     //  May want to abstract this away into some DrillPlayer class in the future
-    private AudioPlayer audioPlayer;
+    public AudioPlayer audioPlayer;
     private boolean canSeekAudio = true;
 
     // Effect
@@ -241,7 +241,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         frame.setIconImage(icon);
 
         // Scrub Bar
-        scrubBarGUI = new ScrubBarGUI(frame, this, this, footballFieldPanel);
+        scrubBarGUI = new ScrubBarGUI(frame, this, this, footballFieldPanel, getAudioPlayer());
 
         // Scrub bar cursor starts on first count of drill by default
         useStartDelay = true;
@@ -710,11 +710,6 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         runMenu.add(runWebServer);
         runMenu.add(runLightBoardWebServer);
         runMenu.add(stopWebServer);
-        runMenu.addSeparator();
-        JMenuItem verifyShowItem = new JMenuItem("Verify Show");
-        runMenu.add(verifyShowItem);
-        JMenuItem verifyLightBoardItem = new JMenuItem("Verify Light Board");
-        runMenu.add(verifyLightBoardItem);
         if (server == null) {
             stopWebServer.setEnabled(false);
         } else {
@@ -753,7 +748,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         });
         flowViewerItem.addActionListener(e -> {
             isLightBoardMode = false;
-            serialTransmitter = comPortPrompt();
+            serialTransmitter = comPortPrompt("Transmitter");
             if (serialTransmitter == null) {
                 return;
             }
@@ -770,7 +765,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
 
         lightBoardFlowViewerItem.addActionListener(e -> {
             isLightBoardMode = true;
-            serialTransmitter = comPortPrompt();
+            serialTransmitter = comPortPrompt("Transmitter");
             if (serialTransmitter == null) {
                 return;
             }
@@ -786,7 +781,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         });
 
         runShowItem.addActionListener(e -> {
-            serialTransmitter = comPortPrompt();
+            serialTransmitter = comPortPrompt("Transmitter");
 
             if (serialTransmitter == null) {
                 return;
@@ -798,18 +793,75 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             stopShowItem.setEnabled(true);
         });
 
+        JMenu hardwareMenu = new JMenu("Hardware");
+        menuBar.add(hardwareMenu);
+        JMenuItem verifyShowItem = new JMenuItem("Verify Show");
+        hardwareMenu.add(verifyShowItem);
+        JMenuItem verifyLightBoardItem = new JMenuItem("Verify Light Board");
+        hardwareMenu.add(verifyLightBoardItem);
+        JMenuItem wirelessCheck = new JMenuItem("Wireless Check");
+        hardwareMenu.add(wirelessCheck);
+        hardwareMenu.addSeparator();
+        JMenuItem modifyBoardItem = new JMenuItem("Modify Board");
+        hardwareMenu.add(modifyBoardItem);
+
         verifyShowItem.addActionListener(e -> {
-            SerialTransmitter st = comPortPrompt();
+            SerialTransmitter st = comPortPrompt("Transmitter");
             if (st == null) return;
 
             st.writeToSerialPort("v");
         });
 
         verifyLightBoardItem.addActionListener(e -> {
-            SerialTransmitter st = comPortPrompt();
+            SerialTransmitter st = comPortPrompt("Transmitter");
             if (st == null) return;
 
             st.writeToSerialPort("w");
+        });
+
+        wirelessCheck.addActionListener(e -> {
+           SerialTransmitter st = comPortPrompt("Transmitter");
+           if (st == null) return;
+
+           st.writeToSerialPort("c");
+        });
+
+        modifyBoardItem.addActionListener(e -> {
+           SerialTransmitter st = comPortPrompt("Receiver");
+
+           JTextField boardIDField = new JTextField();
+           JCheckBox boardIDEnable = new JCheckBox("Write new Board ID");
+           boardIDEnable.setSelected(false);
+           JTextField ledCountField = new JTextField();
+           JCheckBox enableLedCount = new JCheckBox("Write new LED Count");
+           enableLedCount.setSelected(false);
+
+           Object[] inputs = {
+                   new JLabel("Board ID: "), boardIDField, boardIDEnable,
+                   new JLabel("LED Count: "), ledCountField, enableLedCount
+           };
+
+           int option = JOptionPane.showConfirmDialog(null, inputs, "Enter board parameters:", JOptionPane.OK_CANCEL_OPTION);
+           if (option == JOptionPane.OK_OPTION) {
+               if (boardIDEnable.isSelected()) {
+                   int id = Integer.parseInt(boardIDField.getText());
+                   String position = "";
+                   if (!footballFieldPanel.drill.ledStrips.isEmpty()) {
+                       LEDStrip ledStrip = footballFieldPanel.drill.ledStrips.get(id);
+                       position = ledStrip.getLedConfig().getLabel();
+                   }
+
+                   st.writeBoardID(boardIDField.getText(), position);
+                   try {
+                       Thread.sleep(5000);
+                   } catch (InterruptedException ex) {
+                       throw new RuntimeException(ex);
+                   }
+               }
+               if (enableLedCount.isSelected()) {
+                   st.writeLEDCount(ledCountField.getText());
+               }
+           }
         });
 
         // Help menu
@@ -1004,17 +1056,34 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         return lightButton;
     }
 
-    public SerialTransmitter comPortPrompt() {
+    public SerialTransmitter comPortPrompt(String type) {
         SerialTransmitter st = new SerialTransmitter();
         SerialPort[] allPorts = SerialTransmitter.getPortNames();
         String[] allPortNames = new String[allPorts.length];
+        writeSysMsg("Attempting to find Emrick Hardware");
         for (int i = 0; i < allPorts.length; i++) {
             allPortNames[i] = allPorts[i].getDescriptivePortName();
         }
-        String port = (String) JOptionPane.showInputDialog(null, "Choose",
-                "Menu", JOptionPane.INFORMATION_MESSAGE,
-                new ImageIcon(PathConverter.pathConverter("icon.ico", true)),
-                allPortNames, allPortNames[0]);
+        String port = "";
+        for (int i = 0; i < allPortNames.length; i++) {
+            if (st.getBoardType(allPortNames[i]).equals(type)) {
+                if (port.isEmpty()) {
+                    port = allPortNames[i];
+                } else {
+                    port = "";
+                    break;
+                }
+            }
+        }
+
+        if (port.isEmpty()) {
+            port = (String) JOptionPane.showInputDialog(null, "Choose",
+                    "Menu", JOptionPane.INFORMATION_MESSAGE,
+                    new ImageIcon(PathConverter.pathConverter("icon.ico", true)),
+                    allPortNames, allPortNames[0]);
+        } else {
+            writeSysMsg("Found Emrick Hardware at: " + port);
+        }
         st.setSerialPort(port);
         return st;
     }
@@ -1085,7 +1154,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             password = new String(passwordChar);
             port = Integer.parseInt(portField.getText());
 
-            serialTransmitter = comPortPrompt();
+            serialTransmitter = comPortPrompt("Transmitter");
 
             Unzip.unzip(f.getAbsolutePath(), PathConverter.pathConverter("tmp/", false));
 
@@ -1593,6 +1662,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
     public void onAudioImport(File audioFile) {
         // Playing or pausing audio is done through the AudioPlayer service class
         audioPlayer = new AudioPlayer(audioFile);
+        scrubBarGUI.setAudioPlayer(audioPlayer);
     }
 
     @Override
@@ -1623,12 +1693,16 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
     private void rebuildPageTabCounts() {
         Map<String, Integer> pageTabCounts = new HashMap<>();
         int startCount = 0;
+        int totalCounts;
         for (Set s : footballFieldPanel.drill.sets) {
             startCount += s.duration;
             pageTabCounts.put(s.label, startCount);
         }
+        totalCounts = startCount;
 
-        scrubBarGUI.updatePageTabCounts(pageTabCounts);
+
+
+        scrubBarGUI.updatePageTabCounts(pageTabCounts, totalCounts);
         buildScrubBarPanel();
 
         // At the point of import process, the project is ready to sync
@@ -1649,6 +1723,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         footballFieldPanel.setCount2RFTrigger(count2RFTrigger);
 
         setupEffectView(null);
+        ledStripViewGUI = new LEDStripViewGUI(new ArrayList<>(), effectManager);
     }
 
     private void setupEffectView(ArrayList<Integer> ids) {
@@ -2620,6 +2695,10 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                 throw new RuntimeException(ioe);
             }
         }
+    }
+
+    public AudioPlayer getAudioPlayer() {
+        return audioPlayer;
     }
 
 
