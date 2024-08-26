@@ -835,7 +835,14 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
            int option = JOptionPane.showConfirmDialog(null, inputs, "Enter board parameters:", JOptionPane.OK_CANCEL_OPTION);
            if (option == JOptionPane.OK_OPTION) {
                if (boardIDEnable.isSelected()) {
-                   st.writeBoardID(boardIDField.getText());
+                   int id = Integer.parseInt(boardIDField.getText());
+                   String position = "";
+                   if (!footballFieldPanel.drill.ledStrips.isEmpty()) {
+                       LEDStrip ledStrip = footballFieldPanel.drill.ledStrips.get(id);
+                       position = ledStrip.getLedConfig().getLabel();
+                   }
+
+                   st.writeBoardID(boardIDField.getText(), position);
                    try {
                        Thread.sleep(5000);
                    } catch (InterruptedException ex) {

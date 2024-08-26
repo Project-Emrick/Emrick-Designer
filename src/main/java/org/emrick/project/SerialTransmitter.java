@@ -58,8 +58,8 @@ public class SerialTransmitter {
         this.type = type;
     }
 
-    public void writeBoardID(String boardID) {
-        String query = "b" + boardID + "\n";
+    public void writeBoardID(String boardID, String position) {
+        String query = "b" + boardID + "," + position + "\n";
         sp.setDTR();
         sp.setRTS();
         if (!sp.openPort()) {
