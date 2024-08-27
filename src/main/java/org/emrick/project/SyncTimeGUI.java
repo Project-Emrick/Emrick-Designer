@@ -562,29 +562,6 @@ public class SyncTimeGUI implements ActionListener {
             return false;
         }
 
-        // If BPM is not necessarily consistent, ensure all fields have input
-        if (!isConsistent) {
-            for (Map.Entry<String, JTextField> bpmField : set2BpmField) {
-                String fieldText = bpmField.getValue().getText();
-                boolean isEmpty = fieldText.isEmpty();
-                boolean isGoodFormat = true;
-                try {
-                    Float.parseFloat(fieldText);
-                } catch (NumberFormatException e) {
-                    isGoodFormat = false;
-                }
-
-                String set = bpmField.getKey();
-
-                // BPM input is not valid
-                if (isEmpty || !isGoodFormat) {
-                    JOptionPane.showMessageDialog(dialogWindow, "Failed to read BPM for set " + set,
-                            "BPM Sync Error", JOptionPane.ERROR_MESSAGE);
-                    return false;
-                }
-            }
-        }
-
         List<Map.Entry<String, Integer>> setCountsSorted = ScrubBarGUI.sortMap(set2Count);
 
         for (int i = 0; i < set2BpmField.size(); i++) {
@@ -604,7 +581,7 @@ public class SyncTimeGUI implements ActionListener {
             // Find the set and bpm entered
             Map.Entry<String, JTextField> bpmField = set2BpmField.get(i);
             String set = bpmField.getKey();
-            if (!isConsistent) {
+            if (!bpmField.getValue().getText().isEmpty()) {
                 bpm = Float.parseFloat(bpmField.getValue().getText());
             }
 
