@@ -133,6 +133,13 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
     private ProgrammingTracker programmingTracker;
     private JProgressBar programmingProgressBar;
     private boolean lightBoardMode;
+    // Flow viewer
+    private JMenuItem runShowItem;
+    private JMenuItem flowViewerItem;
+    private JMenuItem lightBoardFlowViewerItem;
+    private JMenuItem stopShowItem;
+
+    private JCheckBoxMenuItem showIndividualView;
     // Project info
     private File archivePath = null;
     private File drillPath = null;
@@ -235,6 +242,8 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         footballFieldBackground = new FootballFieldBackground(this);
         footballField = new JPanel();
 
+        flowViewGUI = new FlowViewGUI(new HashMap<>(), this);
+
         // Main frame
         frame = new JFrame("Emrick Designer");
         Image icon = Toolkit.getDefaultToolkit().getImage(PathConverter.pathConverter("res/images/icon.png", true));
@@ -299,8 +308,11 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                 createAndShowGUI();
                 loadProject(new File(file));
             } else {
-                runServer(file, false);
                 createAndShowGUI();
+                runWebServer.setEnabled(false);
+                runLightBoardWebServer.setEnabled(false);
+                stopWebServer.setEnabled(true);
+                runServer(file, false);
             }
         } else {
             createAndShowGUI();
@@ -475,8 +487,11 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             ledConfigurationGUI = new LEDConfigurationGUI(footballFieldPanel.drill, this);
             if (footballField.isShowing()) {
                 mainContentPanel.remove(footballField);
-            } else {
-                mainContentPanel.remove(flowViewGUI);
+            } else if (flowViewGUI.isShowing()) {
+                removeFlowViewer();
+            } else if (ledStripViewGUI.isShowing()) {
+                showIndividualView.setState(false);
+                mainContentPanel.remove(ledStripViewGUI);
             }
             mainContentPanel.add(ledConfigurationGUI);
             mainContentPanel.revalidate();
@@ -568,10 +583,6 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                                               JOptionPane.WARNING_MESSAGE);
                 return;
             }
-            JOptionPane.showMessageDialog(frame,
-                                          "Effect copied.",
-                                          "Copy Effect: Success",
-                                          JOptionPane.INFORMATION_MESSAGE);
             this.copiedEffect = this.currentEffect;
         });
         editMenu.add(copyCurrentEffect);
@@ -668,7 +679,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
 
         viewMenu.addSeparator();
 
-        JCheckBoxMenuItem showIndividualView = new JCheckBoxMenuItem("Show Individual View");
+        showIndividualView = new JCheckBoxMenuItem("Show Individual View");
         showIndividualView.setSelected(false);
         showIndividualView.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_L,
                 Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx()));
@@ -678,7 +689,13 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                 ledStripViewGUI = new LEDStripViewGUI(ledStrips, effectManager);
                 ledStripViewGUI.setCurrentMS(footballFieldPanel.currentMS);
                 ledStripViewGUI.setCurrentSet(footballFieldPanel.getCurrentSet());
-                mainContentPanel.remove(footballField);
+                if (footballField.isShowing()) {
+                    mainContentPanel.remove(footballField);
+                } else if (ledConfigurationGUI.isShowing()) {
+                    mainContentPanel.remove(ledConfigurationGUI);
+                } else if (flowViewGUI.isShowing()) {
+                    removeFlowViewer();
+                }
                 mainContentPanel.add(ledStripViewGUI);
                 mainContentPanel.revalidate();
                 mainContentPanel.repaint();
@@ -691,16 +708,17 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         });
         viewMenu.add(showIndividualView);
 
+
         // Run menu
         JMenu runMenu = new JMenu("Run");
         menuBar.add(runMenu);
-        JMenuItem runShowItem = new JMenuItem("Run Show Linked to Viewport");
+        runShowItem = new JMenuItem("Run Show Linked to Viewport");
         runMenu.add(runShowItem);
-        JMenuItem flowViewerItem = new JMenuItem("Run Show via Flow View");
+        flowViewerItem = new JMenuItem("Run Show via Flow View");
         runMenu.add(flowViewerItem);
-        JMenuItem lightBoardFlowViewerItem = new JMenuItem("Run Light Board via View");
+        lightBoardFlowViewerItem = new JMenuItem("Run Light Board via View");
         runMenu.add(lightBoardFlowViewerItem);
-        JMenuItem stopShowItem = new JMenuItem("Stop show");
+        stopShowItem = new JMenuItem("Stop show");
         stopShowItem.setEnabled(false);
         runMenu.add(stopShowItem);
         runMenu.addSeparator();
@@ -718,16 +736,16 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         }
 
         runWebServer.addActionListener(e -> {
-            runServer("", false);
             runWebServer.setEnabled(false);
             runLightBoardWebServer.setEnabled(false);
             stopWebServer.setEnabled(true);
+            runServer("", false);
         });
         runLightBoardWebServer.addActionListener(e -> {
-            runServer("", true);
             runWebServer.setEnabled(false);
             runLightBoardWebServer.setEnabled(false);
             stopWebServer.setEnabled(true);
+            runServer("", true);
         });
         stopWebServer.addActionListener(e -> {
             stopServer();
@@ -749,7 +767,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         flowViewerItem.addActionListener(e -> {
             isLightBoardMode = false;
             serialTransmitter = comPortPrompt("Transmitter");
-            if (serialTransmitter == null) {
+            if (!serialTransmitter.getType().equals("Transmitter")) {
                 return;
             }
             runShowItem.setEnabled(false);
@@ -757,7 +775,14 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             lightBoardFlowViewerItem.setEnabled(false);
             stopShowItem.setEnabled(true);
             flowViewGUI = new FlowViewGUI(count2RFTrigger, this);
-            mainContentPanel.remove(footballField);
+            if (footballField.isShowing()) {
+                mainContentPanel.remove(footballField);
+            } else if (ledStripViewGUI.isShowing()) {
+                showIndividualView.setState(false);
+                mainContentPanel.remove(ledStripViewGUI);
+            } else if (ledConfigurationGUI.isShowing()) {
+                mainContentPanel.remove(ledConfigurationGUI);
+            }
             mainContentPanel.add(flowViewGUI);
             mainContentPanel.revalidate();
             mainContentPanel.repaint();
@@ -766,7 +791,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         lightBoardFlowViewerItem.addActionListener(e -> {
             isLightBoardMode = true;
             serialTransmitter = comPortPrompt("Transmitter");
-            if (serialTransmitter == null) {
+            if (!serialTransmitter.getType().equals("Transmitter")) {
                 return;
             }
             runShowItem.setEnabled(false);
@@ -774,7 +799,14 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             lightBoardFlowViewerItem.setEnabled(false);
             stopShowItem.setEnabled(true);
             flowViewGUI = new FlowViewGUI(count2RFTrigger, this);
-            mainContentPanel.remove(footballField);
+            if (footballField.isShowing()) {
+                mainContentPanel.remove(footballField);
+            } else if (ledStripViewGUI.isShowing()) {
+                showIndividualView.setState(false);
+                mainContentPanel.remove(ledStripViewGUI);
+            } else if (ledConfigurationGUI.isShowing()) {
+                mainContentPanel.remove(ledConfigurationGUI);
+            }
             mainContentPanel.add(flowViewGUI);
             mainContentPanel.revalidate();
             mainContentPanel.repaint();
@@ -783,13 +815,14 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         runShowItem.addActionListener(e -> {
             serialTransmitter = comPortPrompt("Transmitter");
 
-            if (serialTransmitter == null) {
+            if (!serialTransmitter.getType().equals("Transmitter")) {
                 return;
             }
 
             footballFieldPanel.addSetToField(footballFieldPanel.drill.sets.get(0));
             runShowItem.setEnabled(false);
             flowViewerItem.setEnabled(false);
+            lightBoardFlowViewerItem.setEnabled(false);
             stopShowItem.setEnabled(true);
         });
 
@@ -828,6 +861,9 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
 
         modifyBoardItem.addActionListener(e -> {
            SerialTransmitter st = comPortPrompt("Receiver");
+           if (!st.getType().equals("Receiver")) {
+               return;
+           }
 
            JTextField boardIDField = new JTextField();
            JCheckBox boardIDEnable = new JCheckBox("Write new Board ID");
@@ -1088,6 +1124,14 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         return st;
     }
 
+    public void removeFlowViewer() {
+        mainContentPanel.remove(flowViewGUI);
+        runShowItem.setEnabled(true);
+        flowViewerItem.setEnabled(true);
+        lightBoardFlowViewerItem.setEnabled(true);
+        stopShowItem.setEnabled(false);
+    }
+
     public void stopServer() {
         server.stop(0);
         noRequestTimer.stop();
@@ -1120,7 +1164,12 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                     fileChooser.setDialogTitle("Select Packets (.pkt) file");
                     fileChooser.setFileFilter(new FileNameExtensionFilter("Emrick Designer Packets File (*.pkt)", "pkt"));
                     fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
-                    fileChooser.showOpenDialog(null);
+                    if (fileChooser.showOpenDialog(null) != JFileChooser.APPROVE_OPTION) {
+                        stopWebServer.setEnabled(false);
+                        runWebServer.setEnabled(true);
+                        runLightBoardWebServer.setEnabled(true);
+                        return;
+                    }
                     f = fileChooser.getSelectedFile();
                 } else {
                     f = new File(path);
@@ -1147,6 +1196,9 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             int option = JOptionPane.showConfirmDialog(null, inputs, "Enter WiFi Credentials", JOptionPane.OK_CANCEL_OPTION);
 
             if (option != JOptionPane.OK_OPTION) {
+                stopWebServer.setEnabled(false);
+                runWebServer.setEnabled(true);
+                runLightBoardWebServer.setEnabled(true);
                 return;
             }
             ssid = ssidField.getText();
@@ -1155,8 +1207,40 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             port = Integer.parseInt(portField.getText());
 
             serialTransmitter = comPortPrompt("Transmitter");
+            if (!serialTransmitter.getType().equals("Transmitter")) {
+                stopWebServer.setEnabled(false);
+                runWebServer.setEnabled(true);
+                runLightBoardWebServer.setEnabled(true);
+                return;
+            }
 
             Unzip.unzip(f.getAbsolutePath(), PathConverter.pathConverter("tmp/", false));
+            verificationColor = JColorChooser.showDialog(this, "Select verification color", Color.WHITE);
+            if (verificationColor == null) {
+                stopWebServer.setEnabled(false);
+                runWebServer.setEnabled(true);
+                runLightBoardWebServer.setEnabled(true);
+                return;
+            }
+
+            String input = JOptionPane.showInputDialog(null, "Enter verification token (leave blank for new token)\n\nDon't use this feature to program more than 200 units");
+            System.out.println(input);
+            if (input != null) {
+                if (input.isEmpty()) {
+                    Random r = new Random();
+                    token = r.nextInt(0, Integer.MAX_VALUE);
+                    JOptionPane.showMessageDialog(null, new JTextArea("The token for this show is: " + token + "\n Save this token in case some boards are not programmed"));
+                } else {
+                    token = Integer.parseInt(input);
+                    currentID = footballFieldPanel.drill.performers.size();
+                }
+            } else {
+                System.out.println("passed");
+                stopWebServer.setEnabled(false);
+                runWebServer.setEnabled(true);
+                runLightBoardWebServer.setEnabled(true);
+                return;
+            }
 
             server = HttpServer.create(new InetSocketAddress(port), 250);
             writeSysMsg("server started at " + port);
@@ -1165,19 +1249,8 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             server.createContext("/", new GetHandler(PathConverter.pathConverter("tmp/", false), this));
             server.setExecutor(new ServerExecutor());
             server.start();
+
             currentID = Math.min(MAX_CONNECTIONS, footballFieldPanel.drill.ledStrips.size());
-            verificationColor = JColorChooser.showDialog(this, "Select verification color", Color.WHITE);
-
-            String input = JOptionPane.showInputDialog(null, "Enter verification token (leave blank for new token)\n\nDon't use this feature to program more than 200 units");
-
-            if (input.isEmpty()) {
-                Random r = new Random();
-                token = r.nextInt(0, Integer.MAX_VALUE);
-                JOptionPane.showMessageDialog(null, new JTextArea("The token for this show is: " + token + "\n Save this token in case some boards are not programmed"));
-            } else {
-                token = Integer.parseInt(input);
-                currentID = footballFieldPanel.drill.performers.size();
-            }
             webServerFrame = new JFrame("Board Programming Tracker");
             webServerFrame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
             webServerFrame.setSize(800, 600);
