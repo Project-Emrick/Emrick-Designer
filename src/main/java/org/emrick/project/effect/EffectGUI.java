@@ -83,6 +83,7 @@ public class EffectGUI implements ActionListener {
     int showGridIndex = -1;
     JTextField hMovementField = new JTextField(10);
     JTextField vMovementField = new JTextField(10);
+    JCheckBox wholePerformer = new JCheckBox("Move by performer");
 
     private JLabel placeholderLabel;
     private EffectList effectType;
@@ -215,7 +216,7 @@ public class EffectGUI implements ActionListener {
 
         if (effectMod.getShapes() == null) {
             effectMod.setShapes(new GridShape[1]);
-            effectMod.getShapes()[0] = new GridShape(new boolean[1][1], new Point(0,0), new Point(0,0), Color.BLACK);
+            effectMod.getShapes()[0] = new GridShape(new boolean[1][1], new Point(0,0), 2, Color.BLACK);
         }
 
         for (int i = 0; i < effectMod.getShapes().length; i++) {
@@ -253,6 +254,10 @@ public class EffectGUI implements ActionListener {
                 setComponentSize(vMovementField, 100, 25);
                 vMovementField.setText(Integer.toString(effectMod.getShapes()[i].getMovement().y));
                 currentComponents[1] = vMovementField;
+                panelComponents.add(currentComponents);
+                currentComponents = new JComponent[1];
+                wholePerformer.setSelected(effectMod.getShapes()[showGridIndex].getSpeed() == 2);
+                currentComponents[0] = wholePerformer;
                 panelComponents.add(currentComponents);
                 currentComponents = new JComponent[1];
                 JButton doneButton = new JButton("Done");
@@ -301,11 +306,15 @@ public class EffectGUI implements ActionListener {
                             trimmedGrid[j-minY][k-minX] = untrimmedGrid[j][k];
                         }
                     }
+                    if (wholePerformer.isSelected()) {
+                        effectMod.getShapes()[showGridIndex].setSpeed(2);
+                    } else {
+                        effectMod.getShapes()[showGridIndex].setSpeed(1);
+                    }
                     effectMod.getShapes()[showGridIndex].setShape(trimmedGrid);
                     Point move = effectMod.getShapes()[showGridIndex].getMovement();
                     effectMod.getShapes()[showGridIndex].setLedStrips(selectedStrips);
                     effectMod.getShapes()[showGridIndex].setStartPos(new Point(minX, minY));
-                    effectMod.getShapes()[showGridIndex].setEndPos(new Point(minX + move.x, minY + move.y));
                     effectListener.onChangeSelectionMode(false, effectMod.getShapes()[showGridIndex].getLedStrips());
                     effectListener.onUpdateEffectPanel(effectMod, this.isNewEffect, -1);
                 });
@@ -324,7 +333,7 @@ public class EffectGUI implements ActionListener {
            for (int i = 0; i < prevShapes.length; i++) {
                newShapes[i] = prevShapes[i];
            }
-           newShapes[newShapes.length-1] = new GridShape(new boolean[1][1], new Point(0,0), new Point(0,0), Color.BLACK);
+           newShapes[newShapes.length-1] = new GridShape(new boolean[1][1], new Point(0,0), 2, Color.BLACK);
            effectMod.setShapes(newShapes);
            effectListener.onUpdateEffectPanel(effectMod, this.isNewEffect, showGridIndex);
         });

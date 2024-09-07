@@ -121,7 +121,7 @@ public class GridEffect implements GeneratedEffect {
                 long time = duration.toMillis() / iterations;
                 ArrayList<LEDStrip> strips = new ArrayList<>();
                 Point curPos = new Point();
-                curPos.x = (int) Math.round((double) shape.getStartPos().x + (double) shape.getMovement().x / ((double)iterations - 1.0) * (double) j);
+                curPos.x = (int) Math.round((double) shape.getStartPos().x + (double) shape.getMovement().x / ((double)iterations - 1.0) * (double) j * (double) shape.getSpeed());
                 curPos.y = (int) Math.round((double) shape.getStartPos().y + (double) shape.getMovement().y / ((double)iterations - 1.0) * (double) j);
                 for (int k = curPos.y; k < curPos.y + shape.getShape().length; k++) {
                     for (int l = curPos.x; l < curPos.x + shape.getShape()[k - curPos.y].length; l++) {

@@ -235,14 +235,12 @@ public class GeneratedEffectAdapter extends TypeAdapter<GeneratedEffect> {
                 writer.value(shape.getStartPos().x);
                 writer.name("startPosY" + i);
                 writer.value(shape.getStartPos().y);
-                writer.name("endPosX" + i);
-                writer.value(shape.getEndPos().x);
-                writer.name("endPosY" + i);
-                writer.value(shape.getEndPos().y);
                 writer.name("moveX" + i);
                 writer.value(shape.getMovement().x);
                 writer.name("moveY" + i);
                 writer.value(shape.getMovement().y);
+                writer.name("gridSpeed" + i);
+                writer.value(shape.getSpeed());
                 StringBuilder boolStr = new StringBuilder();
                 for (int j = 0; j < shape.getShape().length; j++) {
                     for (int k = 0; k < shape.getShape()[j].length; k++) {
@@ -305,6 +303,7 @@ public class GeneratedEffectAdapter extends TypeAdapter<GeneratedEffect> {
         Integer effectType = null;
         Integer height = null;
         Integer width = null;
+        Integer gridSpeed = null;
         ArrayList<Color> chaseSequence = null;
         ArrayList<GridShape> gridShapes = null;
         if (reader.peek().equals(JsonToken.NULL)) {
@@ -383,7 +382,7 @@ public class GeneratedEffectAdapter extends TypeAdapter<GeneratedEffect> {
             } else if ("width".equals(fieldname)) {
                 width = reader.nextInt();
             } else if (isChaseSequenceMember(fieldname)) {
-                Integer data = reader.nextInt();
+                int data = reader.nextInt();
                 int index = Integer.parseInt(fieldname.substring(6));
                 if (chaseSequence == null) {
                     chaseSequence = new ArrayList<>();
@@ -413,7 +412,7 @@ public class GeneratedEffectAdapter extends TypeAdapter<GeneratedEffect> {
                         case 'B': shape.setColor(new Color(shape.getColor().getRed(), shape.getColor().getGreen(), data)); break;
                     }
                 } else if (fieldname.startsWith("startPos")) {
-                    Integer data = reader.nextInt();
+                    int data = reader.nextInt();
                     int index = Integer.parseInt(fieldname.substring(9));
                     while (gridShapes.size() <= index) {
                         gridShapes.add(new GridShape());
@@ -423,19 +422,8 @@ public class GeneratedEffectAdapter extends TypeAdapter<GeneratedEffect> {
                         case 'X': shape.setStartPos(new Point(data, shape.getStartPos().y)); break;
                         case 'Y': shape.setStartPos(new Point(shape.getStartPos().x, data)); break;
                     }
-                } else if (fieldname.startsWith("endPos")) {
-                    Integer data = reader.nextInt();
-                    int index = Integer.parseInt(fieldname.substring(7));
-                    while (gridShapes.size() <= index) {
-                        gridShapes.add(new GridShape());
-                    }
-                    GridShape shape = gridShapes.get(index);
-                    switch (fieldname.charAt(6)) {
-                        case 'X': shape.setEndPos(new Point(data, shape.getEndPos().y)); break;
-                        case 'Y': shape.setEndPos(new Point(shape.getEndPos().x, data)); break;
-                    }
                 } else if (fieldname.startsWith("move")) {
-                    Integer data = reader.nextInt();
+                    int data = reader.nextInt();
                     int index = Integer.parseInt(fieldname.substring(5));
                     while (gridShapes.size() <= index) {
                         gridShapes.add(new GridShape());
@@ -470,6 +458,14 @@ public class GeneratedEffectAdapter extends TypeAdapter<GeneratedEffect> {
                     }
                     GridShape shape = gridShapes.get(index);
                     shape.setRecoveryString(data);
+                } else if (fieldname.startsWith("gridSpeed")) {
+                    int data = reader.nextInt();
+                    int index = Integer.parseInt(fieldname.substring(9));
+                    while (gridShapes.size() <= index) {
+                        gridShapes.add(new GridShape());
+                    }
+                    GridShape shape = gridShapes.get(index);
+                    shape.setSpeed(data);
                 }
             }
         }
@@ -697,8 +693,8 @@ public class GeneratedEffectAdapter extends TypeAdapter<GeneratedEffect> {
         }
 
         return str.startsWith("gridColorR") || str.startsWith("gridColorG") || str.startsWith("gridColorB")
-                || str.startsWith("startPosX") || str.startsWith("startPosY") || str.startsWith("endPosX")
-                || str.startsWith("endPosY") || str.startsWith("moveX") || str.startsWith("moveY")
+                || str.startsWith("startPosX") || str.startsWith("startPosY") || str.startsWith("gridSpeed")
+                || str.startsWith("moveX") || str.startsWith("moveY")
                 || str.startsWith("shape") || str.startsWith("ledString");
     }
 

@@ -11,8 +11,8 @@ import java.util.List;
 public class GridShape {
     private boolean[][] shape;
     private Point startPos;
-    private Point endPos;
     private Color color;
+    private int speed;
     private Point movement = new Point(0, 0);
     private HashSet<LEDStrip> ledStrips;
     private String recoveryString = "";
@@ -20,18 +20,26 @@ public class GridShape {
     public GridShape() {
         this.shape = new boolean[1][1];
         this.startPos = new Point(0, 0);
-        this.endPos = new Point(0, 0);
         this.color = Color.BLACK;
         this.ledStrips = new HashSet<>();
+        this.speed = 1;
         this.movement = new Point(0, 0);
     }
 
-    public GridShape(boolean[][] shape, Point startPos, Point endPos, Color color) {
+    public GridShape(boolean[][] shape, Point startPos, int speed, Color color) {
         this.shape = shape;
         this.startPos = startPos;
-        this.endPos = endPos;
         this.color = color;
+        this.speed = speed;
         ledStrips = new HashSet<>();
+    }
+
+    public int getSpeed() {
+        return speed;
+    }
+
+    public void setSpeed(int speed) {
+        this.speed = speed;
     }
 
     public String generateRecoveryString() {
@@ -95,13 +103,5 @@ public class GridShape {
 
     public void setStartPos(Point startPos) {
         this.startPos = startPos;
-    }
-
-    public Point getEndPos() {
-        return endPos;
-    }
-
-    public void setEndPos(Point endPos) {
-        this.endPos = endPos;
     }
 }
