@@ -87,6 +87,6 @@ public class LEDStrip {
 
     @Override
     public String toString() {
-        return "LEDStrip: " + ledConfig.getLabel() + ", " + id;
+        return "LEDStrip: " + getLabel() + ", " + id;
     }
 }

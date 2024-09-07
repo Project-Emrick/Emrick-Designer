@@ -24,6 +24,7 @@ import java.awt.event.*;
 import java.awt.geom.*;
 import java.awt.image.BufferedImage;
 import java.io.*;
+import java.lang.reflect.Array;
 import java.net.*;
 import java.nio.file.*;
 import java.time.*;
@@ -1079,6 +1080,13 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         });
         lightMenuPopup.add(chasePattern);
 
+        JMenuItem gridPattern = new JMenuItem("Create Grid Effect");
+        gridPattern.addActionListener(e -> {
+            selectedEffectType = EffectList.GRID;
+            updateEffectViewPanel(selectedEffectType);
+        });
+        lightMenuPopup.add(gridPattern);
+
 
         // Button that triggers the popup menu
         JButton lightButton = new JButton("Effect Options");
@@ -1331,6 +1339,17 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                 Performer p = footballFieldPanel.drill.performers.get(ledStrip.getPerformerID());
                 p.addLEDStrip(ledStrip.getId());
                 ledStrip.setPerformer(p);
+
+            }
+            for (LEDStrip ledStrip : footballFieldPanel.drill.ledStrips) {
+                for (Effect e : ledStrip.getEffects()) {
+                    if (e.getEffectType() == EffectList.GRID) {
+                        GridShape[] shapes = ((GridEffect) e.getGeneratedEffect()).getShapes();
+                        for (GridShape g : shapes) {
+                            g.recoverLEDStrips(footballFieldPanel.drill.ledStrips);
+                        }
+                    }
+                }
             }
             ledStripViewGUI = new LEDStripViewGUI(new ArrayList<>(), effectManager);
             footballFieldPanel.setCurrentSet(footballFieldPanel.drill.sets.get(0));
@@ -1996,12 +2015,34 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
     }
 
     @Override
-    public void onUpdateEffectPanel(Effect effect, boolean isNew) {
+    public void onUpdateEffectPanel(Effect effect, boolean isNew, int index) {
         this.effectViewPanel.remove(effectGUI.getEffectPanel());
-        effectGUI = new EffectGUI(effect, effect.getStartTimeMSec(), this, effect.getEffectType(), isNew);
+        effectGUI = new EffectGUI(effect, effect.getStartTimeMSec(), this, effect.getEffectType(), isNew, index);
         this.effectViewPanel.add(effectGUI.getEffectPanel());
         this.effectViewPanel.revalidate();
         this.effectViewPanel.repaint();
+    }
+
+    @Override
+    public void onChangeSelectionMode(boolean isInnerSelect, HashSet<LEDStrip> strips) {
+        footballFieldPanel.innerSelect = isInnerSelect;
+        if (isInnerSelect) {
+            footballFieldPanel.innerSelectedLEDStrips = new HashSet<>();
+            footballFieldPanel.innerSelectedLEDStrips.addAll(strips);
+            footballFieldPanel.repaint();
+        } else {
+            footballFieldPanel.innerSelectedLEDStrips = new HashSet<>();
+        }
+    }
+
+    @Override
+    public HashSet<LEDStrip> onInnerSelectionRequired() {
+        return footballFieldPanel.innerSelectedLEDStrips;
+    }
+
+    @Override
+    public HashSet<LEDStrip> onSelectionRequired() {
+        return footballFieldPanel.selectedLEDStrips;
     }
 
     @Override
@@ -2016,7 +2057,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         if (effectManager != null) {
             LEDStrip l = effectManager.getSelectedLEDStrips().get(0);
             long msec = footballFieldPanel.currentMS;
-            if (l.getEffects().size() != 0) {
+            if (!l.getEffects().isEmpty()) {
                 Effect effect = effectManager.getEffect(l, msec);
                 if (effect != null) {
                     if (selectedEffectType != EffectList.SHOW_GROUPS) {
@@ -2168,9 +2209,12 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                 } else if (currentEffect.getEffectType() == EffectList.CHASE) {
                     ChaseEffect chaseEffect = (ChaseEffect) currentEffect.getGeneratedEffect();
                     currentEffect = chaseEffect.generateEffectObj();
+                } else if (currentEffect.getEffectType() == EffectList.GRID) {
+                    GridEffect gridEffect = (GridEffect) currentEffect.getGeneratedEffect();
+                    currentEffect = gridEffect.generateEffectObj();
                 }
             }
-            effectGUI = new EffectGUI(currentEffect, currentMSec, this, selectedEffectType, false);
+            effectGUI = new EffectGUI(currentEffect, currentMSec, this, selectedEffectType, false, -1);
             // Add updated data for effect view
             effectViewPanel.add(effectGUI.getEffectPanel(), BorderLayout.CENTER);
             effectViewPanel.revalidate();

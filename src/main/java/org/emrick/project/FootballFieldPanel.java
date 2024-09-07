@@ -16,6 +16,8 @@ import java.util.*;
 public class FootballFieldPanel extends JPanel implements RepaintListener {
     public Drill drill;
     public HashSet<LEDStrip> selectedLEDStrips;
+    public HashSet<LEDStrip> innerSelectedLEDStrips;
+    public boolean innerSelect;
     private double fieldWidth = 720; // Width of the football field
     private double fieldHeight = 360;
     private Point frontSideline50 = new Point(360,360);
@@ -54,6 +56,8 @@ public class FootballFieldPanel extends JPanel implements RepaintListener {
         setMinimumSize(new Dimension(1042, 548));
         drill = new Drill();
         selectedLEDStrips = new HashSet<>();
+        innerSelectedLEDStrips = new HashSet<>();
+        innerSelect = false;
         this.addMouseMotionListener(new MouseInput(this));
         this.addMouseListener(new MouseInput(this));
         colorChosen = Color.BLACK;
@@ -234,7 +238,9 @@ public class FootballFieldPanel extends JPanel implements RepaintListener {
                     }
                     g.fillRect((int) x + l.getLedConfig().gethOffset(), (int) y + l.getLedConfig().getvOffset(), l.getLedConfig().getWidth(), l.getLedConfig().getHeight());
 
-                    if (selectedLEDStrips.contains(l)) {
+                    if (innerSelectedLEDStrips.contains(l)) {
+                        g.setColor(Color.BLUE);
+                    }else if (selectedLEDStrips.contains(l)) {
                         g.setColor(Color.GREEN);
                     } else {
                         g.setColor(Color.WHITE);
@@ -324,8 +330,6 @@ public class FootballFieldPanel extends JPanel implements RepaintListener {
             selectEndX = e.getX();
             selectEndY = e.getY();
 
-            // TODO: select all boxes inside box
-
             int axmin = Math.min(selectStartX, selectEndX);
             int aymin = Math.min(selectStartY, selectEndY);
             int axmax = Math.max(selectStartX, selectEndX);
@@ -333,8 +337,12 @@ public class FootballFieldPanel extends JPanel implements RepaintListener {
 
             boolean isControlDown = e.isControlDown();
             if (!isControlDown) {
-                selectedLEDStrips.clear();
-                footballFieldListener.onPerformerDeselect();
+                if (innerSelect) {
+                    innerSelectedLEDStrips.clear();
+                } else {
+                    selectedLEDStrips.clear();
+                    footballFieldListener.onPerformerDeselect();
+                }
             }
             boolean select = false;
             HashSet<LEDStrip> ledStripsToChange = new HashSet<>();
@@ -355,40 +363,77 @@ public class FootballFieldPanel extends JPanel implements RepaintListener {
                 }
 
                 if (intersecting) {
-                    if (selectAllLEDs) {
-                        for (Integer i : p.getLedStrips()) {
-                            LEDStrip l = drill.ledStrips.get(i);
+                    if (innerSelect) {
+                        if (selectAllLEDs) {
+                            for (Integer i : p.getLedStrips()) {
+                                LEDStrip l = drill.ledStrips.get(i);
+                                if (isControlDown) {
+                                    ledStripsToChange.add(l);
+                                    if (!innerSelectedLEDStrips.contains(l)) {
+                                        select = true;
+                                    }
+                                } else {
+                                    ledStripsToChange.add(l);
+                                    select = true;
+                                }
+                            }
+                        } else {
                             if (isControlDown) {
-                                ledStripsToChange.add(l);
-                                if (!selectedLEDStrips.contains(l)) {
+                                ledStripsToChange.add(ledStrip);
+                                if (!innerSelectedLEDStrips.contains(ledStrip)) {
                                     select = true;
                                 }
                             } else {
-                                selectedLEDStrips.add(l);
+                                ledStripsToChange.add(ledStrip);
                                 select = true;
                             }
                         }
                     } else {
-                        if (isControlDown) {
-                            ledStripsToChange.add(ledStrip);
-                            if (!selectedLEDStrips.contains(ledStrip)) {
-                                select = true;
+                        if (selectAllLEDs) {
+                            for (Integer i : p.getLedStrips()) {
+                                LEDStrip l = drill.ledStrips.get(i);
+                                if (isControlDown) {
+                                    ledStripsToChange.add(l);
+                                    if (!selectedLEDStrips.contains(l)) {
+                                        select = true;
+                                    }
+                                } else {
+                                    ledStripsToChange.add(l);
+                                    select = true;
+                                }
                             }
                         } else {
-                            selectedLEDStrips.add(ledStrip);
-                            select = true;
+                            if (isControlDown) {
+                                ledStripsToChange.add(ledStrip);
+                                if (!selectedLEDStrips.contains(ledStrip)) {
+                                    select = true;
+                                }
+                            } else {
+                                ledStripsToChange.add(ledStrip);
+                                select = true;
+                            }
                         }
                     }
                 }
             }
             if (select) {
-                selectedLEDStrips.addAll(ledStripsToChange);
-                footballFieldListener.onPerformerSelect();
-            } else {
-                for (LEDStrip ledStrip : ledStripsToChange) {
-                    selectedLEDStrips.remove(ledStrip);
+                if (innerSelect) {
+                    innerSelectedLEDStrips.addAll(ledStripsToChange);
+                } else {
+                    selectedLEDStrips.addAll(ledStripsToChange);
+                    footballFieldListener.onPerformerSelect();
                 }
-                footballFieldListener.onPerformerDeselect();
+            } else {
+                if (innerSelect) {
+                    for (LEDStrip ledStrip : ledStripsToChange) {
+                        innerSelectedLEDStrips.remove(ledStrip);
+                    }
+                } else {
+                    for (LEDStrip ledStrip : ledStripsToChange) {
+                        selectedLEDStrips.remove(ledStrip);
+                    }
+                    footballFieldListener.onPerformerDeselect();
+                }
             }
             this.repaintListener.onRepaintCall();
         }

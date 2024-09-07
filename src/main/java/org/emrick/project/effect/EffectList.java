@@ -9,5 +9,6 @@ public enum EffectList {
     RIPPLE,
     WAVE,
     CIRCLE_CHASE,
-    CHASE
+    CHASE,
+    GRID
 }

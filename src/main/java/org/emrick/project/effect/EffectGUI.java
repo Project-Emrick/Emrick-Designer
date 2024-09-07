@@ -1,9 +1,7 @@
 package org.emrick.project.effect;
 
-import com.google.gson.*;
-import com.google.gson.reflect.*;
 import org.emrick.project.EffectsGroup;
-import org.emrick.project.PathConverter;
+import org.emrick.project.LEDStrip;
 import org.emrick.project.Performer;
 import org.emrick.project.TimeManager;
 
@@ -12,13 +10,9 @@ import javax.swing.border.*;
 import javax.swing.event.*;
 import java.awt.*;
 import java.awt.event.*;
-import java.io.*;
-import java.lang.reflect.*;
-import java.nio.file.*;
 import java.time.*;
 import java.util.List;
 import java.util.*;
-import java.util.stream.*;
 
 public class EffectGUI implements ActionListener {
     private static List<EffectsGroup> EFFECTS_GROUPS;
@@ -84,6 +78,12 @@ public class EffectGUI implements ActionListener {
     JComboBox<String> durationTypeSelect = new JComboBox<String>(durationTypeOptions);
     String durationType = "Seconds";
     ArrayList<JComponent[]> panelComponents = new ArrayList<>();
+    JLabel addShapeLabel = new JLabel("Add Shape");
+    JButton addShapeBtn = new JButton();
+    int showGridIndex = -1;
+    JTextField hMovementField = new JTextField(10);
+    JTextField vMovementField = new JTextField(10);
+    JCheckBox wholePerformer = new JCheckBox("Move by performer");
 
     private JLabel placeholderLabel;
     private EffectList effectType;
@@ -93,11 +93,13 @@ public class EffectGUI implements ActionListener {
      * @param startTime In the case that no effect exists for the performer at the given time, we still need the current
      *                  time for gui display.
      */
-    public EffectGUI(Effect effect, long startTime, EffectListener effectListener, EffectList effectType, boolean isNew) {
+    public EffectGUI(Effect effect, long startTime, EffectListener effectListener, EffectList effectType, boolean isNew, int index) {
         this.effect = effect;
         this.effectListener = effectListener;
+        effectListener.onChangeSelectionMode(index != -1, index != -1 ? effect.getShapes()[index].getLedStrips() : new HashSet<>());
         this.effectType = effectType;
         this.isNewEffect = true;
+        this.showGridIndex = index;
 
         if (this.effect.equals(new Effect(startTime))) {
 
@@ -142,6 +144,7 @@ public class EffectGUI implements ActionListener {
             case RIPPLE -> setupRippleGUI();
             case CIRCLE_CHASE -> setupCircleChaseGUI();
             case CHASE -> setupChaseGUI();
+            case  GRID -> setupGridGUI();
         }
     }
 
@@ -157,6 +160,7 @@ public class EffectGUI implements ActionListener {
             case RIPPLE -> effectTitle = "Ripple Effect";
             case CIRCLE_CHASE -> effectTitle = "Circle Chase Effect";
             case CHASE -> effectTitle = "Chase Effect";
+            case GRID -> effectTitle = "Grid Effect";
         }
         Border innerBorder = BorderFactory.createTitledBorder(effectTitle);
         Border outerBorder = BorderFactory.createEmptyBorder(5, 5, 5, 5);
@@ -178,6 +182,172 @@ public class EffectGUI implements ActionListener {
         component.setPreferredSize(new Dimension(width,height));
         component.setMaximumSize(new Dimension(width,height));
         component.setMinimumSize(new Dimension(width,height));
+    }
+
+    private void setupGridGUI() {
+        this.effectPanel = new JPanel();
+
+        durationField.getDocument().addDocumentListener(getDocumentListener());
+
+        durationTypeSelect.addActionListener(this);
+
+        applyBtn.addActionListener(this);
+        deleteBtn.addActionListener(this);
+
+        //////////////// 0th Row ////////////////
+
+        JComponent[] currentComponents = new JComponent[2];
+        currentComponents[0] = startTimeLabel;
+        currentComponents[1] = endTimeLabel;
+        panelComponents.add(currentComponents);
+
+        //////////////// 1st Row ////////////////
+        currentComponents = new JComponent[2];
+        currentComponents[0] = new JLabel("Set count by: ");
+        setComponentSize(durationTypeSelect, 100, 25);
+        currentComponents[1] = durationTypeSelect;
+        panelComponents.add(currentComponents);
+
+        currentComponents = new JComponent[2];
+        currentComponents[0] = durationLabel;
+        setComponentSize(durationField, 100, 25);
+        currentComponents[1] = durationField;
+        panelComponents.add(currentComponents);
+
+        if (effectMod.getShapes() == null) {
+            effectMod.setShapes(new GridShape[1]);
+            effectMod.getShapes()[0] = new GridShape(new boolean[1][1], new Point(0,0), 2, Color.BLACK);
+        }
+
+        for (int i = 0; i < effectMod.getShapes().length; i++) {
+            if (showGridIndex != i) {
+                currentComponents = new JComponent[1];
+                JButton editShapeButton = new JButton("Edit Shape " + (i + 1));
+                int index = i;
+                editShapeButton.addActionListener(e -> {
+                    applyToEffectMod();
+                    effectListener.onChangeSelectionMode(true, effectMod.getShapes()[index].getLedStrips());
+                    effectListener.onUpdateEffectPanel(effectMod, this.isNewEffect, index);
+                });
+                currentComponents[0] = editShapeButton;
+                panelComponents.add(currentComponents);
+            } else {
+                currentComponents = new JComponent[2];
+                JLabel colorLabel = new JLabel("Set Shape Color");
+                currentComponents[0] = colorLabel;
+                JButton colorButton = new JButton();
+                colorButton.addActionListener(this);
+                setComponentSize(colorButton, 20, 20);
+                colorButton.setBackground(effectMod.getShapes()[i].getColor());
+                currentComponents[1] = colorButton;
+                panelComponents.add(currentComponents);
+                currentComponents = new JComponent[2];
+                JLabel hMoveLabel = new JLabel("Set horizontal movement");
+                currentComponents[0] = hMoveLabel;
+                setComponentSize(hMovementField, 100, 25);
+                hMovementField.setText(Integer.toString(effectMod.getShapes()[i].getMovement().x));
+                currentComponents[1] = hMovementField;
+                panelComponents.add(currentComponents);
+                currentComponents = new JComponent[2];
+                JLabel vMoveLabel = new JLabel("Set vertical movement");
+                currentComponents[0] = vMoveLabel;
+                setComponentSize(vMovementField, 100, 25);
+                vMovementField.setText(Integer.toString(effectMod.getShapes()[i].getMovement().y));
+                currentComponents[1] = vMovementField;
+                panelComponents.add(currentComponents);
+                currentComponents = new JComponent[1];
+                wholePerformer.setSelected(effectMod.getShapes()[showGridIndex].getSpeed() == 2);
+                currentComponents[0] = wholePerformer;
+                panelComponents.add(currentComponents);
+                currentComponents = new JComponent[1];
+                JButton doneButton = new JButton("Done");
+                doneButton.addActionListener(e -> {
+                    applyToEffectMod();
+                    ArrayList<LEDStrip> strips = new ArrayList<>();
+                    Iterator<LEDStrip> iterator = effectListener.onSelectionRequired().iterator();
+                    while (iterator.hasNext()) {
+                        strips.add(iterator.next());
+                    }
+                    LEDStrip[][] grid = GridEffect.buildGrid(strips, effectMod.getWidth(), effectMod.getHeight());
+                    HashSet<LEDStrip> selectedStrips = effectListener.onInnerSelectionRequired();
+                    boolean[][] untrimmedGrid = new boolean[effectMod.getHeight()][effectMod.getWidth()];
+                    for (int j = 0; j < grid.length; j++) {
+                        for (int k = 0; k < grid[j].length; k++) {
+                            untrimmedGrid[j][k] = selectedStrips.contains(grid[j][k]);
+                        }
+                    }
+                    int minX = Integer.MAX_VALUE;
+                    int maxX = Integer.MIN_VALUE;
+                    int minY = Integer.MAX_VALUE;
+                    int maxY = Integer.MIN_VALUE;
+                    for (int j = 0; j < untrimmedGrid.length; j++) {
+                        for (int k = 0; k < untrimmedGrid[j].length; k++) {
+                            if (untrimmedGrid[j][k]) {
+                                if (j > maxY) {
+                                    maxY = j;
+                                }
+                                if (j < minY) {
+                                    minY = j;
+                                }
+                                if (k > maxX) {
+                                    maxX = k;
+                                }
+                                if (k < minX) {
+                                    minX = k;
+                                }
+                            }
+                        }
+                    }
+                    int dimX = maxX - minX + 1;
+                    int dimY = maxY - minY + 1;
+                    boolean[][] trimmedGrid = new boolean[dimY][dimX];
+                    for (int j = minY; j <= maxY; j++) {
+                        for (int k = minX; k <= maxX; k++) {
+                            trimmedGrid[j-minY][k-minX] = untrimmedGrid[j][k];
+                        }
+                    }
+                    if (wholePerformer.isSelected()) {
+                        effectMod.getShapes()[showGridIndex].setSpeed(2);
+                    } else {
+                        effectMod.getShapes()[showGridIndex].setSpeed(1);
+                    }
+                    effectMod.getShapes()[showGridIndex].setShape(trimmedGrid);
+                    Point move = effectMod.getShapes()[showGridIndex].getMovement();
+                    effectMod.getShapes()[showGridIndex].setLedStrips(selectedStrips);
+                    effectMod.getShapes()[showGridIndex].setStartPos(new Point(minX, minY));
+                    effectListener.onChangeSelectionMode(false, effectMod.getShapes()[showGridIndex].getLedStrips());
+                    effectListener.onUpdateEffectPanel(effectMod, this.isNewEffect, -1);
+                });
+                currentComponents[0] = doneButton;
+                panelComponents.add(currentComponents);
+            }
+
+            // TODO: add delete shape button
+        }
+
+        currentComponents = new JComponent[1];
+        JButton addButton = new JButton("Add Shape");
+        addButton.addActionListener(e -> {
+           GridShape[] prevShapes = effectMod.getShapes();
+           GridShape[] newShapes = new GridShape[prevShapes.length + 1];
+           for (int i = 0; i < prevShapes.length; i++) {
+               newShapes[i] = prevShapes[i];
+           }
+           newShapes[newShapes.length-1] = new GridShape(new boolean[1][1], new Point(0,0), 2, Color.BLACK);
+           effectMod.setShapes(newShapes);
+           effectListener.onUpdateEffectPanel(effectMod, this.isNewEffect, showGridIndex);
+        });
+        currentComponents[0] = addButton;
+        panelComponents.add(currentComponents);
+
+        currentComponents = new JComponent[2];
+        currentComponents[0] = deleteBtn;
+        currentComponents[1] = applyBtn;
+        panelComponents.add(currentComponents);
+
+        setupGUI();
+
+        loadEffectToGUI(effectMod);
     }
 
     private void setupChaseGUI() {
@@ -1000,9 +1170,11 @@ public class EffectGUI implements ActionListener {
                                                     "Choose Color " + (i+1),
                                                     button.getBackground());
             button.setBackground(color);
-            if (button.equals(colorButtons.get(colorButtons.size() - 1))) {
+            if (effectType == EffectList.GRID) {
+                effectMod.getShapes()[showGridIndex].setColor(color);
+            } else if (button.equals(colorButtons.get(colorButtons.size() - 1))) {
                 applyToEffectMod();
-                effectListener.onUpdateEffectPanel(effectMod, this.isNewEffect);
+                effectListener.onUpdateEffectPanel(effectMod, this.isNewEffect, -1);
             }
         }
     }
@@ -1059,9 +1231,6 @@ public class EffectGUI implements ActionListener {
             durationMSec--;
         }
 
-
-
-
         Duration delay = Duration.ofMillis(delayMSec);
         Duration duration = Duration.ofMillis(durationMSec);
         Duration timeout = Duration.ofMillis(timeoutMSec);
@@ -1070,6 +1239,39 @@ public class EffectGUI implements ActionListener {
         this.effectMod.setTimeout(timeout);
         this.effectMod.setSpeed(Double.parseDouble(speedField.getText()));
         this.effectMod.setAngle(Double.parseDouble(angleField.getText()));
+        if (effectType == EffectList.GRID && showGridIndex != -1) {
+            this.effectMod.getShapes()[showGridIndex].setMovement(
+                    new Point(Integer.parseInt(hMovementField.getText()),
+                            Integer.parseInt(vMovementField.getText())));
+            Iterator<LEDStrip> iterator = effectListener.onSelectionRequired().iterator();
+            ArrayList<LEDStrip> list = new ArrayList<>();
+            while (iterator.hasNext()) {
+                list.add(iterator.next());
+            }
+            list.sort(Comparator.comparingInt((o) -> (int) o.getPerformer().currentLocation.getY()));
+            // find width and height
+            int i = 0;
+            HashSet<Integer> xPositions = new HashSet<>();
+            HashSet<Integer> yPositions = new HashSet<>();
+            HashSet<Performer> performers = new HashSet<>();
+            int widthOffset = 0;
+            while (i < list.size()) {
+                int x = (int) list.get(i).getPerformer().currentLocation.getX();
+                if (xPositions.contains(x)) {
+                    if (performers.contains(list.get(i).getPerformer())) {
+                        widthOffset++;
+                    }
+                } else {
+                    performers.add(list.get(i).getPerformer());
+                }
+                xPositions.add(x);
+                yPositions.add((int) list.get(i).getPerformer().currentLocation.getY());
+
+                i++;
+            }
+            effectMod.setWidth(xPositions.size() + widthOffset);
+            effectMod.setHeight(yPositions.size());
+        }
 
         this.effectMod.setUSE_DURATION(this.TIME_GRADIENTBox.isSelected());
         this.effectMod.setSET_TIMEOUT(this.SET_TIMEOUTBox.isSelected());
@@ -1089,6 +1291,9 @@ public class EffectGUI implements ActionListener {
             }
             this.effectMod.setChaseSequence(chaseSequence);
         }
+//        if (this.effectType == EffectList.GRID) {
+//            this.effectMod.getShapes()[showGridIndex].setColor();
+//        }
 
     }
 
