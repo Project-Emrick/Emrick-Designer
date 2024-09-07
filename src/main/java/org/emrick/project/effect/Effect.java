@@ -29,6 +29,9 @@ public class Effect implements Cloneable, TimelineEvent {
     private LightingDisplay.Function function;
     private int size;
     private ArrayList<Color> chaseSequence;
+    private int height;
+    private int width;
+    private GridShape[] shapes;
 
     // Bitflags
     private boolean USE_DURATION;
@@ -58,6 +61,8 @@ public class Effect implements Cloneable, TimelineEvent {
         this.effectType = EffectList.HIDE_GROUPS;
         this.id = -1;
         this.chaseSequence = new ArrayList<>();
+        this.height = 0;
+        this.width = 0;
         calculateEndTimeMSec();
     }
 
@@ -83,7 +88,17 @@ public class Effect implements Cloneable, TimelineEvent {
         this.effectType = EffectList.HIDE_GROUPS;
         this.id = id;
         this.chaseSequence = new ArrayList<>();
+        this.height = 0;
+        this.width = 0;
         calculateEndTimeMSec();
+    }
+
+    public GridShape[] getShapes() {
+        return shapes;
+    }
+
+    public void setShapes(GridShape[] shapes) {
+        this.shapes = shapes;
     }
 
     public int getSize() {
@@ -120,10 +135,27 @@ public class Effect implements Cloneable, TimelineEvent {
                 case ALTERNATING_COLOR: generatedEffect = GeneratedEffectLoader.generateAlternatingColorEffectFromEffect(this); break;
                 case RIPPLE: generatedEffect = GeneratedEffectLoader.generateRippleEffectFromEffect(this); break;
                 case CIRCLE_CHASE: generatedEffect = GeneratedEffectLoader.generateCircleChaseEffectFromEffect(this); break;
-                case CHASE: generatedEffect = GeneratedEffectLoader.generateChaseEffectFromEffect(this);
+                case CHASE: generatedEffect = GeneratedEffectLoader.generateChaseEffectFromEffect(this); break;
+                case GRID: generatedEffect = GeneratedEffectLoader.generateGridEffectFromEffect(this); break;
             }
         }
         return generatedEffect;
+    }
+
+    public int getHeight() {
+        return height;
+    }
+
+    public void setHeight(int height) {
+        this.height = height;
+    }
+
+    public int getWidth() {
+        return width;
+    }
+
+    public void setWidth(int width) {
+        this.width = width;
     }
 
     public ArrayList<Color> getChaseSequence() {

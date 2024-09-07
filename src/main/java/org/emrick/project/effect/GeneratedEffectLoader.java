@@ -28,4 +28,8 @@ public class GeneratedEffectLoader {
     public static ChaseEffect generateChaseEffectFromEffect(Effect e) {
         return new ChaseEffect(e.getStartTimeMSec(), e.getEndTimeMSec(), e.getChaseSequence(), e.getDuration(), e.isDirection(), e.getSpeed(), e.getId());
     }
+
+    public static GridEffect generateGridEffectFromEffect(Effect e) {
+        return new GridEffect(e.getStartTimeMSec(), e.getEndTimeMSec(), e.getHeight(), e.getWidth(), e.getShapes(), e.getDuration(), e.getId());
+    }
 }
