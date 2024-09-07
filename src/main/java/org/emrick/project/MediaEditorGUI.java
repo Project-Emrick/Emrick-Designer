@@ -1339,6 +1339,17 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                 Performer p = footballFieldPanel.drill.performers.get(ledStrip.getPerformerID());
                 p.addLEDStrip(ledStrip.getId());
                 ledStrip.setPerformer(p);
+
+            }
+            for (LEDStrip ledStrip : footballFieldPanel.drill.ledStrips) {
+                for (Effect e : ledStrip.getEffects()) {
+                    if (e.getEffectType() == EffectList.GRID) {
+                        GridShape[] shapes = ((GridEffect) e.getGeneratedEffect()).getShapes();
+                        for (GridShape g : shapes) {
+                            g.recoverLEDStrips(footballFieldPanel.drill.ledStrips);
+                        }
+                    }
+                }
             }
             ledStripViewGUI = new LEDStripViewGUI(new ArrayList<>(), effectManager);
             footballFieldPanel.setCurrentSet(footballFieldPanel.drill.sets.get(0));
