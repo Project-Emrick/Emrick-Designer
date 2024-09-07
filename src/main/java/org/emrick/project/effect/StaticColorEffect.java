@@ -80,6 +80,7 @@ public class StaticColorEffect implements GeneratedEffect {
         effect.setUSE_DURATION(false);
         effect.setEffectType(EffectList.STATIC_COLOR);
         effect.setId(this.getId());
+        effect.setGeneratedEffect(this);
         return effect;
     }
 

@@ -359,6 +359,7 @@ public class Effect implements Cloneable, TimelineEvent {
             case WAVE: timeLineLabel = "Wave"; break;
             case CIRCLE_CHASE: timeLineLabel = "Circle Chase"; break;
             case CHASE: timeLineLabel = "Chase"; break;
+            case GRID: timeLineLabel = "Grid"; break;
             default : timeLineLabel = "Default Pattern"; break;
         }
 

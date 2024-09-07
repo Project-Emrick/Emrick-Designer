@@ -3,11 +3,9 @@ package org.emrick.project.effect;
 import org.emrick.project.LEDStrip;
 import org.emrick.project.actions.EffectLEDStripMap;
 
+import java.awt.*;
 import java.time.Duration;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Comparator;
-import java.util.HashSet;
+import java.util.*;
 
 public class GridEffect implements GeneratedEffect {
     private long startTime;
@@ -17,6 +15,9 @@ public class GridEffect implements GeneratedEffect {
     private GridShape[] shapes;
     private Duration duration;
     private int id;
+
+
+    // TODO: add option for double width movement
 
     public GridEffect(long startTime, long endTime, int height, int width, GridShape[] shapes, Duration duration, int id) {
         this.startTime = startTime;
@@ -99,14 +100,123 @@ public class GridEffect implements GeneratedEffect {
         e.setDuration(duration);
         e.setId(id);
         e.setEffectType(EffectList.GRID);
+        e.setGeneratedEffect(this);
         return e;
     }
 
     @Override
     public ArrayList<EffectLEDStripMap> generateEffects(ArrayList<LEDStrip> ledStrips) {
         LEDStrip[][] grid = buildGrid(ledStrips, width, height);
+        ArrayList<EffectLEDStripMap> effects = new ArrayList<>();
+        for (int i = 0; i < shapes.length; i++) {
+            GridShape shape = shapes[i];
+            int iterations = Math.max(Math.abs(shape.getMovement().x), Math.abs(shape.getMovement().y)) + 1;
+            long prevDuration = 0;
+            for (int j = 0; j < iterations; j++) {
+                long time = duration.toMillis() / iterations;
+                ArrayList<LEDStrip> strips = new ArrayList<>();
+                Point curPos = new Point();
+                curPos.x = (int) Math.round((double) shape.getStartPos().x + (double) shape.getMovement().x / ((double)iterations - 1.0) * (double) j);
+                curPos.y = (int) Math.round((double) shape.getStartPos().y + (double) shape.getMovement().y / ((double)iterations - 1.0) * (double) j);
+                for (int k = curPos.y; k < curPos.y + shape.getShape().length; k++) {
+                    for (int l = curPos.x; l < curPos.x + shape.getShape()[k - curPos.y].length; l++) {
+                        if (shape.getShape()[k - curPos.y][l - curPos.x]) {
+                            if (k < height && l < width && k >= 0 && l >= 0
+                                    && grid[k][l] != null) {
+                                strips.add(grid[k][l]);
+                            }
+                        }
+                    }
+                }
+                for (LEDStrip strip : strips) {
+                    for (int k = 0; k < effects.size(); k++) {
+                        EffectLEDStripMap effect = effects.get(k);
+                        if (effect.getLedStrip().equals(strip)) {
+                            // calculate overlap
+                            long start = effect.getEffect().getStartTimeMSec();
+                            long end = effect.getEffect().getEndTimeMSec();
+                            long overlap = 0;
+                            long overlapStart;
+                            if (start >= startTime + prevDuration) {
+                                overlap = (startTime + prevDuration + time) - start;
+                                overlapStart = start;
+                            } else {
+                                overlap = end - (startTime + prevDuration);
+                                overlapStart = startTime + prevDuration;
+                            }
+                            if (overlap > 0) {
+                                //System.out.println(effect.getEffect().getStartColor() + ", " + effect.getLedStrip());
+                                if (effect.getEffect().getStartColor().equals(Color.BLACK)) {
+                                    Effect e = new Effect(overlapStart);
+                                    e.setEffectType(EffectList.GRID);
+                                    e.setStartColor(Color.BLACK);
+                                    e.setDelay(Duration.ofMillis(overlap));
+                                    e.setDO_DELAY(true);
+                                    e.setUSE_DURATION(false);
+                                    e.setId(id);
+                                    e.setGeneratedEffect(this);
+                                    effects.add(new EffectLEDStripMap(e, strip));
+                                    effects.remove(effect);
+                                } else {
+                                    // throw error
+                                }
+                            }
+                        }
+                    }
 
-        return null;
+
+                    Effect e = new Effect(startTime + prevDuration);
+                    e.setEffectType(EffectList.GRID);
+                    e.setStartColor(shape.getColor());
+                    e.setDelay(Duration.ofMillis(time));
+                    e.setDO_DELAY(true);
+                    e.setUSE_DURATION(false);
+                    e.setId(id);
+                    e.setGeneratedEffect(this);
+                    effects.add(new EffectLEDStripMap(e, strip));
+                }
+                prevDuration += time;
+            }
+        }
+
+        // fill in the space between patterns
+
+        for (LEDStrip ledStrip : ledStrips) {
+            ArrayList<EffectLEDStripMap> maps = new ArrayList<>();
+            for (int i = 0 ; i < effects.size(); i++) {
+                if (effects.get(i).getLedStrip().equals(ledStrip)) {
+                    maps.add(effects.get(i));
+                }
+            }
+            maps.sort(Comparator.comparingLong((o) -> o.getEffect().getStartTimeMSec()));
+            long lastEnd = startTime;
+            for (int i = 0; i < maps.size(); i++) {
+                if (maps.get(i).getEffect().getStartTimeMSec() > lastEnd + 1) {
+                    Effect e = new Effect(lastEnd);
+                    e.setEffectType(EffectList.GRID);
+                    e.setStartColor(Color.BLACK);
+                    e.setDelay(Duration.ofMillis(maps.get(i).getEffect().getStartTimeMSec() - lastEnd));
+                    e.setDO_DELAY(true);
+                    e.setUSE_DURATION(false);
+                    e.setId(id);
+                    e.setGeneratedEffect(this);
+                    effects.add(new EffectLEDStripMap(e, ledStrip));
+                }
+                lastEnd = maps.get(i).getEffect().getEndTimeMSec();
+            }
+            if (lastEnd < endTime - 1) {
+                Effect e = new Effect(lastEnd);
+                e.setEffectType(EffectList.GRID);
+                e.setStartColor(Color.BLACK);
+                e.setDelay(Duration.ofMillis(endTime - lastEnd));
+                e.setDO_DELAY(true);
+                e.setUSE_DURATION(false);
+                e.setId(id);
+                e.setGeneratedEffect(this);
+                effects.add(new EffectLEDStripMap(e, ledStrip));
+            }
+        }
+        return effects;
     }
 
     public static LEDStrip[][] buildGrid(ArrayList<LEDStrip> ledStrips, int width, int height) {

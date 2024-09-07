@@ -107,6 +107,7 @@ public class ChaseEffect implements GeneratedEffect {
         e.setId(id);
         e.setFunction(function);
         e.setSize(chaseSequence.size()*3+2);
+        e.setGeneratedEffect(this);
         return e;
     }
 
