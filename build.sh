@@ -10,7 +10,7 @@
 #echo BUILD COMPLETE
 
 
-VERSION="8.26.0"
+VERSION="9.7.0"
 DIR="./build/dist/$VERSION/Emrick-Designer"
 NAME="Emrick-Designer"
 
