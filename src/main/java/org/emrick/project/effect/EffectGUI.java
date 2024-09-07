@@ -219,9 +219,9 @@ public class EffectGUI implements ActionListener {
             effectMod.getShapes()[0] = new GridShape(new boolean[1][1], new Point(0,0), 2, Color.BLACK);
         }
 
-        for (int i = 0; i < effectMod.getShapes().length; i++) {
-            if (showGridIndex != i) {
-                currentComponents = new JComponent[1];
+        if (showGridIndex == -1) {
+            for (int i = 0; i < effectMod.getShapes().length; i++) {
+                currentComponents = new JComponent[2];
                 JButton editShapeButton = new JButton("Edit Shape " + (i + 1));
                 int index = i;
                 editShapeButton.addActionListener(e -> {
@@ -229,119 +229,144 @@ public class EffectGUI implements ActionListener {
                     effectListener.onChangeSelectionMode(true, effectMod.getShapes()[index].getLedStrips());
                     effectListener.onUpdateEffectPanel(effectMod, this.isNewEffect, index);
                 });
-                currentComponents[0] = editShapeButton;
-                panelComponents.add(currentComponents);
-            } else {
-                currentComponents = new JComponent[2];
-                JLabel colorLabel = new JLabel("Set Shape Color");
-                currentComponents[0] = colorLabel;
-                JButton colorButton = new JButton();
-                colorButton.addActionListener(this);
-                setComponentSize(colorButton, 20, 20);
-                colorButton.setBackground(effectMod.getShapes()[i].getColor());
-                currentComponents[1] = colorButton;
-                panelComponents.add(currentComponents);
-                currentComponents = new JComponent[2];
-                JLabel hMoveLabel = new JLabel("Set horizontal movement");
-                currentComponents[0] = hMoveLabel;
-                setComponentSize(hMovementField, 100, 25);
-                hMovementField.setText(Integer.toString(effectMod.getShapes()[i].getMovement().x));
-                currentComponents[1] = hMovementField;
-                panelComponents.add(currentComponents);
-                currentComponents = new JComponent[2];
-                JLabel vMoveLabel = new JLabel("Set vertical movement");
-                currentComponents[0] = vMoveLabel;
-                setComponentSize(vMovementField, 100, 25);
-                vMovementField.setText(Integer.toString(effectMod.getShapes()[i].getMovement().y));
-                currentComponents[1] = vMovementField;
-                panelComponents.add(currentComponents);
-                currentComponents = new JComponent[1];
-                wholePerformer.setSelected(effectMod.getShapes()[showGridIndex].getSpeed() == 2);
-                currentComponents[0] = wholePerformer;
-                panelComponents.add(currentComponents);
-                currentComponents = new JComponent[1];
-                JButton doneButton = new JButton("Done");
-                doneButton.addActionListener(e -> {
-                    applyToEffectMod();
-                    ArrayList<LEDStrip> strips = new ArrayList<>();
-                    Iterator<LEDStrip> iterator = effectListener.onSelectionRequired().iterator();
-                    while (iterator.hasNext()) {
-                        strips.add(iterator.next());
-                    }
-                    LEDStrip[][] grid = GridEffect.buildGrid(strips, effectMod.getWidth(), effectMod.getHeight());
-                    HashSet<LEDStrip> selectedStrips = effectListener.onInnerSelectionRequired();
-                    boolean[][] untrimmedGrid = new boolean[effectMod.getHeight()][effectMod.getWidth()];
-                    for (int j = 0; j < grid.length; j++) {
-                        for (int k = 0; k < grid[j].length; k++) {
-                            untrimmedGrid[j][k] = selectedStrips.contains(grid[j][k]);
+                JButton deleteShapeButton = new JButton("Delete Shape " + (i + 1));
+                deleteShapeButton.addActionListener(e -> {
+                    GridShape[] shapes = effectMod.getShapes();
+                    int next = 0;
+                    boolean skipped = false;
+                    GridShape[] tmp = new GridShape[shapes.length-1];
+                    for (GridShape shape : shapes) {
+                        if (next == index) {
+                            skipped = true;
+                        } else if (skipped) {
+                            tmp[next-1] = shape;
+                            next++;
+                        } else {
+                            tmp[next] = shape;
+                            next++;
                         }
                     }
-                    int minX = Integer.MAX_VALUE;
-                    int maxX = Integer.MIN_VALUE;
-                    int minY = Integer.MAX_VALUE;
-                    int maxY = Integer.MIN_VALUE;
-                    for (int j = 0; j < untrimmedGrid.length; j++) {
-                        for (int k = 0; k < untrimmedGrid[j].length; k++) {
-                            if (untrimmedGrid[j][k]) {
-                                if (j > maxY) {
-                                    maxY = j;
-                                }
-                                if (j < minY) {
-                                    minY = j;
-                                }
-                                if (k > maxX) {
-                                    maxX = k;
-                                }
-                                if (k < minX) {
-                                    minX = k;
-                                }
-                            }
-                        }
-                    }
-                    int dimX = maxX - minX + 1;
-                    int dimY = maxY - minY + 1;
-                    boolean[][] trimmedGrid = new boolean[dimY][dimX];
-                    for (int j = minY; j <= maxY; j++) {
-                        for (int k = minX; k <= maxX; k++) {
-                            trimmedGrid[j-minY][k-minX] = untrimmedGrid[j][k];
-                        }
-                    }
-                    if (wholePerformer.isSelected()) {
-                        effectMod.getShapes()[showGridIndex].setSpeed(2);
-                    } else {
-                        effectMod.getShapes()[showGridIndex].setSpeed(1);
-                    }
-                    effectMod.getShapes()[showGridIndex].setShape(trimmedGrid);
-                    Point move = effectMod.getShapes()[showGridIndex].getMovement();
-                    effectMod.getShapes()[showGridIndex].setLedStrips(selectedStrips);
-                    effectMod.getShapes()[showGridIndex].setStartPos(new Point(minX, minY));
-                    effectListener.onChangeSelectionMode(false, effectMod.getShapes()[showGridIndex].getLedStrips());
+                    effectMod.setShapes(tmp);
                     effectListener.onUpdateEffectPanel(effectMod, this.isNewEffect, -1);
                 });
-                currentComponents[0] = doneButton;
+                currentComponents[0] = editShapeButton;
+                currentComponents[1] = deleteShapeButton;
                 panelComponents.add(currentComponents);
             }
 
-            // TODO: add delete shape button
-        }
+            currentComponents = new JComponent[1];
+            JButton addButton = new JButton("Add Shape");
+            addButton.addActionListener(e -> {
+                GridShape[] prevShapes = effectMod.getShapes();
+                GridShape[] newShapes = new GridShape[prevShapes.length + 1];
+                for (int i = 0; i < prevShapes.length; i++) {
+                    newShapes[i] = prevShapes[i];
+                }
+                newShapes[newShapes.length-1] = new GridShape(new boolean[1][1], new Point(0,0), 2, Color.BLACK);
+                effectMod.setShapes(newShapes);
+                effectListener.onUpdateEffectPanel(effectMod, this.isNewEffect, showGridIndex);
+            });
+            currentComponents[0] = addButton;
+            panelComponents.add(currentComponents);
 
-        currentComponents = new JComponent[1];
-        JButton addButton = new JButton("Add Shape");
-        addButton.addActionListener(e -> {
-           GridShape[] prevShapes = effectMod.getShapes();
-           GridShape[] newShapes = new GridShape[prevShapes.length + 1];
-           for (int i = 0; i < prevShapes.length; i++) {
-               newShapes[i] = prevShapes[i];
-           }
-           newShapes[newShapes.length-1] = new GridShape(new boolean[1][1], new Point(0,0), 2, Color.BLACK);
-           effectMod.setShapes(newShapes);
-           effectListener.onUpdateEffectPanel(effectMod, this.isNewEffect, showGridIndex);
-        });
-        currentComponents[0] = addButton;
-        panelComponents.add(currentComponents);
+        } else {
+            currentComponents = new JComponent[2];
+            JLabel colorLabel = new JLabel("Set Shape Color");
+            currentComponents[0] = colorLabel;
+            JButton colorButton = new JButton();
+            colorButton.addActionListener(this);
+            setComponentSize(colorButton, 20, 20);
+            colorButton.setBackground(effectMod.getShapes()[showGridIndex].getColor());
+            currentComponents[1] = colorButton;
+            panelComponents.add(currentComponents);
+            currentComponents = new JComponent[2];
+            JLabel hMoveLabel = new JLabel("Set horizontal movement");
+            currentComponents[0] = hMoveLabel;
+            setComponentSize(hMovementField, 100, 25);
+            hMovementField.setText(Integer.toString(effectMod.getShapes()[showGridIndex].getMovement().x));
+            currentComponents[1] = hMovementField;
+            panelComponents.add(currentComponents);
+            currentComponents = new JComponent[2];
+            JLabel vMoveLabel = new JLabel("Set vertical movement");
+            currentComponents[0] = vMoveLabel;
+            setComponentSize(vMovementField, 100, 25);
+            vMovementField.setText(Integer.toString(effectMod.getShapes()[showGridIndex].getMovement().y));
+            currentComponents[1] = vMovementField;
+            panelComponents.add(currentComponents);
+            currentComponents = new JComponent[1];
+            wholePerformer.setSelected(effectMod.getShapes()[showGridIndex].getSpeed() == 2);
+            currentComponents[0] = wholePerformer;
+            panelComponents.add(currentComponents);
+            currentComponents = new JComponent[1];
+            JButton doneButton = new JButton("Done");
+            doneButton.addActionListener(e -> {
+                applyToEffectMod();
+                ArrayList<LEDStrip> strips = new ArrayList<>();
+                Iterator<LEDStrip> iterator = effectListener.onSelectionRequired().iterator();
+                while (iterator.hasNext()) {
+                    strips.add(iterator.next());
+                }
+                LEDStrip[][] grid = GridEffect.buildGrid(strips, effectMod.getWidth(), effectMod.getHeight());
+                HashSet<LEDStrip> selectedStrips = effectListener.onInnerSelectionRequired();
+                boolean[][] untrimmedGrid = new boolean[effectMod.getHeight()][effectMod.getWidth()];
+                for (int j = 0; j < grid.length; j++) {
+                    for (int k = 0; k < grid[j].length; k++) {
+                        untrimmedGrid[j][k] = selectedStrips.contains(grid[j][k]);
+                    }
+                }
+                int minX = Integer.MAX_VALUE;
+                int maxX = Integer.MIN_VALUE;
+                int minY = Integer.MAX_VALUE;
+                int maxY = Integer.MIN_VALUE;
+                for (int j = 0; j < untrimmedGrid.length; j++) {
+                    for (int k = 0; k < untrimmedGrid[j].length; k++) {
+                        if (untrimmedGrid[j][k]) {
+                            if (j > maxY) {
+                                maxY = j;
+                            }
+                            if (j < minY) {
+                                minY = j;
+                            }
+                            if (k > maxX) {
+                                maxX = k;
+                            }
+                            if (k < minX) {
+                                minX = k;
+                            }
+                        }
+                    }
+                }
+                int dimX = maxX - minX + 1;
+                int dimY = maxY - minY + 1;
+                boolean[][] trimmedGrid = new boolean[dimY][dimX];
+                for (int j = minY; j <= maxY; j++) {
+                    for (int k = minX; k <= maxX; k++) {
+                        trimmedGrid[j-minY][k-minX] = untrimmedGrid[j][k];
+                    }
+                }
+                if (wholePerformer.isSelected()) {
+                    effectMod.getShapes()[showGridIndex].setSpeed(2);
+                } else {
+                    effectMod.getShapes()[showGridIndex].setSpeed(1);
+                }
+                effectMod.getShapes()[showGridIndex].setShape(trimmedGrid);
+                Point move = effectMod.getShapes()[showGridIndex].getMovement();
+                effectMod.getShapes()[showGridIndex].setLedStrips(selectedStrips);
+                effectMod.getShapes()[showGridIndex].setStartPos(new Point(minX, minY));
+                effectListener.onChangeSelectionMode(false, effectMod.getShapes()[showGridIndex].getLedStrips());
+                effectListener.onUpdateEffectPanel(effectMod, this.isNewEffect, -1);
+            });
+            currentComponents[0] = doneButton;
+            panelComponents.add(currentComponents);
+        }
 
         currentComponents = new JComponent[2];
         currentComponents[0] = deleteBtn;
+        if (showGridIndex != -1) {
+            applyBtn.setEnabled(false);
+        } else {
+            applyBtn.setEnabled(true);
+        }
         currentComponents[1] = applyBtn;
         panelComponents.add(currentComponents);
 
