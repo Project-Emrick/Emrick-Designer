@@ -106,6 +106,11 @@ public class GridEffect implements GeneratedEffect {
 
     @Override
     public ArrayList<EffectLEDStripMap> generateEffects(ArrayList<LEDStrip> ledStrips) {
+        // remove duplicates
+        HashSet<LEDStrip> stripSet = new HashSet<>(ledStrips);
+        ledStrips.clear();
+        ledStrips.addAll(stripSet);
+
         LEDStrip[][] grid = buildGrid(ledStrips, width, height);
         ArrayList<EffectLEDStripMap> effects = new ArrayList<>();
         for (int i = 0; i < shapes.length; i++) {
