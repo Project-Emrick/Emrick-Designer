@@ -39,6 +39,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
     public static final String FILE_MENU_NEW_PROJECT = "New Project";
     public static final String FILE_MENU_OPEN_PROJECT = "Open Project";
     public static final String FILE_MENU_SAVE = "Save Project";
+    public static final String FILE_MENU_SAVE_AS = "Save Project As";
 
     // UI Components of MediaEditorGUI
     private final JFrame frame;
@@ -144,6 +145,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
     // Project info
     private File archivePath = null;
     private File drillPath = null;
+    private File emrickPath = null;
     private File csvFile;
     private Border originalBorder;  // To store the original border of the highlighted component
     private SerialTransmitter serialTransmitter;
@@ -413,6 +415,12 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         fileMenu.add(saveItem);
         saveItem.addActionListener(e -> {
             saveProjectDialog();
+        });
+        // Save As Emrick Project
+        JMenuItem saveAsItem = new JMenuItem(FILE_MENU_SAVE_AS);
+        fileMenu.add(saveAsItem);
+        saveAsItem.addActionListener(e -> {
+            saveAsProjectDialog();
         });
 
         fileMenu.addSeparator();
@@ -1590,8 +1598,9 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         fileChooser.setFileFilter(new FileNameExtensionFilter("Emrick Project Files (*.emrick)","emrick"));
 
         if (fileChooser.showOpenDialog(null) == JFileChooser.APPROVE_OPTION) {
-            writeSysMsg("Opening file `" + fileChooser.getSelectedFile().getAbsolutePath() + "`.");
-            loadProject(fileChooser.getSelectedFile());
+            emrickPath = fileChooser.getSelectedFile();
+            writeSysMsg("Opening file `" + emrickPath.getAbsolutePath() + "`.");
+            loadProject(emrickPath);
         }
     }
 
@@ -1602,7 +1611,23 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             return;
         }
 
-        writeSysMsg("Saving project...");
+        writeSysMsg("Saving Project...");
+        if (emrickPath != null) {
+            writeSysMsg("Saving file `" + emrickPath + "`.");
+            saveProject(emrickPath, archivePath);
+        } else {
+            saveAsProjectDialog();
+        }
+    }
+
+    private void saveAsProjectDialog() {
+        if (archivePath == null) {
+            System.out.println("Nothing to save.");
+            writeSysMsg("Nothing to save!");
+            return;
+        }
+
+        writeSysMsg("Saving New Project...");
         JFileChooser fileChooser = new JFileChooser();
         fileChooser.setDialogTitle("Save Project");
         fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
@@ -1715,7 +1740,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                         JOptionPane.YES_NO_OPTION);
                 if (resp == JOptionPane.YES_OPTION) {
                     System.out.println("User saving and quitting.");
-                    saveProjectDialog();
+                    saveAsProjectDialog();
                 } else if (resp == JOptionPane.NO_OPTION) {
                     System.out.println("User not saving but quitting anyway.");
                 }
