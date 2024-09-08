@@ -390,6 +390,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                 Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx()));
         fileMenu.add(importItem);
         importItem.addActionListener(e -> {
+            emrickPath = null;
             writeSysMsg("New Project...");
             new SelectFileGUI(frame, this);
         });
