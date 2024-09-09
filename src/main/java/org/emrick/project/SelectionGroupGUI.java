@@ -149,7 +149,7 @@ public class SelectionGroupGUI implements ActionListener {
     public void setGroups(ArrayList<SelectionGroup> groups, ArrayList<LEDStrip> ledStrips) {
         this.groups = groups;
         for (SelectionGroup group : groups) {
-            ArrayList<LEDStrip> copyList = new ArrayList<>(ledStrips);
+            ArrayList<LEDStrip> copyList = new ArrayList<>();
             for (LEDStrip ledStrip : group.getLEDStrips()) {
                 for (LEDStrip l : ledStrips) {
                     if (ledStrip.equals(l)) {
