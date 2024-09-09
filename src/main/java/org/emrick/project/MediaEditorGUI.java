@@ -27,6 +27,8 @@ import java.io.*;
 import java.lang.reflect.Array;
 import java.net.*;
 import java.nio.file.*;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.time.*;
 import java.util.*;
 
@@ -1175,7 +1177,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             // If a project is loaded, generate the packets from the project and write them to a temp file in project directory.
             // delete file after server is stopped.
             if(archivePath == null) { //if no project open
-                if (path.equals("")) {
+                if (path.isEmpty()) {
                     JFileChooser fileChooser = new JFileChooser();
                     fileChooser.setDialogTitle("Select Packets (.pkt) file");
                     fileChooser.setFileFilter(new FileNameExtensionFilter("Emrick Designer Packets File (*.pkt)", "pkt"));
@@ -1192,7 +1194,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                 }
             }
             else{ //there is a project open
-                if (path.equals("")) {
+                if (path.isEmpty()) {
                     f = new File(PathConverter.pathConverter("tempPkt.pkt", false));
                     exportPackets(f);
                 } else {
@@ -1202,21 +1204,54 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             JTextField ssidField = new JTextField();
             JPasswordField passwordField = new JPasswordField();
             JTextField portField = new JTextField("8080");
+            JCheckBox useSavedCred = new JCheckBox("Use Saved Credentials");
+            useSavedCred.setSelected(true);
+            JCheckBox rememberCredentials = new JCheckBox("Remember Credentials");
 
             Object[] inputs = {
                     new JLabel("WiFi SSID:"), ssidField,
                     new JLabel("WiFi Password:"), passwordField,
-                    new JLabel("Server Port:"), portField
+                    new JLabel("Server Port:"), portField,
+                    useSavedCred, rememberCredentials
             };
 
-            int option = JOptionPane.showConfirmDialog(null, inputs, "Enter WiFi Credentials", JOptionPane.OK_CANCEL_OPTION);
+            int option = 0;
 
+
+            option = JOptionPane.showConfirmDialog(null, inputs, "Enter WiFi Credentials", JOptionPane.OK_CANCEL_OPTION);
             if (option != JOptionPane.OK_OPTION) {
                 stopWebServer.setEnabled(false);
                 runWebServer.setEnabled(true);
                 runLightBoardWebServer.setEnabled(true);
+                deleteDirectory(f);
                 return;
             }
+
+            if (useSavedCred.isSelected()) {
+                File cred = new File (PathConverter.pathConverter("wifiConfig.txt", false));
+                if (cred.exists()) {
+                    // TODO: add encryption
+                    BufferedReader bfr = new BufferedReader(new FileReader(cred));
+                    ssidField.setText(bfr.readLine());
+                    StringBuilder pass = new StringBuilder(bfr.readLine());
+                    String[] tmp = pass.toString().split(", ");
+                    pass = new StringBuilder();
+                    for (String s : tmp) {
+                        pass.append(s);
+                    }
+                    passwordField.setText(pass.substring(1, pass.length() - 1));
+                    portField.setText(bfr.readLine());
+                }
+            }
+            if (rememberCredentials.isSelected()) {
+                File cred = new File (PathConverter.pathConverter("wifiConfig.txt", false));
+                BufferedWriter bfw = new BufferedWriter(new FileWriter(cred));
+                String out = ssidField.getText() + "\n" + Arrays.toString(passwordField.getPassword()) + "\n" + portField.getText() + "\n";
+                bfw.write(out);
+                bfw.flush();
+                bfw.close();
+            }
+
             ssid = ssidField.getText();
             char[] passwordChar = passwordField.getPassword();
             password = new String(passwordChar);
@@ -1227,6 +1262,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                 stopWebServer.setEnabled(false);
                 runWebServer.setEnabled(true);
                 runLightBoardWebServer.setEnabled(true);
+                deleteDirectory(f);
                 return;
             }
 
@@ -1240,7 +1276,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             }
 
             String input = JOptionPane.showInputDialog(null, "Enter verification token (leave blank for new token)\n\nDon't use this feature to program more than 200 units");
-            System.out.println(input);
+
             if (input != null) {
                 if (input.isEmpty()) {
                     Random r = new Random();
@@ -1251,10 +1287,10 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                     currentID = footballFieldPanel.drill.performers.size();
                 }
             } else {
-                System.out.println("passed");
                 stopWebServer.setEnabled(false);
                 runWebServer.setEnabled(true);
                 runLightBoardWebServer.setEnabled(true);
+                deleteDirectory(f);
                 return;
             }
 
@@ -2507,7 +2543,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                 threads[i].join();
             }
             Unzip.zip(files, path.getAbsolutePath(), true);
-            dir.delete();
+            deleteDirectory(dir);
         }
         catch (IOException ioe) {
             throw new RuntimeException(ioe);
@@ -2837,9 +2873,9 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                         }
                         bfw.write(out);
                         bfw.flush();
-                        bfw.close();
                         out = "";
                     }
+                    bfw.close();
                 }
             } catch (IOException ioe) {
                 throw new RuntimeException(ioe);
