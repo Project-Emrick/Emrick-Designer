@@ -390,7 +390,6 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                 Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx()));
         fileMenu.add(importItem);
         importItem.addActionListener(e -> {
-            emrickPath = null;
             writeSysMsg("New Project...");
             new SelectFileGUI(frame, this);
         });
@@ -1309,6 +1308,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
 
     public void loadProject(File path) {
         try {
+            emrickPath = path;
 
             File showDataDir = new File(PathConverter.pathConverter("show_data/", false));
             showDataDir.mkdirs();
@@ -1599,9 +1599,8 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         fileChooser.setFileFilter(new FileNameExtensionFilter("Emrick Project Files (*.emrick)","emrick"));
 
         if (fileChooser.showOpenDialog(null) == JFileChooser.APPROVE_OPTION) {
-            emrickPath = fileChooser.getSelectedFile();
-            writeSysMsg("Opening file `" + emrickPath.getAbsolutePath() + "`.");
-            loadProject(emrickPath);
+            writeSysMsg("Opening file `" + fileChooser.getSelectedFile().getAbsolutePath() + "`.");
+            loadProject(fileChooser.getSelectedFile());
         }
     }
 
@@ -1758,6 +1757,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         this.archivePath = archivePath;
         this.drillPath = drillPath;
         this.csvFile = csvFile;
+        emrickPath = null;
     }
 
     @Override
@@ -2352,6 +2352,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             FileWriter w = new FileWriter(PathConverter.pathConverter("show_data/" + jsonName, false));
             w.write(g);
             w.close();
+            emrickPath = path;
         } catch (IOException e) {
             writeSysMsg("Failed to save to `" + path + "`.");
             throw new RuntimeException(e);
