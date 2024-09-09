@@ -636,6 +636,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             lassoSelect.setEnabled(true);
             footballFieldPanel.selectionMethod = FootballFieldPanel.SelectionMethod.BOX;
         });
+        boxSelect.setEnabled(false);
         selectMenu.add(boxSelect);
 
         lassoSelect.addActionListener(e -> {
