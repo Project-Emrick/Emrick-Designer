@@ -24,11 +24,8 @@ import java.awt.event.*;
 import java.awt.geom.*;
 import java.awt.image.BufferedImage;
 import java.io.*;
-import java.lang.reflect.Array;
 import java.net.*;
 import java.nio.file.*;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.time.*;
 import java.util.*;
 
@@ -146,10 +143,8 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
     private JCheckBoxMenuItem showIndividualView;
     // Project info
     private File archivePath = null;
-    private File drillPath = null;
     private File emrickPath = null;
     private File csvFile;
-    private Border originalBorder;  // To store the original border of the highlighted component
     private SerialTransmitter serialTransmitter;
     JFrame webServerFrame;
 
@@ -611,8 +606,10 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         });
         editMenu.add(pasteCopiedEffect);
 
-        editMenu.addSeparator();
 
+        // Select Menu
+        JMenu selectMenu = new JMenu("Select");
+        menuBar.add(selectMenu);
         JMenuItem selectByCrit = new JMenuItem("Select by Criteria");
         selectByCrit.addActionListener(e -> {
             if (archivePath == null) {
@@ -630,8 +627,24 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             FilterSelect filterSelect = new FilterSelect(frame, this, labels, symbols);
             filterSelect.show();
         });
-        editMenu.add(selectByCrit);
-        editMenu.addSeparator();
+        selectMenu.add(selectByCrit);
+
+        JMenuItem boxSelect = new JMenuItem("Box Selection");
+        JMenuItem lassoSelect = new JMenuItem("Lasso Selection");
+        boxSelect.addActionListener(e -> {
+            boxSelect.setEnabled(false);
+            lassoSelect.setEnabled(true);
+            footballFieldPanel.selectionMethod = FootballFieldPanel.SelectionMethod.BOX;
+        });
+        selectMenu.add(boxSelect);
+
+        lassoSelect.addActionListener(e -> {
+            lassoSelect.setEnabled(false);
+            boxSelect.setEnabled(true);
+            footballFieldPanel.selectionMethod = FootballFieldPanel.SelectionMethod.LASSO;
+        });
+        selectMenu.add(lassoSelect);
+        selectMenu.addSeparator();
 
         JMenuItem groups = new JMenuItem("Show Saved Groups");
         JMenuItem hideGroups = new JMenuItem("Hide Saved Groups");
@@ -645,7 +658,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             hideGroups.setEnabled(true);
             groups.setEnabled(false);
         });
-        editMenu.add(groups);
+        selectMenu.add(groups);
         hideGroups.addActionListener(e -> {
             selectedEffectType = EffectList.HIDE_GROUPS;
             updateEffectViewPanel(selectedEffectType);
@@ -653,7 +666,14 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             hideGroups.setEnabled(false);
         });
         hideGroups.setEnabled(false);
-        editMenu.add(hideGroups);
+        selectMenu.add(hideGroups);
+        selectMenu.addSeparator();
+        JCheckBoxMenuItem toggleSelectAllLEDs = new JCheckBoxMenuItem("Select All LEDs");
+        toggleSelectAllLEDs.setState(true);
+        toggleSelectAllLEDs.addActionListener(e -> {
+            footballFieldPanel.setSelectAllLEDs(!footballFieldPanel.isSelectAllLEDs());
+        });
+        selectMenu.add(toggleSelectAllLEDs);
 
         // View menu
         JMenu viewMenu = new JMenu("View");
@@ -681,12 +701,6 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         toggleShowLabels.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_I,
                 Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx()));
         viewMenu.add(toggleShowLabels);
-        JCheckBoxMenuItem toggleSelectAllLEDs = new JCheckBoxMenuItem("Select All LEDs");
-        toggleSelectAllLEDs.setState(true);
-        toggleSelectAllLEDs.addActionListener(e -> {
-            footballFieldPanel.setSelectAllLEDs(!footballFieldPanel.isSelectAllLEDs());
-        });
-        viewMenu.add(toggleSelectAllLEDs);
 
         viewMenu.addSeparator();
 
@@ -1789,9 +1803,8 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
     }
 
     @Override
-    public void onFileSelect(File archivePath, File drillPath, File csvFile) {
+    public void onFileSelect(File archivePath, File csvFile) {
         this.archivePath = archivePath;
-        this.drillPath = drillPath;
         this.csvFile = csvFile;
         emrickPath = null;
     }
