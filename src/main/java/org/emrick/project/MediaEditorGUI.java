@@ -1175,7 +1175,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             // If a project is loaded, generate the packets from the project and write them to a temp file in project directory.
             // delete file after server is stopped.
             if(archivePath == null) { //if no project open
-                if (path.equals("")) {
+                if (path.isEmpty()) {
                     JFileChooser fileChooser = new JFileChooser();
                     fileChooser.setDialogTitle("Select Packets (.pkt) file");
                     fileChooser.setFileFilter(new FileNameExtensionFilter("Emrick Designer Packets File (*.pkt)", "pkt"));
@@ -1192,7 +1192,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                 }
             }
             else{ //there is a project open
-                if (path.equals("")) {
+                if (path.isEmpty()) {
                     f = new File(PathConverter.pathConverter("tempPkt.pkt", false));
                     exportPackets(f);
                 } else {
@@ -1215,6 +1215,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                 stopWebServer.setEnabled(false);
                 runWebServer.setEnabled(true);
                 runLightBoardWebServer.setEnabled(true);
+                deleteDirectory(f);
                 return;
             }
             ssid = ssidField.getText();
@@ -1227,6 +1228,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                 stopWebServer.setEnabled(false);
                 runWebServer.setEnabled(true);
                 runLightBoardWebServer.setEnabled(true);
+                deleteDirectory(f);
                 return;
             }
 
@@ -1240,7 +1242,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             }
 
             String input = JOptionPane.showInputDialog(null, "Enter verification token (leave blank for new token)\n\nDon't use this feature to program more than 200 units");
-            System.out.println(input);
+
             if (input != null) {
                 if (input.isEmpty()) {
                     Random r = new Random();
@@ -1251,10 +1253,10 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                     currentID = footballFieldPanel.drill.performers.size();
                 }
             } else {
-                System.out.println("passed");
                 stopWebServer.setEnabled(false);
                 runWebServer.setEnabled(true);
                 runLightBoardWebServer.setEnabled(true);
+                deleteDirectory(f);
                 return;
             }
 
