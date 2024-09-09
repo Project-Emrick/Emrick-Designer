@@ -2507,7 +2507,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                 threads[i].join();
             }
             Unzip.zip(files, path.getAbsolutePath(), true);
-            dir.delete();
+            deleteDirectory(dir);
         }
         catch (IOException ioe) {
             throw new RuntimeException(ioe);
@@ -2837,9 +2837,9 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                         }
                         bfw.write(out);
                         bfw.flush();
-                        bfw.close();
                         out = "";
                     }
+                    bfw.close();
                 }
             } catch (IOException ioe) {
                 throw new RuntimeException(ioe);
