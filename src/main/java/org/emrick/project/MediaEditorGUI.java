@@ -2324,7 +2324,9 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         }
 
         String aPath = archivePath.getName();
+        ArrayList<Performer> recoverPerformers = new ArrayList<>();
         for (LEDStrip ledStrip : footballFieldPanel.drill.ledStrips) {
+            recoverPerformers.add(ledStrip.getPerformer());
             ledStrip.setPerformer(null);
         }
         if (this.effectManager != null) {
@@ -2356,6 +2358,10 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         } catch (IOException e) {
             writeSysMsg("Failed to save to `" + path + "`.");
             throw new RuntimeException(e);
+        }
+
+        for (int i = 0; i < recoverPerformers.size(); i++) {
+            footballFieldPanel.drill.ledStrips.get(i).setPerformer(recoverPerformers.get(i));
         }
 
         File showDataDir = new File(PathConverter.pathConverter("show_data/", false));
