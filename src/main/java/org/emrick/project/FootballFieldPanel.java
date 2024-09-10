@@ -390,25 +390,29 @@ public class FootballFieldPanel extends JPanel implements RepaintListener {
                             if (selectAllLEDs) {
                                 for (Integer i : p.getLedStrips()) {
                                     LEDStrip l = drill.ledStrips.get(i);
-                                    if (isControlDown) {
-                                        ledStripsToChange.add(l);
-                                        if (!innerSelectedLEDStrips.contains(l)) {
+                                    if (selectedLEDStrips.contains(l)) {
+                                        if (isControlDown) {
+                                            ledStripsToChange.add(l);
+                                            if (!innerSelectedLEDStrips.contains(l)) {
+                                                select = true;
+                                            }
+                                        } else {
+                                            ledStripsToChange.add(l);
                                             select = true;
                                         }
-                                    } else {
-                                        ledStripsToChange.add(l);
-                                        select = true;
                                     }
                                 }
                             } else {
-                                if (isControlDown) {
-                                    ledStripsToChange.add(ledStrip);
-                                    if (!innerSelectedLEDStrips.contains(ledStrip)) {
+                                if (selectedLEDStrips.contains(ledStrip)) {
+                                    if (isControlDown) {
+                                        ledStripsToChange.add(ledStrip);
+                                        if (!innerSelectedLEDStrips.contains(ledStrip)) {
+                                            select = true;
+                                        }
+                                    } else {
+                                        ledStripsToChange.add(ledStrip);
                                         select = true;
                                     }
-                                } else {
-                                    ledStripsToChange.add(ledStrip);
-                                    select = true;
                                 }
                             }
                         } else {
@@ -448,15 +452,31 @@ public class FootballFieldPanel extends JPanel implements RepaintListener {
                             }
                         }
                     }
-                    if (leftCrossings % 2 == 1) {
-                        if (isControlDown) {
-                            ledStripsToChange.add(ledStrip);
-                            if (!selectedLEDStrips.contains(ledStrip)) {
+                    if (innerSelect) {
+                        if (selectedLEDStrips.contains(ledStrip)) {
+                            if (leftCrossings % 2 == 1) {
+                                if (isControlDown) {
+                                    ledStripsToChange.add(ledStrip);
+                                    if (!innerSelectedLEDStrips.contains(ledStrip)) {
+                                        select = true;
+                                    }
+                                } else {
+                                    ledStripsToChange.add(ledStrip);
+                                    select = true;
+                                }
+                            }
+                        }
+                    } else {
+                        if (leftCrossings % 2 == 1) {
+                            if (isControlDown) {
+                                ledStripsToChange.add(ledStrip);
+                                if (!selectedLEDStrips.contains(ledStrip)) {
+                                    select = true;
+                                }
+                            } else {
+                                ledStripsToChange.add(ledStrip);
                                 select = true;
                             }
-                        } else {
-                            ledStripsToChange.add(ledStrip);
-                            select = true;
                         }
                     }
                 }
