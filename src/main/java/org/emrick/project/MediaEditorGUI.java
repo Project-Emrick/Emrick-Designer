@@ -42,10 +42,11 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
 
     // UI Components of MediaEditorGUI
     private final JFrame frame;
+    private WindowListener windowListener;
     private JPanel mainContentPanel;
-    private final JPanel footballField;
-    private final FootballFieldPanel footballFieldPanel;
-    private final FootballFieldBackground footballFieldBackground;
+    private JPanel footballField;
+    private FootballFieldPanel footballFieldPanel;
+    private FootballFieldBackground footballFieldBackground;
     private LEDConfigurationGUI ledConfigurationGUI;
     // dots
     private final JLabel sysMsg = new JLabel("Welcome to Emrick Designer!", SwingConstants.RIGHT);
@@ -164,66 +165,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         clearSysMsg.setRepeats(false);
         clearSysMsg.start();
 
-        // test autosave stuff
-        Timer t = new Timer(60 * 1000, e -> {
-            // FIXME: Temporarily commented auto-save feature -- like a snail is slowing eating away my disk space
 
-//            System.out.println("autosaving...");
-//            writeSysMsg("Autosaving...");
-
-//            autosaveProject();
-//            writeSysMsg("Autosaved.");
-        });
-        t.setRepeats(true);
-        t.start();
-
-        // playback timer
-        playbackStartMS = 0;
-        playbackTimer = new Timer(0, e -> {
-            if (scrubBarGUI == null || playbackTimer == null) {
-                // TODO: throw an error, we shouldn't be able to be here!
-                return;
-            }
-
-            // Start delay
-            if (useStartDelay) {
-                useStartDelay = false; // prevent infinite delay
-
-                // System.out.println("Attempting to delay drill start.");
-                playbackTimer.stop();
-                int startDelayMs = (int) (startDelay * 1000);
-                Timer delayTimer = new Timer(startDelayMs, e2 -> {
-                    playbackTimer.start();
-                });
-                delayTimer.setRepeats(false);
-                delayTimer.start();
-                return;
-            }
-
-            canSeekAudio = false;
-            if (scrubBarGUI.isUseFps()) {
-                frameStartTime = System.currentTimeMillis();
-                if (scrubBarGUI.nextStep(playbackSpeed)) {
-                    // Reached the end
-                    playbackTimer.stop();
-                    scrubBarGUI.setIsPlayingPlay();
-                }
-                setPlaybackTimerTimeByFps();
-            } else {
-                scrubBarGUI.nextCount();
-
-                if (scrubBarGUI.isAtLastSet()) {
-                    // Reached the end
-                    playbackTimer.stop();
-                    audioPlayer.pauseAudio();
-                    scrubBarGUI.setIsPlayingPlay();
-                    canSeekAudio = true;
-                    return;
-                }
-                setPlaybackTimerTimeByCounts();
-            }
-            canSeekAudio = true;
-        });
 
         // Change Font Size for Menu and MenuIem
         Font f = new Font("FlatLaf.style", Font.PLAIN, 14);
@@ -232,29 +174,55 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         UIManager.put("CheckBoxMenuItem.font", f);
         UIManager.put("RadioButtonMenuItem.font", f);
 
-        // Field
-        footballFieldPanel = new FootballFieldPanel(this, null);
-        footballFieldPanel.setOpaque(false);
-        //footballFieldPanel.setBackground(Color.lightGray); // temp. Visual indicator for unfilled space
-        JScrollPane fieldScrollPane = new JScrollPane(footballFieldPanel);
-        fieldScrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
-        fieldScrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
-        footballFieldBackground = new FootballFieldBackground(this);
-        footballField = new JPanel();
 
-        flowViewGUI = new FlowViewGUI(new HashMap<>(), this);
 
         // Main frame
         frame = new JFrame("Emrick Designer");
         Image icon = Toolkit.getDefaultToolkit().getImage(PathConverter.pathConverter("res/images/icon.png", true));
         frame.setIconImage(icon);
+        frame.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
+        frame.setSize(1200, 600);
 
-        // Scrub Bar
-        scrubBarGUI = new ScrubBarGUI(frame, this, this, footballFieldPanel, getAudioPlayer());
+        windowListener = new WindowAdapter() {
+            @Override
+            public void windowClosing(WindowEvent e) {
+                if (server != null) {
+                    stopServer();
+                    webServerFrame.dispose();
+                }
+                if (archivePath != null) {
+                    if (effectManager != null && !effectManager.getUndoStack().isEmpty()) {
+                        int resp = JOptionPane.showConfirmDialog(frame,
+                                "Would you like to save before quitting?",
+                                "Save and Quit?",
+                                JOptionPane.YES_NO_CANCEL_OPTION);
+                        if (resp == JOptionPane.CANCEL_OPTION) {
+                            System.out.println("User cancelled exit.");
+                            return;
+                        } else if (resp == JOptionPane.YES_OPTION) {
+                            System.out.println("User saving and quitting.");
+                            saveProjectDialog();
+                        } else if (resp == JOptionPane.NO_OPTION) {
+                            System.out.println("User not saving but quitting anyway.");
+                        }
+                    }
+                }
+                File showDataDir = new File(PathConverter.pathConverter("show_data/", false));
+                showDataDir.mkdirs();
+                File[] cleanFiles = showDataDir.listFiles();
+                for (File f : cleanFiles) {
+                    if (f.isDirectory()) {
+                        deleteDirectory(f);
+                    } else {
+                        f.delete();
+                    }
+                }
+                frame.dispose();
+                super.windowClosing(e);
+            }
+        };
+        frame.addWindowListener(windowListener);
 
-        // Scrub bar cursor starts on first count of drill by default
-        useStartDelay = true;
-        runningShow = false;
 
         currentID = MAX_CONNECTIONS;
 
@@ -318,6 +286,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             createAndShowGUI();
         }
 
+
     }
 
     private void setPlaybackTimerTimeByFps() {
@@ -332,16 +301,87 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
     }
 
     public void createAndShowGUI() {
-        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        frame.setSize(1200, 600);
 
-        JMenuBar menuBar = new JMenuBar();
+        if (archivePath != null) {
+            frame.remove(mainContentPanel);
+            frame.remove(effectViewPanel);
+            frame.remove(timelinePanel);
+            frame.revalidate();
+            frame.repaint();
+        }
+
+        // playback timer
+        playbackStartMS = 0;
+        playbackTimer = new Timer(0, e -> {
+            if (scrubBarGUI == null || playbackTimer == null) {
+                // TODO: throw an error, we shouldn't be able to be here!
+                return;
+            }
+
+            // Start delay
+            if (useStartDelay) {
+                useStartDelay = false; // prevent infinite delay
+
+                // System.out.println("Attempting to delay drill start.");
+                playbackTimer.stop();
+                int startDelayMs = (int) (startDelay * 1000);
+                Timer delayTimer = new Timer(startDelayMs, e2 -> {
+                    playbackTimer.start();
+                });
+                delayTimer.setRepeats(false);
+                delayTimer.start();
+                return;
+            }
+
+            canSeekAudio = false;
+            if (scrubBarGUI.isUseFps()) {
+                frameStartTime = System.currentTimeMillis();
+                if (scrubBarGUI.nextStep(playbackSpeed)) {
+                    // Reached the end
+                    playbackTimer.stop();
+                    scrubBarGUI.setIsPlayingPlay();
+                }
+                setPlaybackTimerTimeByFps();
+            } else {
+                scrubBarGUI.nextCount();
+
+                if (scrubBarGUI.isAtLastSet()) {
+                    // Reached the end
+                    playbackTimer.stop();
+                    audioPlayer.pauseAudio();
+                    scrubBarGUI.setIsPlayingPlay();
+                    canSeekAudio = true;
+                    return;
+                }
+                setPlaybackTimerTimeByCounts();
+            }
+            canSeekAudio = true;
+        });
 
         ////////////////////////// Panels //////////////////////////
 
-        JPanel topPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        JMenuBar menuBar = new JMenuBar();
 
-        frame.add(topPanel, BorderLayout.NORTH);
+        // Field
+        footballFieldPanel = new FootballFieldPanel(this, null);
+        footballFieldPanel.setOpaque(false);
+
+        //footballFieldPanel.setBackground(Color.lightGray); // temp. Visual indicator for unfilled space
+        JScrollPane fieldScrollPane = new JScrollPane(footballFieldPanel);
+        fieldScrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+        fieldScrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
+        footballFieldBackground = new FootballFieldBackground(this);
+        footballField = new JPanel();
+
+        flowViewGUI = new FlowViewGUI(new HashMap<>(), this);
+
+        // Scrub Bar
+        scrubBarGUI = new ScrubBarGUI(frame, this, this, footballFieldPanel, getAudioPlayer());
+
+        // Scrub bar cursor starts on first count of drill by default
+        useStartDelay = true;
+        runningShow = false;
+
 
         mainContentPanel = new JPanel();
         mainContentPanel.setLayout(new BorderLayout());
@@ -994,53 +1034,18 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         JButton effectOptions = getEffectOptionsButton();
         effectViewPanel.add(effectOptions, BorderLayout.NORTH);
 
-        // handle closing the window
-        frame.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
-        frame.addWindowListener(new WindowAdapter() {
-            @Override
-            public void windowClosing(WindowEvent e) {
-                if (server != null) {
-                    stopServer();
-                    webServerFrame.dispose();
-                }
-                if (archivePath != null) {
-                    if (effectManager != null && !effectManager.getUndoStack().isEmpty()) {
-                        int resp = JOptionPane.showConfirmDialog(frame,
-                                "Would you like to save before quitting?",
-                                "Save and Quit?",
-                                JOptionPane.YES_NO_CANCEL_OPTION);
-                        if (resp == JOptionPane.CANCEL_OPTION) {
-                            System.out.println("User cancelled exit.");
-                            return;
-                        } else if (resp == JOptionPane.YES_OPTION) {
-                            System.out.println("User saving and quitting.");
-                            saveProjectDialog();
-                        } else if (resp == JOptionPane.NO_OPTION) {
-                            System.out.println("User not saving but quitting anyway.");
-                        }
-                    }
-                }
-                File showDataDir = new File(PathConverter.pathConverter("show_data/", false));
-                showDataDir.mkdirs();
-                File[] cleanFiles = showDataDir.listFiles();
-                for (File f : cleanFiles) {
-                    if (f.isDirectory()) {
-                        deleteDirectory(f);
-                    } else {
-                        f.delete();
-                    }
-                }
-                frame.dispose();
-                super.windowClosing(e);
-            }
-        });
 
         // Display the window
-        frame.setJMenuBar(menuBar);
-        frame.pack();
-        frame.setLocationRelativeTo(null);
-        frame.setVisible(true);
-        frame.setTitle("Emrick Designer");
+        if (archivePath == null) {
+            frame.setJMenuBar(menuBar);
+            frame.pack();
+            frame.setLocationRelativeTo(null);
+            frame.setVisible(true);
+            frame.setTitle("Emrick Designer");
+        } else {
+            frame.revalidate();
+            frame.repaint();
+        }
     }
 
     private boolean deleteDirectory(File directoryToBeDeleted) {
@@ -1359,6 +1364,12 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
 
     public void loadProject(File path) {
         try {
+
+            if (archivePath != null) {
+                // reinitialize everything
+                createAndShowGUI();
+            }
+
             emrickPath = path;
 
             File showDataDir = new File(PathConverter.pathConverter("show_data/", false));
@@ -1805,6 +1816,9 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
 
     @Override
     public void onFileSelect(File archivePath, File csvFile) {
+        if (this.archivePath != null) {
+            createAndShowGUI();
+        }
         this.archivePath = archivePath;
         this.csvFile = csvFile;
         emrickPath = null;
