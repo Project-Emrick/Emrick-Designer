@@ -105,9 +105,6 @@ public class ScrubBarGUI extends JComponent implements ActionListener {
         this.pageTab2Count = pageTabCounts;
         this.totalCounts = totalCounts;
 
-        // Because SyncTimeGUI depends on pageTabCounts, update it as well
-//        syncTimeGUI = new SyncTimeGUI(pageTabCounts);
-
         // There should exist at least a first Page Tab, for logic purposes
         if (pageTabCounts.isEmpty()) {
             System.out.println("Note: No page tabs found.");
@@ -202,39 +199,30 @@ public class ScrubBarGUI extends JComponent implements ActionListener {
 
         // Change Listeners
 
-        topSlider.addChangeListener(new ChangeListener() {
-            public void stateChanged(ChangeEvent e) {
+        topSlider.addChangeListener(e -> {
 
-                // Status label
-                int val = ((JSlider)e.getSource()).getValue();
-                String set = labelTable.get(getCurrentSetStart()).getText();
-                statusLabel.setText("Set: " + set);
+            // Status label
+            int val = ((JSlider)e.getSource()).getValue();
+            String set = labelTable.get(getCurrentSetStart()).getText();
+            statusLabel.setText("Set: " + set);
 
-//                updateCurrSetCounts(set);
-//                for (Set s : footballFieldPanel.drill.sets) {
-//                    if (s.equalsString(set)) {
-//                        footballFieldPanel.addSetToField(s);
-//                    }
-//                }
-
-                scrubBarListener.onSetChange(getCurrentSetIndex());
-                footballFieldPanel.setCurrentSetStartCount(getCurrentSetStart());
-                footballFieldPanel.setCurrentCount(val);
+            scrubBarListener.onSetChange(getCurrentSetIndex());
+            footballFieldPanel.setCurrentSetStartCount(getCurrentSetStart());
+            footballFieldPanel.setCurrentCount(val);
 
 
-                long currTimeMSec = scrubBarListener.onScrub();
-                if (!isUseFps()) {
-                    float pastSetTime = 0;
-                    for (int i = 0; i < getCurrentSetIndex(); i++) {
-                        pastSetTime += timeSync.get(i).getValue();
-                    }
-                    time = ((float) currTimeMSec + pastSetTime) / 1000;
-                    scrubBarListener.onTimeChange((long) ((time - pastSetTime) * 1000));
+            long currTimeMSec = scrubBarListener.onScrub();
+            if (!isUseFps()) {
+                float pastSetTime = 0;
+                for (int i = 0; i < getCurrentSetIndex(); i++) {
+                    pastSetTime += timeSync.get(i).getValue();
                 }
-                timeLabel.setText(TimeManager.getFormattedTime(currTimeMSec));
-
-                setPlaybackTime();
+                time = ((float) currTimeMSec + pastSetTime) / 1000;
+                scrubBarListener.onTimeChange((long) ((time - pastSetTime) * 1000));
             }
+            timeLabel.setText(TimeManager.getFormattedTime(currTimeMSec));
+
+            setPlaybackTime();
         });
 
         sliderPanel.add(topSlider, BorderLayout.CENTER);
@@ -297,7 +285,6 @@ public class ScrubBarGUI extends JComponent implements ActionListener {
 
         List<Map.Entry<String, Integer>> list = sortMap(pageTab2Count);
 
-        int val = 0;
         for (Map.Entry<String, Integer> entry : list) {
             labelTable.put(entry.getValue(), new JLabel(entry.getKey()));
         }
@@ -314,7 +301,6 @@ public class ScrubBarGUI extends JComponent implements ActionListener {
      */
     public static List<Map.Entry<String, Integer>> sortMap(Map<String, Integer> map) {
         List<Map.Entry<String, Integer>> list = new ArrayList<>(map.entrySet());
-//       list.sort(Map.Entry.comparingByKey()); // Was there a reason that this was changed to comparingByKey(), that I am missing?
         list.sort(Map.Entry.comparingByValue());
         return list;
     }
@@ -461,7 +447,6 @@ public class ScrubBarGUI extends JComponent implements ActionListener {
         // There is no further page tab
         if (currSetStartCount == lastCount) {
             currSetEndCount = currSetStartCount;
-            printSetStartEndCounts(set);
             return;
         }
 
@@ -486,7 +471,6 @@ public class ScrubBarGUI extends JComponent implements ActionListener {
 
                 if (pageTab2Count.get(Integer.toString(setNum) + subSetChar) != null) {
                     currSetEndCount = pageTab2Count.get(Integer.toString(setNum) + subSetChar);
-                    printSetStartEndCounts(set);
                     return;
                 }
             }
@@ -495,22 +479,15 @@ public class ScrubBarGUI extends JComponent implements ActionListener {
             else {
                 if (pageTab2Count.get(setNum + "A") != null) {
                     currSetEndCount = pageTab2Count.get(setNum + "A");
-                    printSetStartEndCounts(set);
                     return;
                 }
             }
         }
 
         currSetEndCount = pageTab2Count.get(Integer.toString(setNum + 1));
-        printSetStartEndCounts(set);
     }
 
-    public void printSetStartEndCounts(String set) {
-        // Debugging
-//        System.out.println("set = " + set);
-//        System.out.println("currSetStartCount = " + currSetStartCount);
-//        System.out.println("currSetEndCount = " + currSetEndCount);
-    }
+
 
     public boolean isPlaying() {
         return isPlaying;
@@ -564,10 +541,6 @@ public class ScrubBarGUI extends JComponent implements ActionListener {
             scrubBarListener.onSpeedChange(playbackSpeed);
         }
 
-//        int val = topSlider.getValue();
-//        footballFieldPanel.setCurrentCount(val);
-//        footballFieldPanel.setCurrentSet(footballFieldPanel.drill.sets.get(getCurrentSetIndex()));
-//        setPlaybackTime();
     }
 
     // these might be misleading, fix?
@@ -575,15 +548,12 @@ public class ScrubBarGUI extends JComponent implements ActionListener {
         playPauseButton.setIcon(PAUSE_ICON);
         isPlaying = true;
 
-//        time = scrubBarListener.onScrub() / 1000.0;
         System.out.println("ScrubBarGUI: isPlaying = " + isPlaying + ", time = " + scrubBarListener.onScrub() / 1000.0);
     }
     public void setIsPlayingPlay() {
         playPauseButton.setIcon(PLAY_ICON);
         isPlaying = false;
 
-//        scrubBarListener.onTimeChange((long) (time * 1000));
-//        time = scrubBarListener.onScrub() / 1000.0;
         System.out.println("ScrubBarGUI: isPlaying = " + isPlaying + ", time = " + scrubBarListener.onScrub() / 1000.0);
     }
 
@@ -652,14 +622,6 @@ public class ScrubBarGUI extends JComponent implements ActionListener {
         }
         return list.size()-1;
     }
-
-//    public int getCurrentCountInIndex() {
-//        return botSlider.getValue() - botSlider.getMinimum();
-//    }
-//
-//    public int getCurrentCount() {
-//        return botSlider.getValue();
-//    }
 
     public int getCurrentSetStart() {
         Iterator<Integer> iterator = pageTab2Count.values().iterator();

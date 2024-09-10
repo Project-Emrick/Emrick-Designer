@@ -21,6 +21,7 @@ public class FootballFieldBackground extends JPanel {
     private double fieldHeight;
     private Point frontSideline50;
     private boolean heightBound;
+    public boolean justResized = false;
     public FootballFieldBackground(FootballFieldListener footballFieldListener) {
         this.footballFieldListener = footballFieldListener;
         fieldHeight = 0;
@@ -30,6 +31,7 @@ public class FootballFieldBackground extends JPanel {
         this.addComponentListener(new ComponentListener() {
             @Override
             public void componentResized(ComponentEvent e) {
+                justResized = true;
                 repaint();
             }
 
@@ -53,32 +55,38 @@ public class FootballFieldBackground extends JPanel {
     @Override
     public void paintComponent(Graphics g) {
         super.paintComponent(g);
-        double widthRatio = (double) getWidth() / dummyImage.getWidth();
-        double heightRatio = (double) getHeight() / dummyImage.getHeight();
-        ratio = Math.min(widthRatio, heightRatio);
-        if (ratio == heightRatio) {
-            heightBound = true;
-        } else {
-            heightBound = false;
-        }
-        BufferedImage scaledImage = new BufferedImage((int) (dummyImage.getWidth() * ratio), (int) (dummyImage.getHeight() * ratio), BufferedImage.TYPE_INT_RGB);
-        Graphics g1 = scaledImage.getGraphics();
-        if (surfaceImage != null && showSurfaceImage) {
-            drawBetterImage(g1, surfaceImage);
-        }
+        if (justResized) {
+            double widthRatio = (double) getWidth() / dummyImage.getWidth();
+            double heightRatio = (double) getHeight() / dummyImage.getHeight();
+            ratio = Math.min(widthRatio, heightRatio);
+            if (ratio == heightRatio) {
+                heightBound = true;
+            } else {
+                heightBound = false;
+            }
+            BufferedImage scaledImage = new BufferedImage((int) (dummyImage.getWidth() * ratio), (int) (dummyImage.getHeight() * ratio), BufferedImage.TYPE_INT_RGB);
+            Graphics g1 = scaledImage.getGraphics();
+            if (surfaceImage != null && showSurfaceImage) {
+                drawBetterImage(g1, surfaceImage);
+            }
 
-        // Draw the floorCover image on top
-        if (floorCoverImage != null && showFloorCoverImage) {
-            drawBetterCoverImage(g1, floorCoverImage);
-        }
+            // Draw the floorCover image on top
+            if (floorCoverImage != null && showFloorCoverImage) {
+                drawBetterCoverImage(g1, floorCoverImage);
+            }
 
-        if (!showFloorCoverImage && !showSurfaceImage) {
-            drawBetterImage(g1, dummyImage); // For accurate plotting, need some image reference
+            if (!showFloorCoverImage && !showSurfaceImage) {
+                drawBetterImage(g1, dummyImage); // For accurate plotting, need some image reference
+            }
+            fullImage = scaledImage;
         }
-        fullImage = scaledImage;
         int x = (getWidth() - (int) fieldWidth) / 2;
         int y = (getHeight() - (int) fieldHeight) / 2;
         g.drawImage(fullImage, x, y, (int) fieldWidth, (int) fieldHeight, this);
+        if (justResized) {
+            justResized = false;
+            footballFieldListener.onResizeBackground();
+        }
     }
 
     private void drawBetterCoverImage(Graphics g, BufferedImage image) {
@@ -100,7 +108,6 @@ public class FootballFieldBackground extends JPanel {
         }
 
         g.drawImage(image, x, 0, width, height, this);
-        footballFieldListener.onResizeBackground();
     }
 
     private void drawBetterImage(Graphics g, BufferedImage image) {
@@ -123,7 +130,6 @@ public class FootballFieldBackground extends JPanel {
         frontSideline50 = new Point(x + (int)fieldWidth / 2,y + (int)fieldHeight);
 
         g.drawImage(image, 0, 0, width, height, this);
-        footballFieldListener.onResizeBackground();
     }
 
     public boolean isShowSurfaceImage() {

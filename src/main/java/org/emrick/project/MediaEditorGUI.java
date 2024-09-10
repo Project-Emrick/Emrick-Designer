@@ -290,7 +290,6 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
     }
 
     private void setPlaybackTimerTimeByFps() {
-        scrubBarGUI.setPlaybackTime();
         playbackTimer.setDelay((int) (1 / scrubBarGUI.getFps() * 1000.0 / playbackSpeed));
     }
 
@@ -1427,7 +1426,8 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             ledStripViewGUI.setCurrentSet(footballFieldPanel.drill.sets.get(0));
 //            rebuildPageTabCounts();
 //            scrubBarGUI.setReady(true);
-            footballFieldPanel.repaint();
+            footballFieldBackground.justResized = true;
+            footballFieldBackground.repaint();
 
             ledConfigurationGUI = new LEDConfigurationGUI(footballFieldPanel.drill, this);
 
