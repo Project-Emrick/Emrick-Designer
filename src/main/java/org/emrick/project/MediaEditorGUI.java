@@ -3,9 +3,6 @@ package org.emrick.project;
 import com.fazecast.jSerialComm.SerialPort;
 import com.formdev.flatlaf.*;
 import com.google.gson.*;
-import com.itextpdf.text.Document;
-import com.itextpdf.text.*;
-import com.itextpdf.text.pdf.*;
 import com.sun.net.httpserver.HttpServer;
 import org.emrick.project.actions.LEDConfig;
 import org.emrick.project.audio.*;
@@ -194,7 +191,9 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                     playbackTimer.cancel();
                     playbackTimer.purge();
                     playbackTimer = null;
-                    audioPlayer.pauseAudio();
+                    if (audioPlayer != null) {
+                        audioPlayer.pauseAudio();
+                    }
                 }
                 if (archivePath != null) {
                     if (effectManager != null && !effectManager.getUndoStack().isEmpty()) {
@@ -1723,32 +1722,6 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
 
 
     ////////////////////////// Effect Listeners //////////////////////////
-
-
-    private void exportToPDF(String textContent) {
-        if (textContent.isEmpty()) {
-            JOptionPane.showMessageDialog(this, "The text area cannot be empty.", "Error", JOptionPane.ERROR_MESSAGE);
-            return;
-        }
-
-        Document document = new Document();
-        try {
-            PdfWriter.getInstance(document, new FileOutputStream("LightDescription.pdf"));
-            document.open();
-            document.add(new Paragraph(textContent));
-            document.close();
-            JOptionPane.showMessageDialog(this,
-                                          "PDF exported successfully!",
-                                          "Success",
-                                          JOptionPane.INFORMATION_MESSAGE);
-        } catch (Exception e) {
-            JOptionPane.showMessageDialog(this,
-                                          "Could not create PDF: " + e.getMessage(),
-                                          "Error",
-                                          JOptionPane.ERROR_MESSAGE);
-        }
-    }
-
 
     ////////////////////////// Football Field Listeners //////////////////////////
 
