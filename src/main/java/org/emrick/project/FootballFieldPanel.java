@@ -282,7 +282,6 @@ public class FootballFieldPanel extends JPanel implements RepaintListener {
                 g.fillPolygon(new Polygon(xpoints, ypoints, lassoPoints.size()));
             }
         }
-        footballFieldListener.onFinishRepaint();
     }
 
     public void setColorChosen(Color color) {

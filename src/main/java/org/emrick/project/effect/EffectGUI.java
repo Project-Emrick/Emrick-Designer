@@ -53,10 +53,6 @@ public class EffectGUI implements ActionListener {
     JLabel color1Label = new JLabel("Color 1: ");
     JLabel color2Label = new JLabel("Color 2: ");
     JLabel rateLabel = new JLabel("Rate (Hz): ");
-    JCheckBox upOrSideBox = new JCheckBox("Vertical");
-    JCheckBox clockwiseBox = new JCheckBox("Clockwise");
-    JCheckBox directionBox = new JCheckBox("Up/Right");
-    JCheckBox dirBox = new JCheckBox("Clockwise");
     JLabel speedLabel = new JLabel("Speed: ");
     JLabel angleLabel = new JLabel("Start Angle (deg): ");
     JButton startColorBtn = new JButton();
@@ -66,10 +62,6 @@ public class EffectGUI implements ActionListener {
     JTextField timeoutField = new JTextField(10);
     JTextField speedField = new JTextField(10);
     JTextField angleField = new JTextField(10);
-    JCheckBox TIME_GRADIENTBox = new JCheckBox("TIME_GRADIENT");
-    JCheckBox SET_TIMEOUTBox = new JCheckBox("SET_TIMEOUT");
-    JCheckBox DO_DELAYBox = new JCheckBox("DO_DELAY");
-    JCheckBox INSTANT_COLORBox = new JCheckBox("INSTANT_COLOR");
     JButton applyBtn = new JButton("REPLACE THIS TEXT WITH UPDATE OR CREATE EFFECT TEXT");
     JButton deleteBtn = new JButton("Delete effect");
     JLabel batteryEstLabel = new JLabel("Estimated Battery Usage: ");
@@ -84,6 +76,10 @@ public class EffectGUI implements ActionListener {
     JTextField hMovementField = new JTextField(10);
     JTextField vMovementField = new JTextField(10);
     JCheckBox wholePerformer = new JCheckBox("Move by performer");
+    String[] rotationOptions = {"Clockwise", "Counterclockwise"};
+    JComboBox<String> rotationSelect = new JComboBox<>(rotationOptions);
+    String[] directionOptions = {"Right", "Left", "Up", "Down"};
+    JComboBox<String> directionSelect = new JComboBox<>(directionOptions);
 
     private JLabel placeholderLabel;
     private EffectList effectType;
@@ -414,7 +410,11 @@ public class EffectGUI implements ActionListener {
         addColorButton.setBackground(Color.black);
         colorButtons.add(addColorButton);
 
-        dirBox.setSelected(effectMod.isDirection());
+        if (effectMod.isDirection()) {
+            rotationSelect.setSelectedItem(rotationOptions[0]);
+        } else {
+            rotationSelect.setSelectedItem(rotationOptions[1]);
+        }
 
         durationField.getDocument().addDocumentListener(getDocumentListener());
 
@@ -477,7 +477,8 @@ public class EffectGUI implements ActionListener {
 
         //////////////// 6th +n Row ////////////////
         currentComponents = new JComponent[1];
-        currentComponents[0] = dirBox;
+        setComponentSize(rotationSelect, 140, 25);
+        currentComponents[0] = rotationSelect;
         panelComponents.add(currentComponents);
 
         //////////////// Apply or Delete Buttons ////////////////
@@ -553,12 +554,8 @@ public class EffectGUI implements ActionListener {
 
         //////////////// 5th Row ////////////////
         currentComponents = new JComponent[1];
-        currentComponents[0] = upOrSideBox;
-        panelComponents.add(currentComponents);
-
-        //////////////// 6th Row ////////////////
-        currentComponents = new JComponent[1];
-        currentComponents[0] = directionBox;
+        setComponentSize(directionSelect, 100, 25);
+        currentComponents[0] = directionSelect;
         panelComponents.add(currentComponents);
 
         //////////////// Apply or Delete Buttons ////////////////
@@ -648,7 +645,8 @@ public class EffectGUI implements ActionListener {
         //////////////// 6th Row ////////////////
 
         currentComponents = new JComponent[1];
-        currentComponents[0] = clockwiseBox;
+        setComponentSize(rotationSelect, 140, 25);
+        currentComponents[0] = rotationSelect;
         panelComponents.add(currentComponents);
 
         //////////////// Apply or Delete Buttons ////////////////
@@ -724,12 +722,8 @@ public class EffectGUI implements ActionListener {
 
         //////////////// 5th Row ////////////////
         currentComponents = new JComponent[1];
-        currentComponents[0] = upOrSideBox;
-        panelComponents.add(currentComponents);
-
-        //////////////// 6th Row ////////////////
-        currentComponents = new JComponent[1];
-        currentComponents[0] = directionBox;
+        setComponentSize(directionSelect, 100, 25);
+        currentComponents[0] = directionSelect;
         panelComponents.add(currentComponents);
 
         //////////////// Apply or Delete Buttons ////////////////
@@ -984,13 +978,21 @@ public class EffectGUI implements ActionListener {
         speedField.setText(speedStr);
         angleField.setText(angleStr);
 
-        TIME_GRADIENTBox.setSelected(effect.isUSE_DURATION());
-        SET_TIMEOUTBox.setSelected(effect.isSET_TIMEOUT());
-        DO_DELAYBox.setSelected(effect.isDO_DELAY());
-        INSTANT_COLORBox.setSelected(effect.isINSTANT_COLOR());
-        upOrSideBox.setSelected(effect.isUpOrSide());
-        clockwiseBox.setSelected(effect.isDirection());
-        directionBox.setSelected(effect.isDirection());
+        if (effect.isDirection()) {
+            if (effect.isUpOrSide()) {
+                directionSelect.setSelectedItem(directionOptions[2]);
+            } else {
+                directionSelect.setSelectedItem(directionOptions[0]);
+            }
+            rotationSelect.setSelectedItem(rotationOptions[0]);
+        } else {
+            if (effect.isUpOrSide()) {
+                directionSelect.setSelectedItem(directionOptions[3]);
+            } else {
+                directionSelect.setSelectedItem(directionOptions[1]);
+            }
+            rotationSelect.setSelectedItem(rotationOptions[1]);
+        }
 
         // Calculate start time label
         long minutesStart = java.util.concurrent.TimeUnit.MILLISECONDS.toMinutes(effect.getStartTimeMSec());
@@ -1049,29 +1051,15 @@ public class EffectGUI implements ActionListener {
                         break;
                     }
                 }
-                String delayFieldText;
-                if (delayField.getText().contains(".")) {
-                    delayFieldText = delayField.getText().substring(0, delayField.getText().indexOf("."));
-                } else {
-                    delayFieldText = delayField.getText();
-                }
                 String durationFieldText;
                 if (durationField.getText().contains(".")) {
                     durationFieldText = durationField.getText().substring(0, durationField.getText().indexOf("."));
                 } else {
                     durationFieldText = durationField.getText();
                 }
-                int delayCount = Integer.parseInt(delayFieldText);
                 int durationCount = Integer.parseInt(durationFieldText);
-                if (DO_DELAYBox.isSelected()) {
-                    newEndTime = timeManager.getCount2MSec().get(startCount + delayCount);
-                }
-                if (TIME_GRADIENTBox.isSelected()) {
-                    newEndTime = timeManager.getCount2MSec().get(startCount + durationCount);
-                }
-                if (DO_DELAYBox.isSelected() && TIME_GRADIENTBox.isSelected()) {
-                    newEndTime = timeManager.getCount2MSec().get(startCount + durationCount + delayCount);
-                }
+
+                newEndTime = timeManager.getCount2MSec().get(startCount + durationCount);
                 newEndTime--;
             }
         } catch (NumberFormatException nfe) {
@@ -1231,28 +1219,14 @@ public class EffectGUI implements ActionListener {
                     break;
                 }
             }
-            String delayFieldText;
-            if (delayField.getText().contains(".")) {
-                delayFieldText = delayField.getText().substring(0, delayField.getText().indexOf("."));
-            } else {
-                delayFieldText = delayField.getText();
-            }
             String durationFieldText;
             if (durationField.getText().contains(".")) {
                 durationFieldText = durationField.getText().substring(0, durationField.getText().indexOf("."));
             } else {
                 durationFieldText = durationField.getText();
             }
-            int delayCount = Integer.parseInt(delayFieldText);
             int durationCount = Integer.parseInt(durationFieldText);
-            if (DO_DELAYBox.isSelected()) {
-                delayMSec = timeManager.getCount2MSec().get(startCount + delayCount) - effectMod.getStartTimeMSec();
-            } else if (TIME_GRADIENTBox.isSelected()) {
-                durationMSec = timeManager.getCount2MSec().get(startCount + durationCount) - effectMod.getStartTimeMSec();
-            }
-            if (DO_DELAYBox.isSelected() && TIME_GRADIENTBox.isSelected()) {
-                durationMSec = timeManager.getCount2MSec().get(startCount + durationCount + delayCount) - delayMSec;
-            }
+            durationMSec = timeManager.getCount2MSec().get(startCount + durationCount) - effectMod.getStartTimeMSec();
             durationMSec--;
         }
 
@@ -1298,18 +1272,15 @@ public class EffectGUI implements ActionListener {
             effectMod.setHeight(yPositions.size());
         }
 
-        this.effectMod.setUSE_DURATION(this.TIME_GRADIENTBox.isSelected());
-        this.effectMod.setSET_TIMEOUT(this.SET_TIMEOUTBox.isSelected());
-        this.effectMod.setDO_DELAY(this.DO_DELAYBox.isSelected());
-        this.effectMod.setINSTANT_COLOR(this.INSTANT_COLORBox.isSelected());
-        this.effectMod.setUpOrSide(this.upOrSideBox.isSelected());
+
+        this.effectMod.setUpOrSide(directionSelect.getSelectedItem().equals("Up") || directionSelect.getSelectedItem().equals("Down"));
         if (effectType == EffectList.CIRCLE_CHASE) {
-            this.effectMod.setDirection(this.clockwiseBox.isSelected());
+            this.effectMod.setDirection(rotationSelect.getSelectedItem().equals("Clockwise"));
         } else {
-            this.effectMod.setDirection(this.directionBox.isSelected());
+            this.effectMod.setDirection(directionSelect.getSelectedItem().equals("Up") || directionSelect.getSelectedItem().equals("Right"));
         }
         if (this.effectType == EffectList.CHASE) {
-            this.effectMod.setDirection(this.dirBox.isSelected());
+            this.effectMod.setDirection(rotationSelect.getSelectedItem().equals("Clockwise"));
             ArrayList<Color> chaseSequence = new ArrayList<>();
             for (JButton button : colorButtons) {
                 chaseSequence.add(button.getBackground());

@@ -114,7 +114,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
     private float startDelay; // Drills might not start immediately, therefore use this. Unit: seconds.
     private float playbackSpeed = 1;
     // The selected playback speed. For example "0.5", "1.0", "1.5". Use as a multiplier
-    private Timer playbackTimer = null;
+    private java.util.Timer playbackTimer = null;
     private long frameStartTime;
     private long playbackStartMS;
     private int timeAdjustment = 0;
@@ -190,6 +190,12 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                     stopServer();
                     webServerFrame.dispose();
                 }
+                if (playbackTimer != null) {
+                    playbackTimer.cancel();
+                    playbackTimer.purge();
+                    playbackTimer = null;
+                    audioPlayer.pauseAudio();
+                }
                 if (archivePath != null) {
                     if (effectManager != null && !effectManager.getUndoStack().isEmpty()) {
                         int resp = JOptionPane.showConfirmDialog(frame,
@@ -219,6 +225,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                 }
                 frame.dispose();
                 super.windowClosing(e);
+                System.exit(0);
             }
         };
         frame.addWindowListener(windowListener);
@@ -289,15 +296,14 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
 
     }
 
-    private void setPlaybackTimerTimeByFps() {
-        scrubBarGUI.setPlaybackTime();
-        playbackTimer.setDelay((int) (1 / scrubBarGUI.getFps() * 1000.0 / playbackSpeed));
-    }
-
-    private void setPlaybackTimerTimeByCounts() {
+//    private void setPlaybackTimerTimeByFps() {
+//        playbackTimer.setDelay((int) (1 / scrubBarGUI.getFps() * 1000.0 / playbackSpeed));
+//    }
+//
+    private long getPlaybackTimerTimeByCounts() {
         float setSyncDuration = timeSync.get(scrubBarGUI.getCurrentSetIndex()).getValue();
         float setDuration = scrubBarGUI.getCurrSetDuration();
-        playbackTimer.setDelay(Math.round(setSyncDuration / setDuration * 1000 / playbackSpeed));
+        return Math.round(setSyncDuration / setDuration * 1000 / playbackSpeed);
     }
 
     public void createAndShowGUI() {
@@ -312,7 +318,14 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
 
         // playback timer
         playbackStartMS = 0;
-        playbackTimer = new Timer(0, e -> {
+
+        playbackTimer = new java.util.Timer();
+
+
+
+
+
+        /*playbackTimer = new Timer(0, e -> {
             if (scrubBarGUI == null || playbackTimer == null) {
                 // TODO: throw an error, we shouldn't be able to be here!
                 return;
@@ -356,7 +369,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                 setPlaybackTimerTimeByCounts();
             }
             canSeekAudio = true;
-        });
+        });*/
 
         ////////////////////////// Panels //////////////////////////
 
@@ -1427,7 +1440,8 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             ledStripViewGUI.setCurrentSet(footballFieldPanel.drill.sets.get(0));
 //            rebuildPageTabCounts();
 //            scrubBarGUI.setReady(true);
-            footballFieldPanel.repaint();
+            footballFieldBackground.justResized = true;
+            footballFieldBackground.repaint();
 
             ledConfigurationGUI = new LEDConfigurationGUI(footballFieldPanel.drill, this);
 
@@ -1933,6 +1947,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
 
     @Override
     public boolean onPlay() {
+        long period;
         if (timeSync == null) {
             JOptionPane.showMessageDialog(frame, "Cannot play without syncing time!",
                     "Playback Error", JOptionPane.ERROR_MESSAGE);
@@ -1942,15 +1957,16 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             playAudioFromCorrectPosition();
         }
         if (scrubBarGUI.isUseFps()) {
-            setPlaybackTimerTimeByFps();
+            period = (long) (1 / scrubBarGUI.getFps() * 1000.0 / playbackSpeed);
             footballFieldPanel.setUseFps(true);
             playbackStartMS = System.currentTimeMillis() - timeManager.getCount2MSec().get(footballFieldPanel.getCurrentCount());
             System.out.println("Start time: " + timeManager.getCount2MSec().get(footballFieldPanel.getCurrentCount()));
         } else {
-            setPlaybackTimerTimeByCounts();
+            period = getPlaybackTimerTimeByCounts();
             footballFieldPanel.setUseFps(false);
         }
-        playbackTimer.start();
+        playbackTimer = new java.util.Timer();
+        playbackTimer.scheduleAtFixedRate(new PlaybackTask(), 0, period);
         return true;
     }
 
@@ -1964,7 +1980,9 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         if (audioPlayer != null) {
             audioPlayer.pauseAudio();
         }
-        playbackTimer.stop();
+        playbackTimer.cancel();
+        playbackTimer.purge();
+        playbackTimer = null;
         return true;
     }
 
@@ -2195,23 +2213,6 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         footballFieldPanel.setFieldWidth(footballFieldBackground.getFieldWidth() * 5.0/6.0);
         footballFieldPanel.setFrontSideline50(footballFieldBackground.getFrontSideline50());
         footballFieldPanel.repaint();
-    }
-
-    @Override
-    public void onFinishRepaint() {
-        if (scrubBarGUI.isPlaying() && scrubBarGUI.isUseFps()) {
-
-            try {
-                double currTime = scrubBarGUI.getTime() * 1000;
-                double timeDiff = System.currentTimeMillis() - playbackStartMS - currTime;
-                playbackTimer.setDelay(playbackTimer.getDelay() - (int) timeDiff);
-            }
-            catch (IllegalArgumentException iae) {
-                if (frameStartTime != 0) {
-                    playbackTimer.setDelay(0);
-                }
-            }
-        }
     }
 
     @Override
@@ -2920,6 +2921,41 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
     /*
         tutorial
      */
+
+    private class PlaybackTask extends TimerTask {
+
+        @Override
+        public void run() {
+            canSeekAudio = false;
+            if (scrubBarGUI.isUseFps()) {
+                frameStartTime = System.currentTimeMillis();
+                if (scrubBarGUI.nextStep(playbackSpeed)) {
+                    // Reached the end
+                    playbackTimer.cancel();
+                    playbackTimer.purge();
+                    playbackTimer = null;
+                    audioPlayer.pauseAudio();
+                    scrubBarGUI.setIsPlayingPlay();
+                    canSeekAudio = true;
+                    return;
+                }
+            } else {
+                scrubBarGUI.nextCount();
+
+                if (scrubBarGUI.isAtLastSet()) {
+                    // Reached the end
+                    playbackTimer.cancel();
+                    playbackTimer.purge();
+                    playbackTimer = null;
+                    audioPlayer.pauseAudio();
+                    scrubBarGUI.setIsPlayingPlay();
+                    canSeekAudio = true;
+                    return;
+                }
+            }
+            canSeekAudio = true;
+        }
+    }
 
     public class LimitedDocument extends PlainDocument {
 
