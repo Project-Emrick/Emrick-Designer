@@ -1816,6 +1816,9 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
 
     @Override
     public void onFileSelect(File archivePath, File csvFile) {
+        if (this.archivePath != null) {
+            createAndShowGUI();
+        }
         this.archivePath = archivePath;
         this.csvFile = csvFile;
         emrickPath = null;
