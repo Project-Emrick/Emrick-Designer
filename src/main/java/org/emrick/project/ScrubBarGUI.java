@@ -1,5 +1,7 @@
 package org.emrick.project;
 
+import org.emrick.project.audio.AudioPlayer;
+
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
@@ -29,6 +31,8 @@ public class ScrubBarGUI extends JComponent implements ActionListener {
     private JPanel scrubBarPanel;
     private final JFrame parent;
 
+    private AudioPlayer audioPlayer;
+
     // Status
     private long currTimeMSec;
 
@@ -57,6 +61,7 @@ public class ScrubBarGUI extends JComponent implements ActionListener {
     private int currSetStartCount;
     private int currSetEndCount;
     private final FootballFieldPanel footballFieldPanel;
+    private int totalCounts; //total counts in the show
 
     // Listener
     private final ScrubBarListener scrubBarListener;
@@ -70,9 +75,11 @@ public class ScrubBarGUI extends JComponent implements ActionListener {
     private boolean useFps = false;
     private ArrayList<SyncTimeGUI.Pair> timeSync = null;
 
-    public ScrubBarGUI(JFrame parent, ScrubBarListener scrubBarListener, SyncListener syncListener, FootballFieldPanel footballFieldPanel) {
+    public ScrubBarGUI(JFrame parent, ScrubBarListener scrubBarListener, SyncListener syncListener,
+                       FootballFieldPanel footballFieldPanel, AudioPlayer audioPlayer) {
         this.parent = parent;
 
+        this.audioPlayer = audioPlayer;
         // Placeholder. E.g., When Emrick Designer is first opened, no project is loaded.
         this.pageTab2Count = new HashMap<>();
         this.pageTab2Count.put("1", 0);
@@ -93,9 +100,10 @@ public class ScrubBarGUI extends JComponent implements ActionListener {
         initialize();
     }
 
-    public void updatePageTabCounts(Map<String, Integer> pageTabCounts) {
+    public void updatePageTabCounts(Map<String, Integer> pageTabCounts, int totalCounts) {
 
         this.pageTab2Count = pageTabCounts;
+        this.totalCounts = totalCounts;
 
         // Because SyncTimeGUI depends on pageTabCounts, update it as well
 //        syncTimeGUI = new SyncTimeGUI(pageTabCounts);
@@ -209,7 +217,7 @@ public class ScrubBarGUI extends JComponent implements ActionListener {
 //                    }
 //                }
 
-                footballFieldPanel.setCurrentSet(footballFieldPanel.drill.sets.get(getCurrentSetIndex()));
+                scrubBarListener.onSetChange(getCurrentSetIndex());
                 footballFieldPanel.setCurrentSetStartCount(getCurrentSetStart());
                 footballFieldPanel.setCurrentCount(val);
 
@@ -246,7 +254,7 @@ public class ScrubBarGUI extends JComponent implements ActionListener {
             time = (float) (topSlider.getValue() - getCurrentSetStart()) / setDuration * setSyncDuration + pastSetTime;
             scrubBarListener.onTimeChange((long) ((Math.round(time * 1000.0) / 1000.0 - pastSetTime) * 1000));
             double ratio = (time - pastSetTime) / setSyncDuration;
-            footballFieldPanel.setCurrentSet(footballFieldPanel.drill.sets.get(getCurrentSetIndex()));
+            scrubBarListener.onSetChange(getCurrentSetIndex());
             footballFieldPanel.setCurrentSetRatio(Math.min(ratio, 1));
             footballFieldPanel.repaint();
         }
@@ -269,7 +277,7 @@ public class ScrubBarGUI extends JComponent implements ActionListener {
         topSlider.setValue(getCurrentSetStart() + (int) Math.floor(setCount));
         scrubBarListener.onTimeChange((long) ((time - pastSetTime) * 1000));
 
-        footballFieldPanel.setCurrentSet(footballFieldPanel.drill.sets.get(getCurrentSetIndex()));
+        scrubBarListener.onSetChange(getCurrentSetIndex());
         footballFieldPanel.setCurrentSetRatio(Math.min(ratio, 1));
         footballFieldPanel.repaint();
 
@@ -306,7 +314,7 @@ public class ScrubBarGUI extends JComponent implements ActionListener {
      */
     public static List<Map.Entry<String, Integer>> sortMap(Map<String, Integer> map) {
         List<Map.Entry<String, Integer>> list = new ArrayList<>(map.entrySet());
-//        list.sort(Map.Entry.comparingByKey()); // Was there a reason that this was changed to comparingByKey(), that I am missing?
+//       list.sort(Map.Entry.comparingByKey()); // Was there a reason that this was changed to comparingByKey(), that I am missing?
         list.sort(Map.Entry.comparingByValue());
         return list;
     }
@@ -509,7 +517,7 @@ public class ScrubBarGUI extends JComponent implements ActionListener {
     }
 
     @Override
-    public void actionPerformed(ActionEvent e) {
+    public void actionPerformed(ActionEvent e)   {
 
         if (e.getSource().equals(playPauseButton)) {
             if (!isReady) {
@@ -543,7 +551,7 @@ public class ScrubBarGUI extends JComponent implements ActionListener {
         }
         else if (e.getSource().equals(syncButton)) {
             if (isReady) {
-                new SyncTimeGUI(parent, syncListener, pageTab2Count);
+                new SyncTimeGUI(parent, syncListener, pageTab2Count, audioPlayer, totalCounts);
             }
         }
         else if (e.getSource().equals(playbackSpeedsBox)) {
@@ -716,6 +724,9 @@ public class ScrubBarGUI extends JComponent implements ActionListener {
                 return o1.getKey().compareTo(o2.getKey());
             }
         });
+    }
+    public void setAudioPlayer(AudioPlayer audioPlayer) {
+        this.audioPlayer = audioPlayer;
     }
 
     public JButton getSyncButton() {

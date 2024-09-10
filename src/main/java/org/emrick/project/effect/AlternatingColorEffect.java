@@ -99,6 +99,8 @@ public class AlternatingColorEffect implements GeneratedEffect {
         e.setFunction(LightingDisplay.Function.ALTERNATING_COLOR);
         e.setEffectType(EffectList.ALTERNATING_COLOR);
         e.setId(id);
+        e.setSize(1);
+        e.setGeneratedEffect(this);
         return e;
     }
 

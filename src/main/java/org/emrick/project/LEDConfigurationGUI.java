@@ -258,7 +258,15 @@ public class LEDConfigurationGUI extends JPanel {
 
     public int getPrevID(int id) {
         Performer prev = drill.performers.get(id - 1);
-        return prev.getLedStrips().get(prev.getLedStrips().size()-1);
+        if (!prev.getLedStrips().isEmpty()) {
+            return prev.getLedStrips().get(prev.getLedStrips().size() - 1)+1;
+        } else {
+            if (id > 1) {
+                return getPrevID(id - 1);
+            } else {
+                return 0;
+            }
+        }
     }
 
     public void addLEDStrip(LEDStrip ledStrip) {
@@ -589,7 +597,6 @@ public class LEDConfigurationGUI extends JPanel {
         }
 
         public void pasteConfig(PerformerConfig performerConfig) {
-            // TODO: Make this undoable
 
             if (performerConfig != null) {
                 int i;

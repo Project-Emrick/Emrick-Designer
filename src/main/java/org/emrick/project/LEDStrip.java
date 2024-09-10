@@ -54,7 +54,7 @@ public class LEDStrip {
     }
 
     public String getLabel() {
-        return performer.getLabel() + ledConfig.getLabel();
+        return performer.getIdentifier() + ledConfig.getLabel();
     }
 
     public int getId() {
@@ -87,6 +87,6 @@ public class LEDStrip {
 
     @Override
     public String toString() {
-        return "LEDStrip: " + ledConfig.getLabel() + ", " + id;
+        return "LEDStrip: " + getLabel() + ", " + id;
     }
 }

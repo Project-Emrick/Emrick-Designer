@@ -9,6 +9,7 @@ import org.emrick.project.effect.*;
 import java.awt.*;
 import java.io.IOException;
 import java.time.Duration;
+import java.util.ArrayList;
 
 public class GeneratedEffectAdapter extends TypeAdapter<GeneratedEffect> {
     @Override
@@ -189,6 +190,80 @@ public class GeneratedEffectAdapter extends TypeAdapter<GeneratedEffect> {
             writer.name("effectType");
             writer.value(circleChaseEffect.getEffectType().ordinal());
             writer.endObject();
+        } else if (generatedEffect.getEffectType() == EffectList.CHASE) {
+            ChaseEffect chaseEffect = (ChaseEffect) generatedEffect;
+            writer.beginObject();
+            writer.name("startTime");
+            writer.value(chaseEffect.getStartTime());
+            writer.name("endTime");
+            writer.value(chaseEffect.getEndTime());
+            for (int i = 0; i < chaseEffect.getChaseSequence().size(); i++) {
+                writer.name("colorR" + i);
+                writer.value(chaseEffect.getChaseSequence().get(i).getRed());
+                writer.name("colorG" + i);
+                writer.value(chaseEffect.getChaseSequence().get(i).getGreen());
+                writer.name("colorB" + i);
+                writer.value(chaseEffect.getChaseSequence().get(i).getBlue());
+            }
+            writer.name("duration");
+            writer.value(chaseEffect.getDuration().toMillis());
+            writer.name("speed");
+            writer.value(chaseEffect.getSpeed());
+            writer.name("clockwise");
+            writer.value(chaseEffect.isClockwise());
+            writer.name("id");
+            writer.value(chaseEffect.getId());
+            writer.name("effectType");
+            writer.value(chaseEffect.getEffectType().ordinal());
+            writer.endObject();
+        } else if (generatedEffect.getEffectType() == EffectList.GRID) {
+            GridEffect gridEffect = (GridEffect) generatedEffect;
+            writer.beginObject();
+            writer.name("startTime");
+            writer.value(gridEffect.getStartTime());
+            writer.name("endTime");
+            writer.value(gridEffect.getEndTime());
+            for (int i = 0; i < gridEffect.getShapes().length; i++) {
+                GridShape shape = gridEffect.getShapes()[i];
+                writer.name("gridColorR" + i);
+                writer.value(shape.getColor().getRed());
+                writer.name("gridColorG" + i);
+                writer.value(shape.getColor().getGreen());
+                writer.name("gridColorB" + i);
+                writer.value(shape.getColor().getBlue());
+                writer.name("startPosX" + i);
+                writer.value(shape.getStartPos().x);
+                writer.name("startPosY" + i);
+                writer.value(shape.getStartPos().y);
+                writer.name("moveX" + i);
+                writer.value(shape.getMovement().x);
+                writer.name("moveY" + i);
+                writer.value(shape.getMovement().y);
+                writer.name("gridSpeed" + i);
+                writer.value(shape.getSpeed());
+                StringBuilder boolStr = new StringBuilder();
+                for (int j = 0; j < shape.getShape().length; j++) {
+                    for (int k = 0; k < shape.getShape()[j].length; k++) {
+                        boolStr.append(shape.getShape()[j][k] ? "1" : "0");
+                    }
+                    boolStr.append(",");
+                }
+                writer.name("shape" + i);
+                writer.value(boolStr.toString());
+                writer.name("ledString" + i);
+                writer.value(shape.generateRecoveryString());
+            }
+            writer.name("height");
+            writer.value(gridEffect.getHeight());
+            writer.name("width");
+            writer.value(gridEffect.getWidth());
+            writer.name("duration");
+            writer.value(gridEffect.getDuration().toMillis());
+            writer.name("id");
+            writer.value(gridEffect.getId());
+            writer.name("effectType");
+            writer.value(gridEffect.getEffectType().ordinal());
+            writer.endObject();
         } else {
             writer.nullValue();
         }
@@ -226,6 +301,11 @@ public class GeneratedEffectAdapter extends TypeAdapter<GeneratedEffect> {
         Integer id = null;
         String fieldname = null;
         Integer effectType = null;
+        Integer height = null;
+        Integer width = null;
+        Integer gridSpeed = null;
+        ArrayList<Color> chaseSequence = null;
+        ArrayList<GridShape> gridShapes = null;
         if (reader.peek().equals(JsonToken.NULL)) {
             reader.nextNull();
             return null;
@@ -244,59 +324,149 @@ public class GeneratedEffectAdapter extends TypeAdapter<GeneratedEffect> {
             } else if ("endTime".equals(fieldname)) {
                 endTime = reader.nextLong();
             } else if ("staticColorR".equals(fieldname)) {
-                staticColorR = Integer.valueOf(reader.nextInt());
+                staticColorR = reader.nextInt();
             } else if ("staticColorG".equals(fieldname)) {
-                staticColorG = Integer.valueOf(reader.nextInt());
+                staticColorG = reader.nextInt();
             } else if ("staticColorB".equals(fieldname)) {
-                staticColorB = Integer.valueOf(reader.nextInt());
+                staticColorB = reader.nextInt();
             } else if ("waveColorR".equals(fieldname)) {
-                waveColorR = Integer.valueOf(reader.nextInt());
+                waveColorR = reader.nextInt();
             } else if ("waveColorG".equals(fieldname)) {
-                waveColorG = Integer.valueOf(reader.nextInt());
+                waveColorG = reader.nextInt();
             } else if ("waveColorB".equals(fieldname)) {
-                waveColorB = Integer.valueOf(reader.nextInt());
+                waveColorB = reader.nextInt();
             } else if ("startColorR".equals(fieldname)) {
-                startColorR = Integer.valueOf(reader.nextInt());
+                startColorR = reader.nextInt();
             } else if ("startColorG".equals(fieldname)) {
-                startColorG = Integer.valueOf(reader.nextInt());
+                startColorG = reader.nextInt();
             } else if ("startColorB".equals(fieldname)) {
-                startColorB = Integer.valueOf(reader.nextInt());
+                startColorB = reader.nextInt();
             } else if ("endColorR".equals(fieldname)) {
-                endColorR = Integer.valueOf(reader.nextInt());
+                endColorR = reader.nextInt();
             } else if ("endColorG".equals(fieldname)) {
-                endColorG = Integer.valueOf(reader.nextInt());
+                endColorG = reader.nextInt();
             } else if ("endColorB".equals(fieldname)) {
-                endColorB = Integer.valueOf(reader.nextInt());
+                endColorB = reader.nextInt();
             } else if ("duration".equals(fieldname)) {
-                duration = Long.valueOf(reader.nextLong());
+                duration = reader.nextLong();
             } else if ("speed".equals(fieldname)) {
-                speed = Double.valueOf(reader.nextDouble());
+                speed = reader.nextDouble();
             } else if ("vertical".equals(fieldname)) {
-                vertical = Boolean.valueOf(reader.nextBoolean());
+                vertical = reader.nextBoolean();
             } else if ("upRight".equals(fieldname)) {
-                upRight = Boolean.valueOf(reader.nextBoolean());
+                upRight = reader.nextBoolean();
             } else if ("id".equals(fieldname)) {
-                id = Integer.valueOf(reader.nextInt());
+                id = reader.nextInt();
             } else if ("effectType".equals(fieldname)) {
-                effectType = Integer.valueOf(reader.nextInt());
+                effectType = reader.nextInt();
             } else if ("color1R".equals(fieldname)) {
-                color1R = Integer.valueOf(reader.nextInt());
+                color1R = reader.nextInt();
             } else if ("color1G".equals(fieldname)) {
-                color1G = Integer.valueOf(reader.nextInt());
+                color1G = reader.nextInt();
             } else if ("color1B".equals(fieldname)) {
-                color1B = Integer.valueOf(reader.nextInt());
+                color1B = reader.nextInt();
             } else if ("color2R".equals(fieldname)) {
-                color2R = Integer.valueOf(reader.nextInt());
+                color2R = reader.nextInt();
             } else if ("color2G".equals(fieldname)) {
-                color2G = Integer.valueOf(reader.nextInt());
+                color2G = reader.nextInt();
             } else if ("color2B".equals(fieldname)) {
-                color2B = Integer.valueOf(reader.nextInt());
+                color2B = reader.nextInt();
             } else if ("rate".equals(fieldname)) {
-                rate = Double.valueOf(reader.nextDouble());
+                rate = reader.nextDouble();
             } else if ("clockwise".equals(fieldname)) {
-                clockwise = Boolean.valueOf(reader.nextBoolean());
+                clockwise = reader.nextBoolean();
             } else if ("angle".equals(fieldname)) {
-                angle = Double.valueOf(reader.nextDouble());
+                angle = reader.nextDouble();
+            } else if ("height".equals(fieldname)) {
+                height = reader.nextInt();
+            } else if ("width".equals(fieldname)) {
+                width = reader.nextInt();
+            } else if (isChaseSequenceMember(fieldname)) {
+                int data = reader.nextInt();
+                int index = Integer.parseInt(fieldname.substring(6));
+                if (chaseSequence == null) {
+                    chaseSequence = new ArrayList<>();
+                }
+                while (chaseSequence.size() <= index) {
+                    chaseSequence.add(new Color(0,0,0));
+                }
+                switch (fieldname.charAt(5)) {
+                    case 'R': chaseSequence.set(index, new Color(data, chaseSequence.get(index).getGreen(), chaseSequence.get(index).getBlue())); break;
+                    case 'G': chaseSequence.set(index, new Color(chaseSequence.get(index).getRed(), data, chaseSequence.get(index).getBlue())); break;
+                    case 'B': chaseSequence.set(index, new Color(chaseSequence.get(index).getRed(), chaseSequence.get(index).getGreen(), data)); break;
+                }
+            } else if (isGridMember(fieldname)) {
+                if (gridShapes == null) {
+                    gridShapes = new ArrayList<>();
+                }
+                if (fieldname.startsWith("gridColor")) {
+                    int index = Integer.parseInt(fieldname.substring(10));
+                    int data = reader.nextInt();
+                    while (gridShapes.size() <= index) {
+                        gridShapes.add(new GridShape());
+                    }
+                    GridShape shape = gridShapes.get(index);
+                    switch (fieldname.charAt(9)) {
+                        case 'R': shape.setColor(new Color(data, shape.getColor().getGreen(), shape.getColor().getBlue())); break;
+                        case 'G': shape.setColor(new Color(shape.getColor().getRed(), data, shape.getColor().getBlue())); break;
+                        case 'B': shape.setColor(new Color(shape.getColor().getRed(), shape.getColor().getGreen(), data)); break;
+                    }
+                } else if (fieldname.startsWith("startPos")) {
+                    int data = reader.nextInt();
+                    int index = Integer.parseInt(fieldname.substring(9));
+                    while (gridShapes.size() <= index) {
+                        gridShapes.add(new GridShape());
+                    }
+                    GridShape shape = gridShapes.get(index);
+                    switch (fieldname.charAt(8)) {
+                        case 'X': shape.setStartPos(new Point(data, shape.getStartPos().y)); break;
+                        case 'Y': shape.setStartPos(new Point(shape.getStartPos().x, data)); break;
+                    }
+                } else if (fieldname.startsWith("move")) {
+                    int data = reader.nextInt();
+                    int index = Integer.parseInt(fieldname.substring(5));
+                    while (gridShapes.size() <= index) {
+                        gridShapes.add(new GridShape());
+                    }
+                    GridShape shape = gridShapes.get(index);
+                    switch (fieldname.charAt(4)) {
+                        case 'X': shape.setMovement(new Point(data, shape.getMovement().y)); break;
+                        case 'Y': shape.setMovement(new Point(shape.getMovement().x, data)); break;
+                    }
+                } else if (fieldname.startsWith("shape")) {
+                    String data = reader.nextString();
+                    int index = Integer.parseInt(fieldname.substring(5));
+                    while (gridShapes.size() <= index) {
+                        gridShapes.add(new GridShape());
+                    }
+                    GridShape shape = gridShapes.get(index);
+                    String[] rows = data.split(",");
+                    int w = rows[0].length();
+                    int h = rows.length;
+                    boolean[][] grid = new boolean[h][w];
+                    for (int i = 0; i < h; i++) {
+                        for (int j = 0; j < w; j++) {
+                            grid[i][j] = rows[i].charAt(j) == '1';
+                        }
+                    }
+                    shape.setShape(grid);
+                } else if (fieldname.startsWith("ledString")) {
+                    String data = reader.nextString();
+                    int index = Integer.parseInt(fieldname.substring(9));
+                    while (gridShapes.size() <= index) {
+                        gridShapes.add(new GridShape());
+                    }
+                    GridShape shape = gridShapes.get(index);
+                    shape.setRecoveryString(data);
+                } else if (fieldname.startsWith("gridSpeed")) {
+                    int data = reader.nextInt();
+                    int index = Integer.parseInt(fieldname.substring(9));
+                    while (gridShapes.size() <= index) {
+                        gridShapes.add(new GridShape());
+                    }
+                    GridShape shape = gridShapes.get(index);
+                    shape.setSpeed(data);
+                }
             }
         }
         reader.endObject();
@@ -475,10 +645,67 @@ public class GeneratedEffectAdapter extends TypeAdapter<GeneratedEffect> {
                         new Color(startColorR, startColorG, startColorB),
                         new Color(endColorR, endColorG, endColorB),
                         Duration.ofMillis(duration), clockwise, angle, speed, id);
+            } else if (effectType == EffectList.CHASE.ordinal()) {
+                if (startTime == null) {
+                    throw new IOException("failed to get startTime component for GeneratedEffect");
+                } else if (endTime == null) {
+                    throw new IOException("failed to get endTime component for GeneratedEffect");
+                } else if (duration == null) {
+                    throw new IOException("failed to get duration component for GeneratedEffect");
+                } else if (clockwise == null) {
+                    throw new IOException("failed to get clockwise component for GeneratedEffect");
+                } else if (id == null) {
+                    throw new IOException("failed to get id component for GeneratedEffect");
+                } else if (speed == null) {
+                    throw new IOException("failed to get speed component for GeneratedEffect");
+                } else if (chaseSequence == null) {
+                    throw new IOException("failed to get chase sequence component for GeneratedEffect");
+                }
+                return new ChaseEffect(startTime, endTime, chaseSequence, Duration.ofMillis(duration), clockwise, speed, id);
+            } else if (effectType == EffectList.GRID.ordinal()) {
+                if (startTime == null) {
+                    throw new IOException("failed to get startTime component for GeneratedEffect");
+                } else if (endTime == null) {
+                    throw new IOException("failed to get endTime component for GeneratedEffect");
+                } else if (duration == null) {
+                    throw new IOException("failed to get duration component for GeneratedEffect");
+                } else if (id == null) {
+                    throw new IOException("failed to get id component for GeneratedEffect");
+                } else if (gridShapes == null) {
+                    throw new IOException("failed to get grid shapes component for GeneratedEffect");
+                } else if (height == null) {
+                    throw new IOException("failed to get height component for GeneratedEffect");
+                } else if (width == null) {
+                    throw new IOException("failed to get width component for GeneratedEffect");
+                }
+                GridShape[] shapes = new GridShape[gridShapes.size()];
+                return new GridEffect(startTime, endTime, height, width, gridShapes.toArray(shapes), Duration.ofMillis(duration), id);
             }
         }  else {
             throw new IOException("failed to get effectType component for GeneratedEffect");
         }
         return null;
+    }
+
+    private boolean isGridMember(String str) {
+        if (str == null) {
+            return false;
+        }
+
+        return str.startsWith("gridColorR") || str.startsWith("gridColorG") || str.startsWith("gridColorB")
+                || str.startsWith("startPosX") || str.startsWith("startPosY") || str.startsWith("gridSpeed")
+                || str.startsWith("moveX") || str.startsWith("moveY")
+                || str.startsWith("shape") || str.startsWith("ledString");
+    }
+
+    private boolean isChaseSequenceMember(String str) {
+        if (str == null) {
+            return false;
+        }
+
+        if (str.startsWith("colorR") || str.startsWith("colorG") || str.startsWith("colorB")) {
+            return Integer.parseInt(str.substring(6)) >= 0;
+        }
+        return false;
     }
 }

@@ -126,6 +126,22 @@ public class FootballFieldBackground extends JPanel {
         footballFieldListener.onResizeBackground();
     }
 
+    public boolean isShowSurfaceImage() {
+        return showSurfaceImage;
+    }
+
+    public void setShowSurfaceImage(boolean showSurfaceImage) {
+        this.showSurfaceImage = showSurfaceImage;
+    }
+
+    public boolean isShowFloorCoverImage() {
+        return showFloorCoverImage;
+    }
+
+    public void setShowFloorCoverImage(boolean showFloorCoverImage) {
+        this.showFloorCoverImage = showFloorCoverImage;
+    }
+
     public BufferedImage getSurfaceImage() {
         return surfaceImage;
     }

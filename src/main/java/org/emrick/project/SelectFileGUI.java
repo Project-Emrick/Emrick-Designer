@@ -252,7 +252,7 @@ public class SelectFileGUI implements ActionListener {
                     csvFile = new File(PathConverter.pathConverter("show_data/" + csvFile.getName(), false));
                 }
 
-                importListener.onFileSelect(archiveFile, coordsFile, csvFile);
+                importListener.onFileSelect(archiveFile, csvFile);
                 importArchive.fullImport(archiveFile.getAbsolutePath(), coordsFile.getAbsolutePath());
 
                 dialogWindow.dispose();

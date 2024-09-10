@@ -189,7 +189,7 @@ public class EffectManager {
     public void replaceEffectForSelectedLEDStrips(Effect oldEffect, Effect newEffect) {
         ArrayList<LEDStrip> ledStrips = getSelectedLEDStrips();
         if (ledStrips == null) return;
-
+        newEffect.setGeneratedEffect(null);
         ArrayList<EffectLEDStripMap> map = newEffect.getGeneratedEffect().generateEffects(ledStrips);
         for (EffectLEDStripMap m : map) {
             m.setOldEffect(oldEffect);

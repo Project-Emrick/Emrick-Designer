@@ -9,4 +9,5 @@ public interface FootballFieldListener extends RFSignalListener {
     void onResizeBackground();
     void onFinishRepaint();
     double getFrameRate();
+    boolean isPlaying();
 }

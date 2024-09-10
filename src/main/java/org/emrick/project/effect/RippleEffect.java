@@ -120,6 +120,7 @@ public class RippleEffect implements GeneratedEffect {
         effect.setDirection(this.isUpRight());
         effect.setEffectType(EffectList.RIPPLE);
         effect.setId(this.getId());
+        effect.setGeneratedEffect(this);
         return effect;
     }
 

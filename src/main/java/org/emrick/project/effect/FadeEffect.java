@@ -87,6 +87,7 @@ public class FadeEffect implements GeneratedEffect {
         effect.setDuration(this.getDuration());
         effect.setEffectType(EffectList.GENERATED_FADE);
         effect.setId(this.getId());
+        effect.setGeneratedEffect(this);
         return effect;
     }
 
