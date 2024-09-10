@@ -22,7 +22,7 @@ dependencies {
 //    compile 'junit:junit:4.12'
     implementation 'com.formdev:flatlaf:3.3'
     implementation 'com.google.code.gson:gson:2.10.1'
-    implementation 'org.apache.pdfbox:pdfbox:3.0.3'
+    implementation 'org.apache.pdfbox:pdfbox:3.0.2'
     implementation 'com.fazecast:jSerialComm:[2.0.0,3.0.0)'
 
     // https://mvnrepository.com/artifact/org.junit.jupiter/junit-jupiter-api - For JUnit
