@@ -33,6 +33,7 @@ public class FlowViewGUI extends JPanel {
             public void keyTyped(KeyEvent e) {
                 System.out.println(++currentTrigger);
                 rfSignalListener.onRFSignal(currentTrigger);
+                System.out.println("Current Trigger: " + currentTrigger);
             }
 
             @Override
