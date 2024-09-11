@@ -24,7 +24,10 @@ import java.nio.file.*;
 import java.time.*;
 import java.util.*;
 
-
+/**
+ * Main class of Emrick Designer.
+ * Contains all GUI elements and logic for light show design and Emrick board interaction
+ */
 public class MediaEditorGUI extends Component implements ImportListener, ScrubBarListener, SyncListener,
         FootballFieldListener, EffectListener, SelectListener, UserAuthListener, RFTriggerListener, RFSignalListener, RequestCompleteListener,
         LEDConfigListener{
@@ -132,6 +135,11 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
     private SerialTransmitter serialTransmitter;
     JFrame webServerFrame;
 
+    /**
+     * Main method of Emrick Designer
+     *
+     * @param args - Only used when opening the application via an associated file type rather than an executable
+     */
     public static void main(String[] args) {
         final String file;
         if (args.length != 0) {
@@ -152,6 +160,12 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         });
     }
 
+    /**
+     * Constructor for MediaEditorGUI
+     *
+     * @param file - Used when starting the application via opening a file via an associated type.
+     *             Otherwise, this can be left as an empty string.
+     */
     public MediaEditorGUI(String file) {
         // serde setup
         GsonBuilder builder = new GsonBuilder();
@@ -295,12 +309,21 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
 
     }
 
+    /**
+     * Calculates and returns the frame length in milliseconds
+     *
+     * @return - Time in milliseconds the timer should wait between frames
+     */
     private long getPlaybackTimerTimeByCounts() {
         float setSyncDuration = timeSync.get(scrubBarGUI.getCurrentSetIndex()).getValue();
         float setDuration = scrubBarGUI.getCurrSetDuration();
         return Math.round(setSyncDuration / setDuration * 1000 / playbackSpeed);
     }
 
+    /**
+     * Builds all major GUI elements and adds them to the main frame.
+     * This method should be called on startup and on project loading when another project is already loaded.
+     */
     public void createAndShowGUI() {
 
         if (archivePath != null) {
@@ -949,7 +972,13 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         }
     }
 
-    private boolean deleteDirectory(File directoryToBeDeleted) {
+    /**
+     * Recursively empties and deletes the specified file/directory.
+     *
+     * @param directoryToBeDeleted - File or directory that should be emptied and/or deleted
+     * @return true - if the directory was deleted successfully. false - otherwise
+     */
+    public boolean deleteDirectory(File directoryToBeDeleted) {
         File[] allContents = directoryToBeDeleted.listFiles();
         if (allContents != null) {
             for (File file : allContents) {
@@ -959,7 +988,12 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         return directoryToBeDeleted.delete();
     }
 
-    private JButton getEffectOptionsButton() {
+    /**
+     * Initializes the Effect Options button and the effects popup menu and returns the Effect Options button.
+     *
+     * @return JButton button that displays a popup menu with all the effect options when pressed
+     */
+    public JButton getEffectOptionsButton() {
         JPopupMenu lightMenuPopup = new JPopupMenu();
 
         JMenuItem fadePattern = new JMenuItem("Create Fade Effect");
@@ -1031,9 +1065,21 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         return lightButton;
     }
 
+    /**
+     * Used to get a Serial Transmitter object.
+     * If only 1 Emrick board of the desired type is connected, it will be found automatically.
+     * Otherwise, the user will be prompted with a menu to select the intended COM port
+     *
+     * @param type The type of hardware that should be detected.
+     * @return A SerialTransmitter object loaded with the specified COM port.
+     * If no COM ports are found, this method returns null.
+     */
     public SerialTransmitter comPortPrompt(String type) {
         SerialTransmitter st = new SerialTransmitter();
         SerialPort[] allPorts = SerialTransmitter.getPortNames();
+        if (allPorts.length == 0) {
+            return null;
+        }
         String[] allPortNames = new String[allPorts.length];
         writeSysMsg("Attempting to find Emrick Hardware");
         for (int i = 0; i < allPorts.length; i++) {
@@ -1063,6 +1109,9 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         return st;
     }
 
+    /**
+     * Removes the flow viewer from the main content panel and restores the run menu to be used again
+     */
     public void removeFlowViewer() {
         mainContentPanel.remove(flowViewGUI);
         runShowItem.setEnabled(true);
@@ -1071,6 +1120,10 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         stopShowItem.setEnabled(false);
     }
 
+    /**
+     * Stops the currently running web server, restores the run menu to be used again,
+     * and cleans the filesystem of any files created by the web server
+     */
     public void stopServer() {
         server.stop(0);
         noRequestTimer.stop();
@@ -1092,6 +1145,13 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         }
     }
 
+    /**
+     * Prompts the user for information and then starts a web server using this information
+     *
+     * @param path A path to the .pkt file whose contents should be served by the web server.
+     * @param lightBoard true - Run the web server to serve light board packets
+     *                   false - Run the web server to serve show packets
+     */
     public void runServer(String path, boolean lightBoard) {
         try {
             File f;
@@ -1263,6 +1323,10 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         }
     }
 
+    /**
+     * Loads a new .emrick file to the viewport to be edited.
+     * @param path Path pointing to the intended .emrick file
+     */
     public void loadProject(File path) {
         try {
 
@@ -1357,7 +1421,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
     /**
      * Loads the ScrubBarGUI Panel if it has not been created, or refreshes it if it already exists.
      */
-    private void buildScrubBarPanel() {
+    public void buildScrubBarPanel() {
 
         // Remove the existing scrubBarPanel
         if (scrubBarPanel != null) {
@@ -1431,7 +1495,24 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         updateEffectViewPanel(selectedEffectType);
     }
 
-    private void exportCsvFileForPerformerDeviceIDs(File selectedFile) {
+    /**
+     * Builds and exports a csv file containing configuration data for led strips and performers
+     * <p>
+     *     Format:
+     * <p>
+     *     The first line contains headers and the last element contains the expected number of led strips.
+     * <p>
+     *     A new performer starts on a new line where its label (Ex. "R31") is written as the first element
+     * <p>
+     *     Below each performer label will be a list of all of this performer's led strips,
+     *     each line beginning with an empty element.
+     *     The led strips lines will contain their label, id, and a set of configuration data.
+     * <p>
+     *     Ex. ",226,R31L,50,12,6,-6,-6"
+     *
+     * @param selectedFile The desired file location to write the csv file.
+     */
+    public void exportCsvFileForPerformerDeviceIDs(File selectedFile) {
         try (FileWriter fileWriter = new FileWriter(selectedFile)) {
             fileWriter.write("Performer Label,LED ID,LED Label,LED Count,Height,Width,Horizontal Offset,VerticalOffset,,Size:," + footballFieldPanel.drill.ledStrips.size());
             fileWriter.write("\n");
@@ -1465,7 +1546,10 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         }
     }
 
-    private void applyDefaultLEDConfiguration() {
+    /**
+     * Applies a default led configuration to all performers
+     */
+    public void applyDefaultLEDConfiguration() {
         footballFieldPanel.drill.performers.sort(new Comparator<Performer>() {
             @Override
             public int compare(Performer o1, Performer o2) {
@@ -1495,7 +1579,11 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         }
     }
 
-    private void parseCsvFileForPerformerDeviceIDs(File inputFile) {
+    /**
+     * Imports a configuration csv file and applies the config to an open project.
+     * @param inputFile csv configuration file
+     */
+    public void parseCsvFileForPerformerDeviceIDs(File inputFile) {
         try {
             // TODO: rewrite so that effects are not lost during this process
             BufferedReader reader = new BufferedReader(new FileReader(inputFile));
@@ -1555,7 +1643,10 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
 
     ////////////////////////// Sync Listeners //////////////////////////
 
-    private void openProjectDialog() {
+    /**
+     * Opens a prompt for the user to select a project to open.
+     */
+    public void openProjectDialog() {
         writeSysMsg("Opening project...");
         JFileChooser fileChooser = new JFileChooser();
         fileChooser.setDialogTitle("Open Project");
@@ -1568,7 +1659,12 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         }
     }
 
-    private void saveProjectDialog() {
+    /**
+     * Attempts to save the project to a file.
+     * If the currently open project is a new project, the user will be prompted to specify
+     * a save location before the project is saved.
+     */
+    public void saveProjectDialog() {
         if (archivePath == null) {
             System.out.println("Nothing to save.");
             writeSysMsg("Nothing to save!");
@@ -1584,7 +1680,10 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         }
     }
 
-    private void saveAsProjectDialog() {
+    /**
+     * Prompts the user for a location to save the current project.
+     */
+    public void saveAsProjectDialog() {
         if (archivePath == null) {
             System.out.println("Nothing to save.");
             writeSysMsg("Nothing to save!");
@@ -1698,7 +1797,10 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         mainContentPanel.repaint();
     }
 
-    private void rebuildPageTabCounts() {
+    /**
+     * Rebuilds the map of set labels to set start counts that is used in ScrubBarGUI.
+     */
+    public void rebuildPageTabCounts() {
         Map<String, Integer> pageTabCounts = new HashMap<>();
         int startCount = 0;
         int totalCounts;
@@ -1731,7 +1833,11 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         ledStripViewGUI = new LEDStripViewGUI(new ArrayList<>(), effectManager);
     }
 
-    private void setupEffectView(ArrayList<Integer> ids) {
+    /**
+     * Initializes the effect panel and its dependencies
+     * @param ids List of effect ids
+     */
+    public void setupEffectView(ArrayList<Integer> ids) {
 
         // Recalculate set to count map (pageTab2Count) to initialize timeManager
         Map<String, Integer> pageTab2Count = new HashMap<>();
@@ -1827,8 +1933,10 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         ledStripViewGUI.setCurrentSet(footballFieldPanel.drill.sets.get(setIndex));
     }
 
-    private void updateRFTriggerButton() {
-        // Create a create/delete button depending on whether there is RF trigger at current count
+    /**
+     * Create a create/delete button depending on whether there is RF trigger at current count.
+     */
+    public void updateRFTriggerButton() {
         if (rfTriggerGUI != null) {
             effectViewPanel.remove(rfTriggerGUI.getCreateDeleteBtn());
             effectViewPanel.revalidate();
@@ -1844,7 +1952,10 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         effectViewPanel.repaint();
     }
 
-    private void playAudioFromCorrectPosition() {
+    /**
+     * Begin playing audio in sync with the drill playback
+     */
+    public void playAudioFromCorrectPosition() {
         // Get audio to correct position before playing
         if (!scrubBarGUI.getAudioCheckbox().isSelected()) {
             audioPlayer.pauseAudio();
@@ -1879,7 +1990,10 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         frame.setTitle("Emrick Designer - Welcome "+username);
     }
 
-    private void showEffectBeforeFirstTriggerError() {
+    /**
+     * Display an error message to the user that indicates an RF Trigger has not been placed yet.
+     */
+    public void showEffectBeforeFirstTriggerError() {
         JOptionPane.showMessageDialog(null,
                 "Could not create effect. Ensure that an RF Trigger is placed before or at the same time as the first effect.",
                 "Create Effect: Error", JOptionPane.ERROR_MESSAGE);
@@ -2033,7 +2147,11 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         return scrubBarGUI.isPlaying();
     }
 
-    private void updateEffectViewPanel(EffectList effectType) {
+    /**
+     * Update the effect panel to display the currently selected effect
+     * @param effectType - The type of effect that is currently selected.
+     */
+    public void updateEffectViewPanel(EffectList effectType) {
 
         // No point in updating effect view if can't use effects
         if (effectManager == null) return;
@@ -2127,7 +2245,10 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         }
     }
 
-    private void updateTimelinePanel() {
+    /**
+     * Update the timeline panel to show data relevant to the currently selected performers.
+     */
+    public void updateTimelinePanel() {
         // Remove existing timeline data if it exists
         if (timelineGUI != null) {
             timelinePanel.remove(timelineGUI.getTimelineScrollPane());
@@ -2157,6 +2278,11 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         timelinePanel.repaint();
     }
 
+    /**
+     * Save the current project to a .emrick file.
+     * @param path The file location to save the project.
+     * @param archivePath The location of the .3dz file in user files when the project is loaded.
+     */
     public void saveProject(File path, File archivePath) {
         ProjectFile pf;
 
@@ -2221,7 +2347,15 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         writeSysMsg("Saved project to `" + path + "`.");
     }
 
-    private long timeBeforeEffect(int index, Effect e, ArrayList<Effect> effects, Long[] timesMS) {
+    /**
+     * Calculates the time between the end of the previous effect/RF Trigger and the start of the current effect.
+     * @param index Current RF Trigger index
+     * @param e Effect to find the time before
+     * @param effects List of effects on the relevant led strip
+     * @param timesMS A list of times in milliseconds that RF Triggers occur
+     * @return The time in milliseconds between the current effect and the previous effect/RF Trigger.
+     */
+    public long timeBeforeEffect(int index, Effect e, ArrayList<Effect> effects, Long[] timesMS) {
         if (index == 0) {
             return e.getStartTimeMSec() - timesMS[0];
         }
@@ -2240,7 +2374,15 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         }
     }
 
-    private long timeAfterEffect(int index, Effect e, ArrayList<Effect> effects, Long[] timesMS) {
+    /**
+     * Calculates the time between the end of the current effect and the start of the next effect/RF Trigger.
+     * @param index Current RF Trigger index
+     * @param e Effect to find the time before
+     * @param effects List of effects on the relevant led strip
+     * @param timesMS A list of times in milliseconds that RF Triggers occur
+     * @return The time in milliseconds between the current effect and the next effect/RF Trigger.
+     */
+    public long timeAfterEffect(int index, Effect e, ArrayList<Effect> effects, Long[] timesMS) {
         if (index == effects.size()-1) {
             return Long.MAX_VALUE;
         }
@@ -2266,7 +2408,13 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         }
     }
 
-    private int getEffectTriggerIndex(Effect e, Long[] timesMS) {
+    /**
+     * Calculates the index of the RF Trigger immediately before the relevant effect.
+     * @param e The relevant effect.
+     * @param timesMS A list of times in milliseconds that RF Triggers occur
+     * @return The index of the RF Trigger immediately before the relevant effect.
+     */
+    public int getEffectTriggerIndex(Effect e, Long[] timesMS) {
         int r = 0;
         for (int i = 0; i < timesMS.length; i++) {
             if (e.getStartTimeMSec() >= timesMS[i]) {
@@ -2278,6 +2426,10 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         return r;
     }
 
+    /**
+     * Multithreaded export of firmware-readable packet data to a .pkt file.
+     * @param path Location to write .pkt file.
+     */
     public void exportPackets(File path) {
         int s = count2RFTrigger.size();
         RFTrigger[] rfTriggerArray = new RFTrigger[s];
@@ -2359,7 +2511,11 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         }
     }
 
-    private void writeSysMsg(String msg) {
+    /**
+     * Writes a system message in the top right of the screen
+     * @param msg Message to be written
+     */
+    public void writeSysMsg(String msg) {
         clearSysMsg.stop();
         sysMsg.setText(msg);
         clearSysMsg.start();
@@ -2422,7 +2578,10 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         mainContentPanel.repaint();
     }
 
-    private class ProgrammingTracker extends JPanel {
+    /**
+     * Object used to track the progress of programming led strips using the web server
+     */
+    public class ProgrammingTracker extends JPanel {
         private ArrayList<LEDStrip> allStrips;
         private ArrayList<Integer> completedStrips;
         private ArrayList<ProgrammableItem> items;
@@ -2512,8 +2671,10 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         }
     }
 
-
-    private class PacketExport implements Runnable {
+    /**
+     * Runnable object used to split the load of packet export.
+     */
+    public class PacketExport implements Runnable {
         private ArrayList<LEDStrip> ledStrips;
         private Long[] timesMS;
         public PacketExport(ArrayList<LEDStrip> ledStrips, Long[] timesMS) {
@@ -2604,12 +2765,18 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         }
     }
 
+    /**
+     * Get audio player
+     * @return AudioPlayer object
+     */
     public AudioPlayer getAudioPlayer() {
         return audioPlayer;
     }
 
-
-    private class PlaybackTask extends TimerTask {
+    /**
+     * Task used by the playback timer to repeatedly repaint the footballfieldpanel with new frames in fps mode.
+     */
+    public class PlaybackTask extends TimerTask {
 
         @Override
         public void run() {
