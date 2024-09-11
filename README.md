@@ -58,5 +58,3 @@
     ProjectFile.java - This file contains the object that is saved to a json file when saving the project. Any data that should be contained in the save file should be loaded into this object. If any errors are present when saving a particular object, it may be necessary to create an adapter object to help Gson parse the object.
 
 Message Alex Bolinger (alex.bolinger3514@gmail.com if he isn't still in the discord) if you have any further questions
-
-TODO - Add more files with better descriptions to this readme
