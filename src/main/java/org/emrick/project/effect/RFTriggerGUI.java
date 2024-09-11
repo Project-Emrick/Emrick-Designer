@@ -66,6 +66,11 @@ public class RFTriggerGUI {
             public void onDeleteRFTrigger(int count) {
                 System.out.println("RF Delete");
             }
+
+            @Override
+            public void onPressRFTrigger(RFTrigger rfTrigger) {
+                System.out.println("RF Pressed");
+            }
         };
 
         long timestampMillis = 1000;

@@ -230,6 +230,15 @@ public class ScrubBarGUI extends JComponent implements ActionListener {
         scrubBarPanel.add(sliderPanel, BorderLayout.CENTER);
     }
 
+    public boolean setScrub(int count) {
+        if (!isPlaying) {
+            topSlider.setValue(count);
+            scrubBarListener.onScrub();
+            return true;
+        }
+        return false;
+    }
+
     public void setPlaybackTime() {
         //TODO rewrite
         if (!isPlaying) {

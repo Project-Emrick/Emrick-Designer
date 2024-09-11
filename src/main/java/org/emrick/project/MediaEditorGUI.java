@@ -325,6 +325,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
      * This method should be called on startup and on project loading when another project is already loaded.
      */
     public void createAndShowGUI() {
+        RFTrigger.rfTriggerListener = this;
 
         if (archivePath != null) {
             frame.remove(mainContentPanel);
@@ -2125,6 +2126,11 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         footballFieldPanel.setCount2RFTrigger(count2RFTrigger);
         updateRFTriggerButton();
         updateTimelinePanel();
+    }
+
+    @Override
+    public void onPressRFTrigger(RFTrigger rfTrigger) {
+        scrubBarGUI.setScrub(rfTrigger.getCount());
     }
 
     ////////////////////////// Effect Listeners //////////////////////////
