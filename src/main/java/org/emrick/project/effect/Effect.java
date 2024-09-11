@@ -9,7 +9,12 @@ import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Objects;
 
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+
 public class Effect implements Cloneable, TimelineEvent {
+
+    public static EffectListener effectListener;
 
     // Application
     private final long startTimeMSec; // Based on position of scrub bar cursor when user first creates the effect
@@ -386,6 +391,26 @@ public class Effect implements Cloneable, TimelineEvent {
         widgetPanel.add(endColorPanel);
 
         widgetPanel.setPreferredSize(new Dimension(110, 85));
+
+        widgetPanel.addMouseListener(new MouseAdapter() {
+
+            @Override
+            public void mouseEntered(MouseEvent e) {
+                widgetPanel.setBorder
+                    (BorderFactory.createCompoundBorder(outerBorder, BorderFactory.createLineBorder(Color.blue, 2, true)));
+            }
+
+            @Override
+            public void mouseExited(MouseEvent e) {
+                widgetPanel.setBorder(BorderFactory.createCompoundBorder(outerBorder, innerBorder));
+            }
+
+            @Override
+            public void mousePressed(MouseEvent e) {
+                // signals scrub to this rf trigger on press
+                effectListener.onPressEffect(Effect.this);
+            }
+        });
 
         return widgetPanel;
     }

@@ -64,6 +64,7 @@ public class RFTrigger implements TimelineEvent {
 
             @Override
             public void mousePressed(MouseEvent e) {
+                // signals scrub to this rf trigger on press
                 rfTriggerListener.onPressRFTrigger(RFTrigger.this);
             }
         });

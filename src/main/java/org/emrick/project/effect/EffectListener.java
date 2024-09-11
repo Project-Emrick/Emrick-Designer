@@ -17,4 +17,6 @@ public interface EffectListener {
     HashSet<LEDStrip> onInnerSelectionRequired();
     HashSet<LEDStrip> onSelectionRequired();
     TimeManager onTimeRequired();
+
+    void onPressEffect(Effect effect);
 }

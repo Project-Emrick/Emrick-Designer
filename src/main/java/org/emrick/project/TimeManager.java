@@ -70,6 +70,13 @@ public class TimeManager {
         buildSet2MSec(set2CountSorted, count2MSec);
     }
 
+    public int MSec2Count(long ms) {
+        for (Map.Entry<Integer, Long> entry : count2MSec.entrySet()) {
+            if (entry.getValue() > ms) return entry.getKey();
+        }
+        return count2MSec.size();
+    } // not entirely sure if this returns count or count + 1
+
     private void buildSet2MSec(ArrayList<Map.Entry<String, Integer>> set2CountSorted, HashMap<Integer, Long> count2MSec) {
         set2MSec = new ArrayList<>();
         for (Map.Entry<String, Integer> entry : set2CountSorted) {

@@ -247,6 +247,16 @@ public class EffectManager {
         }
     }
 
+    public ArrayList<LEDStrip> getLEDStripsWithEffect(Effect e) {
+        ArrayList<LEDStrip> ledStrips = new ArrayList<>();
+        for (LEDStrip ledStrip : this.footballFieldPanel.drill.ledStrips) {
+            if (ledStrip.getEffects().contains(e)) {
+                ledStrips.add(ledStrip);
+            }
+        }
+        return ledStrips;
+    }
+
     public ArrayList<LEDStrip> getSelectedLEDStrips() {
         ArrayList<LEDStrip> selectedPerformers = new ArrayList<>();
         if (footballFieldPanel.selectedLEDStrips.isEmpty()) {

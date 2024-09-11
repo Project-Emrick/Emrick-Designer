@@ -326,6 +326,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
      */
     private void createAndShowGUI() {
         RFTrigger.rfTriggerListener = this;
+        Effect.effectListener = this;
 
         if (archivePath != null) {
             frame.remove(mainContentPanel);
@@ -2130,6 +2131,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
 
     @Override
     public void onPressRFTrigger(RFTrigger rfTrigger) {
+        // scrub to this rf trigger
         scrubBarGUI.setScrub(rfTrigger.getCount());
     }
 
@@ -2151,6 +2153,27 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
     @Override
     public boolean isPlaying() {
         return scrubBarGUI.isPlaying();
+    }
+
+    @Override
+    public void onPressEffect(Effect effect) {
+        // scrub to this effect
+        // make effects based on count pls
+        int count = 0;
+        long ms = effect.getStartTimeMSec();
+        // get count of the ms using the timemanager
+        if (timeManager != null) {
+            count = timeManager.MSec2Count(ms);
+        }
+        scrubBarGUI.setScrub(count-1);
+
+        // search all ledstrips for the effect and select them if found
+        if (effectManager != null) {
+            ArrayList<LEDStrip> ledStrips = effectManager.getLEDStripsWithEffect(effect);
+            if (!ledStrips.isEmpty()) {
+                onGroupSelection(ledStrips.toArray(new LEDStrip[ledStrips.size()]));
+            }
+        }
     }
 
     /**

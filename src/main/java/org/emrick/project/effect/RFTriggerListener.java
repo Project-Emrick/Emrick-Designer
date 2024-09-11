@@ -4,5 +4,5 @@ public interface RFTriggerListener {
     void onCreateRFTrigger(RFTrigger rfTrigger);
     void onDeleteRFTrigger(int count);
 
-    public void onPressRFTrigger(RFTrigger rfTrigger);
+    void onPressRFTrigger(RFTrigger rfTrigger);
 }
