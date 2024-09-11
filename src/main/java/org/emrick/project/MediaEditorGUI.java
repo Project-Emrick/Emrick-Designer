@@ -136,7 +136,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
     JFrame webServerFrame;
 
     /**
-     * Main method of Emrick Designer
+     * Main method of Emrick Designer.
      *
      * @param args - Only used when opening the application via an associated file type rather than an executable
      */
