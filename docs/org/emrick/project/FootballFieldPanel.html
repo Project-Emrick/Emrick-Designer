@@ -110,9 +110,12 @@ implements <a href="RepaintListener.html" title="interface in org.emrick.project
 <div class="table-header col-first">Modifier and Type</div>
 <div class="table-header col-second">Class</div>
 <div class="table-header col-last">Description</div>
-<div class="col-first even-row-color"><code>static enum&nbsp;</code></div>
-<div class="col-second even-row-color"><code><a href="FootballFieldPanel.SelectionMethod.html" class="type-name-link" title="enum class in org.emrick.project">FootballFieldPanel.SelectionMethod</a></code></div>
+<div class="col-first even-row-color"><code>private class&nbsp;</code></div>
+<div class="col-second even-row-color"><code><a href="FootballFieldPanel.MouseInput.html" class="type-name-link" title="class in org.emrick.project">FootballFieldPanel.MouseInput</a></code></div>
 <div class="col-last even-row-color">&nbsp;</div>
+<div class="col-first odd-row-color"><code>static enum&nbsp;</code></div>
+<div class="col-second odd-row-color"><code><a href="FootballFieldPanel.SelectionMethod.html" class="type-name-link" title="enum class in org.emrick.project">FootballFieldPanel.SelectionMethod</a></code></div>
+<div class="col-last odd-row-color">&nbsp;</div>
 </div>
 <div class="inherited-list">
 <h2 id="nested-classes-inherited-from-class-javax.swing.JPanel">Nested classes/interfaces inherited from class&nbsp;javax.swing.<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.desktop/javax/swing/JPanel.html" title="class or interface in javax.swing" class="external-link">JPanel</a></h2>
@@ -137,11 +140,53 @@ implements <a href="RepaintListener.html" title="interface in org.emrick.project
 <div class="table-header col-first">Modifier and Type</div>
 <div class="table-header col-second">Field</div>
 <div class="table-header col-last">Description</div>
-<div class="col-first even-row-color"><code>long</code></div>
-<div class="col-second even-row-color"><code><a href="#currentMS" class="member-name-link">currentMS</a></code></div>
+<div class="col-first even-row-color"><code>private <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.desktop/java/awt/Color.html" title="class or interface in java.awt" class="external-link">Color</a></code></div>
+<div class="col-second even-row-color"><code><a href="#colorChosen" class="member-name-link">colorChosen</a></code></div>
+<div class="col-last even-row-color">&nbsp;</div>
+<div class="col-first odd-row-color"><code>private <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/HashMap.html" title="class or interface in java.util" class="external-link">HashMap</a>&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Integer.html" title="class or interface in java.lang" class="external-link">Integer</a>,<wbr><a href="effect/RFTrigger.html" title="class in org.emrick.project.effect">RFTrigger</a>&gt;</code></div>
+<div class="col-second odd-row-color"><code><a href="#count2RFTrigger" class="member-name-link">count2RFTrigger</a></code></div>
+<div class="col-last odd-row-color">&nbsp;</div>
+<div class="col-first even-row-color"><code>private int</code></div>
+<div class="col-second even-row-color"><code><a href="#currentCount" class="member-name-link">currentCount</a></code></div>
+<div class="col-last even-row-color">&nbsp;</div>
+<div class="col-first odd-row-color"><code>long</code></div>
+<div class="col-second odd-row-color"><code><a href="#currentMS" class="member-name-link">currentMS</a></code></div>
+<div class="col-last odd-row-color">&nbsp;</div>
+<div class="col-first even-row-color"><code>private <a href="Set.html" title="class in org.emrick.project">Set</a></code></div>
+<div class="col-second even-row-color"><code><a href="#currentSet" class="member-name-link">currentSet</a></code></div>
+<div class="col-last even-row-color">&nbsp;</div>
+<div class="col-first odd-row-color"><code>private double</code></div>
+<div class="col-second odd-row-color"><code><a href="#currentSetRatio" class="member-name-link">currentSetRatio</a></code></div>
+<div class="col-last odd-row-color">&nbsp;</div>
+<div class="col-first even-row-color"><code>private int</code></div>
+<div class="col-second even-row-color"><code><a href="#currentSetStartCount" class="member-name-link">currentSetStartCount</a></code></div>
 <div class="col-last even-row-color">&nbsp;</div>
 <div class="col-first odd-row-color"><code><a href="Drill.html" title="class in org.emrick.project">Drill</a></code></div>
 <div class="col-second odd-row-color"><code><a href="#drill" class="member-name-link">drill</a></code></div>
+<div class="col-last odd-row-color">&nbsp;</div>
+<div class="col-first even-row-color"><code>private final <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.desktop/java/awt/image/BufferedImage.html" title="class or interface in java.awt.image" class="external-link">BufferedImage</a></code></div>
+<div class="col-second even-row-color"><code><a href="#dummyImage" class="member-name-link">dummyImage</a></code></div>
+<div class="col-last even-row-color">&nbsp;</div>
+<div class="col-first odd-row-color"><code>private <a href="effect/EffectManager.html" title="class in org.emrick.project.effect">EffectManager</a></code></div>
+<div class="col-second odd-row-color"><code><a href="#effectManager" class="member-name-link">effectManager</a></code></div>
+<div class="col-last odd-row-color">&nbsp;</div>
+<div class="col-first even-row-color"><code>private int</code></div>
+<div class="col-second even-row-color"><code><a href="#effectTransparency" class="member-name-link">effectTransparency</a></code></div>
+<div class="col-last even-row-color">&nbsp;</div>
+<div class="col-first odd-row-color"><code>private double</code></div>
+<div class="col-second odd-row-color"><code><a href="#fieldHeight" class="member-name-link">fieldHeight</a></code></div>
+<div class="col-last odd-row-color">&nbsp;</div>
+<div class="col-first even-row-color"><code>private double</code></div>
+<div class="col-second even-row-color"><code><a href="#fieldWidth" class="member-name-link">fieldWidth</a></code></div>
+<div class="col-last even-row-color">&nbsp;</div>
+<div class="col-first odd-row-color"><code>private <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.desktop/java/awt/image/BufferedImage.html" title="class or interface in java.awt.image" class="external-link">BufferedImage</a></code></div>
+<div class="col-second odd-row-color"><code><a href="#floorCoverImage" class="member-name-link">floorCoverImage</a></code></div>
+<div class="col-last odd-row-color">&nbsp;</div>
+<div class="col-first even-row-color"><code>private final <a href="FootballFieldListener.html" title="interface in org.emrick.project">FootballFieldListener</a></code></div>
+<div class="col-second even-row-color"><code><a href="#footballFieldListener" class="member-name-link">footballFieldListener</a></code></div>
+<div class="col-last even-row-color">&nbsp;</div>
+<div class="col-first odd-row-color"><code>private <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.desktop/java/awt/Point.html" title="class or interface in java.awt" class="external-link">Point</a></code></div>
+<div class="col-second odd-row-color"><code><a href="#frontSideline50" class="member-name-link">frontSideline50</a></code></div>
 <div class="col-last odd-row-color">&nbsp;</div>
 <div class="col-first even-row-color"><code>boolean</code></div>
 <div class="col-second even-row-color"><code><a href="#innerSelect" class="member-name-link">innerSelect</a></code></div>
@@ -149,12 +194,51 @@ implements <a href="RepaintListener.html" title="interface in org.emrick.project
 <div class="col-first odd-row-color"><code><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/HashSet.html" title="class or interface in java.util" class="external-link">HashSet</a>&lt;<a href="LEDStrip.html" title="class in org.emrick.project">LEDStrip</a>&gt;</code></div>
 <div class="col-second odd-row-color"><code><a href="#innerSelectedLEDStrips" class="member-name-link">innerSelectedLEDStrips</a></code></div>
 <div class="col-last odd-row-color">&nbsp;</div>
-<div class="col-first even-row-color"><code><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/HashSet.html" title="class or interface in java.util" class="external-link">HashSet</a>&lt;<a href="LEDStrip.html" title="class in org.emrick.project">LEDStrip</a>&gt;</code></div>
-<div class="col-second even-row-color"><code><a href="#selectedLEDStrips" class="member-name-link">selectedLEDStrips</a></code></div>
+<div class="col-first even-row-color"><code>private <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/ArrayList.html" title="class or interface in java.util" class="external-link">ArrayList</a>&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.desktop/java/awt/Point.html" title="class or interface in java.awt" class="external-link">Point</a>&gt;</code></div>
+<div class="col-second even-row-color"><code><a href="#lassoPoints" class="member-name-link">lassoPoints</a></code></div>
+<div class="col-last even-row-color">&nbsp;</div>
+<div class="col-first odd-row-color"><code>private final int</code></div>
+<div class="col-second odd-row-color"><code><a href="#margin" class="member-name-link">margin</a></code></div>
+<div class="col-last odd-row-color">&nbsp;</div>
+<div class="col-first even-row-color"><code>private boolean</code></div>
+<div class="col-second even-row-color"><code><a href="#selectAllLEDs" class="member-name-link">selectAllLEDs</a></code></div>
+<div class="col-last even-row-color">&nbsp;</div>
+<div class="col-first odd-row-color"><code><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/HashSet.html" title="class or interface in java.util" class="external-link">HashSet</a>&lt;<a href="LEDStrip.html" title="class in org.emrick.project">LEDStrip</a>&gt;</code></div>
+<div class="col-second odd-row-color"><code><a href="#selectedLEDStrips" class="member-name-link">selectedLEDStrips</a></code></div>
+<div class="col-last odd-row-color">&nbsp;</div>
+<div class="col-first even-row-color"><code>private int</code></div>
+<div class="col-second even-row-color"><code><a href="#selectEndX" class="member-name-link">selectEndX</a></code></div>
+<div class="col-last even-row-color">&nbsp;</div>
+<div class="col-first odd-row-color"><code>private int</code></div>
+<div class="col-second odd-row-color"><code><a href="#selectEndY" class="member-name-link">selectEndY</a></code></div>
+<div class="col-last odd-row-color">&nbsp;</div>
+<div class="col-first even-row-color"><code>private boolean</code></div>
+<div class="col-second even-row-color"><code><a href="#selecting" class="member-name-link">selecting</a></code></div>
 <div class="col-last even-row-color">&nbsp;</div>
 <div class="col-first odd-row-color"><code><a href="FootballFieldPanel.SelectionMethod.html" title="enum class in org.emrick.project">FootballFieldPanel.SelectionMethod</a></code></div>
 <div class="col-second odd-row-color"><code><a href="#selectionMethod" class="member-name-link">selectionMethod</a></code></div>
 <div class="col-last odd-row-color">&nbsp;</div>
+<div class="col-first even-row-color"><code>private int</code></div>
+<div class="col-second even-row-color"><code><a href="#selectStartX" class="member-name-link">selectStartX</a></code></div>
+<div class="col-last even-row-color">&nbsp;</div>
+<div class="col-first odd-row-color"><code>private int</code></div>
+<div class="col-second odd-row-color"><code><a href="#selectStartY" class="member-name-link">selectStartY</a></code></div>
+<div class="col-last odd-row-color">&nbsp;</div>
+<div class="col-first even-row-color"><code>private boolean</code></div>
+<div class="col-second even-row-color"><code><a href="#showFloorCoverImage" class="member-name-link">showFloorCoverImage</a></code></div>
+<div class="col-last even-row-color">&nbsp;</div>
+<div class="col-first odd-row-color"><code>private boolean</code></div>
+<div class="col-second odd-row-color"><code><a href="#showLabels" class="member-name-link">showLabels</a></code></div>
+<div class="col-last odd-row-color">&nbsp;</div>
+<div class="col-first even-row-color"><code>private boolean</code></div>
+<div class="col-second even-row-color"><code><a href="#showSurfaceImage" class="member-name-link">showSurfaceImage</a></code></div>
+<div class="col-last even-row-color">&nbsp;</div>
+<div class="col-first odd-row-color"><code>private <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.desktop/java/awt/image/BufferedImage.html" title="class or interface in java.awt.image" class="external-link">BufferedImage</a></code></div>
+<div class="col-second odd-row-color"><code><a href="#surfaceImage" class="member-name-link">surfaceImage</a></code></div>
+<div class="col-last odd-row-color">&nbsp;</div>
+<div class="col-first even-row-color"><code>private boolean</code></div>
+<div class="col-second even-row-color"><code><a href="#useFps" class="member-name-link">useFps</a></code></div>
+<div class="col-last even-row-color">&nbsp;</div>
 </div>
 <div class="inherited-list">
 <h3 id="fields-inherited-from-class-javax.swing.JComponent">Fields inherited from class&nbsp;javax.swing.<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.desktop/javax/swing/JComponent.html" title="class or interface in javax.swing" class="external-link">JComponent</a></h3>
@@ -361,15 +445,185 @@ implements <a href="RepaintListener.html" title="interface in org.emrick.project
 </section>
 </li>
 <li>
+<section class="detail" id="fieldWidth">
+<h3>fieldWidth</h3>
+<div class="member-signature"><span class="modifiers">private</span>&nbsp;<span class="return-type">double</span>&nbsp;<span class="element-name">fieldWidth</span></div>
+</section>
+</li>
+<li>
+<section class="detail" id="fieldHeight">
+<h3>fieldHeight</h3>
+<div class="member-signature"><span class="modifiers">private</span>&nbsp;<span class="return-type">double</span>&nbsp;<span class="element-name">fieldHeight</span></div>
+</section>
+</li>
+<li>
+<section class="detail" id="frontSideline50">
+<h3>frontSideline50</h3>
+<div class="member-signature"><span class="modifiers">private</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.desktop/java/awt/Point.html" title="class or interface in java.awt" class="external-link">Point</a></span>&nbsp;<span class="element-name">frontSideline50</span></div>
+</section>
+</li>
+<li>
+<section class="detail" id="colorChosen">
+<h3>colorChosen</h3>
+<div class="member-signature"><span class="modifiers">private</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.desktop/java/awt/Color.html" title="class or interface in java.awt" class="external-link">Color</a></span>&nbsp;<span class="element-name">colorChosen</span></div>
+</section>
+</li>
+<li>
+<section class="detail" id="margin">
+<h3>margin</h3>
+<div class="member-signature"><span class="modifiers">private final</span>&nbsp;<span class="return-type">int</span>&nbsp;<span class="element-name">margin</span></div>
+<dl class="notes">
+<dt>See Also:</dt>
+<dd>
+<ul class="see-list">
+<li><a href="../../../constant-values.html#org.emrick.project.FootballFieldPanel.margin">Constant Field Values</a></li>
+</ul>
+</dd>
+</dl>
+</section>
+</li>
+<li>
+<section class="detail" id="surfaceImage">
+<h3>surfaceImage</h3>
+<div class="member-signature"><span class="modifiers">private</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.desktop/java/awt/image/BufferedImage.html" title="class or interface in java.awt.image" class="external-link">BufferedImage</a></span>&nbsp;<span class="element-name">surfaceImage</span></div>
+</section>
+</li>
+<li>
+<section class="detail" id="floorCoverImage">
+<h3>floorCoverImage</h3>
+<div class="member-signature"><span class="modifiers">private</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.desktop/java/awt/image/BufferedImage.html" title="class or interface in java.awt.image" class="external-link">BufferedImage</a></span>&nbsp;<span class="element-name">floorCoverImage</span></div>
+</section>
+</li>
+<li>
+<section class="detail" id="dummyImage">
+<h3>dummyImage</h3>
+<div class="member-signature"><span class="modifiers">private final</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.desktop/java/awt/image/BufferedImage.html" title="class or interface in java.awt.image" class="external-link">BufferedImage</a></span>&nbsp;<span class="element-name">dummyImage</span></div>
+</section>
+</li>
+<li>
+<section class="detail" id="showSurfaceImage">
+<h3>showSurfaceImage</h3>
+<div class="member-signature"><span class="modifiers">private</span>&nbsp;<span class="return-type">boolean</span>&nbsp;<span class="element-name">showSurfaceImage</span></div>
+</section>
+</li>
+<li>
+<section class="detail" id="showFloorCoverImage">
+<h3>showFloorCoverImage</h3>
+<div class="member-signature"><span class="modifiers">private</span>&nbsp;<span class="return-type">boolean</span>&nbsp;<span class="element-name">showFloorCoverImage</span></div>
+</section>
+</li>
+<li>
+<section class="detail" id="currentSet">
+<h3>currentSet</h3>
+<div class="member-signature"><span class="modifiers">private</span>&nbsp;<span class="return-type"><a href="Set.html" title="class in org.emrick.project">Set</a></span>&nbsp;<span class="element-name">currentSet</span></div>
+</section>
+</li>
+<li>
+<section class="detail" id="currentSetRatio">
+<h3>currentSetRatio</h3>
+<div class="member-signature"><span class="modifiers">private</span>&nbsp;<span class="return-type">double</span>&nbsp;<span class="element-name">currentSetRatio</span></div>
+</section>
+</li>
+<li>
 <section class="detail" id="currentMS">
 <h3>currentMS</h3>
 <div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">long</span>&nbsp;<span class="element-name">currentMS</span></div>
 </section>
 </li>
 <li>
+<section class="detail" id="currentCount">
+<h3>currentCount</h3>
+<div class="member-signature"><span class="modifiers">private</span>&nbsp;<span class="return-type">int</span>&nbsp;<span class="element-name">currentCount</span></div>
+</section>
+</li>
+<li>
+<section class="detail" id="currentSetStartCount">
+<h3>currentSetStartCount</h3>
+<div class="member-signature"><span class="modifiers">private</span>&nbsp;<span class="return-type">int</span>&nbsp;<span class="element-name">currentSetStartCount</span></div>
+</section>
+</li>
+<li>
+<section class="detail" id="showLabels">
+<h3>showLabels</h3>
+<div class="member-signature"><span class="modifiers">private</span>&nbsp;<span class="return-type">boolean</span>&nbsp;<span class="element-name">showLabels</span></div>
+</section>
+</li>
+<li>
+<section class="detail" id="selectAllLEDs">
+<h3>selectAllLEDs</h3>
+<div class="member-signature"><span class="modifiers">private</span>&nbsp;<span class="return-type">boolean</span>&nbsp;<span class="element-name">selectAllLEDs</span></div>
+</section>
+</li>
+<li>
 <section class="detail" id="selectionMethod">
 <h3>selectionMethod</h3>
 <div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="FootballFieldPanel.SelectionMethod.html" title="enum class in org.emrick.project">FootballFieldPanel.SelectionMethod</a></span>&nbsp;<span class="element-name">selectionMethod</span></div>
+</section>
+</li>
+<li>
+<section class="detail" id="lassoPoints">
+<h3>lassoPoints</h3>
+<div class="member-signature"><span class="modifiers">private</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/ArrayList.html" title="class or interface in java.util" class="external-link">ArrayList</a>&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.desktop/java/awt/Point.html" title="class or interface in java.awt" class="external-link">Point</a>&gt;</span>&nbsp;<span class="element-name">lassoPoints</span></div>
+</section>
+</li>
+<li>
+<section class="detail" id="footballFieldListener">
+<h3>footballFieldListener</h3>
+<div class="member-signature"><span class="modifiers">private final</span>&nbsp;<span class="return-type"><a href="FootballFieldListener.html" title="interface in org.emrick.project">FootballFieldListener</a></span>&nbsp;<span class="element-name">footballFieldListener</span></div>
+</section>
+</li>
+<li>
+<section class="detail" id="effectManager">
+<h3>effectManager</h3>
+<div class="member-signature"><span class="modifiers">private</span>&nbsp;<span class="return-type"><a href="effect/EffectManager.html" title="class in org.emrick.project.effect">EffectManager</a></span>&nbsp;<span class="element-name">effectManager</span></div>
+</section>
+</li>
+<li>
+<section class="detail" id="effectTransparency">
+<h3>effectTransparency</h3>
+<div class="member-signature"><span class="modifiers">private</span>&nbsp;<span class="return-type">int</span>&nbsp;<span class="element-name">effectTransparency</span></div>
+</section>
+</li>
+<li>
+<section class="detail" id="useFps">
+<h3>useFps</h3>
+<div class="member-signature"><span class="modifiers">private</span>&nbsp;<span class="return-type">boolean</span>&nbsp;<span class="element-name">useFps</span></div>
+</section>
+</li>
+<li>
+<section class="detail" id="count2RFTrigger">
+<h3>count2RFTrigger</h3>
+<div class="member-signature"><span class="modifiers">private</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/HashMap.html" title="class or interface in java.util" class="external-link">HashMap</a>&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Integer.html" title="class or interface in java.lang" class="external-link">Integer</a>,<wbr><a href="effect/RFTrigger.html" title="class in org.emrick.project.effect">RFTrigger</a>&gt;</span>&nbsp;<span class="element-name">count2RFTrigger</span></div>
+</section>
+</li>
+<li>
+<section class="detail" id="selecting">
+<h3>selecting</h3>
+<div class="member-signature"><span class="modifiers">private</span>&nbsp;<span class="return-type">boolean</span>&nbsp;<span class="element-name">selecting</span></div>
+</section>
+</li>
+<li>
+<section class="detail" id="selectStartX">
+<h3>selectStartX</h3>
+<div class="member-signature"><span class="modifiers">private</span>&nbsp;<span class="return-type">int</span>&nbsp;<span class="element-name">selectStartX</span></div>
+</section>
+</li>
+<li>
+<section class="detail" id="selectStartY">
+<h3>selectStartY</h3>
+<div class="member-signature"><span class="modifiers">private</span>&nbsp;<span class="return-type">int</span>&nbsp;<span class="element-name">selectStartY</span></div>
+</section>
+</li>
+<li>
+<section class="detail" id="selectEndX">
+<h3>selectEndX</h3>
+<div class="member-signature"><span class="modifiers">private</span>&nbsp;<span class="return-type">int</span>&nbsp;<span class="element-name">selectEndX</span></div>
+</section>
+</li>
+<li>
+<section class="detail" id="selectEndY">
+<h3>selectEndY</h3>
+<div class="member-signature"><span class="modifiers">private</span>&nbsp;<span class="return-type">int</span>&nbsp;<span class="element-name">selectEndY</span></div>
 </section>
 </li>
 </ul>

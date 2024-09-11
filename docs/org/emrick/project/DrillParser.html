@@ -109,6 +109,18 @@ loadScripts(document, 'script');</script>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4">
 <div class="block">Takes in a pdf filename and returns the raw text from the document</div>
 </div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code>private static double</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#getX(java.lang.String)" class="member-name-link">getX</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;line)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4">
+<div class="block">Takes in a line of drill data and returns the specified
+ x-coordinate</div>
+</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code>private static double</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#getY(java.lang.String)" class="member-name-link">getY</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;line)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4">
+<div class="block">Takes in a line of drill data and returns the specified
+ y-coordinate</div>
+</div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code>static <a href="Drill.html" title="class in org.emrick.project">Drill</a></code></div>
 <div class="col-second odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#importDrill(java.lang.String)" class="member-name-link">importDrill</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;filename)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4">
@@ -221,6 +233,34 @@ loadScripts(document, 'script');</script>
 <dd><code>id</code> - ID for new Performer object</dd>
 <dt>Returns:</dt>
 <dd>newly created Performer object</dd>
+</dl>
+</section>
+</li>
+<li>
+<section class="detail" id="getX(java.lang.String)">
+<h3>getX</h3>
+<div class="member-signature"><span class="modifiers">private static</span>&nbsp;<span class="return-type">double</span>&nbsp;<span class="element-name">getX</span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;line)</span></div>
+<div class="block">Takes in a line of drill data and returns the specified
+ x-coordinate</div>
+<dl class="notes">
+<dt>Parameters:</dt>
+<dd><code>line</code> - 1 line of raw text drill data</dd>
+<dt>Returns:</dt>
+<dd>x-coordinate</dd>
+</dl>
+</section>
+</li>
+<li>
+<section class="detail" id="getY(java.lang.String)">
+<h3>getY</h3>
+<div class="member-signature"><span class="modifiers">private static</span>&nbsp;<span class="return-type">double</span>&nbsp;<span class="element-name">getY</span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;line)</span></div>
+<div class="block">Takes in a line of drill data and returns the specified
+ y-coordinate</div>
+<dl class="notes">
+<dt>Parameters:</dt>
+<dd><code>line</code> - 1 line of raw text drill data</dd>
+<dt>Returns:</dt>
+<dd>y-coordinate</dd>
 </dl>
 </section>
 </li>

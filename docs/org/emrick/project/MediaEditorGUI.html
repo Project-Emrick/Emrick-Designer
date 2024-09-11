@@ -106,17 +106,17 @@ implements <a href="ImportListener.html" title="interface in org.emrick.project"
 <div class="table-header col-first">Modifier and Type</div>
 <div class="table-header col-second">Class</div>
 <div class="table-header col-last">Description</div>
-<div class="col-first even-row-color"><code>class&nbsp;</code></div>
+<div class="col-first even-row-color"><code>private class&nbsp;</code></div>
 <div class="col-second even-row-color"><code><a href="MediaEditorGUI.PacketExport.html" class="type-name-link" title="class in org.emrick.project">MediaEditorGUI.PacketExport</a></code></div>
 <div class="col-last even-row-color">
 <div class="block">Runnable object used to split the load of packet export.</div>
 </div>
-<div class="col-first odd-row-color"><code>class&nbsp;</code></div>
+<div class="col-first odd-row-color"><code>private class&nbsp;</code></div>
 <div class="col-second odd-row-color"><code><a href="MediaEditorGUI.PlaybackTask.html" class="type-name-link" title="class in org.emrick.project">MediaEditorGUI.PlaybackTask</a></code></div>
 <div class="col-last odd-row-color">
 <div class="block">Task used by the playback timer to repeatedly repaint the footballfieldpanel with new frames in fps mode.</div>
 </div>
-<div class="col-first even-row-color"><code>class&nbsp;</code></div>
+<div class="col-first even-row-color"><code>private class&nbsp;</code></div>
 <div class="col-second even-row-color"><code><a href="MediaEditorGUI.ProgrammingTracker.html" class="type-name-link" title="class in org.emrick.project">MediaEditorGUI.ProgrammingTracker</a></code></div>
 <div class="col-last even-row-color">
 <div class="block">Object used to track the progress of programming led strips using the web server</div>
@@ -136,14 +136,38 @@ implements <a href="ImportListener.html" title="interface in org.emrick.project"
 <div class="table-header col-first">Modifier and Type</div>
 <div class="table-header col-second">Field</div>
 <div class="table-header col-last">Description</div>
-<div class="col-first even-row-color"><code><a href="audio/AudioPlayer.html" title="class in org.emrick.project.audio">AudioPlayer</a></code></div>
-<div class="col-second even-row-color"><code><a href="#audioPlayer" class="member-name-link">audioPlayer</a></code></div>
+<div class="col-first even-row-color"><code>private <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/io/File.html" title="class or interface in java.io" class="external-link">File</a></code></div>
+<div class="col-second even-row-color"><code><a href="#archivePath" class="member-name-link">archivePath</a></code></div>
+<div class="col-last even-row-color">&nbsp;</div>
+<div class="col-first odd-row-color"><code><a href="audio/AudioPlayer.html" title="class in org.emrick.project.audio">AudioPlayer</a></code></div>
+<div class="col-second odd-row-color"><code><a href="#audioPlayer" class="member-name-link">audioPlayer</a></code></div>
+<div class="col-last odd-row-color">&nbsp;</div>
+<div class="col-first even-row-color"><code>private boolean</code></div>
+<div class="col-second even-row-color"><code><a href="#canSeekAudio" class="member-name-link">canSeekAudio</a></code></div>
 <div class="col-last even-row-color">&nbsp;</div>
 <div class="col-first odd-row-color"><code>final int</code></div>
 <div class="col-second odd-row-color"><code><a href="#CHECK_LR" class="member-name-link">CHECK_LR</a></code></div>
 <div class="col-last odd-row-color">&nbsp;</div>
-<div class="col-first even-row-color"><code>final int</code></div>
-<div class="col-second even-row-color"><code><a href="#CONTINUOUS" class="member-name-link">CONTINUOUS</a></code></div>
+<div class="col-first even-row-color"><code>private final <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.desktop/javax/swing/Timer.html" title="class or interface in javax.swing" class="external-link">Timer</a></code></div>
+<div class="col-second even-row-color"><code><a href="#clearSysMsg" class="member-name-link">clearSysMsg</a></code></div>
+<div class="col-last even-row-color">&nbsp;</div>
+<div class="col-first odd-row-color"><code>final int</code></div>
+<div class="col-second odd-row-color"><code><a href="#CONTINUOUS" class="member-name-link">CONTINUOUS</a></code></div>
+<div class="col-last odd-row-color">&nbsp;</div>
+<div class="col-first even-row-color"><code>private <a href="effect/Effect.html" title="class in org.emrick.project.effect">Effect</a></code></div>
+<div class="col-second even-row-color"><code><a href="#copiedEffect" class="member-name-link">copiedEffect</a></code></div>
+<div class="col-last even-row-color">&nbsp;</div>
+<div class="col-first odd-row-color"><code>private <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/HashMap.html" title="class or interface in java.util" class="external-link">HashMap</a>&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Integer.html" title="class or interface in java.lang" class="external-link">Integer</a>,<wbr><a href="effect/RFTrigger.html" title="class in org.emrick.project.effect">RFTrigger</a>&gt;</code></div>
+<div class="col-second odd-row-color"><code><a href="#count2RFTrigger" class="member-name-link">count2RFTrigger</a></code></div>
+<div class="col-last odd-row-color">&nbsp;</div>
+<div class="col-first even-row-color"><code>private <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/io/File.html" title="class or interface in java.io" class="external-link">File</a></code></div>
+<div class="col-second even-row-color"><code><a href="#csvFile" class="member-name-link">csvFile</a></code></div>
+<div class="col-last even-row-color">&nbsp;</div>
+<div class="col-first odd-row-color"><code>private <a href="effect/Effect.html" title="class in org.emrick.project.effect">Effect</a></code></div>
+<div class="col-second odd-row-color"><code><a href="#currentEffect" class="member-name-link">currentEffect</a></code></div>
+<div class="col-last odd-row-color">&nbsp;</div>
+<div class="col-first even-row-color"><code>private int</code></div>
+<div class="col-second even-row-color"><code><a href="#currentID" class="member-name-link">currentID</a></code></div>
 <div class="col-last even-row-color">&nbsp;</div>
 <div class="col-first odd-row-color"><code>final int</code></div>
 <div class="col-second odd-row-color"><code><a href="#DEFAULT_FUNCTION" class="member-name-link">DEFAULT_FUNCTION</a></code></div>
@@ -153,6 +177,18 @@ implements <a href="ImportListener.html" title="interface in org.emrick.project"
 <div class="col-last even-row-color">&nbsp;</div>
 <div class="col-first odd-row-color"><code>final int</code></div>
 <div class="col-second odd-row-color"><code><a href="#DO_DELAY" class="member-name-link">DO_DELAY</a></code></div>
+<div class="col-last odd-row-color">&nbsp;</div>
+<div class="col-first even-row-color"><code>private <a href="effect/EffectGUI.html" title="class in org.emrick.project.effect">EffectGUI</a></code></div>
+<div class="col-second even-row-color"><code><a href="#effectGUI" class="member-name-link">effectGUI</a></code></div>
+<div class="col-last even-row-color">&nbsp;</div>
+<div class="col-first odd-row-color"><code>private <a href="effect/EffectManager.html" title="class in org.emrick.project.effect">EffectManager</a></code></div>
+<div class="col-second odd-row-color"><code><a href="#effectManager" class="member-name-link">effectManager</a></code></div>
+<div class="col-last odd-row-color">&nbsp;</div>
+<div class="col-first even-row-color"><code>private <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.desktop/javax/swing/JPanel.html" title="class or interface in javax.swing" class="external-link">JPanel</a></code></div>
+<div class="col-second even-row-color"><code><a href="#effectViewPanel" class="member-name-link">effectViewPanel</a></code></div>
+<div class="col-last even-row-color">&nbsp;</div>
+<div class="col-first odd-row-color"><code>private <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/io/File.html" title="class or interface in java.io" class="external-link">File</a></code></div>
+<div class="col-second odd-row-color"><code><a href="#emrickPath" class="member-name-link">emrickPath</a></code></div>
 <div class="col-last odd-row-color">&nbsp;</div>
 <div class="col-first even-row-color"><code>static final <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
 <div class="col-second even-row-color"><code><a href="#FILE_MENU_NEW_PROJECT" class="member-name-link">FILE_MENU_NEW_PROJECT</a></code></div>
@@ -166,26 +202,170 @@ implements <a href="ImportListener.html" title="interface in org.emrick.project"
 <div class="col-first odd-row-color"><code>static final <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
 <div class="col-second odd-row-color"><code><a href="#FILE_MENU_SAVE_AS" class="member-name-link">FILE_MENU_SAVE_AS</a></code></div>
 <div class="col-last odd-row-color">&nbsp;</div>
+<div class="col-first even-row-color"><code>private <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.desktop/javax/swing/JMenuItem.html" title="class or interface in javax.swing" class="external-link">JMenuItem</a></code></div>
+<div class="col-second even-row-color"><code><a href="#flowViewerItem" class="member-name-link">flowViewerItem</a></code></div>
+<div class="col-last even-row-color">&nbsp;</div>
+<div class="col-first odd-row-color"><code>private <a href="FlowViewGUI.html" title="class in org.emrick.project">FlowViewGUI</a></code></div>
+<div class="col-second odd-row-color"><code><a href="#flowViewGUI" class="member-name-link">flowViewGUI</a></code></div>
+<div class="col-last odd-row-color">&nbsp;</div>
+<div class="col-first even-row-color"><code>private <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.desktop/javax/swing/JPanel.html" title="class or interface in javax.swing" class="external-link">JPanel</a></code></div>
+<div class="col-second even-row-color"><code><a href="#footballField" class="member-name-link">footballField</a></code></div>
+<div class="col-last even-row-color">&nbsp;</div>
+<div class="col-first odd-row-color"><code>private <a href="FootballFieldBackground.html" title="class in org.emrick.project">FootballFieldBackground</a></code></div>
+<div class="col-second odd-row-color"><code><a href="#footballFieldBackground" class="member-name-link">footballFieldBackground</a></code></div>
+<div class="col-last odd-row-color">&nbsp;</div>
+<div class="col-first even-row-color"><code>private <a href="FootballFieldPanel.html" title="class in org.emrick.project">FootballFieldPanel</a></code></div>
+<div class="col-second even-row-color"><code><a href="#footballFieldPanel" class="member-name-link">footballFieldPanel</a></code></div>
+<div class="col-last even-row-color">&nbsp;</div>
+<div class="col-first odd-row-color"><code>private final <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.desktop/javax/swing/JFrame.html" title="class or interface in javax.swing" class="external-link">JFrame</a></code></div>
+<div class="col-second odd-row-color"><code><a href="#frame" class="member-name-link">frame</a></code></div>
+<div class="col-last odd-row-color">&nbsp;</div>
+<div class="col-first even-row-color"><code>private <a href="SelectionGroupGUI.html" title="class in org.emrick.project">SelectionGroupGUI</a></code></div>
+<div class="col-second even-row-color"><code><a href="#groupsGUI" class="member-name-link">groupsGUI</a></code></div>
+<div class="col-last even-row-color">&nbsp;</div>
+<div class="col-first odd-row-color"><code>private final com.google.gson.Gson</code></div>
+<div class="col-second odd-row-color"><code><a href="#gson" class="member-name-link">gson</a></code></div>
+<div class="col-last odd-row-color">&nbsp;</div>
 <div class="col-first even-row-color"><code>final int</code></div>
 <div class="col-second even-row-color"><code><a href="#INSTANT_COLOR" class="member-name-link">INSTANT_COLOR</a></code></div>
 <div class="col-last even-row-color">&nbsp;</div>
-<div class="col-first odd-row-color"><code>final int</code></div>
-<div class="col-second odd-row-color"><code><a href="#LIGHT_BOARD" class="member-name-link">LIGHT_BOARD</a></code></div>
+<div class="col-first odd-row-color"><code>private boolean</code></div>
+<div class="col-second odd-row-color"><code><a href="#isLightBoardMode" class="member-name-link">isLightBoardMode</a></code></div>
+<div class="col-last odd-row-color">&nbsp;</div>
+<div class="col-first even-row-color"><code>private <a href="LEDConfigurationGUI.html" title="class in org.emrick.project">LEDConfigurationGUI</a></code></div>
+<div class="col-second even-row-color"><code><a href="#ledConfigurationGUI" class="member-name-link">ledConfigurationGUI</a></code></div>
+<div class="col-last even-row-color">&nbsp;</div>
+<div class="col-first odd-row-color"><code>private <a href="LEDStripViewGUI.html" title="class in org.emrick.project">LEDStripViewGUI</a></code></div>
+<div class="col-second odd-row-color"><code><a href="#ledStripViewGUI" class="member-name-link">ledStripViewGUI</a></code></div>
+<div class="col-last odd-row-color">&nbsp;</div>
+<div class="col-first even-row-color"><code>final int</code></div>
+<div class="col-second even-row-color"><code><a href="#LIGHT_BOARD" class="member-name-link">LIGHT_BOARD</a></code></div>
+<div class="col-last even-row-color">&nbsp;</div>
+<div class="col-first odd-row-color"><code>private <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.desktop/javax/swing/JMenuItem.html" title="class or interface in javax.swing" class="external-link">JMenuItem</a></code></div>
+<div class="col-second odd-row-color"><code><a href="#lightBoardFlowViewerItem" class="member-name-link">lightBoardFlowViewerItem</a></code></div>
+<div class="col-last odd-row-color">&nbsp;</div>
+<div class="col-first even-row-color"><code>private boolean</code></div>
+<div class="col-second even-row-color"><code><a href="#lightBoardMode" class="member-name-link">lightBoardMode</a></code></div>
+<div class="col-last even-row-color">&nbsp;</div>
+<div class="col-first odd-row-color"><code>private <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.desktop/javax/swing/JPanel.html" title="class or interface in javax.swing" class="external-link">JPanel</a></code></div>
+<div class="col-second odd-row-color"><code><a href="#mainContentPanel" class="member-name-link">mainContentPanel</a></code></div>
+<div class="col-last odd-row-color">&nbsp;</div>
+<div class="col-first even-row-color"><code>private static int</code></div>
+<div class="col-second even-row-color"><code><a href="#MAX_CONNECTIONS" class="member-name-link">MAX_CONNECTIONS</a></code></div>
+<div class="col-last even-row-color">&nbsp;</div>
+<div class="col-first odd-row-color"><code>private <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.desktop/javax/swing/Timer.html" title="class or interface in javax.swing" class="external-link">Timer</a></code></div>
+<div class="col-second odd-row-color"><code><a href="#noRequestTimer" class="member-name-link">noRequestTimer</a></code></div>
+<div class="col-last odd-row-color">&nbsp;</div>
+<div class="col-first even-row-color"><code>private <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
+<div class="col-second even-row-color"><code><a href="#password" class="member-name-link">password</a></code></div>
+<div class="col-last even-row-color">&nbsp;</div>
+<div class="col-first odd-row-color"><code>private float</code></div>
+<div class="col-second odd-row-color"><code><a href="#playbackSpeed" class="member-name-link">playbackSpeed</a></code></div>
+<div class="col-last odd-row-color">&nbsp;</div>
+<div class="col-first even-row-color"><code>private <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/Timer.html" title="class or interface in java.util" class="external-link">Timer</a></code></div>
+<div class="col-second even-row-color"><code><a href="#playbackTimer" class="member-name-link">playbackTimer</a></code></div>
+<div class="col-last even-row-color">&nbsp;</div>
+<div class="col-first odd-row-color"><code>private int</code></div>
+<div class="col-second odd-row-color"><code><a href="#port" class="member-name-link">port</a></code></div>
 <div class="col-last odd-row-color">&nbsp;</div>
 <div class="col-first even-row-color"><code>final int</code></div>
 <div class="col-second even-row-color"><code><a href="#PROGRAMMING_MODE" class="member-name-link">PROGRAMMING_MODE</a></code></div>
 <div class="col-last even-row-color">&nbsp;</div>
+<div class="col-first odd-row-color"><code>private <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.desktop/javax/swing/JProgressBar.html" title="class or interface in javax.swing" class="external-link">JProgressBar</a></code></div>
+<div class="col-second odd-row-color"><code><a href="#programmingProgressBar" class="member-name-link">programmingProgressBar</a></code></div>
+<div class="col-last odd-row-color">&nbsp;</div>
+<div class="col-first even-row-color"><code>private <a href="MediaEditorGUI.ProgrammingTracker.html" title="class in org.emrick.project">MediaEditorGUI.ProgrammingTracker</a></code></div>
+<div class="col-second even-row-color"><code><a href="#programmingTracker" class="member-name-link">programmingTracker</a></code></div>
+<div class="col-last even-row-color">&nbsp;</div>
+<div class="col-first odd-row-color"><code>private <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/ArrayList.html" title="class or interface in java.util" class="external-link">ArrayList</a>&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Integer.html" title="class or interface in java.lang" class="external-link">Integer</a>&gt;</code></div>
+<div class="col-second odd-row-color"><code><a href="#requestIDs" class="member-name-link">requestIDs</a></code></div>
+<div class="col-last odd-row-color">&nbsp;</div>
+<div class="col-first even-row-color"><code>private <a href="effect/RFTriggerGUI.html" title="class in org.emrick.project.effect">RFTriggerGUI</a></code></div>
+<div class="col-second even-row-color"><code><a href="#rfTriggerGUI" class="member-name-link">rfTriggerGUI</a></code></div>
+<div class="col-last even-row-color">&nbsp;</div>
+<div class="col-first odd-row-color"><code>private <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.desktop/javax/swing/JMenuItem.html" title="class or interface in javax.swing" class="external-link">JMenuItem</a></code></div>
+<div class="col-second odd-row-color"><code><a href="#runLightBoardWebServer" class="member-name-link">runLightBoardWebServer</a></code></div>
+<div class="col-last odd-row-color">&nbsp;</div>
+<div class="col-first even-row-color"><code>private <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.desktop/javax/swing/JMenuItem.html" title="class or interface in javax.swing" class="external-link">JMenuItem</a></code></div>
+<div class="col-second even-row-color"><code><a href="#runShowItem" class="member-name-link">runShowItem</a></code></div>
+<div class="col-last even-row-color">&nbsp;</div>
+<div class="col-first odd-row-color"><code>private <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.desktop/javax/swing/JMenuItem.html" title="class or interface in javax.swing" class="external-link">JMenuItem</a></code></div>
+<div class="col-second odd-row-color"><code><a href="#runWebServer" class="member-name-link">runWebServer</a></code></div>
+<div class="col-last odd-row-color">&nbsp;</div>
+<div class="col-first even-row-color"><code>private <a href="ScrubBarGUI.html" title="class in org.emrick.project">ScrubBarGUI</a></code></div>
+<div class="col-second even-row-color"><code><a href="#scrubBarGUI" class="member-name-link">scrubBarGUI</a></code></div>
+<div class="col-last even-row-color">&nbsp;</div>
+<div class="col-first odd-row-color"><code>private <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.desktop/javax/swing/JPanel.html" title="class or interface in javax.swing" class="external-link">JPanel</a></code></div>
+<div class="col-second odd-row-color"><code><a href="#scrubBarPanel" class="member-name-link">scrubBarPanel</a></code></div>
+<div class="col-last odd-row-color">&nbsp;</div>
+<div class="col-first even-row-color"><code>private <a href="effect/EffectList.html" title="enum class in org.emrick.project.effect">EffectList</a></code></div>
+<div class="col-second even-row-color"><code><a href="#selectedEffectType" class="member-name-link">selectedEffectType</a></code></div>
+<div class="col-last even-row-color">&nbsp;</div>
+<div class="col-first odd-row-color"><code>private <a href="SerialTransmitter.html" title="class in org.emrick.project">SerialTransmitter</a></code></div>
+<div class="col-second odd-row-color"><code><a href="#serialTransmitter" class="member-name-link">serialTransmitter</a></code></div>
+<div class="col-last odd-row-color">&nbsp;</div>
+<div class="col-first even-row-color"><code>private <a href="https://docs.oracle.com/en/java/javase/17/docs/api/jdk.httpserver/com/sun/net/httpserver/HttpServer.html" title="class or interface in com.sun.net.httpserver" class="external-link">HttpServer</a></code></div>
+<div class="col-second even-row-color"><code><a href="#server" class="member-name-link">server</a></code></div>
+<div class="col-last even-row-color">&nbsp;</div>
 <div class="col-first odd-row-color"><code>final int</code></div>
 <div class="col-second odd-row-color"><code><a href="#SET_TIMEOUT" class="member-name-link">SET_TIMEOUT</a></code></div>
 <div class="col-last odd-row-color">&nbsp;</div>
-<div class="col-first even-row-color"><code>final int</code></div>
-<div class="col-second even-row-color"><code><a href="#USE_COLORS" class="member-name-link">USE_COLORS</a></code></div>
+<div class="col-first even-row-color"><code>private <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.desktop/javax/swing/JCheckBoxMenuItem.html" title="class or interface in javax.swing" class="external-link">JCheckBoxMenuItem</a></code></div>
+<div class="col-second even-row-color"><code><a href="#showIndividualView" class="member-name-link">showIndividualView</a></code></div>
+<div class="col-last even-row-color">&nbsp;</div>
+<div class="col-first odd-row-color"><code>private <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
+<div class="col-second odd-row-color"><code><a href="#ssid" class="member-name-link">ssid</a></code></div>
+<div class="col-last odd-row-color">&nbsp;</div>
+<div class="col-first even-row-color"><code>private float</code></div>
+<div class="col-second even-row-color"><code><a href="#startDelay" class="member-name-link">startDelay</a></code></div>
+<div class="col-last even-row-color">&nbsp;</div>
+<div class="col-first odd-row-color"><code>private <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.desktop/javax/swing/JMenuItem.html" title="class or interface in javax.swing" class="external-link">JMenuItem</a></code></div>
+<div class="col-second odd-row-color"><code><a href="#stopShowItem" class="member-name-link">stopShowItem</a></code></div>
+<div class="col-last odd-row-color">&nbsp;</div>
+<div class="col-first even-row-color"><code>private <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.desktop/javax/swing/JMenuItem.html" title="class or interface in javax.swing" class="external-link">JMenuItem</a></code></div>
+<div class="col-second even-row-color"><code><a href="#stopWebServer" class="member-name-link">stopWebServer</a></code></div>
+<div class="col-last even-row-color">&nbsp;</div>
+<div class="col-first odd-row-color"><code>private final <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.desktop/javax/swing/JLabel.html" title="class or interface in javax.swing" class="external-link">JLabel</a></code></div>
+<div class="col-second odd-row-color"><code><a href="#sysMsg" class="member-name-link">sysMsg</a></code></div>
+<div class="col-last odd-row-color">&nbsp;</div>
+<div class="col-first even-row-color"><code>private <a href="TimelineGUI.html" title="class in org.emrick.project">TimelineGUI</a></code></div>
+<div class="col-second even-row-color"><code><a href="#timelineGUI" class="member-name-link">timelineGUI</a></code></div>
+<div class="col-last even-row-color">&nbsp;</div>
+<div class="col-first odd-row-color"><code>private <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.desktop/javax/swing/JPanel.html" title="class or interface in javax.swing" class="external-link">JPanel</a></code></div>
+<div class="col-second odd-row-color"><code><a href="#timelinePanel" class="member-name-link">timelinePanel</a></code></div>
+<div class="col-last odd-row-color">&nbsp;</div>
+<div class="col-first even-row-color"><code>private <a href="TimeManager.html" title="class in org.emrick.project">TimeManager</a></code></div>
+<div class="col-second even-row-color"><code><a href="#timeManager" class="member-name-link">timeManager</a></code></div>
+<div class="col-last even-row-color">&nbsp;</div>
+<div class="col-first odd-row-color"><code>private <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/ArrayList.html" title="class or interface in java.util" class="external-link">ArrayList</a>&lt;<a href="SyncTimeGUI.Pair.html" title="class in org.emrick.project">SyncTimeGUI.Pair</a>&gt;</code></div>
+<div class="col-second odd-row-color"><code><a href="#timeSync" class="member-name-link">timeSync</a></code></div>
+<div class="col-last odd-row-color">&nbsp;</div>
+<div class="col-first even-row-color"><code>private int</code></div>
+<div class="col-second even-row-color"><code><a href="#token" class="member-name-link">token</a></code></div>
 <div class="col-last even-row-color">&nbsp;</div>
 <div class="col-first odd-row-color"><code>final int</code></div>
-<div class="col-second odd-row-color"><code><a href="#USE_DURATION" class="member-name-link">USE_DURATION</a></code></div>
+<div class="col-second odd-row-color"><code><a href="#USE_COLORS" class="member-name-link">USE_COLORS</a></code></div>
+<div class="col-last odd-row-color">&nbsp;</div>
+<div class="col-first even-row-color"><code>final int</code></div>
+<div class="col-second even-row-color"><code><a href="#USE_DURATION" class="member-name-link">USE_DURATION</a></code></div>
+<div class="col-last even-row-color">&nbsp;</div>
+<div class="col-first odd-row-color"><code>private final <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/nio/file/Path.html" title="class or interface in java.nio.file" class="external-link">Path</a></code></div>
+<div class="col-second odd-row-color"><code><a href="#userHome" class="member-name-link">userHome</a></code></div>
+<div class="col-last odd-row-color">&nbsp;</div>
+<div class="col-first even-row-color"><code>private boolean</code></div>
+<div class="col-second even-row-color"><code><a href="#useStartDelay" class="member-name-link">useStartDelay</a></code></div>
+<div class="col-last even-row-color">&nbsp;</div>
+<div class="col-first odd-row-color"><code>private <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.desktop/java/awt/Color.html" title="class or interface in java.awt" class="external-link">Color</a></code></div>
+<div class="col-second odd-row-color"><code><a href="#verificationColor" class="member-name-link">verificationColor</a></code></div>
 <div class="col-last odd-row-color">&nbsp;</div>
 <div class="col-first even-row-color"><code>final int</code></div>
 <div class="col-second even-row-color"><code><a href="#VERIFY" class="member-name-link">VERIFY</a></code></div>
+<div class="col-last even-row-color">&nbsp;</div>
+<div class="col-first odd-row-color"><code>(package private) <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.desktop/javax/swing/JFrame.html" title="class or interface in javax.swing" class="external-link">JFrame</a></code></div>
+<div class="col-second odd-row-color"><code><a href="#webServerFrame" class="member-name-link">webServerFrame</a></code></div>
+<div class="col-last odd-row-color">&nbsp;</div>
+<div class="col-first even-row-color"><code>private <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.desktop/java/awt/event/WindowListener.html" title="class or interface in java.awt.event" class="external-link">WindowListener</a></code></div>
+<div class="col-second even-row-color"><code><a href="#windowListener" class="member-name-link">windowListener</a></code></div>
 <div class="col-last even-row-color">&nbsp;</div>
 </div>
 <div class="inherited-list">
@@ -222,12 +402,12 @@ implements <a href="ImportListener.html" title="interface in org.emrick.project"
 <div class="table-header col-first">Modifier and Type</div>
 <div class="table-header col-second">Method</div>
 <div class="table-header col-last">Description</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>void</code></div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>private void</code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#applyDefaultLEDConfiguration()" class="member-name-link">applyDefaultLEDConfiguration</a>()</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Applies a default led configuration to all performers</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>void</code></div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>private void</code></div>
 <div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#buildScrubBarPanel()" class="member-name-link">buildScrubBarPanel</a>()</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Loads the ScrubBarGUI Panel if it has not been created, or refreshes it if it already exists.</div>
@@ -237,7 +417,7 @@ implements <a href="ImportListener.html" title="interface in org.emrick.project"
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Used to get a Serial Transmitter object.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>void</code></div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>private void</code></div>
 <div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#createAndShowGUI()" class="member-name-link">createAndShowGUI</a>()</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Builds all major GUI elements and adds them to the main frame.</div>
@@ -245,17 +425,17 @@ implements <a href="ImportListener.html" title="interface in org.emrick.project"
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>void</code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#ctrlGroupSelection(org.emrick.project.LEDStrip%5B%5D)" class="member-name-link">ctrlGroupSelection</a><wbr>(<a href="LEDStrip.html" title="class in org.emrick.project">LEDStrip</a>[]&nbsp;ledStrips)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>boolean</code></div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>private boolean</code></div>
 <div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#deleteDirectory(java.io.File)" class="member-name-link">deleteDirectory</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/io/File.html" title="class or interface in java.io" class="external-link">File</a>&nbsp;directoryToBeDeleted)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Recursively empties and deletes the specified file/directory.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>void</code></div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>private void</code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#exportCsvFileForPerformerDeviceIDs(java.io.File)" class="member-name-link">exportCsvFileForPerformerDeviceIDs</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/io/File.html" title="class or interface in java.io" class="external-link">File</a>&nbsp;selectedFile)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Builds and exports a csv file containing configuration data for led strips and performers</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>void</code></div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>private void</code></div>
 <div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#exportPackets(java.io.File)" class="member-name-link">exportPackets</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/io/File.html" title="class or interface in java.io" class="external-link">File</a>&nbsp;path)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Multithreaded export of firmware-readable packet data to a .pkt file.</div>
@@ -265,12 +445,12 @@ implements <a href="ImportListener.html" title="interface in org.emrick.project"
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Get audio player</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.desktop/javax/swing/JButton.html" title="class or interface in javax.swing" class="external-link">JButton</a></code></div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>private <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.desktop/javax/swing/JButton.html" title="class or interface in javax.swing" class="external-link">JButton</a></code></div>
 <div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getEffectOptionsButton()" class="member-name-link">getEffectOptionsButton</a>()</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Initializes the Effect Options button and the effects popup menu and returns the Effect Options button.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>int</code></div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>private int</code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getEffectTriggerIndex(org.emrick.project.effect.Effect,java.lang.Long%5B%5D)" class="member-name-link">getEffectTriggerIndex</a><wbr>(<a href="effect/Effect.html" title="class in org.emrick.project.effect">Effect</a>&nbsp;e,
  <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Long.html" title="class or interface in java.lang" class="external-link">Long</a>[]&nbsp;timesMS)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
@@ -279,231 +459,236 @@ implements <a href="ImportListener.html" title="interface in org.emrick.project"
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>double</code></div>
 <div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getFrameRate()" class="member-name-link">getFrameRate</a>()</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>boolean</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#isPlaying()" class="member-name-link">isPlaying</a>()</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>void</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#loadProject(java.io.File)" class="member-name-link">loadProject</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/io/File.html" title="class or interface in java.io" class="external-link">File</a>&nbsp;path)</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>private long</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getPlaybackTimerTimeByCounts()" class="member-name-link">getPlaybackTimerTimeByCounts</a>()</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="block">Calculates and returns the frame length in milliseconds</div>
+</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>boolean</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#isPlaying()" class="member-name-link">isPlaying</a>()</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>private void</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#loadProject(java.io.File)" class="member-name-link">loadProject</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/io/File.html" title="class or interface in java.io" class="external-link">File</a>&nbsp;path)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Loads a new .emrick file to the viewport to be edited.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code>static void</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#main(java.lang.String%5B%5D)" class="member-name-link">main</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>[]&nbsp;args)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4">
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code>static void</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#main(java.lang.String%5B%5D)" class="member-name-link">main</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>[]&nbsp;args)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4">
 <div class="block">Main method of Emrick Designer.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>void</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#onAudioImport(java.io.File)" class="member-name-link">onAudioImport</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/io/File.html" title="class or interface in java.io" class="external-link">File</a>&nbsp;audioFile)</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>void</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#onBeginImport()" class="member-name-link">onBeginImport</a>()</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#onAudioImport(java.io.File)" class="member-name-link">onAudioImport</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/io/File.html" title="class or interface in java.io" class="external-link">File</a>&nbsp;audioFile)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>void</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#onChangeSelectionMode(boolean,java.util.HashSet)" class="member-name-link">onChangeSelectionMode</a><wbr>(boolean&nbsp;isInnerSelect,
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#onBeginImport()" class="member-name-link">onBeginImport</a>()</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>void</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#onChangeSelectionMode(boolean,java.util.HashSet)" class="member-name-link">onChangeSelectionMode</a><wbr>(boolean&nbsp;isInnerSelect,
  <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/HashSet.html" title="class or interface in java.util" class="external-link">HashSet</a>&lt;<a href="LEDStrip.html" title="class in org.emrick.project">LEDStrip</a>&gt;&nbsp;strips)</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>void</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#onCreateEffect(org.emrick.project.effect.Effect)" class="member-name-link">onCreateEffect</a><wbr>(<a href="effect/Effect.html" title="class in org.emrick.project.effect">Effect</a>&nbsp;effect)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>void</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#onCreateRFTrigger(org.emrick.project.effect.RFTrigger)" class="member-name-link">onCreateRFTrigger</a><wbr>(<a href="effect/RFTrigger.html" title="class in org.emrick.project.effect">RFTrigger</a>&nbsp;rfTrigger)</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#onCreateEffect(org.emrick.project.effect.Effect)" class="member-name-link">onCreateEffect</a><wbr>(<a href="effect/Effect.html" title="class in org.emrick.project.effect">Effect</a>&nbsp;effect)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>void</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#onDeleteEffect(org.emrick.project.effect.Effect)" class="member-name-link">onDeleteEffect</a><wbr>(<a href="effect/Effect.html" title="class in org.emrick.project.effect">Effect</a>&nbsp;effect)</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#onCreateRFTrigger(org.emrick.project.effect.RFTrigger)" class="member-name-link">onCreateRFTrigger</a><wbr>(<a href="effect/RFTrigger.html" title="class in org.emrick.project.effect">RFTrigger</a>&nbsp;rfTrigger)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>void</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#onDeleteRFTrigger(int)" class="member-name-link">onDeleteRFTrigger</a><wbr>(int&nbsp;count)</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#onDeleteEffect(org.emrick.project.effect.Effect)" class="member-name-link">onDeleteEffect</a><wbr>(<a href="effect/Effect.html" title="class in org.emrick.project.effect">Effect</a>&nbsp;effect)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>void</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#onDrillImport(java.lang.String)" class="member-name-link">onDrillImport</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;drill)</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#onDeleteRFTrigger(int)" class="member-name-link">onDeleteRFTrigger</a><wbr>(int&nbsp;count)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>void</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#onExitConfig()" class="member-name-link">onExitConfig</a>()</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#onDrillImport(java.lang.String)" class="member-name-link">onDrillImport</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;drill)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>void</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#onFileSelect(java.io.File,java.io.File)" class="member-name-link">onFileSelect</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/io/File.html" title="class or interface in java.io" class="external-link">File</a>&nbsp;archivePath,
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#onExitConfig()" class="member-name-link">onExitConfig</a>()</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>void</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#onFileSelect(java.io.File,java.io.File)" class="member-name-link">onFileSelect</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/io/File.html" title="class or interface in java.io" class="external-link">File</a>&nbsp;archivePath,
  <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/io/File.html" title="class or interface in java.io" class="external-link">File</a>&nbsp;csvFile)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>void</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#onFloorCoverImport(java.awt.Image)" class="member-name-link">onFloorCoverImport</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.desktop/java/awt/Image.html" title="class or interface in java.awt" class="external-link">Image</a>&nbsp;image)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>void</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#onGroupSelection(org.emrick.project.LEDStrip%5B%5D)" class="member-name-link">onGroupSelection</a><wbr>(<a href="LEDStrip.html" title="class in org.emrick.project">LEDStrip</a>[]&nbsp;ledStrips)</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#onFloorCoverImport(java.awt.Image)" class="member-name-link">onFloorCoverImport</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.desktop/java/awt/Image.html" title="class or interface in java.awt" class="external-link">Image</a>&nbsp;image)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>void</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#onImport()" class="member-name-link">onImport</a>()</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#onGroupSelection(org.emrick.project.LEDStrip%5B%5D)" class="member-name-link">onGroupSelection</a><wbr>(<a href="LEDStrip.html" title="class in org.emrick.project">LEDStrip</a>[]&nbsp;ledStrips)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/HashSet.html" title="class or interface in java.util" class="external-link">HashSet</a>&lt;<a href="LEDStrip.html" title="class in org.emrick.project">LEDStrip</a>&gt;</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#onInnerSelectionRequired()" class="member-name-link">onInnerSelectionRequired</a>()</code></div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>void</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#onImport()" class="member-name-link">onImport</a>()</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>void</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#onMultiSelect(java.util.HashSet,java.util.HashSet)" class="member-name-link">onMultiSelect</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/HashSet.html" title="class or interface in java.util" class="external-link">HashSet</a>&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Integer.html" title="class or interface in java.lang" class="external-link">Integer</a>&gt;&nbsp;labels,
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/HashSet.html" title="class or interface in java.util" class="external-link">HashSet</a>&lt;<a href="LEDStrip.html" title="class in org.emrick.project">LEDStrip</a>&gt;</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#onInnerSelectionRequired()" class="member-name-link">onInnerSelectionRequired</a>()</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>void</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#onMultiSelect(java.util.HashSet,java.util.HashSet)" class="member-name-link">onMultiSelect</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/HashSet.html" title="class or interface in java.util" class="external-link">HashSet</a>&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Integer.html" title="class or interface in java.lang" class="external-link">Integer</a>&gt;&nbsp;labels,
  <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/HashSet.html" title="class or interface in java.util" class="external-link">HashSet</a>&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;&nbsp;symbols)</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>boolean</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#onPause()" class="member-name-link">onPause</a>()</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>void</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#onPerformerDeselect()" class="member-name-link">onPerformerDeselect</a>()</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>void</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#onPerformerSelect()" class="member-name-link">onPerformerSelect</a>()</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>boolean</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#onPlay()" class="member-name-link">onPlay</a>()</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#onPause()" class="member-name-link">onPause</a>()</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>void</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#onPressRFTrigger(org.emrick.project.effect.RFTrigger)" class="member-name-link">onPressRFTrigger</a><wbr>(<a href="effect/RFTrigger.html" title="class in org.emrick.project.effect">RFTrigger</a>&nbsp;rfTrigger)</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#onPerformerDeselect()" class="member-name-link">onPerformerDeselect</a>()</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>void</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#onRequestComplete(int)" class="member-name-link">onRequestComplete</a><wbr>(int&nbsp;id)</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#onPerformerSelect()" class="member-name-link">onPerformerSelect</a>()</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>boolean</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#onPlay()" class="member-name-link">onPlay</a>()</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>void</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#onPressRFTrigger(org.emrick.project.effect.RFTrigger)" class="member-name-link">onPressRFTrigger</a><wbr>(<a href="effect/RFTrigger.html" title="class in org.emrick.project.effect">RFTrigger</a>&nbsp;rfTrigger)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>void</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#onResizeBackground()" class="member-name-link">onResizeBackground</a>()</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#onRequestComplete(int)" class="member-name-link">onRequestComplete</a><wbr>(int&nbsp;id)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>void</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#onRFSignal(int)" class="member-name-link">onRFSignal</a><wbr>(int&nbsp;i)</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="LEDStrip.html" title="class in org.emrick.project">LEDStrip</a>[]</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#onSaveGroup()" class="member-name-link">onSaveGroup</a>()</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>long</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#onScrub()" class="member-name-link">onScrub</a>()</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/HashSet.html" title="class or interface in java.util" class="external-link">HashSet</a>&lt;<a href="LEDStrip.html" title="class in org.emrick.project">LEDStrip</a>&gt;</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#onSelectionRequired()" class="member-name-link">onSelectionRequired</a>()</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>void</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#onSetChange(int)" class="member-name-link">onSetChange</a><wbr>(int&nbsp;setIndex)</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#onResizeBackground()" class="member-name-link">onResizeBackground</a>()</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>void</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#onSpeedChange(float)" class="member-name-link">onSpeedChange</a><wbr>(float&nbsp;playbackSpeed)</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#onRFSignal(int)" class="member-name-link">onRFSignal</a><wbr>(int&nbsp;i)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>void</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#onSurfaceImport(java.awt.Image)" class="member-name-link">onSurfaceImport</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.desktop/java/awt/Image.html" title="class or interface in java.awt" class="external-link">Image</a>&nbsp;image)</code></div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="LEDStrip.html" title="class in org.emrick.project">LEDStrip</a>[]</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#onSaveGroup()" class="member-name-link">onSaveGroup</a>()</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>long</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#onScrub()" class="member-name-link">onScrub</a>()</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/HashSet.html" title="class or interface in java.util" class="external-link">HashSet</a>&lt;<a href="LEDStrip.html" title="class in org.emrick.project">LEDStrip</a>&gt;</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#onSelectionRequired()" class="member-name-link">onSelectionRequired</a>()</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>void</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#onSync(java.util.ArrayList,float)" class="member-name-link">onSync</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/ArrayList.html" title="class or interface in java.util" class="external-link">ArrayList</a>&lt;<a href="SyncTimeGUI.Pair.html" title="class in org.emrick.project">SyncTimeGUI.Pair</a>&gt;&nbsp;times,
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#onSetChange(int)" class="member-name-link">onSetChange</a><wbr>(int&nbsp;setIndex)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>void</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#onSpeedChange(float)" class="member-name-link">onSpeedChange</a><wbr>(float&nbsp;playbackSpeed)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>void</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#onSurfaceImport(java.awt.Image)" class="member-name-link">onSurfaceImport</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.desktop/java/awt/Image.html" title="class or interface in java.awt" class="external-link">Image</a>&nbsp;image)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>void</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#onSync(java.util.ArrayList,float)" class="member-name-link">onSync</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/ArrayList.html" title="class or interface in java.util" class="external-link">ArrayList</a>&lt;<a href="SyncTimeGUI.Pair.html" title="class in org.emrick.project">SyncTimeGUI.Pair</a>&gt;&nbsp;times,
  float&nbsp;startDelay)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>void</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#onTimeChange(long)" class="member-name-link">onTimeChange</a><wbr>(long&nbsp;time)</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="TimeManager.html" title="class in org.emrick.project">TimeManager</a></code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#onTimeRequired()" class="member-name-link">onTimeRequired</a>()</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>void</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#onUpdateEffect(org.emrick.project.effect.Effect,org.emrick.project.effect.Effect)" class="member-name-link">onUpdateEffect</a><wbr>(<a href="effect/Effect.html" title="class in org.emrick.project.effect">Effect</a>&nbsp;oldEffect,
- <a href="effect/Effect.html" title="class in org.emrick.project.effect">Effect</a>&nbsp;newEffect)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>void</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#onUpdateEffectPanel(org.emrick.project.effect.Effect,boolean,int)" class="member-name-link">onUpdateEffectPanel</a><wbr>(<a href="effect/Effect.html" title="class in org.emrick.project.effect">Effect</a>&nbsp;effect,
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#onTimeChange(long)" class="member-name-link">onTimeChange</a><wbr>(long&nbsp;time)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="TimeManager.html" title="class in org.emrick.project">TimeManager</a></code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#onTimeRequired()" class="member-name-link">onTimeRequired</a>()</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>void</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#onUpdateEffect(org.emrick.project.effect.Effect,org.emrick.project.effect.Effect)" class="member-name-link">onUpdateEffect</a><wbr>(<a href="effect/Effect.html" title="class in org.emrick.project.effect">Effect</a>&nbsp;oldEffect,
+ <a href="effect/Effect.html" title="class in org.emrick.project.effect">Effect</a>&nbsp;newEffect)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>void</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#onUpdateEffectPanel(org.emrick.project.effect.Effect,boolean,int)" class="member-name-link">onUpdateEffectPanel</a><wbr>(<a href="effect/Effect.html" title="class in org.emrick.project.effect">Effect</a>&nbsp;effect,
  boolean&nbsp;isNew,
  int&nbsp;index)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>void</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#onUpdateGroup()" class="member-name-link">onUpdateGroup</a>()</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>void</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#onUserLoggedIn(java.lang.String)" class="member-name-link">onUserLoggedIn</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;username)</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#onUpdateGroup()" class="member-name-link">onUpdateGroup</a>()</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>void</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#openProjectDialog()" class="member-name-link">openProjectDialog</a>()</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#onUserLoggedIn(java.lang.String)" class="member-name-link">onUserLoggedIn</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;username)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>private void</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#openProjectDialog()" class="member-name-link">openProjectDialog</a>()</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Opens a prompt for the user to select a project to open.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>void</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#parseCsvFileForPerformerDeviceIDs(java.io.File)" class="member-name-link">parseCsvFileForPerformerDeviceIDs</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/io/File.html" title="class or interface in java.io" class="external-link">File</a>&nbsp;inputFile)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>private void</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#parseCsvFileForPerformerDeviceIDs(java.io.File)" class="member-name-link">parseCsvFileForPerformerDeviceIDs</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/io/File.html" title="class or interface in java.io" class="external-link">File</a>&nbsp;inputFile)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Imports a configuration csv file and applies the config to an open project.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>void</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#playAudioFromCorrectPosition()" class="member-name-link">playAudioFromCorrectPosition</a>()</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>private void</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#playAudioFromCorrectPosition()" class="member-name-link">playAudioFromCorrectPosition</a>()</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Begin playing audio in sync with the drill playback</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>void</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#rebuildPageTabCounts()" class="member-name-link">rebuildPageTabCounts</a>()</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>private void</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#rebuildPageTabCounts()" class="member-name-link">rebuildPageTabCounts</a>()</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Rebuilds the map of set labels to set start counts that is used in ScrubBarGUI.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>void</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#removeFlowViewer()" class="member-name-link">removeFlowViewer</a>()</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>private void</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#removeFlowViewer()" class="member-name-link">removeFlowViewer</a>()</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Removes the flow viewer from the main content panel and restores the run menu to be used again</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>void</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#runServer(java.lang.String,boolean)" class="member-name-link">runServer</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;path,
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>private void</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#runServer(java.lang.String,boolean)" class="member-name-link">runServer</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;path,
  boolean&nbsp;lightBoard)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Prompts the user for information and then starts a web server using this information</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>void</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#saveAsProjectDialog()" class="member-name-link">saveAsProjectDialog</a>()</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>private void</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#saveAsProjectDialog()" class="member-name-link">saveAsProjectDialog</a>()</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Prompts the user for a location to save the current project.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>void</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#saveProject(java.io.File,java.io.File)" class="member-name-link">saveProject</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/io/File.html" title="class or interface in java.io" class="external-link">File</a>&nbsp;path,
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>private void</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#saveProject(java.io.File,java.io.File)" class="member-name-link">saveProject</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/io/File.html" title="class or interface in java.io" class="external-link">File</a>&nbsp;path,
  <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/io/File.html" title="class or interface in java.io" class="external-link">File</a>&nbsp;archivePath)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Save the current project to a .emrick file.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>void</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#saveProjectDialog()" class="member-name-link">saveProjectDialog</a>()</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>private void</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#saveProjectDialog()" class="member-name-link">saveProjectDialog</a>()</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Attempts to save the project to a file.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>void</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#setupEffectView(java.util.ArrayList)" class="member-name-link">setupEffectView</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/ArrayList.html" title="class or interface in java.util" class="external-link">ArrayList</a>&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Integer.html" title="class or interface in java.lang" class="external-link">Integer</a>&gt;&nbsp;ids)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>private void</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#setupEffectView(java.util.ArrayList)" class="member-name-link">setupEffectView</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/ArrayList.html" title="class or interface in java.util" class="external-link">ArrayList</a>&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Integer.html" title="class or interface in java.lang" class="external-link">Integer</a>&gt;&nbsp;ids)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Initializes the effect panel and its dependencies</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>void</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#showEffectBeforeFirstTriggerError()" class="member-name-link">showEffectBeforeFirstTriggerError</a>()</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>private void</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#showEffectBeforeFirstTriggerError()" class="member-name-link">showEffectBeforeFirstTriggerError</a>()</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Display an error message to the user that indicates an RF Trigger has not been placed yet.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>void</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#stopServer()" class="member-name-link">stopServer</a>()</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>private void</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#stopServer()" class="member-name-link">stopServer</a>()</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Stops the currently running web server, restores the run menu to be used again,
  and cleans the filesystem of any files created by the web server</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>long</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#timeAfterEffect(int,org.emrick.project.effect.Effect,java.util.ArrayList,java.lang.Long%5B%5D)" class="member-name-link">timeAfterEffect</a><wbr>(int&nbsp;index,
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>private long</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#timeAfterEffect(int,org.emrick.project.effect.Effect,java.util.ArrayList,java.lang.Long%5B%5D)" class="member-name-link">timeAfterEffect</a><wbr>(int&nbsp;index,
  <a href="effect/Effect.html" title="class in org.emrick.project.effect">Effect</a>&nbsp;e,
  <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/ArrayList.html" title="class or interface in java.util" class="external-link">ArrayList</a>&lt;<a href="effect/Effect.html" title="class in org.emrick.project.effect">Effect</a>&gt;&nbsp;effects,
  <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Long.html" title="class or interface in java.lang" class="external-link">Long</a>[]&nbsp;timesMS)</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Calculates the time between the end of the current effect and the start of the next effect/RF Trigger.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>long</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#timeBeforeEffect(int,org.emrick.project.effect.Effect,java.util.ArrayList,java.lang.Long%5B%5D)" class="member-name-link">timeBeforeEffect</a><wbr>(int&nbsp;index,
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>private long</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#timeBeforeEffect(int,org.emrick.project.effect.Effect,java.util.ArrayList,java.lang.Long%5B%5D)" class="member-name-link">timeBeforeEffect</a><wbr>(int&nbsp;index,
  <a href="effect/Effect.html" title="class in org.emrick.project.effect">Effect</a>&nbsp;e,
  <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/ArrayList.html" title="class or interface in java.util" class="external-link">ArrayList</a>&lt;<a href="effect/Effect.html" title="class in org.emrick.project.effect">Effect</a>&gt;&nbsp;effects,
  <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Long.html" title="class or interface in java.lang" class="external-link">Long</a>[]&nbsp;timesMS)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Calculates the time between the end of the previous effect/RF Trigger and the start of the current effect.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>void</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#updateEffectViewPanel(org.emrick.project.effect.EffectList)" class="member-name-link">updateEffectViewPanel</a><wbr>(<a href="effect/EffectList.html" title="enum class in org.emrick.project.effect">EffectList</a>&nbsp;effectType)</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>private void</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#updateEffectViewPanel(org.emrick.project.effect.EffectList)" class="member-name-link">updateEffectViewPanel</a><wbr>(<a href="effect/EffectList.html" title="enum class in org.emrick.project.effect">EffectList</a>&nbsp;effectType)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Update the effect panel to display the currently selected effect</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>void</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#updateRFTriggerButton()" class="member-name-link">updateRFTriggerButton</a>()</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>private void</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#updateRFTriggerButton()" class="member-name-link">updateRFTriggerButton</a>()</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Create a create/delete button depending on whether there is RF trigger at current count.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>void</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#updateTimelinePanel()" class="member-name-link">updateTimelinePanel</a>()</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>private void</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#updateTimelinePanel()" class="member-name-link">updateTimelinePanel</a>()</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Update the timeline panel to show data relevant to the currently selected performers.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>void</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#writeSysMsg(java.lang.String)" class="member-name-link">writeSysMsg</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;msg)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>private void</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#writeSysMsg(java.lang.String)" class="member-name-link">writeSysMsg</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;msg)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Writes a system message in the top right of the screen</div>
 </div>
 </div>
@@ -583,9 +768,165 @@ implements <a href="ImportListener.html" title="interface in org.emrick.project"
 </section>
 </li>
 <li>
+<section class="detail" id="frame">
+<h3>frame</h3>
+<div class="member-signature"><span class="modifiers">private final</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.desktop/javax/swing/JFrame.html" title="class or interface in javax.swing" class="external-link">JFrame</a></span>&nbsp;<span class="element-name">frame</span></div>
+</section>
+</li>
+<li>
+<section class="detail" id="windowListener">
+<h3>windowListener</h3>
+<div class="member-signature"><span class="modifiers">private</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.desktop/java/awt/event/WindowListener.html" title="class or interface in java.awt.event" class="external-link">WindowListener</a></span>&nbsp;<span class="element-name">windowListener</span></div>
+</section>
+</li>
+<li>
+<section class="detail" id="mainContentPanel">
+<h3>mainContentPanel</h3>
+<div class="member-signature"><span class="modifiers">private</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.desktop/javax/swing/JPanel.html" title="class or interface in javax.swing" class="external-link">JPanel</a></span>&nbsp;<span class="element-name">mainContentPanel</span></div>
+</section>
+</li>
+<li>
+<section class="detail" id="footballField">
+<h3>footballField</h3>
+<div class="member-signature"><span class="modifiers">private</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.desktop/javax/swing/JPanel.html" title="class or interface in javax.swing" class="external-link">JPanel</a></span>&nbsp;<span class="element-name">footballField</span></div>
+</section>
+</li>
+<li>
+<section class="detail" id="footballFieldPanel">
+<h3>footballFieldPanel</h3>
+<div class="member-signature"><span class="modifiers">private</span>&nbsp;<span class="return-type"><a href="FootballFieldPanel.html" title="class in org.emrick.project">FootballFieldPanel</a></span>&nbsp;<span class="element-name">footballFieldPanel</span></div>
+</section>
+</li>
+<li>
+<section class="detail" id="footballFieldBackground">
+<h3>footballFieldBackground</h3>
+<div class="member-signature"><span class="modifiers">private</span>&nbsp;<span class="return-type"><a href="FootballFieldBackground.html" title="class in org.emrick.project">FootballFieldBackground</a></span>&nbsp;<span class="element-name">footballFieldBackground</span></div>
+</section>
+</li>
+<li>
+<section class="detail" id="ledConfigurationGUI">
+<h3>ledConfigurationGUI</h3>
+<div class="member-signature"><span class="modifiers">private</span>&nbsp;<span class="return-type"><a href="LEDConfigurationGUI.html" title="class in org.emrick.project">LEDConfigurationGUI</a></span>&nbsp;<span class="element-name">ledConfigurationGUI</span></div>
+</section>
+</li>
+<li>
+<section class="detail" id="timelineGUI">
+<h3>timelineGUI</h3>
+<div class="member-signature"><span class="modifiers">private</span>&nbsp;<span class="return-type"><a href="TimelineGUI.html" title="class in org.emrick.project">TimelineGUI</a></span>&nbsp;<span class="element-name">timelineGUI</span></div>
+</section>
+</li>
+<li>
+<section class="detail" id="effectGUI">
+<h3>effectGUI</h3>
+<div class="member-signature"><span class="modifiers">private</span>&nbsp;<span class="return-type"><a href="effect/EffectGUI.html" title="class in org.emrick.project.effect">EffectGUI</a></span>&nbsp;<span class="element-name">effectGUI</span></div>
+</section>
+</li>
+<li>
+<section class="detail" id="groupsGUI">
+<h3>groupsGUI</h3>
+<div class="member-signature"><span class="modifiers">private</span>&nbsp;<span class="return-type"><a href="SelectionGroupGUI.html" title="class in org.emrick.project">SelectionGroupGUI</a></span>&nbsp;<span class="element-name">groupsGUI</span></div>
+</section>
+</li>
+<li>
+<section class="detail" id="rfTriggerGUI">
+<h3>rfTriggerGUI</h3>
+<div class="member-signature"><span class="modifiers">private</span>&nbsp;<span class="return-type"><a href="effect/RFTriggerGUI.html" title="class in org.emrick.project.effect">RFTriggerGUI</a></span>&nbsp;<span class="element-name">rfTriggerGUI</span></div>
+</section>
+</li>
+<li>
+<section class="detail" id="flowViewGUI">
+<h3>flowViewGUI</h3>
+<div class="member-signature"><span class="modifiers">private</span>&nbsp;<span class="return-type"><a href="FlowViewGUI.html" title="class in org.emrick.project">FlowViewGUI</a></span>&nbsp;<span class="element-name">flowViewGUI</span></div>
+</section>
+</li>
+<li>
+<section class="detail" id="ledStripViewGUI">
+<h3>ledStripViewGUI</h3>
+<div class="member-signature"><span class="modifiers">private</span>&nbsp;<span class="return-type"><a href="LEDStripViewGUI.html" title="class in org.emrick.project">LEDStripViewGUI</a></span>&nbsp;<span class="element-name">ledStripViewGUI</span></div>
+</section>
+</li>
+<li>
+<section class="detail" id="scrubBarGUI">
+<h3>scrubBarGUI</h3>
+<div class="member-signature"><span class="modifiers">private</span>&nbsp;<span class="return-type"><a href="ScrubBarGUI.html" title="class in org.emrick.project">ScrubBarGUI</a></span>&nbsp;<span class="element-name">scrubBarGUI</span></div>
+</section>
+</li>
+<li>
+<section class="detail" id="scrubBarPanel">
+<h3>scrubBarPanel</h3>
+<div class="member-signature"><span class="modifiers">private</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.desktop/javax/swing/JPanel.html" title="class or interface in javax.swing" class="external-link">JPanel</a></span>&nbsp;<span class="element-name">scrubBarPanel</span></div>
+</section>
+</li>
+<li>
+<section class="detail" id="effectViewPanel">
+<h3>effectViewPanel</h3>
+<div class="member-signature"><span class="modifiers">private</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.desktop/javax/swing/JPanel.html" title="class or interface in javax.swing" class="external-link">JPanel</a></span>&nbsp;<span class="element-name">effectViewPanel</span></div>
+</section>
+</li>
+<li>
+<section class="detail" id="timelinePanel">
+<h3>timelinePanel</h3>
+<div class="member-signature"><span class="modifiers">private</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.desktop/javax/swing/JPanel.html" title="class or interface in javax.swing" class="external-link">JPanel</a></span>&nbsp;<span class="element-name">timelinePanel</span></div>
+</section>
+</li>
+<li>
+<section class="detail" id="sysMsg">
+<h3>sysMsg</h3>
+<div class="member-signature"><span class="modifiers">private final</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.desktop/javax/swing/JLabel.html" title="class or interface in javax.swing" class="external-link">JLabel</a></span>&nbsp;<span class="element-name">sysMsg</span></div>
+</section>
+</li>
+<li>
+<section class="detail" id="clearSysMsg">
+<h3>clearSysMsg</h3>
+<div class="member-signature"><span class="modifiers">private final</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.desktop/javax/swing/Timer.html" title="class or interface in javax.swing" class="external-link">Timer</a></span>&nbsp;<span class="element-name">clearSysMsg</span></div>
+</section>
+</li>
+<li>
+<section class="detail" id="gson">
+<h3>gson</h3>
+<div class="member-signature"><span class="modifiers">private final</span>&nbsp;<span class="return-type">com.google.gson.Gson</span>&nbsp;<span class="element-name">gson</span></div>
+</section>
+</li>
+<li>
+<section class="detail" id="userHome">
+<h3>userHome</h3>
+<div class="member-signature"><span class="modifiers">private final</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/nio/file/Path.html" title="class or interface in java.nio.file" class="external-link">Path</a></span>&nbsp;<span class="element-name">userHome</span></div>
+</section>
+</li>
+<li>
 <section class="detail" id="audioPlayer">
 <h3>audioPlayer</h3>
 <div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="audio/AudioPlayer.html" title="class in org.emrick.project.audio">AudioPlayer</a></span>&nbsp;<span class="element-name">audioPlayer</span></div>
+</section>
+</li>
+<li>
+<section class="detail" id="canSeekAudio">
+<h3>canSeekAudio</h3>
+<div class="member-signature"><span class="modifiers">private</span>&nbsp;<span class="return-type">boolean</span>&nbsp;<span class="element-name">canSeekAudio</span></div>
+</section>
+</li>
+<li>
+<section class="detail" id="effectManager">
+<h3>effectManager</h3>
+<div class="member-signature"><span class="modifiers">private</span>&nbsp;<span class="return-type"><a href="effect/EffectManager.html" title="class in org.emrick.project.effect">EffectManager</a></span>&nbsp;<span class="element-name">effectManager</span></div>
+</section>
+</li>
+<li>
+<section class="detail" id="currentEffect">
+<h3>currentEffect</h3>
+<div class="member-signature"><span class="modifiers">private</span>&nbsp;<span class="return-type"><a href="effect/Effect.html" title="class in org.emrick.project.effect">Effect</a></span>&nbsp;<span class="element-name">currentEffect</span></div>
+</section>
+</li>
+<li>
+<section class="detail" id="copiedEffect">
+<h3>copiedEffect</h3>
+<div class="member-signature"><span class="modifiers">private</span>&nbsp;<span class="return-type"><a href="effect/Effect.html" title="class in org.emrick.project.effect">Effect</a></span>&nbsp;<span class="element-name">copiedEffect</span></div>
+</section>
+</li>
+<li>
+<section class="detail" id="selectedEffectType">
+<h3>selectedEffectType</h3>
+<div class="member-signature"><span class="modifiers">private</span>&nbsp;<span class="return-type"><a href="effect/EffectList.html" title="enum class in org.emrick.project.effect">EffectList</a></span>&nbsp;<span class="element-name">selectedEffectType</span></div>
 </section>
 </li>
 <li>
@@ -756,6 +1097,210 @@ implements <a href="ImportListener.html" title="interface in org.emrick.project"
 </dl>
 </section>
 </li>
+<li>
+<section class="detail" id="count2RFTrigger">
+<h3>count2RFTrigger</h3>
+<div class="member-signature"><span class="modifiers">private</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/HashMap.html" title="class or interface in java.util" class="external-link">HashMap</a>&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Integer.html" title="class or interface in java.lang" class="external-link">Integer</a>,<wbr><a href="effect/RFTrigger.html" title="class in org.emrick.project.effect">RFTrigger</a>&gt;</span>&nbsp;<span class="element-name">count2RFTrigger</span></div>
+</section>
+</li>
+<li>
+<section class="detail" id="timeManager">
+<h3>timeManager</h3>
+<div class="member-signature"><span class="modifiers">private</span>&nbsp;<span class="return-type"><a href="TimeManager.html" title="class in org.emrick.project">TimeManager</a></span>&nbsp;<span class="element-name">timeManager</span></div>
+</section>
+</li>
+<li>
+<section class="detail" id="timeSync">
+<h3>timeSync</h3>
+<div class="member-signature"><span class="modifiers">private</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/ArrayList.html" title="class or interface in java.util" class="external-link">ArrayList</a>&lt;<a href="SyncTimeGUI.Pair.html" title="class in org.emrick.project">SyncTimeGUI.Pair</a>&gt;</span>&nbsp;<span class="element-name">timeSync</span></div>
+</section>
+</li>
+<li>
+<section class="detail" id="useStartDelay">
+<h3>useStartDelay</h3>
+<div class="member-signature"><span class="modifiers">private</span>&nbsp;<span class="return-type">boolean</span>&nbsp;<span class="element-name">useStartDelay</span></div>
+</section>
+</li>
+<li>
+<section class="detail" id="startDelay">
+<h3>startDelay</h3>
+<div class="member-signature"><span class="modifiers">private</span>&nbsp;<span class="return-type">float</span>&nbsp;<span class="element-name">startDelay</span></div>
+</section>
+</li>
+<li>
+<section class="detail" id="playbackSpeed">
+<h3>playbackSpeed</h3>
+<div class="member-signature"><span class="modifiers">private</span>&nbsp;<span class="return-type">float</span>&nbsp;<span class="element-name">playbackSpeed</span></div>
+</section>
+</li>
+<li>
+<section class="detail" id="playbackTimer">
+<h3>playbackTimer</h3>
+<div class="member-signature"><span class="modifiers">private</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/Timer.html" title="class or interface in java.util" class="external-link">Timer</a></span>&nbsp;<span class="element-name">playbackTimer</span></div>
+</section>
+</li>
+<li>
+<section class="detail" id="server">
+<h3>server</h3>
+<div class="member-signature"><span class="modifiers">private</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/jdk.httpserver/com/sun/net/httpserver/HttpServer.html" title="class or interface in com.sun.net.httpserver" class="external-link">HttpServer</a></span>&nbsp;<span class="element-name">server</span></div>
+</section>
+</li>
+<li>
+<section class="detail" id="ssid">
+<h3>ssid</h3>
+<div class="member-signature"><span class="modifiers">private</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name">ssid</span></div>
+</section>
+</li>
+<li>
+<section class="detail" id="password">
+<h3>password</h3>
+<div class="member-signature"><span class="modifiers">private</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name">password</span></div>
+</section>
+</li>
+<li>
+<section class="detail" id="port">
+<h3>port</h3>
+<div class="member-signature"><span class="modifiers">private</span>&nbsp;<span class="return-type">int</span>&nbsp;<span class="element-name">port</span></div>
+</section>
+</li>
+<li>
+<section class="detail" id="currentID">
+<h3>currentID</h3>
+<div class="member-signature"><span class="modifiers">private</span>&nbsp;<span class="return-type">int</span>&nbsp;<span class="element-name">currentID</span></div>
+</section>
+</li>
+<li>
+<section class="detail" id="MAX_CONNECTIONS">
+<h3>MAX_CONNECTIONS</h3>
+<div class="member-signature"><span class="modifiers">private static</span>&nbsp;<span class="return-type">int</span>&nbsp;<span class="element-name">MAX_CONNECTIONS</span></div>
+</section>
+</li>
+<li>
+<section class="detail" id="token">
+<h3>token</h3>
+<div class="member-signature"><span class="modifiers">private</span>&nbsp;<span class="return-type">int</span>&nbsp;<span class="element-name">token</span></div>
+</section>
+</li>
+<li>
+<section class="detail" id="verificationColor">
+<h3>verificationColor</h3>
+<div class="member-signature"><span class="modifiers">private</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.desktop/java/awt/Color.html" title="class or interface in java.awt" class="external-link">Color</a></span>&nbsp;<span class="element-name">verificationColor</span></div>
+</section>
+</li>
+<li>
+<section class="detail" id="noRequestTimer">
+<h3>noRequestTimer</h3>
+<div class="member-signature"><span class="modifiers">private</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.desktop/javax/swing/Timer.html" title="class or interface in javax.swing" class="external-link">Timer</a></span>&nbsp;<span class="element-name">noRequestTimer</span></div>
+</section>
+</li>
+<li>
+<section class="detail" id="requestIDs">
+<h3>requestIDs</h3>
+<div class="member-signature"><span class="modifiers">private</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/ArrayList.html" title="class or interface in java.util" class="external-link">ArrayList</a>&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Integer.html" title="class or interface in java.lang" class="external-link">Integer</a>&gt;</span>&nbsp;<span class="element-name">requestIDs</span></div>
+</section>
+</li>
+<li>
+<section class="detail" id="runWebServer">
+<h3>runWebServer</h3>
+<div class="member-signature"><span class="modifiers">private</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.desktop/javax/swing/JMenuItem.html" title="class or interface in javax.swing" class="external-link">JMenuItem</a></span>&nbsp;<span class="element-name">runWebServer</span></div>
+</section>
+</li>
+<li>
+<section class="detail" id="runLightBoardWebServer">
+<h3>runLightBoardWebServer</h3>
+<div class="member-signature"><span class="modifiers">private</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.desktop/javax/swing/JMenuItem.html" title="class or interface in javax.swing" class="external-link">JMenuItem</a></span>&nbsp;<span class="element-name">runLightBoardWebServer</span></div>
+</section>
+</li>
+<li>
+<section class="detail" id="stopWebServer">
+<h3>stopWebServer</h3>
+<div class="member-signature"><span class="modifiers">private</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.desktop/javax/swing/JMenuItem.html" title="class or interface in javax.swing" class="external-link">JMenuItem</a></span>&nbsp;<span class="element-name">stopWebServer</span></div>
+</section>
+</li>
+<li>
+<section class="detail" id="programmingTracker">
+<h3>programmingTracker</h3>
+<div class="member-signature"><span class="modifiers">private</span>&nbsp;<span class="return-type"><a href="MediaEditorGUI.ProgrammingTracker.html" title="class in org.emrick.project">MediaEditorGUI.ProgrammingTracker</a></span>&nbsp;<span class="element-name">programmingTracker</span></div>
+</section>
+</li>
+<li>
+<section class="detail" id="programmingProgressBar">
+<h3>programmingProgressBar</h3>
+<div class="member-signature"><span class="modifiers">private</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.desktop/javax/swing/JProgressBar.html" title="class or interface in javax.swing" class="external-link">JProgressBar</a></span>&nbsp;<span class="element-name">programmingProgressBar</span></div>
+</section>
+</li>
+<li>
+<section class="detail" id="lightBoardMode">
+<h3>lightBoardMode</h3>
+<div class="member-signature"><span class="modifiers">private</span>&nbsp;<span class="return-type">boolean</span>&nbsp;<span class="element-name">lightBoardMode</span></div>
+</section>
+</li>
+<li>
+<section class="detail" id="runShowItem">
+<h3>runShowItem</h3>
+<div class="member-signature"><span class="modifiers">private</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.desktop/javax/swing/JMenuItem.html" title="class or interface in javax.swing" class="external-link">JMenuItem</a></span>&nbsp;<span class="element-name">runShowItem</span></div>
+</section>
+</li>
+<li>
+<section class="detail" id="flowViewerItem">
+<h3>flowViewerItem</h3>
+<div class="member-signature"><span class="modifiers">private</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.desktop/javax/swing/JMenuItem.html" title="class or interface in javax.swing" class="external-link">JMenuItem</a></span>&nbsp;<span class="element-name">flowViewerItem</span></div>
+</section>
+</li>
+<li>
+<section class="detail" id="lightBoardFlowViewerItem">
+<h3>lightBoardFlowViewerItem</h3>
+<div class="member-signature"><span class="modifiers">private</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.desktop/javax/swing/JMenuItem.html" title="class or interface in javax.swing" class="external-link">JMenuItem</a></span>&nbsp;<span class="element-name">lightBoardFlowViewerItem</span></div>
+</section>
+</li>
+<li>
+<section class="detail" id="stopShowItem">
+<h3>stopShowItem</h3>
+<div class="member-signature"><span class="modifiers">private</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.desktop/javax/swing/JMenuItem.html" title="class or interface in javax.swing" class="external-link">JMenuItem</a></span>&nbsp;<span class="element-name">stopShowItem</span></div>
+</section>
+</li>
+<li>
+<section class="detail" id="isLightBoardMode">
+<h3>isLightBoardMode</h3>
+<div class="member-signature"><span class="modifiers">private</span>&nbsp;<span class="return-type">boolean</span>&nbsp;<span class="element-name">isLightBoardMode</span></div>
+</section>
+</li>
+<li>
+<section class="detail" id="showIndividualView">
+<h3>showIndividualView</h3>
+<div class="member-signature"><span class="modifiers">private</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.desktop/javax/swing/JCheckBoxMenuItem.html" title="class or interface in javax.swing" class="external-link">JCheckBoxMenuItem</a></span>&nbsp;<span class="element-name">showIndividualView</span></div>
+</section>
+</li>
+<li>
+<section class="detail" id="archivePath">
+<h3>archivePath</h3>
+<div class="member-signature"><span class="modifiers">private</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/io/File.html" title="class or interface in java.io" class="external-link">File</a></span>&nbsp;<span class="element-name">archivePath</span></div>
+</section>
+</li>
+<li>
+<section class="detail" id="emrickPath">
+<h3>emrickPath</h3>
+<div class="member-signature"><span class="modifiers">private</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/io/File.html" title="class or interface in java.io" class="external-link">File</a></span>&nbsp;<span class="element-name">emrickPath</span></div>
+</section>
+</li>
+<li>
+<section class="detail" id="csvFile">
+<h3>csvFile</h3>
+<div class="member-signature"><span class="modifiers">private</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/io/File.html" title="class or interface in java.io" class="external-link">File</a></span>&nbsp;<span class="element-name">csvFile</span></div>
+</section>
+</li>
+<li>
+<section class="detail" id="serialTransmitter">
+<h3>serialTransmitter</h3>
+<div class="member-signature"><span class="modifiers">private</span>&nbsp;<span class="return-type"><a href="SerialTransmitter.html" title="class in org.emrick.project">SerialTransmitter</a></span>&nbsp;<span class="element-name">serialTransmitter</span></div>
+</section>
+</li>
+<li>
+<section class="detail" id="webServerFrame">
+<h3>webServerFrame</h3>
+<div class="member-signature"><span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.desktop/javax/swing/JFrame.html" title="class or interface in javax.swing" class="external-link">JFrame</a></span>&nbsp;<span class="element-name">webServerFrame</span></div>
+</section>
+</li>
 </ul>
 </section>
 </li>
@@ -796,9 +1341,20 @@ implements <a href="ImportListener.html" title="interface in org.emrick.project"
 </section>
 </li>
 <li>
+<section class="detail" id="getPlaybackTimerTimeByCounts()">
+<h3>getPlaybackTimerTimeByCounts</h3>
+<div class="member-signature"><span class="modifiers">private</span>&nbsp;<span class="return-type">long</span>&nbsp;<span class="element-name">getPlaybackTimerTimeByCounts</span>()</div>
+<div class="block">Calculates and returns the frame length in milliseconds</div>
+<dl class="notes">
+<dt>Returns:</dt>
+<dd>- Time in milliseconds the timer should wait between frames</dd>
+</dl>
+</section>
+</li>
+<li>
 <section class="detail" id="createAndShowGUI()">
 <h3>createAndShowGUI</h3>
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name">createAndShowGUI</span>()</div>
+<div class="member-signature"><span class="modifiers">private</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name">createAndShowGUI</span>()</div>
 <div class="block">Builds all major GUI elements and adds them to the main frame.
  This method should be called on startup and on project loading when another project is already loaded.</div>
 </section>
@@ -806,7 +1362,7 @@ implements <a href="ImportListener.html" title="interface in org.emrick.project"
 <li>
 <section class="detail" id="deleteDirectory(java.io.File)">
 <h3>deleteDirectory</h3>
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">boolean</span>&nbsp;<span class="element-name">deleteDirectory</span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/io/File.html" title="class or interface in java.io" class="external-link">File</a>&nbsp;directoryToBeDeleted)</span></div>
+<div class="member-signature"><span class="modifiers">private</span>&nbsp;<span class="return-type">boolean</span>&nbsp;<span class="element-name">deleteDirectory</span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/io/File.html" title="class or interface in java.io" class="external-link">File</a>&nbsp;directoryToBeDeleted)</span></div>
 <div class="block">Recursively empties and deletes the specified file/directory.</div>
 <dl class="notes">
 <dt>Parameters:</dt>
@@ -819,7 +1375,7 @@ implements <a href="ImportListener.html" title="interface in org.emrick.project"
 <li>
 <section class="detail" id="getEffectOptionsButton()">
 <h3>getEffectOptionsButton</h3>
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.desktop/javax/swing/JButton.html" title="class or interface in javax.swing" class="external-link">JButton</a></span>&nbsp;<span class="element-name">getEffectOptionsButton</span>()</div>
+<div class="member-signature"><span class="modifiers">private</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.desktop/javax/swing/JButton.html" title="class or interface in javax.swing" class="external-link">JButton</a></span>&nbsp;<span class="element-name">getEffectOptionsButton</span>()</div>
 <div class="block">Initializes the Effect Options button and the effects popup menu and returns the Effect Options button.</div>
 <dl class="notes">
 <dt>Returns:</dt>
@@ -846,14 +1402,14 @@ implements <a href="ImportListener.html" title="interface in org.emrick.project"
 <li>
 <section class="detail" id="removeFlowViewer()">
 <h3>removeFlowViewer</h3>
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name">removeFlowViewer</span>()</div>
+<div class="member-signature"><span class="modifiers">private</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name">removeFlowViewer</span>()</div>
 <div class="block">Removes the flow viewer from the main content panel and restores the run menu to be used again</div>
 </section>
 </li>
 <li>
 <section class="detail" id="stopServer()">
 <h3>stopServer</h3>
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name">stopServer</span>()</div>
+<div class="member-signature"><span class="modifiers">private</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name">stopServer</span>()</div>
 <div class="block">Stops the currently running web server, restores the run menu to be used again,
  and cleans the filesystem of any files created by the web server</div>
 </section>
@@ -861,7 +1417,7 @@ implements <a href="ImportListener.html" title="interface in org.emrick.project"
 <li>
 <section class="detail" id="runServer(java.lang.String,boolean)">
 <h3>runServer</h3>
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name">runServer</span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;path,
+<div class="member-signature"><span class="modifiers">private</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name">runServer</span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;path,
  boolean&nbsp;lightBoard)</span></div>
 <div class="block">Prompts the user for information and then starts a web server using this information</div>
 <dl class="notes">
@@ -875,7 +1431,7 @@ implements <a href="ImportListener.html" title="interface in org.emrick.project"
 <li>
 <section class="detail" id="loadProject(java.io.File)">
 <h3>loadProject</h3>
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name">loadProject</span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/io/File.html" title="class or interface in java.io" class="external-link">File</a>&nbsp;path)</span></div>
+<div class="member-signature"><span class="modifiers">private</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name">loadProject</span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/io/File.html" title="class or interface in java.io" class="external-link">File</a>&nbsp;path)</span></div>
 <div class="block">Loads a new .emrick file to the viewport to be edited.</div>
 <dl class="notes">
 <dt>Parameters:</dt>
@@ -886,7 +1442,7 @@ implements <a href="ImportListener.html" title="interface in org.emrick.project"
 <li>
 <section class="detail" id="buildScrubBarPanel()">
 <h3>buildScrubBarPanel</h3>
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name">buildScrubBarPanel</span>()</div>
+<div class="member-signature"><span class="modifiers">private</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name">buildScrubBarPanel</span>()</div>
 <div class="block">Loads the ScrubBarGUI Panel if it has not been created, or refreshes it if it already exists.</div>
 </section>
 </li>
@@ -944,7 +1500,7 @@ implements <a href="ImportListener.html" title="interface in org.emrick.project"
 <li>
 <section class="detail" id="exportCsvFileForPerformerDeviceIDs(java.io.File)">
 <h3>exportCsvFileForPerformerDeviceIDs</h3>
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name">exportCsvFileForPerformerDeviceIDs</span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/io/File.html" title="class or interface in java.io" class="external-link">File</a>&nbsp;selectedFile)</span></div>
+<div class="member-signature"><span class="modifiers">private</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name">exportCsvFileForPerformerDeviceIDs</span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/io/File.html" title="class or interface in java.io" class="external-link">File</a>&nbsp;selectedFile)</span></div>
 <div class="block">Builds and exports a csv file containing configuration data for led strips and performers
  <p>
      Format:
@@ -967,14 +1523,14 @@ implements <a href="ImportListener.html" title="interface in org.emrick.project"
 <li>
 <section class="detail" id="applyDefaultLEDConfiguration()">
 <h3>applyDefaultLEDConfiguration</h3>
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name">applyDefaultLEDConfiguration</span>()</div>
+<div class="member-signature"><span class="modifiers">private</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name">applyDefaultLEDConfiguration</span>()</div>
 <div class="block">Applies a default led configuration to all performers</div>
 </section>
 </li>
 <li>
 <section class="detail" id="parseCsvFileForPerformerDeviceIDs(java.io.File)">
 <h3>parseCsvFileForPerformerDeviceIDs</h3>
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name">parseCsvFileForPerformerDeviceIDs</span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/io/File.html" title="class or interface in java.io" class="external-link">File</a>&nbsp;inputFile)</span></div>
+<div class="member-signature"><span class="modifiers">private</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name">parseCsvFileForPerformerDeviceIDs</span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/io/File.html" title="class or interface in java.io" class="external-link">File</a>&nbsp;inputFile)</span></div>
 <div class="block">Imports a configuration csv file and applies the config to an open project.</div>
 <dl class="notes">
 <dt>Parameters:</dt>
@@ -985,14 +1541,14 @@ implements <a href="ImportListener.html" title="interface in org.emrick.project"
 <li>
 <section class="detail" id="openProjectDialog()">
 <h3>openProjectDialog</h3>
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name">openProjectDialog</span>()</div>
+<div class="member-signature"><span class="modifiers">private</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name">openProjectDialog</span>()</div>
 <div class="block">Opens a prompt for the user to select a project to open.</div>
 </section>
 </li>
 <li>
 <section class="detail" id="saveProjectDialog()">
 <h3>saveProjectDialog</h3>
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name">saveProjectDialog</span>()</div>
+<div class="member-signature"><span class="modifiers">private</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name">saveProjectDialog</span>()</div>
 <div class="block">Attempts to save the project to a file.
  If the currently open project is a new project, the user will be prompted to specify
  a save location before the project is saved.</div>
@@ -1001,7 +1557,7 @@ implements <a href="ImportListener.html" title="interface in org.emrick.project"
 <li>
 <section class="detail" id="saveAsProjectDialog()">
 <h3>saveAsProjectDialog</h3>
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name">saveAsProjectDialog</span>()</div>
+<div class="member-signature"><span class="modifiers">private</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name">saveAsProjectDialog</span>()</div>
 <div class="block">Prompts the user for a location to save the current project.</div>
 </section>
 </li>
@@ -1079,7 +1635,7 @@ implements <a href="ImportListener.html" title="interface in org.emrick.project"
 <li>
 <section class="detail" id="rebuildPageTabCounts()">
 <h3>rebuildPageTabCounts</h3>
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name">rebuildPageTabCounts</span>()</div>
+<div class="member-signature"><span class="modifiers">private</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name">rebuildPageTabCounts</span>()</div>
 <div class="block">Rebuilds the map of set labels to set start counts that is used in ScrubBarGUI.</div>
 </section>
 </li>
@@ -1097,7 +1653,7 @@ implements <a href="ImportListener.html" title="interface in org.emrick.project"
 <li>
 <section class="detail" id="setupEffectView(java.util.ArrayList)">
 <h3>setupEffectView</h3>
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name">setupEffectView</span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/ArrayList.html" title="class or interface in java.util" class="external-link">ArrayList</a>&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Integer.html" title="class or interface in java.lang" class="external-link">Integer</a>&gt;&nbsp;ids)</span></div>
+<div class="member-signature"><span class="modifiers">private</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name">setupEffectView</span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/ArrayList.html" title="class or interface in java.util" class="external-link">ArrayList</a>&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Integer.html" title="class or interface in java.lang" class="external-link">Integer</a>&gt;&nbsp;ids)</span></div>
 <div class="block">Initializes the effect panel and its dependencies</div>
 <dl class="notes">
 <dt>Parameters:</dt>
@@ -1158,14 +1714,14 @@ implements <a href="ImportListener.html" title="interface in org.emrick.project"
 <li>
 <section class="detail" id="updateRFTriggerButton()">
 <h3>updateRFTriggerButton</h3>
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name">updateRFTriggerButton</span>()</div>
+<div class="member-signature"><span class="modifiers">private</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name">updateRFTriggerButton</span>()</div>
 <div class="block">Create a create/delete button depending on whether there is RF trigger at current count.</div>
 </section>
 </li>
 <li>
 <section class="detail" id="playAudioFromCorrectPosition()">
 <h3>playAudioFromCorrectPosition</h3>
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name">playAudioFromCorrectPosition</span>()</div>
+<div class="member-signature"><span class="modifiers">private</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name">playAudioFromCorrectPosition</span>()</div>
 <div class="block">Begin playing audio in sync with the drill playback</div>
 </section>
 </li>
@@ -1192,7 +1748,7 @@ implements <a href="ImportListener.html" title="interface in org.emrick.project"
 <li>
 <section class="detail" id="showEffectBeforeFirstTriggerError()">
 <h3>showEffectBeforeFirstTriggerError</h3>
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name">showEffectBeforeFirstTriggerError</span>()</div>
+<div class="member-signature"><span class="modifiers">private</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name">showEffectBeforeFirstTriggerError</span>()</div>
 <div class="block">Display an error message to the user that indicates an RF Trigger has not been placed yet.</div>
 </section>
 </li>
@@ -1363,7 +1919,7 @@ implements <a href="ImportListener.html" title="interface in org.emrick.project"
 <li>
 <section class="detail" id="updateEffectViewPanel(org.emrick.project.effect.EffectList)">
 <h3>updateEffectViewPanel</h3>
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name">updateEffectViewPanel</span><wbr><span class="parameters">(<a href="effect/EffectList.html" title="enum class in org.emrick.project.effect">EffectList</a>&nbsp;effectType)</span></div>
+<div class="member-signature"><span class="modifiers">private</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name">updateEffectViewPanel</span><wbr><span class="parameters">(<a href="effect/EffectList.html" title="enum class in org.emrick.project.effect">EffectList</a>&nbsp;effectType)</span></div>
 <div class="block">Update the effect panel to display the currently selected effect</div>
 <dl class="notes">
 <dt>Parameters:</dt>
@@ -1374,14 +1930,14 @@ implements <a href="ImportListener.html" title="interface in org.emrick.project"
 <li>
 <section class="detail" id="updateTimelinePanel()">
 <h3>updateTimelinePanel</h3>
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name">updateTimelinePanel</span>()</div>
+<div class="member-signature"><span class="modifiers">private</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name">updateTimelinePanel</span>()</div>
 <div class="block">Update the timeline panel to show data relevant to the currently selected performers.</div>
 </section>
 </li>
 <li>
 <section class="detail" id="saveProject(java.io.File,java.io.File)">
 <h3>saveProject</h3>
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name">saveProject</span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/io/File.html" title="class or interface in java.io" class="external-link">File</a>&nbsp;path,
+<div class="member-signature"><span class="modifiers">private</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name">saveProject</span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/io/File.html" title="class or interface in java.io" class="external-link">File</a>&nbsp;path,
  <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/io/File.html" title="class or interface in java.io" class="external-link">File</a>&nbsp;archivePath)</span></div>
 <div class="block">Save the current project to a .emrick file.</div>
 <dl class="notes">
@@ -1394,7 +1950,7 @@ implements <a href="ImportListener.html" title="interface in org.emrick.project"
 <li>
 <section class="detail" id="timeBeforeEffect(int,org.emrick.project.effect.Effect,java.util.ArrayList,java.lang.Long[])">
 <h3>timeBeforeEffect</h3>
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">long</span>&nbsp;<span class="element-name">timeBeforeEffect</span><wbr><span class="parameters">(int&nbsp;index,
+<div class="member-signature"><span class="modifiers">private</span>&nbsp;<span class="return-type">long</span>&nbsp;<span class="element-name">timeBeforeEffect</span><wbr><span class="parameters">(int&nbsp;index,
  <a href="effect/Effect.html" title="class in org.emrick.project.effect">Effect</a>&nbsp;e,
  <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/ArrayList.html" title="class or interface in java.util" class="external-link">ArrayList</a>&lt;<a href="effect/Effect.html" title="class in org.emrick.project.effect">Effect</a>&gt;&nbsp;effects,
  <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Long.html" title="class or interface in java.lang" class="external-link">Long</a>[]&nbsp;timesMS)</span></div>
@@ -1413,7 +1969,7 @@ implements <a href="ImportListener.html" title="interface in org.emrick.project"
 <li>
 <section class="detail" id="timeAfterEffect(int,org.emrick.project.effect.Effect,java.util.ArrayList,java.lang.Long[])">
 <h3>timeAfterEffect</h3>
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">long</span>&nbsp;<span class="element-name">timeAfterEffect</span><wbr><span class="parameters">(int&nbsp;index,
+<div class="member-signature"><span class="modifiers">private</span>&nbsp;<span class="return-type">long</span>&nbsp;<span class="element-name">timeAfterEffect</span><wbr><span class="parameters">(int&nbsp;index,
  <a href="effect/Effect.html" title="class in org.emrick.project.effect">Effect</a>&nbsp;e,
  <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/ArrayList.html" title="class or interface in java.util" class="external-link">ArrayList</a>&lt;<a href="effect/Effect.html" title="class in org.emrick.project.effect">Effect</a>&gt;&nbsp;effects,
  <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Long.html" title="class or interface in java.lang" class="external-link">Long</a>[]&nbsp;timesMS)</span></div>
@@ -1432,7 +1988,7 @@ implements <a href="ImportListener.html" title="interface in org.emrick.project"
 <li>
 <section class="detail" id="getEffectTriggerIndex(org.emrick.project.effect.Effect,java.lang.Long[])">
 <h3>getEffectTriggerIndex</h3>
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">int</span>&nbsp;<span class="element-name">getEffectTriggerIndex</span><wbr><span class="parameters">(<a href="effect/Effect.html" title="class in org.emrick.project.effect">Effect</a>&nbsp;e,
+<div class="member-signature"><span class="modifiers">private</span>&nbsp;<span class="return-type">int</span>&nbsp;<span class="element-name">getEffectTriggerIndex</span><wbr><span class="parameters">(<a href="effect/Effect.html" title="class in org.emrick.project.effect">Effect</a>&nbsp;e,
  <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Long.html" title="class or interface in java.lang" class="external-link">Long</a>[]&nbsp;timesMS)</span></div>
 <div class="block">Calculates the index of the RF Trigger immediately before the relevant effect.</div>
 <dl class="notes">
@@ -1447,7 +2003,7 @@ implements <a href="ImportListener.html" title="interface in org.emrick.project"
 <li>
 <section class="detail" id="exportPackets(java.io.File)">
 <h3>exportPackets</h3>
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name">exportPackets</span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/io/File.html" title="class or interface in java.io" class="external-link">File</a>&nbsp;path)</span></div>
+<div class="member-signature"><span class="modifiers">private</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name">exportPackets</span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/io/File.html" title="class or interface in java.io" class="external-link">File</a>&nbsp;path)</span></div>
 <div class="block">Multithreaded export of firmware-readable packet data to a .pkt file.</div>
 <dl class="notes">
 <dt>Parameters:</dt>
@@ -1458,7 +2014,7 @@ implements <a href="ImportListener.html" title="interface in org.emrick.project"
 <li>
 <section class="detail" id="writeSysMsg(java.lang.String)">
 <h3>writeSysMsg</h3>
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name">writeSysMsg</span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;msg)</span></div>
+<div class="member-signature"><span class="modifiers">private</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name">writeSysMsg</span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;msg)</span></div>
 <div class="block">Writes a system message in the top right of the screen</div>
 <dl class="notes">
 <dt>Parameters:</dt>

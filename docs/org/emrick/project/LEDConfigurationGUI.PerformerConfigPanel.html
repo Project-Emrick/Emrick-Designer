@@ -108,6 +108,15 @@ loadScripts(document, 'script');</script>
 <li>
 <section class="nested-class-summary" id="nested-class-summary">
 <h2>Nested Class Summary</h2>
+<div class="caption"><span>Nested Classes</span></div>
+<div class="summary-table three-column-summary">
+<div class="table-header col-first">Modifier and Type</div>
+<div class="table-header col-second">Class</div>
+<div class="table-header col-last">Description</div>
+<div class="col-first even-row-color"><code>private class&nbsp;</code></div>
+<div class="col-second even-row-color"><code><a href="LEDConfigurationGUI.PerformerConfigPanel.DrawLEDs.html" class="type-name-link" title="class in org.emrick.project">LEDConfigurationGUI.PerformerConfigPanel.DrawLEDs</a></code></div>
+<div class="col-last even-row-color">&nbsp;</div>
+</div>
 <div class="inherited-list">
 <h2 id="nested-classes-inherited-from-class-javax.swing.JPanel">Nested classes/interfaces inherited from class&nbsp;javax.swing.<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.desktop/javax/swing/JPanel.html" title="class or interface in javax.swing" class="external-link">JPanel</a></h2>
 <code><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.desktop/javax/swing/JPanel.AccessibleJPanel.html" title="class or interface in javax.swing" class="external-link">JPanel.AccessibleJPanel</a></code></div>
@@ -131,9 +140,24 @@ loadScripts(document, 'script');</script>
 <div class="table-header col-first">Modifier and Type</div>
 <div class="table-header col-second">Field</div>
 <div class="table-header col-last">Description</div>
+<div class="col-first even-row-color"><code>private int</code></div>
+<div class="col-second even-row-color"><code><a href="#edit" class="member-name-link">edit</a></code></div>
+<div class="col-last even-row-color">&nbsp;</div>
+<div class="col-first odd-row-color"><code>private <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/ArrayList.html" title="class or interface in java.util" class="external-link">ArrayList</a>&lt;<a href="LEDStrip.html" title="class in org.emrick.project">LEDStrip</a>&gt;</code></div>
+<div class="col-second odd-row-color"><code><a href="#ledStrips" class="member-name-link">ledStrips</a></code></div>
+<div class="col-last odd-row-color">&nbsp;</div>
+<div class="col-first even-row-color"><code>private <a href="Performer.html" title="class in org.emrick.project">Performer</a></code></div>
+<div class="col-second even-row-color"><code><a href="#performer" class="member-name-link">performer</a></code></div>
+<div class="col-last even-row-color">&nbsp;</div>
+<div class="col-first odd-row-color"><code>private <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.desktop/javax/swing/JPanel.html" title="class or interface in javax.swing" class="external-link">JPanel</a></code></div>
+<div class="col-second odd-row-color"><code><a href="#performerPanel" class="member-name-link">performerPanel</a></code></div>
+<div class="col-last odd-row-color">&nbsp;</div>
 <div class="col-first even-row-color"><code>boolean</code></div>
 <div class="col-second even-row-color"><code><a href="#selected" class="member-name-link">selected</a></code></div>
 <div class="col-last even-row-color">&nbsp;</div>
+<div class="col-first odd-row-color"><code>private boolean</code></div>
+<div class="col-second odd-row-color"><code><a href="#showLEDs" class="member-name-link">showLEDs</a></code></div>
+<div class="col-last odd-row-color">&nbsp;</div>
 </div>
 <div class="inherited-list">
 <h3 id="fields-inherited-from-class-javax.swing.JComponent">Fields inherited from class&nbsp;javax.swing.<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.desktop/javax/swing/JComponent.html" title="class or interface in javax.swing" class="external-link">JComponent</a></h3>
@@ -234,9 +258,39 @@ loadScripts(document, 'script');</script>
 <h2>Field Details</h2>
 <ul class="member-list">
 <li>
+<section class="detail" id="performer">
+<h3>performer</h3>
+<div class="member-signature"><span class="modifiers">private</span>&nbsp;<span class="return-type"><a href="Performer.html" title="class in org.emrick.project">Performer</a></span>&nbsp;<span class="element-name">performer</span></div>
+</section>
+</li>
+<li>
+<section class="detail" id="performerPanel">
+<h3>performerPanel</h3>
+<div class="member-signature"><span class="modifiers">private</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.desktop/javax/swing/JPanel.html" title="class or interface in javax.swing" class="external-link">JPanel</a></span>&nbsp;<span class="element-name">performerPanel</span></div>
+</section>
+</li>
+<li>
+<section class="detail" id="ledStrips">
+<h3>ledStrips</h3>
+<div class="member-signature"><span class="modifiers">private</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/ArrayList.html" title="class or interface in java.util" class="external-link">ArrayList</a>&lt;<a href="LEDStrip.html" title="class in org.emrick.project">LEDStrip</a>&gt;</span>&nbsp;<span class="element-name">ledStrips</span></div>
+</section>
+</li>
+<li>
+<section class="detail" id="showLEDs">
+<h3>showLEDs</h3>
+<div class="member-signature"><span class="modifiers">private</span>&nbsp;<span class="return-type">boolean</span>&nbsp;<span class="element-name">showLEDs</span></div>
+</section>
+</li>
+<li>
 <section class="detail" id="selected">
 <h3>selected</h3>
 <div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">boolean</span>&nbsp;<span class="element-name">selected</span></div>
+</section>
+</li>
+<li>
+<section class="detail" id="edit">
+<h3>edit</h3>
+<div class="member-signature"><span class="modifiers">private</span>&nbsp;<span class="return-type">int</span>&nbsp;<span class="element-name">edit</span></div>
 </section>
 </li>
 </ul>
