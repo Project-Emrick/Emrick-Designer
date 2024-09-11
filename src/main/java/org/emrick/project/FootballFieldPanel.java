@@ -132,7 +132,6 @@ public class FootballFieldPanel extends JPanel implements RepaintListener {
 
     public void setCurrentCount(int currentCount) {
         this.currentCount = currentCount;
-        repaint();
     }
 
     public int getCurrentSetStartCount() {
