@@ -11,9 +11,7 @@ import org.emrick.project.serde.*;
 
 import javax.swing.Timer;
 import javax.swing.*;
-import javax.swing.border.*;
 import javax.swing.filechooser.*;
-import javax.swing.text.*;
 import java.awt.Font;
 import java.awt.Image;
 import java.awt.*;
@@ -45,6 +43,17 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
     private FootballFieldPanel footballFieldPanel;
     private FootballFieldBackground footballFieldBackground;
     private LEDConfigurationGUI ledConfigurationGUI;
+    private TimelineGUI timelineGUI;
+    private EffectGUI effectGUI;
+    private SelectionGroupGUI groupsGUI;
+    private RFTriggerGUI rfTriggerGUI;
+    private FlowViewGUI flowViewGUI;
+    private LEDStripViewGUI ledStripViewGUI;
+    private ScrubBarGUI scrubBarGUI; // Refers to ScrubBarGUI instance, with functionality
+    private JPanel scrubBarPanel; // Refers directly to panel of ScrubBarGUI. Reduces UI refreshing issues.
+    private JPanel effectViewPanel;
+    private JPanel timelinePanel;
+
     // dots
     private final JLabel sysMsg = new JLabel("Welcome to Emrick Designer!", SwingConstants.RIGHT);
     private final Timer clearSysMsg = new Timer(5000, e -> {
@@ -53,21 +62,6 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
     // JSON serde
     private final Gson gson;
     private final Path userHome = Paths.get(System.getProperty("user.home"), ".emrick");
-    private final String[] tutorialMessages = {
-            "<html>Welcome to Media Editor!<br>Click 'File' to open or create new project.<br></html>",
-            "Modify Each player over Main Panel",
-            "<html>Use the Scrub Bar to manipulate your project. <br> You can change to the drill you wanted or " +
-            "change the speed there <br></html> ",
-            "<html>On the right side,<br> there are many effects that can apply to each performers.<br></html>",
-            "Use the 'Help' menu for detailed documentation."
-    };
-    public int currentTutorialIndex = 0;
-    private JPanel scrubBarPanel; // Refers directly to panel of ScrubBarGUI. Reduces UI refreshing issues.
-    private ScrubBarGUI scrubBarGUI; // Refers to ScrubBarGUI instance, with functionality
-    private JPanel effectViewPanel;
-
-    private JPanel timelinePanel;
-    private TimelineGUI timelineGUI;
 
     // Audio Components
     //  May want to abstract this away into some DrillPlayer class in the future
@@ -76,8 +70,6 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
 
     // Effect
     private EffectManager effectManager;
-    private EffectGUI effectGUI;
-    private SelectionGroupGUI groupsGUI;
     private Effect currentEffect;
     private Effect copiedEffect;
     private EffectList selectedEffectType = EffectList.STATIC_COLOR;
@@ -95,26 +87,17 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
     public final int CHECK_LR = 0x800;
 
     // RF Trigger
-    private RFTriggerGUI rfTriggerGUI;
     private HashMap<Integer, RFTrigger> count2RFTrigger;
-    private boolean runningShow;
 
-    private FlowViewGUI flowViewGUI;
-    private boolean isLightBoardMode;
-
-    private LEDStripViewGUI ledStripViewGUI;
 
     // Time keeping
     private TimeManager timeManager;
     private ArrayList<SyncTimeGUI.Pair> timeSync = null;
     private boolean useStartDelay; // If we are at the first count of the first set, useStartDelay = true
     private float startDelay; // Drills might not start immediately, therefore use this. Unit: seconds.
-    private float playbackSpeed = 1;
-    // The selected playback speed. For example "0.5", "1.0", "1.5". Use as a multiplier
+    private float playbackSpeed = 1; // The selected playback speed. For example "0.5", "1.0", "1.5". Use as a multiplier
     private java.util.Timer playbackTimer = null;
-    private long frameStartTime;
-    private long playbackStartMS;
-    private int timeAdjustment = 0;
+
     // Web Server
     private HttpServer server;
     private String ssid;
@@ -132,19 +115,42 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
     private ProgrammingTracker programmingTracker;
     private JProgressBar programmingProgressBar;
     private boolean lightBoardMode;
+
     // Flow viewer
     private JMenuItem runShowItem;
     private JMenuItem flowViewerItem;
     private JMenuItem lightBoardFlowViewerItem;
     private JMenuItem stopShowItem;
+    private boolean isLightBoardMode;
 
     private JCheckBoxMenuItem showIndividualView;
+
     // Project info
     private File archivePath = null;
     private File emrickPath = null;
     private File csvFile;
     private SerialTransmitter serialTransmitter;
     JFrame webServerFrame;
+
+    public static void main(String[] args) {
+        final String file;
+        if (args.length != 0) {
+            file = args[0];
+        } else {
+            file = "";
+        }
+        try {
+            UIManager.setLookAndFeel(new FlatLightLaf());
+        } catch (Exception ex) {
+            System.err.println("Failed to initialize LaF");
+        }
+
+        // Run this program on the Event Dispatch Thread (EDT)
+        EventQueue.invokeLater(new Runnable() {
+            @Override
+            public void run() { new MediaEditorGUI(file); }
+        });
+    }
 
     public MediaEditorGUI(String file) {
         // serde setup
@@ -162,16 +168,12 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         clearSysMsg.setRepeats(false);
         clearSysMsg.start();
 
-
-
         // Change Font Size for Menu and MenuIem
         Font f = new Font("FlatLaf.style", Font.PLAIN, 14);
         UIManager.put("Menu.font", f);
         UIManager.put("MenuItem.font", f);
         UIManager.put("CheckBoxMenuItem.font", f);
         UIManager.put("RadioButtonMenuItem.font", f);
-
-
 
         // Main frame
         frame = new JFrame("Emrick Designer");
@@ -229,13 +231,11 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         };
         frame.addWindowListener(windowListener);
 
-
         currentID = MAX_CONNECTIONS;
 
         // Make sure user dir exists
         File userDir = new File(PathConverter.pathConverter("", false));
         userDir.mkdirs();
-
 
         // Delete leftover files from show_data/
         File showDataDir = new File(PathConverter.pathConverter("show_data/", false));
@@ -274,7 +274,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         }
 
         noRequestTimer = new Timer(25000, e -> {
-           onRequestComplete(-1);
+            onRequestComplete(-1);
         });
 
         if (!file.equals("")) {
@@ -295,10 +295,6 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
 
     }
 
-//    private void setPlaybackTimerTimeByFps() {
-//        playbackTimer.setDelay((int) (1 / scrubBarGUI.getFps() * 1000.0 / playbackSpeed));
-//    }
-//
     private long getPlaybackTimerTimeByCounts() {
         float setSyncDuration = timeSync.get(scrubBarGUI.getCurrentSetIndex()).getValue();
         float setDuration = scrubBarGUI.getCurrSetDuration();
@@ -316,59 +312,6 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         }
 
         // playback timer
-        playbackStartMS = 0;
-
-        playbackTimer = new java.util.Timer();
-
-
-
-
-
-        /*playbackTimer = new Timer(0, e -> {
-            if (scrubBarGUI == null || playbackTimer == null) {
-                // TODO: throw an error, we shouldn't be able to be here!
-                return;
-            }
-
-            // Start delay
-            if (useStartDelay) {
-                useStartDelay = false; // prevent infinite delay
-
-                // System.out.println("Attempting to delay drill start.");
-                playbackTimer.stop();
-                int startDelayMs = (int) (startDelay * 1000);
-                Timer delayTimer = new Timer(startDelayMs, e2 -> {
-                    playbackTimer.start();
-                });
-                delayTimer.setRepeats(false);
-                delayTimer.start();
-                return;
-            }
-
-            canSeekAudio = false;
-            if (scrubBarGUI.isUseFps()) {
-                frameStartTime = System.currentTimeMillis();
-                if (scrubBarGUI.nextStep(playbackSpeed)) {
-                    // Reached the end
-                    playbackTimer.stop();
-                    scrubBarGUI.setIsPlayingPlay();
-                }
-                setPlaybackTimerTimeByFps();
-            } else {
-                scrubBarGUI.nextCount();
-
-                if (scrubBarGUI.isAtLastSet()) {
-                    // Reached the end
-                    playbackTimer.stop();
-                    audioPlayer.pauseAudio();
-                    scrubBarGUI.setIsPlayingPlay();
-                    canSeekAudio = true;
-                    return;
-                }
-                setPlaybackTimerTimeByCounts();
-            }
-            canSeekAudio = true;
-        });*/
 
         ////////////////////////// Panels //////////////////////////
 
@@ -392,19 +335,14 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
 
         // Scrub bar cursor starts on first count of drill by default
         useStartDelay = true;
-        runningShow = false;
-
 
         mainContentPanel = new JPanel();
         mainContentPanel.setLayout(new BorderLayout());
 
-        // footballFieldPanel.setBorder(BorderFactory.createTitledBorder("Main View"));
         footballField.setLayout(new OverlayLayout(footballField));
         footballField.add(footballFieldPanel, BorderLayout.CENTER);
         footballField.add(footballFieldBackground, BorderLayout.CENTER);
         mainContentPanel.add(footballField, BorderLayout.CENTER);
-//        mainContentPanel.add(footballFieldBackground, BorderLayout.CENTER);
-//        mainContentPanel.add(footballFieldPanel, BorderLayout.CENTER);
 
         // Scrub Bar Panel
         buildScrubBarPanel();
@@ -442,17 +380,13 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             writeSysMsg("New Project...");
             new SelectFileGUI(frame, this);
         });
-// TODO: select stuff
-        // TODO: make sfg not local, have it load the project after import finishes// TODO: select stuff
-// TODO: select stuff
-        // Open Emrick Project// TODO: select stuff
-        // https://www.codejava.net/java-se/swing/add-file-filter-for-jfilechooser-dialog// TODO: select stuff
-        JMenuItem openItem = new JMenuItem(FILE_MENU_OPEN_PROJECT);// TODO: select stuff
+
+        JMenuItem openItem = new JMenuItem(FILE_MENU_OPEN_PROJECT);
         openItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_O,
-                Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx()));// TODO: select stuff
-        fileMenu.add(openItem);// TODO: select stuff
-        openItem.addActionListener(e -> {// TODO: select stuff
-            openProjectDialog();// TODO: select stuff
+                Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx()));
+        fileMenu.add(openItem);
+        openItem.addActionListener(e -> {
+            openProjectDialog();
         });
 
         fileMenu.addSeparator();
@@ -562,7 +496,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
 
         JMenuItem undoColorsItem = new JMenuItem("Undo");
         undoColorsItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_Z,
-                                                             Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx()));
+                Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx()));
         undoColorsItem.addActionListener(e -> {
             //undoColorChange();
             if (ledConfigurationGUI.isShowing()) {
@@ -578,9 +512,8 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
 
         JMenuItem redoColorsItem = new JMenuItem("Redo");
         redoColorsItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_Y,
-                                                             Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx()));
+                Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx()));
         redoColorsItem.addActionListener(e -> {
-            //redoColorChange();
             if (ledConfigurationGUI.isShowing()) {
                 ledConfigurationGUI.redo();
             } else {
@@ -600,12 +533,6 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             if (this.effectManager == null) return;
             this.effectManager.removeAllEffectsFromAllLEDStrips();
 
-            // TODO: Below is deprecated. Schedule for removal.
-            if (archivePath == null) {
-                System.out.println("no project loaded");
-                return;
-            }
-
             footballFieldPanel.repaint();
             updateTimelinePanel();
             updateEffectViewPanel(selectedEffectType);
@@ -614,8 +541,8 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         // Remove effects for selected
         JMenuItem removeEffectsForSelected = new JMenuItem("Reset Selected Performers");
         removeEffectsForSelected.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_R,
-                                                                       Toolkit.getDefaultToolkit()
-                                                                              .getMenuShortcutKeyMaskEx()));
+                Toolkit.getDefaultToolkit()
+                        .getMenuShortcutKeyMaskEx()));
         editMenu.add(removeEffectsForSelected);
         removeEffectsForSelected.addActionListener(e -> {
             if (this.effectManager == null) return;
@@ -630,15 +557,15 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         // Copy current effect
         JMenuItem copyCurrentEffect = new JMenuItem("Copy Effect");
         copyCurrentEffect.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_C,
-                                                                Toolkit.getDefaultToolkit()
-                                                                       .getMenuShortcutKeyMaskEx()));
+                Toolkit.getDefaultToolkit()
+                        .getMenuShortcutKeyMaskEx()));
         copyCurrentEffect.addActionListener(e -> {
             if (this.effectManager == null) return;
             if (this.currentEffect == null) {
                 JOptionPane.showMessageDialog(frame,
-                                              "No effect to copy.",
-                                              "Copy Effect: Warning",
-                                              JOptionPane.WARNING_MESSAGE);
+                        "No effect to copy.",
+                        "Copy Effect: Warning",
+                        JOptionPane.WARNING_MESSAGE);
                 return;
             }
             this.copiedEffect = this.currentEffect;
@@ -648,8 +575,8 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         // Paste copied effect
         JMenuItem pasteCopiedEffect = new JMenuItem("Paste Effect");
         pasteCopiedEffect.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_V,
-                                                                Toolkit.getDefaultToolkit()
-                                                                       .getMenuShortcutKeyMaskEx()));
+                Toolkit.getDefaultToolkit()
+                        .getMenuShortcutKeyMaskEx()));
         pasteCopiedEffect.addActionListener(e -> {
             if (this.effectManager == null) return;
             boolean success = this.effectManager.addEffectToSelectedLEDStrips(this.copiedEffect);
@@ -658,10 +585,11 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         });
         editMenu.add(pasteCopiedEffect);
 
-
         // Select Menu
         JMenu selectMenu = new JMenu("Select");
         menuBar.add(selectMenu);
+
+        // TODO: FIX this feature
         JMenuItem selectByCrit = new JMenuItem("Select by Criteria");
         selectByCrit.addActionListener(e -> {
             if (archivePath == null) {
@@ -675,7 +603,6 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                 labels.add(p.getLabel());
                 symbols.add(p.getSymbol());
             }
-            System.out.println("selecting by criteria...");
             FilterSelect filterSelect = new FilterSelect(frame, this, labels, symbols);
             filterSelect.show();
         });
@@ -931,51 +858,51 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         });
 
         wirelessCheck.addActionListener(e -> {
-           SerialTransmitter st = comPortPrompt("Transmitter");
-           if (st == null) return;
+            SerialTransmitter st = comPortPrompt("Transmitter");
+            if (st == null) return;
 
-           st.writeToSerialPort("c");
+            st.writeToSerialPort("c");
         });
 
         modifyBoardItem.addActionListener(e -> {
-           SerialTransmitter st = comPortPrompt("Receiver");
-           if (!st.getType().equals("Receiver")) {
-               return;
-           }
+            SerialTransmitter st = comPortPrompt("Receiver");
+            if (!st.getType().equals("Receiver")) {
+                return;
+            }
 
-           JTextField boardIDField = new JTextField();
-           JCheckBox boardIDEnable = new JCheckBox("Write new Board ID");
-           boardIDEnable.setSelected(false);
-           JTextField ledCountField = new JTextField();
-           JCheckBox enableLedCount = new JCheckBox("Write new LED Count");
-           enableLedCount.setSelected(false);
+            JTextField boardIDField = new JTextField();
+            JCheckBox boardIDEnable = new JCheckBox("Write new Board ID");
+            boardIDEnable.setSelected(false);
+            JTextField ledCountField = new JTextField();
+            JCheckBox enableLedCount = new JCheckBox("Write new LED Count");
+            enableLedCount.setSelected(false);
 
-           Object[] inputs = {
-                   new JLabel("Board ID: "), boardIDField, boardIDEnable,
-                   new JLabel("LED Count: "), ledCountField, enableLedCount
-           };
+            Object[] inputs = {
+                    new JLabel("Board ID: "), boardIDField, boardIDEnable,
+                    new JLabel("LED Count: "), ledCountField, enableLedCount
+            };
 
-           int option = JOptionPane.showConfirmDialog(null, inputs, "Enter board parameters:", JOptionPane.OK_CANCEL_OPTION);
-           if (option == JOptionPane.OK_OPTION) {
-               if (boardIDEnable.isSelected()) {
-                   int id = Integer.parseInt(boardIDField.getText());
-                   String position = "";
-                   if (!footballFieldPanel.drill.ledStrips.isEmpty()) {
-                       LEDStrip ledStrip = footballFieldPanel.drill.ledStrips.get(id);
-                       position = ledStrip.getLedConfig().getLabel();
-                   }
+            int option = JOptionPane.showConfirmDialog(null, inputs, "Enter board parameters:", JOptionPane.OK_CANCEL_OPTION);
+            if (option == JOptionPane.OK_OPTION) {
+                if (boardIDEnable.isSelected()) {
+                    int id = Integer.parseInt(boardIDField.getText());
+                    String position = "";
+                    if (!footballFieldPanel.drill.ledStrips.isEmpty()) {
+                        LEDStrip ledStrip = footballFieldPanel.drill.ledStrips.get(id);
+                        position = ledStrip.getLedConfig().getLabel();
+                    }
 
-                   st.writeBoardID(boardIDField.getText(), position);
-                   try {
-                       Thread.sleep(5000);
-                   } catch (InterruptedException ex) {
-                       throw new RuntimeException(ex);
-                   }
-               }
-               if (enableLedCount.isSelected()) {
-                   st.writeLEDCount(ledCountField.getText());
-               }
-           }
+                    st.writeBoardID(boardIDField.getText(), position);
+                    try {
+                        Thread.sleep(5000);
+                    } catch (InterruptedException ex) {
+                        throw new RuntimeException(ex);
+                    }
+                }
+                if (enableLedCount.isSelected()) {
+                    st.writeLEDCount(ledCountField.getText());
+                }
+            }
         });
 
         // Help menu
@@ -989,46 +916,8 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         helpMenu.add(submitIssueItem);
         submitIssueItem.addActionListener(e -> JOptionPane.showMessageDialog(frame, "You clicked: Submit an Issue"));
 
-
-        /*
-            Tutorial
-         */
-        JMenuItem tutorialButton = new JMenuItem("Tutorial");
-        helpMenu.add(tutorialButton);
-        tutorialButton.addActionListener(new ActionListener() {
-
-            public void actionPerformed(ActionEvent e) {
-                currentTutorialIndex = 0;
-                if (currentTutorialIndex < tutorialMessages.length) {
-
-                    // Open or Create project
-                    if (currentTutorialIndex == 0) {
-                        fileMenu.setBorder(BorderFactory.createLineBorder(Color.RED, 2));
-                        Timer timer = new Timer(1000, new ActionListener() {
-                            public void actionPerformed(ActionEvent e) {
-                                fileMenu.setBorder(BorderFactory.createLineBorder(Color.BLACK, 0));
-                            }
-                        });
-                        timer.setRepeats(false);
-                        timer.start();
-//                        displayNonModalTip(tutorialMessages[currentTutorialIndex]);
-                    }
-                    displayNonModalTip(tutorialMessages[currentTutorialIndex]);
-
-                    // 1
-//                    if (currentTutorialIndex == 1) {
-//                        System.out.println("second\n");
-//                        displayNonModalTip(tutorialMessages[currentTutorialIndex]);
-//
-//                    }
-//                    System.out.println(currentTutorialIndex);
-                }
-
-            }
-        });
-
+        // TODO: Actually implement this with a real login server or delete this feature
         JMenuItem loginItem = new JMenu("Account");
-        //loginItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_L, ActionEvent.CTRL_MASK));
         menuBar.add(loginItem);
 
         JMenuItem signIn = new JMenuItem("Sign In");
@@ -1437,8 +1326,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             ledStripViewGUI = new LEDStripViewGUI(new ArrayList<>(), effectManager);
             footballFieldPanel.setCurrentSet(footballFieldPanel.drill.sets.get(0));
             ledStripViewGUI.setCurrentSet(footballFieldPanel.drill.sets.get(0));
-//            rebuildPageTabCounts();
-//            scrubBarGUI.setReady(true);
+
             footballFieldBackground.justResized = true;
             footballFieldBackground.repaint();
 
@@ -1489,8 +1377,6 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
 
     @Override
     public void onMultiSelect(HashSet<Integer> labels, HashSet<String> symbols) {
-        // TODO: select stuff
-//        footballFieldPanel.selectedPerformers
         for (Performer p : footballFieldPanel.drill.performers) {
             if (labels.contains(p.getLabel()) || symbols.contains(p.getSymbol())) {
                 for (Integer i : p.getLedStrips()) {
@@ -1547,7 +1433,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
 
     private void exportCsvFileForPerformerDeviceIDs(File selectedFile) {
         try (FileWriter fileWriter = new FileWriter(selectedFile)) {
-            fileWriter.write("Performer Label,LED ID,LED Label,LED Count,Height,Width,Horizontal Offset,VerticalOffset");
+            fileWriter.write("Performer Label,LED ID,LED Label,LED Count,Height,Width,Horizontal Offset,VerticalOffset,,Size:," + footballFieldPanel.drill.ledStrips.size());
             fileWriter.write("\n");
             fileWriter.flush();
             for (Performer performer : footballFieldPanel.drill.performers) {
@@ -1611,9 +1497,13 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
 
     private void parseCsvFileForPerformerDeviceIDs(File inputFile) {
         try {
+            // TODO: rewrite so that effects are not lost during this process
             BufferedReader reader = new BufferedReader(new FileReader(inputFile));
             String line = reader.readLine();
+            int size = 0;
             if (line != null) {
+                String[] split = line.split(",");
+                size = Integer.parseInt(split[10]);
                 line = reader.readLine();
             }
             Performer currPerformer = null;
@@ -1624,12 +1514,11 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
 
             // Very strange buffered reader bug occurs for large csv files
             // The current code works so don't touch it unless major changes need to happen
-            while (line != null) {
-                System.out.println(line);
+            while (line != null && currStripID < size) {
                 if (!line.startsWith(",")) {
                     String[] tmp = line.split(",");
                     try {
-                        if (footballFieldPanel.drill.performers.size() == 0) {
+                        if (footballFieldPanel.drill.performers.isEmpty()) {
                             break;
                         }
                         currPerformer = footballFieldPanel.drill.performers.stream().filter(p -> p.getIdentifier().equals(tmp[0])).findFirst().get();
@@ -1707,7 +1596,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         fileChooser.setDialogTitle("Save Project");
         fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
         fileChooser.setFileFilter(new FileNameExtensionFilter("Emrick Project Files (*.emrick)",
-                                                                       "emrick"));
+                "emrick"));
 
         if (fileChooser.showSaveDialog(null) == JFileChooser.APPROVE_OPTION) {
             String path = fileChooser.getSelectedFile().getAbsolutePath();
@@ -1724,58 +1613,6 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
     ////////////////////////// Effect Listeners //////////////////////////
 
     ////////////////////////// Football Field Listeners //////////////////////////
-
-    private int calculateTransparency(Date time, String weather) {
-        Calendar calendar = Calendar.getInstance();
-        calendar.setTime(time);
-        int hour = calendar.get(Calendar.HOUR_OF_DAY);
-        int transparency;
-
-        if (hour >= 6 && hour < 12) { // Morning
-            transparency = 50;
-        } else if (hour >= 12 && hour < 18) { // Afternoon
-            transparency = 150;
-        } else { // Evening
-            transparency = 100;
-        }
-
-        switch (weather) {
-            case "Clear":
-                transparency -= 30;
-                break;
-            case "Cloudy":
-                transparency += 20;
-                break;
-            case "Rainy":
-                transparency += 40;
-                break;
-            case "Snowy":
-                transparency += 150;
-                break;
-        }
-        transparency = Math.min(transparency, 255);
-        return transparency;
-    }
-
-    public static void main(String[] args) {
-        final String file;
-        if (args.length != 0) {
-            file = args[0];
-        } else {
-            file = "";
-        }
-        try {
-            UIManager.setLookAndFeel(new FlatLightLaf());
-        } catch (Exception ex) {
-            System.err.println("Failed to initialize LaF");
-        }
-
-        // Run this program on the Event Dispatch Thread (EDT)
-        EventQueue.invokeLater(new Runnable() {
-            @Override
-            public void run() { new MediaEditorGUI(file); }
-        });
-    }
 
     ////////////////////////// Importing Listeners //////////////////////////
 
@@ -1875,9 +1712,6 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
 
         scrubBarGUI.updatePageTabCounts(pageTabCounts, totalCounts);
         buildScrubBarPanel();
-
-        // At the point of import process, the project is ready to sync
-        //scrubBarGUI.getSyncButton().doClick();
     }
 
     ////////////////////////// Sync Listeners //////////////////////////
@@ -1934,7 +1768,6 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         if (scrubBarGUI.isUseFps()) {
             period = (long) (1 / scrubBarGUI.getFps() * 1000.0 / playbackSpeed);
             footballFieldPanel.setUseFps(true);
-            playbackStartMS = System.currentTimeMillis() - timeManager.getCount2MSec().get(footballFieldPanel.getCurrentCount());
             System.out.println("Start time: " + timeManager.getCount2MSec().get(footballFieldPanel.getCurrentCount()));
         } else {
             period = getPlaybackTimerTimeByCounts();
@@ -2324,35 +2157,6 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         timelinePanel.repaint();
     }
 
-    // Don't delete, just unused for now because I don't want my disk space being eaten up
-    private void autosaveProject() {
-        // we don't have a project open, nothing to save
-        if (archivePath == null) {
-            return;
-        }
-
-        long time = System.currentTimeMillis() / 1000L;
-        Path dir = Paths.get(userHome.toString(), String.valueOf(time));
-        Path jsonDir = Paths.get(dir.toString(), "backup.json");
-        Path archiveDir = Paths.get(dir.toString(), archivePath.getName());
-        File backupDir = new File(dir.toUri());
-        if (!backupDir.mkdirs()) {
-            // TODO: handle error from the backup failing
-            return;
-        }
-
-        try {
-            Files.copy(archivePath.toPath(), archiveDir);
-        } catch (IOException e) {
-            // TODO: handle error from the backup failing
-            System.out.println("MediaEditorGUI autosaveProject(): " + e.getMessage());
-            return;
-        }
-
-        saveProject(jsonDir.toFile(), archiveDir.toFile());
-        writeSysMsg("Autosaved project to `" + jsonDir + "`.");
-    }
-
     public void saveProject(File path, File archivePath) {
         ProjectFile pf;
 
@@ -2377,7 +2181,6 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         String g = gson.toJson(pf);
 
         writeSysMsg("saving to `" + path + "`");
-//        System.out.println(g);
 
         String jsonName = path.getName();
         jsonName = jsonName.substring(0, jsonName.indexOf(".emrick")) + ".json";
@@ -2487,17 +2290,17 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         ArrayList<Long> timeMS = new ArrayList<>();
         timeMS.add(rfTriggerArray[0].getTimestampMillis());
         for (i = 1; i < rfTriggerArray.length; i++) {
-             for (int j = 0; j < timeMS.size(); j++) {
-                 if (rfTriggerArray[i].getTimestampMillis() < timeMS.get(j)) {
-                     timeMS.add(j, rfTriggerArray[i].getTimestampMillis());
-                     break;
-                 } else {
-                     if (j == timeMS.size()-1) {
-                         timeMS.add(rfTriggerArray[i].getTimestampMillis());
-                         break;
-                     }
-                 }
-             }
+            for (int j = 0; j < timeMS.size(); j++) {
+                if (rfTriggerArray[i].getTimestampMillis() < timeMS.get(j)) {
+                    timeMS.add(j, rfTriggerArray[i].getTimestampMillis());
+                    break;
+                } else {
+                    if (j == timeMS.size()-1) {
+                        timeMS.add(rfTriggerArray[i].getTimestampMillis());
+                        break;
+                    }
+                }
+            }
         }
         Long[] timesMS = new Long[timeMS.size()];
         timesMS = timeMS.toArray(timesMS);
@@ -2560,92 +2363,6 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         clearSysMsg.stop();
         sysMsg.setText(msg);
         clearSysMsg.start();
-    }
-
-    private void displayNonModalTip(String message) {
-        JWindow tipWindow = new JWindow(frame);
-        JPanel contentPane = new JPanel(new BorderLayout());
-        contentPane.setBorder(BorderFactory.createLineBorder(Color.BLACK, 2));
-        contentPane.add(new JLabel(message, SwingConstants.CENTER), BorderLayout.CENTER);
-
-        JPanel buttonPanel = new JPanel();
-        JButton nextButton = new JButton("Next");
-        JButton closeButton = new JButton("Close");
-
-        buttonPanel.add(closeButton);
-        buttonPanel.add(nextButton);
-        contentPane.add(buttonPanel, BorderLayout.SOUTH);
-
-        nextButton.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent e) {
-                tipWindow.dispose();
-                currentTutorialIndex++;
-                if (currentTutorialIndex < tutorialMessages.length) {
-                    // Effect Panel
-                    if (currentTutorialIndex == 3) {
-                        effectViewPanel.setBorder(BorderFactory.createLineBorder(Color.RED, 2));
-                        Timer timer = new Timer(1000, new ActionListener() {
-                            public void actionPerformed(ActionEvent e) {
-                                effectViewPanel.setBorder(BorderFactory.createTitledBorder("Effect View"));
-                            }
-                        });
-                        timer.setRepeats(false);
-                        timer.start();
-                        displayNonModalTip(tutorialMessages[currentTutorialIndex]);
-                    }
-                    // Scrub Bar
-                    else if (currentTutorialIndex == 2) {
-                        scrubBarPanel.setBorder(BorderFactory.createLineBorder(Color.RED, 2));
-                        Timer timer = new Timer(1000, new ActionListener() {
-                            public void actionPerformed(ActionEvent e) {
-                                if (scrubBarPanel != null) {
-                                    mainContentPanel.remove(scrubBarPanel);
-                                }
-                                scrubBarPanel = scrubBarGUI.getScrubBarPanel();
-                                scrubBarPanel.setBorder(BorderFactory.createTitledBorder("Scrub Bar"));
-                                scrubBarPanel.setPreferredSize(new Dimension(650, 120));
-
-                                mainContentPanel.add(scrubBarPanel, BorderLayout.SOUTH);
-
-                                mainContentPanel.revalidate();
-                                mainContentPanel.repaint();
-                            }
-                        });
-                        timer.setRepeats(false);
-                        timer.start();
-                        displayNonModalTip(tutorialMessages[currentTutorialIndex]);
-                    }
-                    // main Content
-                    else if (currentTutorialIndex == 1) {
-                        mainContentPanel.setBorder(BorderFactory.createLineBorder(Color.RED, 2));
-                        Timer timer = new Timer(1000, new ActionListener() {
-                            public void actionPerformed(ActionEvent e) {
-                                mainContentPanel.setBorder(BorderFactory.createLineBorder(Color.BLACK, 0));
-                            }
-                        });
-                        timer.setRepeats(false);
-                        timer.start();
-                        displayNonModalTip(tutorialMessages[currentTutorialIndex]);
-                    }
-                    //
-                    else {
-                        displayNonModalTip(tutorialMessages[currentTutorialIndex]);
-                    }
-                }
-            }
-        });
-
-        closeButton.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent e) {
-                // Restore the original border
-                tipWindow.dispose();
-            }
-        });
-        tipWindow.setContentPane(contentPane);
-        tipWindow.setSize(400, 100);
-        tipWindow.setLocation(frame.getLocationOnScreen().x + (frame.getWidth() - tipWindow.getWidth()) / 2,
-                              frame.getLocationOnScreen().y + (frame.getHeight() - tipWindow.getHeight()) / 2);
-        tipWindow.setVisible(true);
     }
 
     @Override
@@ -2892,18 +2609,12 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
     }
 
 
-
-    /*
-        tutorial
-     */
-
     private class PlaybackTask extends TimerTask {
 
         @Override
         public void run() {
             canSeekAudio = false;
             if (scrubBarGUI.isUseFps()) {
-                frameStartTime = System.currentTimeMillis();
                 if (scrubBarGUI.nextStep(playbackSpeed)) {
                     // Reached the end
                     playbackTimer.cancel();
@@ -2931,22 +2642,4 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             canSeekAudio = true;
         }
     }
-
-    public class LimitedDocument extends PlainDocument {
-
-        private final int limit;
-
-        public LimitedDocument(int limit) {
-            this.limit = limit;
-        }
-
-        public void insertString(int offset, String str, AttributeSet attr) throws BadLocationException {
-            if (str == null) return;
-
-            if ((getLength() + str.length()) <= limit) {
-                super.insertString(offset, str, attr);
-            }
-        }
-    }
-
 }
