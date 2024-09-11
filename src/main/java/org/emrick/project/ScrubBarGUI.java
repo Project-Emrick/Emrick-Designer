@@ -253,7 +253,8 @@ public class ScrubBarGUI extends JComponent implements ActionListener {
 
         time += step;
         float pastSetTime = 0;
-        for (int i = 0; i < getCurrentSetIndex(); i++) {
+        int currentSetIndex = getCurrentSetIndex();
+        for (int i = 0; i < currentSetIndex; i++) {
             pastSetTime += timeSync.get(i).getValue();
         }
 
@@ -263,6 +264,13 @@ public class ScrubBarGUI extends JComponent implements ActionListener {
         double ratio = (time - pastSetTime) / setSyncDuration;
         double setCount = ratio * setDuration;
         topSlider.setValue(getCurrentSetStart() + (int) Math.floor(setCount));
+
+        // account for adjusting time into another set
+        if (currentSetIndex != getCurrentSetIndex()) {
+            pastSetTime += timeSync.get(currentSetIndex).getValue();
+            setSyncDuration = timeSync.get(getCurrentSetIndex()).getValue();
+            ratio = (time - pastSetTime) / setSyncDuration;
+        }
         scrubBarListener.onTimeChange((long) ((time - pastSetTime) * 1000));
 
         scrubBarListener.onSetChange(getCurrentSetIndex());
