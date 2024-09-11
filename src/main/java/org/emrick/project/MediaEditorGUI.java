@@ -1789,7 +1789,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                         JOptionPane.YES_NO_OPTION);
                 if (resp == JOptionPane.YES_OPTION) {
                     System.out.println("User saving and quitting.");
-                    saveAsProjectDialog();
+                    saveProjectDialog();
                 } else if (resp == JOptionPane.NO_OPTION) {
                     System.out.println("User not saving but quitting anyway.");
                 }
