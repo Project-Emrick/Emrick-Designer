@@ -1,0 +1,1 @@
+packageSearchIndex = [{"l":"All Packages","u":"allpackages-index.html"},{"l":"org.emrick.project"},{"l":"org.emrick.project.actions"},{"l":"org.emrick.project.audio"},{"l":"org.emrick.project.effect"},{"l":"org.emrick.project.serde"}];updateSearchResults();

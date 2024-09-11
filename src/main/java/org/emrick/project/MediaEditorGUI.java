@@ -25,7 +25,7 @@ import java.time.*;
 import java.util.*;
 
 /**
- * Main class of Emrick Designer.
+ * Main class of Emrick Designer
  * Contains all GUI elements and logic for light show design and Emrick board interaction
  */
 public class MediaEditorGUI extends Component implements ImportListener, ScrubBarListener, SyncListener,
