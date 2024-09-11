@@ -428,7 +428,6 @@ public class LEDConfigurationGUI extends JPanel {
 
             if (showLEDs) {
                 for (int y = 0; y < ledStrips.size(); y++) {
-                    // TODO: add an add button
                     LEDStrip ledStrip = ledStrips.get(y);
                     JPanel ledStripPanel = new JPanel();
                     ledStripPanel.setLayout(new BoxLayout(ledStripPanel, BoxLayout.X_AXIS));
