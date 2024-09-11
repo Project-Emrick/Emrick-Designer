@@ -38,6 +38,7 @@ application {
 }
 
 tasks.javadoc {
+    options.memberLevel = JavadocMemberLevel.PRIVATE
     destinationDir = new File("$projectDir\\docs")
 }
 

@@ -44,13 +44,13 @@ loadScripts(document, 'script');</script>
 <ul class="sub-nav-list">
 <li>Summary:&nbsp;</li>
 <li>Nested&nbsp;|&nbsp;</li>
-<li>Field&nbsp;|&nbsp;</li>
+<li><a href="#field-summary">Field</a>&nbsp;|&nbsp;</li>
 <li><a href="#constructor-summary">Constr</a>&nbsp;|&nbsp;</li>
 <li><a href="#method-summary">Method</a></li>
 </ul>
 <ul class="sub-nav-list">
 <li>Detail:&nbsp;</li>
-<li>Field&nbsp;|&nbsp;</li>
+<li><a href="#field-detail">Field</a>&nbsp;|&nbsp;</li>
 <li><a href="#constructor-detail">Constr</a>&nbsp;|&nbsp;</li>
 <li><a href="#method-detail">Method</a></li>
 </ul>
@@ -80,6 +80,36 @@ loadScripts(document, 'script');</script>
 </section>
 <section class="summary">
 <ul class="summary-list">
+<!-- =========== FIELD SUMMARY =========== -->
+<li>
+<section class="field-summary" id="field-summary">
+<h2>Field Summary</h2>
+<div class="caption"><span>Fields</span></div>
+<div class="summary-table three-column-summary">
+<div class="table-header col-first">Modifier and Type</div>
+<div class="table-header col-second">Field</div>
+<div class="table-header col-last">Description</div>
+<div class="col-first even-row-color"><code>private <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/HashMap.html" title="class or interface in java.util" class="external-link">HashMap</a>&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Integer.html" title="class or interface in java.lang" class="external-link">Integer</a>,<wbr><a href="RFTrigger.html" title="class in org.emrick.project.effect">RFTrigger</a>&gt;</code></div>
+<div class="col-second even-row-color"><code><a href="#count2RFTrigger" class="member-name-link">count2RFTrigger</a></code></div>
+<div class="col-last even-row-color">&nbsp;</div>
+<div class="col-first odd-row-color"><code>private <a href="../FootballFieldPanel.html" title="class in org.emrick.project">FootballFieldPanel</a></code></div>
+<div class="col-second odd-row-color"><code><a href="#footballFieldPanel" class="member-name-link">footballFieldPanel</a></code></div>
+<div class="col-last odd-row-color">&nbsp;</div>
+<div class="col-first even-row-color"><code>private <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/ArrayList.html" title="class or interface in java.util" class="external-link">ArrayList</a>&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Integer.html" title="class or interface in java.lang" class="external-link">Integer</a>&gt;</code></div>
+<div class="col-second even-row-color"><code><a href="#ids" class="member-name-link">ids</a></code></div>
+<div class="col-last even-row-color">&nbsp;</div>
+<div class="col-first odd-row-color"><code>private final <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/Stack.html" title="class or interface in java.util" class="external-link">Stack</a>&lt;<a href="../actions/UndoableAction.html" title="interface in org.emrick.project.actions">UndoableAction</a>&gt;</code></div>
+<div class="col-second odd-row-color"><code><a href="#redoStack" class="member-name-link">redoStack</a></code></div>
+<div class="col-last odd-row-color">&nbsp;</div>
+<div class="col-first even-row-color"><code>private <a href="../TimeManager.html" title="class in org.emrick.project">TimeManager</a></code></div>
+<div class="col-second even-row-color"><code><a href="#timeManager" class="member-name-link">timeManager</a></code></div>
+<div class="col-last even-row-color">&nbsp;</div>
+<div class="col-first odd-row-color"><code>private final <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/Stack.html" title="class or interface in java.util" class="external-link">Stack</a>&lt;<a href="../actions/UndoableAction.html" title="interface in org.emrick.project.actions">UndoableAction</a>&gt;</code></div>
+<div class="col-second odd-row-color"><code><a href="#undoStack" class="member-name-link">undoStack</a></code></div>
+<div class="col-last odd-row-color">&nbsp;</div>
+</div>
+</section>
+</li>
 <!-- ======== CONSTRUCTOR SUMMARY ======== -->
 <li>
 <section class="constructor-summary" id="constructor-summary">
@@ -166,6 +196,12 @@ loadScripts(document, 'script');</script>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>void</code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#setIds(java.util.ArrayList)" class="member-name-link">setIds</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/ArrayList.html" title="class or interface in java.util" class="external-link">ArrayList</a>&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Integer.html" title="class or interface in java.lang" class="external-link">Integer</a>&gt;&nbsp;ids)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>private void</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#showAddEffectErrorDialog(org.emrick.project.LEDStrip)" class="member-name-link">showAddEffectErrorDialog</a><wbr>(<a href="../LEDStrip.html" title="class in org.emrick.project">LEDStrip</a>&nbsp;ledStrip)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>private void</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#showAddRFTriggerErrorDialog(org.emrick.project.LEDStrip)" class="member-name-link">showAddRFTriggerErrorDialog</a><wbr>(<a href="../LEDStrip.html" title="class in org.emrick.project">LEDStrip</a>&nbsp;ledStrip)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>void</code></div>
 <div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#undo()" class="member-name-link">undo</a>()</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
@@ -181,6 +217,50 @@ loadScripts(document, 'script');</script>
 </section>
 <section class="details">
 <ul class="details-list">
+<!-- ============ FIELD DETAIL =========== -->
+<li>
+<section class="field-details" id="field-detail">
+<h2>Field Details</h2>
+<ul class="member-list">
+<li>
+<section class="detail" id="undoStack">
+<h3>undoStack</h3>
+<div class="member-signature"><span class="modifiers">private final</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/Stack.html" title="class or interface in java.util" class="external-link">Stack</a>&lt;<a href="../actions/UndoableAction.html" title="interface in org.emrick.project.actions">UndoableAction</a>&gt;</span>&nbsp;<span class="element-name">undoStack</span></div>
+</section>
+</li>
+<li>
+<section class="detail" id="redoStack">
+<h3>redoStack</h3>
+<div class="member-signature"><span class="modifiers">private final</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/Stack.html" title="class or interface in java.util" class="external-link">Stack</a>&lt;<a href="../actions/UndoableAction.html" title="interface in org.emrick.project.actions">UndoableAction</a>&gt;</span>&nbsp;<span class="element-name">redoStack</span></div>
+</section>
+</li>
+<li>
+<section class="detail" id="footballFieldPanel">
+<h3>footballFieldPanel</h3>
+<div class="member-signature"><span class="modifiers">private</span>&nbsp;<span class="return-type"><a href="../FootballFieldPanel.html" title="class in org.emrick.project">FootballFieldPanel</a></span>&nbsp;<span class="element-name">footballFieldPanel</span></div>
+</section>
+</li>
+<li>
+<section class="detail" id="timeManager">
+<h3>timeManager</h3>
+<div class="member-signature"><span class="modifiers">private</span>&nbsp;<span class="return-type"><a href="../TimeManager.html" title="class in org.emrick.project">TimeManager</a></span>&nbsp;<span class="element-name">timeManager</span></div>
+</section>
+</li>
+<li>
+<section class="detail" id="count2RFTrigger">
+<h3>count2RFTrigger</h3>
+<div class="member-signature"><span class="modifiers">private</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/HashMap.html" title="class or interface in java.util" class="external-link">HashMap</a>&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Integer.html" title="class or interface in java.lang" class="external-link">Integer</a>,<wbr><a href="RFTrigger.html" title="class in org.emrick.project.effect">RFTrigger</a>&gt;</span>&nbsp;<span class="element-name">count2RFTrigger</span></div>
+</section>
+</li>
+<li>
+<section class="detail" id="ids">
+<h3>ids</h3>
+<div class="member-signature"><span class="modifiers">private</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/ArrayList.html" title="class or interface in java.util" class="external-link">ArrayList</a>&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Integer.html" title="class or interface in java.lang" class="external-link">Integer</a>&gt;</span>&nbsp;<span class="element-name">ids</span></div>
+</section>
+</li>
+</ul>
+</section>
+</li>
 <!-- ========= CONSTRUCTOR DETAIL ======== -->
 <li>
 <section class="constructor-details" id="constructor-detail">
@@ -253,6 +333,18 @@ loadScripts(document, 'script');</script>
 <section class="detail" id="addEffectToSelectedLEDStrips(org.emrick.project.effect.Effect)">
 <h3>addEffectToSelectedLEDStrips</h3>
 <div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">boolean</span>&nbsp;<span class="element-name">addEffectToSelectedLEDStrips</span><wbr><span class="parameters">(<a href="Effect.html" title="class in org.emrick.project.effect">Effect</a>&nbsp;effect)</span></div>
+</section>
+</li>
+<li>
+<section class="detail" id="showAddRFTriggerErrorDialog(org.emrick.project.LEDStrip)">
+<h3>showAddRFTriggerErrorDialog</h3>
+<div class="member-signature"><span class="modifiers">private</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name">showAddRFTriggerErrorDialog</span><wbr><span class="parameters">(<a href="../LEDStrip.html" title="class in org.emrick.project">LEDStrip</a>&nbsp;ledStrip)</span></div>
+</section>
+</li>
+<li>
+<section class="detail" id="showAddEffectErrorDialog(org.emrick.project.LEDStrip)">
+<h3>showAddEffectErrorDialog</h3>
+<div class="member-signature"><span class="modifiers">private</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name">showAddEffectErrorDialog</span><wbr><span class="parameters">(<a href="../LEDStrip.html" title="class in org.emrick.project">LEDStrip</a>&nbsp;ledStrip)</span></div>
 </section>
 </li>
 <li>
