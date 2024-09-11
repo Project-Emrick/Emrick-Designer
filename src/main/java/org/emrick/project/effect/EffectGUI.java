@@ -748,6 +748,8 @@ public class EffectGUI implements ActionListener {
 
         durationField.getDocument().addDocumentListener(getDocumentListener());
 
+        durationTypeSelect.addActionListener(this);
+
         applyBtn.addActionListener(this);
         deleteBtn.addActionListener(this);
 
@@ -759,16 +761,23 @@ public class EffectGUI implements ActionListener {
 
         //////////////// 1st Row ////////////////
         currentComponents = new JComponent[2];
+        currentComponents[0] = new JLabel("Set count by: ");
+        setComponentSize(durationTypeSelect, 100, 25);
+        currentComponents[1] = durationTypeSelect;
+        panelComponents.add(currentComponents);
+
+        //////////////// 2nd Row ////////////////
+        currentComponents = new JComponent[2];
         currentComponents[0] = staticColorLabel;
         setComponentSize(startColorBtn, 20, 20);
         currentComponents[1] = startColorBtn;
         panelComponents.add(currentComponents);
 
-        //////////////// 2nd Row ////////////////
+        //////////////// 3rd Row ////////////////
         currentComponents = new JComponent[2];
         currentComponents[0] = durationLabel;
-        setComponentSize(delayField, 100, 25);
-        currentComponents[1] = delayField;
+        setComponentSize(durationField, 100, 25);
+        currentComponents[1] = durationField;
         panelComponents.add(currentComponents);
 
         //////////////// Apply or Delete Buttons ////////////////
@@ -1160,10 +1169,6 @@ public class EffectGUI implements ActionListener {
             }
         } else if (e.getSource().equals(this.applyBtn)) {
             applyToEffectMod();
-            if (this.effectMod.getEffectType() == EffectList.STATIC_COLOR) {
-                this.effectMod.setDO_DELAY(true);
-                this.effectMod.setUSE_DURATION(false);
-            }
             if (this.effectMod.getEffectType() == EffectList.CHASE) {
                 this.effectMod.getChaseSequence().remove(this.effectMod.getChaseSequence().size() - 1);
             }

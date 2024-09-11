@@ -75,9 +75,7 @@ public class StaticColorEffect implements GeneratedEffect {
         Effect effect = new Effect(this.getStartTime());
         effect.setEndTimeMSec(this.getEndTime());
         effect.setStartColor(this.getStaticColor());
-        effect.setDelay(this.getDuration());
-        effect.setDO_DELAY(true);
-        effect.setUSE_DURATION(false);
+        effect.setDuration(this.getDuration());
         effect.setEffectType(EffectList.STATIC_COLOR);
         effect.setId(this.getId());
         effect.setGeneratedEffect(this);
@@ -87,8 +85,17 @@ public class StaticColorEffect implements GeneratedEffect {
     @Override
     public ArrayList<EffectLEDStripMap> generateEffects(ArrayList<LEDStrip> ledStrips) {
         ArrayList<EffectLEDStripMap> map = new ArrayList<>();
+        Effect effect = new Effect(this.getStartTime());
+        effect.setEndTimeMSec(this.getEndTime());
+        effect.setStartColor(this.getStaticColor());
+        effect.setDelay(this.getDuration());
+        effect.setDO_DELAY(true);
+        effect.setUSE_DURATION(false);
+        effect.setEffectType(EffectList.STATIC_COLOR);
+        effect.setId(this.getId());
+        effect.setGeneratedEffect(this);
         for (LEDStrip ledStrip : ledStrips) {
-            map.add(new EffectLEDStripMap(generateEffectObj(), ledStrip));
+            map.add(new EffectLEDStripMap(effect, ledStrip));
         }
         return map;
     }
