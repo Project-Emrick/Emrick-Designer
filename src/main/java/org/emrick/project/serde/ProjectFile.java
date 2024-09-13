@@ -26,15 +26,4 @@ public class ProjectFile {
         this.ids = ids;
         this.selectionGroups = selectionGroups;
     }
-
-    /*
-    Concatenates the current drill with another selected drill file.
-    This creates a new single drill file and keeps the original
-    individual files.
-     */
-    public Drill concatenate(ProjectFile f1, ProjectFile f2) {
-
-
-    }
-
 }
