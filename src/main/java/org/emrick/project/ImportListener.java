@@ -8,8 +8,6 @@ public interface ImportListener {
     void onBeginImport();
     void onImport();
     void onFileSelect(File archivePath, File csvFile);
-    void onFloorCoverImport(Image image);
-    void onSurfaceImport(Image image);
     void onAudioImport(File audioFile);
     void onDrillImport(String drill);
 }

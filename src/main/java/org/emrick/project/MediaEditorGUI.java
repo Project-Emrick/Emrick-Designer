@@ -9,6 +9,7 @@ import org.emrick.project.audio.*;
 import org.emrick.project.effect.*;
 import org.emrick.project.serde.*;
 
+import javax.imageio.ImageIO;
 import javax.swing.Timer;
 import javax.swing.*;
 import javax.swing.filechooser.*;
@@ -351,6 +352,16 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         fieldScrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
         fieldScrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
         footballFieldBackground = new FootballFieldBackground(this);
+
+        try {
+            BufferedImage surface = ImageIO.read(new File(PathConverter.pathConverter("res/images/field/Surface.png", true)));
+            BufferedImage cover = ImageIO.read(new File(PathConverter.pathConverter("res/images/field/Cover.png", true)));
+            footballFieldBackground.setSurfaceImage(surface);
+            footballFieldBackground.setFloorCoverImage(cover);
+        } catch (IOException ioe) {
+            throw new RuntimeException(ioe);
+        }
+
         footballField = new JPanel();
 
         flowViewGUI = new FlowViewGUI(new HashMap<>(), this);
@@ -687,6 +698,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         toggleFloorCoverImage.setState(true);
         toggleFloorCoverImage.addActionListener(e -> {
             footballFieldBackground.setShowFloorCoverImage(!footballFieldBackground.isShowFloorCoverImage());
+            footballFieldBackground.justResized = true;
             footballFieldBackground.repaint();
         });
         viewMenu.add(toggleFloorCoverImage);
@@ -694,6 +706,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         toggleSurfaceImage.setState(true);
         toggleSurfaceImage.addActionListener(e -> {
             footballFieldBackground.setShowSurfaceImage(!footballFieldBackground.isShowSurfaceImage());
+            footballFieldBackground.justResized = true;
             footballFieldBackground.repaint();
         });
         viewMenu.add(toggleSurfaceImage);
@@ -1747,22 +1760,6 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         this.archivePath = archivePath;
         this.csvFile = csvFile;
         emrickPath = null;
-    }
-
-    @Override
-    public void onFloorCoverImport(Image image) {
-        footballFieldBackground.setFloorCoverImage((BufferedImage) image);
-        footballFieldPanel.setFloorCoverImage(image);
-        footballFieldBackground.repaint();
-        footballFieldPanel.repaint();
-    }
-
-    @Override
-    public void onSurfaceImport(Image image) {
-        footballFieldBackground.setSurfaceImage((BufferedImage) image);
-        footballFieldPanel.setSurfaceImage(image);
-        footballFieldBackground.repaint();
-        footballFieldPanel.repaint();
     }
 
     @Override
