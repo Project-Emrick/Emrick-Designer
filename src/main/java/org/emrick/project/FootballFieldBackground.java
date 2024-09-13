@@ -12,7 +12,7 @@ public class FootballFieldBackground extends JPanel {
     // Loading field decor.
     private BufferedImage surfaceImage;
     private BufferedImage floorCoverImage;
-    private final BufferedImage dummyImage = new BufferedImage(2640, 1155, BufferedImage.TYPE_INT_ARGB);
+    private final BufferedImage dummyImage = new BufferedImage(2635, 1155, BufferedImage.TYPE_INT_ARGB);
     private BufferedImage fullImage;
     private double ratio;
     private boolean showSurfaceImage = true;
@@ -50,6 +50,9 @@ public class FootballFieldBackground extends JPanel {
 
             }
         });
+        Graphics g = dummyImage.getGraphics();
+        g.setColor(new Color(0xBFBFBF));
+        g.fillRect(0, 0, dummyImage.getWidth(), dummyImage.getHeight());
     }
 
     @Override
@@ -66,18 +69,18 @@ public class FootballFieldBackground extends JPanel {
             }
             BufferedImage scaledImage = new BufferedImage((int) (dummyImage.getWidth() * ratio), (int) (dummyImage.getHeight() * ratio), BufferedImage.TYPE_INT_RGB);
             Graphics g1 = scaledImage.getGraphics();
+            if (!showSurfaceImage || (floorCoverImage == null && surfaceImage == null)) {
+                drawBetterImage(g1, dummyImage); // For accurate plotting, need some image reference
+            }
             if (surfaceImage != null && showSurfaceImage) {
                 drawBetterImage(g1, surfaceImage);
             }
 
             // Draw the floorCover image on top
             if (floorCoverImage != null && showFloorCoverImage) {
-                drawBetterCoverImage(g1, floorCoverImage);
+                drawBetterImage(g1, floorCoverImage);
             }
 
-            if (!showFloorCoverImage && !showSurfaceImage || (floorCoverImage == null && surfaceImage == null)) {
-                drawBetterImage(g1, dummyImage); // For accurate plotting, need some image reference
-            }
             fullImage = scaledImage;
         }
         int x = (getWidth() - (int) fieldWidth) / 2;
@@ -87,27 +90,6 @@ public class FootballFieldBackground extends JPanel {
             justResized = false;
             footballFieldListener.onResizeBackground();
         }
-    }
-
-    private void drawBetterCoverImage(Graphics g, BufferedImage image) {
-        assert image != null;
-
-        // Calculate the best width and height to maintain aspect ratio
-        double widthRatio = (double) getWidth() * 5.0/6.0 / image.getWidth();
-        double heightRatio = (double) getHeight() / image.getHeight();
-        double ratio = Math.min(widthRatio, heightRatio);
-
-        int width = (int) (image.getWidth() * ratio);
-        int height = (int) (image.getHeight() * ratio);
-
-        // Center the image
-        int x = (getWidth() - width) / 2;
-        if (heightRatio == ratio) {
-            x = (int) ((double) width / 12.0 * 6.0 / 5.0);
-            width = (int)((double) width * 1.004); // idk why this is necessary but it is. the math checks out without it but idk
-        }
-
-        g.drawImage(image, x, 0, width, height, this);
     }
 
     private void drawBetterImage(Graphics g, BufferedImage image) {

@@ -6,6 +6,7 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Scanner;
@@ -71,7 +72,7 @@ public class ImportArchive {
         }
 
         // See package.ini. Import available files
-        //  Current support: floorCover, audio
+        //  Current support:  audio
         for (Map.Entry<String, String> entry : iniData.get("Files").entrySet()) {
 
             // File missing
@@ -83,18 +84,8 @@ public class ImportArchive {
             // General-purpose callback
             importListener.onImport();
 
-            // Import floorCover
-            if (entry.getKey().equals("floorCover")) {
-                importFloorCover(componentPath);
-            }
-
-            // Import surface
-            else if (entry.getKey().equals("surface")) {
-                importSurface(componentPath);
-            }
-
             // Import audio
-            else if (entry.getKey().equals("audio")) {
+            if (entry.getKey().equals("audio")) {
                 importAudio(componentPath);
             }
         }
@@ -103,21 +94,6 @@ public class ImportArchive {
         if (drillSrc != null) {
             importDrill(drillSrc);
         }
-    }
-
-    private void importFloorCover(String path) {
-        System.out.println("Importing floor cover..." + path);
-        importListener.onFloorCoverImport(loadImage(path));
-    }
-
-    private void importSurface(String path) {
-        System.out.println("Importing surface..." + path);
-        BufferedImage image = (BufferedImage) loadImage(path);
-        // Consider writing cropped image to file?
-        //  Crop coordinates were obtained through trial and error, may change
-        assert image != null;
-        BufferedImage cropped = image.getSubimage(878, 580, 2640, 1155);
-        importListener.onSurfaceImport(cropped);
     }
 
     private void importAudio(String path) {
@@ -129,47 +105,4 @@ public class ImportArchive {
         System.out.println("Importing drill..." + path);
         importListener.onDrillImport(path);
     }
-
-    // Return Image object for images, e.g., field floorCover, surface
-    public static Image loadImage(String path) {
-        try {
-            return ImageIO.read(new File(path));
-        } catch (IOException e) {
-            System.err.println("ImportArchive.loadImage() " + e.getMessage());
-        }
-        return null;
-    }
-
-    // For Testing
-//    public static void main(String[] args) {
-//        ImportListener importListener = new ImportListener() {
-//            @Override
-//            public void onImport() {
-//                System.out.println("onImport called.");
-//            }
-//
-//            @Override
-//            public void onFloorCoverImport(Image image) {
-//                System.out.println("onFloorCoverImport called.");
-//            }
-//
-//            @Override
-//            public void onSurfaceImport(Image image) {
-//                System.out.println("onSurfaceImport called.");
-//            }
-//
-//            @Override
-//            public void onAudioImport(File audioFile) {
-//                System.out.println("onAudioImport called.");
-//            }
-//
-//            @Override
-//            public void onDrillImport(String drill) {
-//                System.out.println("onDrillImport called.");
-//            }
-//        };
-//
-//        ImportArchive importArchive = new ImportArchive(importListener);
-//        importArchive.fullImport("./src/test/java/org/emrick/project/Purdue23-1-1aint_no_mountain_high_enough.3dz", "./src/test/java/org/emrick/project/DrillExample.pdf");
-//    }
 }
