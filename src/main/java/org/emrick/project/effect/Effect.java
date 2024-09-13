@@ -12,7 +12,7 @@ import java.util.Objects;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 
-public class Effect implements Cloneable, TimelineEvent {
+public class  Effect implements Cloneable, TimelineEvent {
 
     public static EffectListener effectListener;
 

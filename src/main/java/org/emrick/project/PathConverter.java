@@ -15,7 +15,7 @@ public class PathConverter {
             if (System.getProperty("os.name").toLowerCase().contains("windows")) {
                 return System.getenv("PROGRAMFILES") + "/Emrick Designer/" + path;
             } else {
-                return "/System/Applications/Emrick Designer.app/" + path;
+                return "/Applications/Emrick Designer.app/" + path;
             }
         }
     }
