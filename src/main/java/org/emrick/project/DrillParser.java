@@ -100,18 +100,20 @@ public class DrillParser {
         try {
             label = Integer.parseInt(text.split("Label: ")[1].split(" ")[0]);
         } catch (NumberFormatException nfe) {
-            label = Integer.parseInt(text.split("Label: ")[1].split(" ")[0].substring(1));
+            String tmpstr = text.split("Label: ")[1].split(" ")[0].substring(1).replace(".", "");
+            label = Integer.parseInt(tmpstr);
         }
         Performer performer = new Performer(symbol, label, id);
         String[] lines = text.split("\n");
         for (int i = 1; i < lines.length-2; i++) {
             String set = lines[i].split(" ")[0];
             int duration;
-            if (lines[i].split(" ")[4].equals("")) {
-                duration = Integer.parseInt(lines[i].split(" ")[5]);
-            } else {
-                duration = Integer.parseInt(lines[i].split(" ")[4]);
+            String[] splitLine = lines[i].split(" ");
+            int j = 1;
+            while (j < splitLine.length && splitLine[j].isEmpty()) {
+                j++;
             }
+            duration = Integer.parseInt(splitLine[j]);
             double x = getX(lines[i]);
             double y = getY(lines[i]);
             Coordinate c = new Coordinate(x, y, set, duration, symbol + label);

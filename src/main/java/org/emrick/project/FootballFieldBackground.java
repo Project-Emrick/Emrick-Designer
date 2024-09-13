@@ -75,7 +75,7 @@ public class FootballFieldBackground extends JPanel {
                 drawBetterCoverImage(g1, floorCoverImage);
             }
 
-            if (!showFloorCoverImage && !showSurfaceImage) {
+            if (!showFloorCoverImage && !showSurfaceImage || (floorCoverImage == null && surfaceImage == null)) {
                 drawBetterImage(g1, dummyImage); // For accurate plotting, need some image reference
             }
             fullImage = scaledImage;
