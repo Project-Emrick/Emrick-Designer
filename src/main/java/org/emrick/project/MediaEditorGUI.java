@@ -2157,16 +2157,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
 
     @Override
     public void onPressEffect(Effect effect) {
-        // scrub to this effect
-        // make effects based on count pls
-        int count = 0;
-        long ms = effect.getStartTimeMSec();
-        // get count of the ms using the timemanager
-        if (timeManager != null) {
-            count = timeManager.MSec2Count(ms);
-        }
-        scrubBarGUI.setScrub(count-1);
-
+        // selcting first ensures the effect appears on the Effect View
         // search all ledstrips for the effect and select them if found
         if (effectManager != null) {
             ArrayList<LEDStrip> ledStrips = effectManager.getLEDStripsWithEffect(effect);
@@ -2174,6 +2165,15 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                 onGroupSelection(ledStrips.toArray(new LEDStrip[ledStrips.size()]));
             }
         }
+
+        // scrub to this effect
+        // make effects based on count pls
+        int count = 0;
+        long ms = effect.getStartTimeMSec();
+        if (timeManager != null) {
+            count = timeManager.MSec2Count(ms);
+        }
+        scrubBarGUI.setScrub(count-1);
     }
 
     /**
