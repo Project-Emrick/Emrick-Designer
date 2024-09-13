@@ -17,6 +17,6 @@ NAME="Emrick Designer"
 ./gradlew clean
 ./gradlew jpackage
 
-cp -r ./src/main/resources "$DIR/res/"
+cp -r ./src/main/resources "$DIR/Contents/res/"
 echo "File Copied"
 jpackage --type dmg --app-image "$DIR" --name "$NAME" --app-version "$VERSION" -d "./build/dist" --file-associations "FAemrick.properties" --file-associations "FApacket.properties" --mac-package-name "$NAME"

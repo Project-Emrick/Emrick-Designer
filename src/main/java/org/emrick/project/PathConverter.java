@@ -9,13 +9,13 @@ public class PathConverter {
             } else if (System.getProperty("os.name").toLowerCase().contains("linux")) {
                 return "/Desktop/Emrick-Designer/" + path;
             } else {
-                return "/Applications/Emrick Designer.app/" + path;
+                return "/Applications/Emrick Designer.app/Contents/" + path;
             }
         } else {
             if (System.getProperty("os.name").toLowerCase().contains("windows")) {
                 return System.getenv("PROGRAMFILES") + "/Emrick Designer/" + path;
             } else {
-                return "/System/Applications/Emrick Designer.app/" + path;
+                return "/Applications/Emrick Designer.app/Contents/" + path;
             }
         }
     }
