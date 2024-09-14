@@ -74,6 +74,9 @@ tasks.jpackage {
     windows {
         winConsole = false
     }
+    linux {
+        appName = "emrick-designer"
+    }
 }
 
 
