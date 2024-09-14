@@ -7,14 +7,17 @@ public class PathConverter {
             if (System.getProperty("os.name").toLowerCase().contains("windows")) {
                 return System.getProperty("user.home") + "/AppData/Local/Emrick Designer/" + path;
             } else if (System.getProperty("os.name").toLowerCase().contains("linux")) {
-                return "/Desktop/Emrick-Designer/" + path;
+                return System.getProperty("user.home") + "/Desktop/emrick-designer/" + path;
             } else {
                 return "/Applications/Emrick Designer.app/Contents/" + path;
             }
         } else {
             if (System.getProperty("os.name").toLowerCase().contains("windows")) {
                 return System.getenv("PROGRAMFILES") + "/Emrick Designer/" + path;
-            } else {
+            } else if (System.getProperty("os.name").toLowerCase().contains("linux")) {
+                return "/opt/emrick-designer/" + path;
+            }
+            else {
                 return "/Applications/Emrick Designer.app/Contents/" + path;
             }
         }
