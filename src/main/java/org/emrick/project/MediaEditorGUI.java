@@ -877,6 +877,8 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         hardwareMenu.add(verifyLightBoardItem);
         JMenuItem wirelessCheck = new JMenuItem("Wireless Check");
         hardwareMenu.add(wirelessCheck);
+        JMenuItem storageMode = new JMenuItem("Storage Mode");
+        hardwareMenu.add(storageMode);
         hardwareMenu.addSeparator();
         JMenuItem modifyBoardItem = new JMenuItem("Modify Board");
         hardwareMenu.add(modifyBoardItem);
@@ -900,6 +902,14 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             if (st == null) return;
 
             st.writeToSerialPort("c");
+        });
+
+        // For Storage Mode
+        storageMode.addActionListener(e -> {
+            SerialTransmitter st = comPortPrompt("Transmitter");
+            if (st == null) return;
+
+            st.writeToSerialPort("d");
         });
 
         modifyBoardItem.addActionListener(e -> {
