@@ -7,6 +7,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Scanner;
@@ -25,50 +26,72 @@ public class ImportArchive {
         this.importListener = importListener;
     }
 
-    public void fullImport(String archiveSrc, String drillSrc) {
+    public void fullImport(ArrayList<File> archiveFiles, String drillSrc) {
         importListener.onBeginImport();
+
+        ArrayList<String> absoluteArchivePaths = new ArrayList<>();
+        for (File f : archiveFiles) {
+            absoluteArchivePaths.add(f.getAbsolutePath());
+        }
+        ArrayList<File> copyArchiveFiles = new ArrayList<>();
+        for (String s : absoluteArchivePaths) {
+            copyArchiveFiles.add(new File(s));
+        }
 
         // ! NOTE ! Assume Working Directory is Emrick-Designer/
         System.out.println("Working Directory = " + System.getProperty("user.dir"));
 
         // Unzip into application resources/unzip/ subfolder. Within "AppData" on Windows, "Applications" on Mac
-        File archiveFile = new File(archiveSrc);
-        String fileNameNoExt = archiveFile.getName().replaceFirst("[.][^.]+$", "");
-        String unzipPath = PathConverter.pathConverter("show_data/" + fileNameNoExt, false);
 
-        Unzip.unzip(archiveSrc, unzipPath);
+        ArrayList<String> fileNamesNoExt = new ArrayList<>();
+
+        for (File f : copyArchiveFiles) {
+            fileNamesNoExt.add(f.getName().replaceFirst("[.][^.]+$", ""));
+        }
+
+        ArrayList<String> unzipPaths = new ArrayList<>();
+
+        for (String s : fileNamesNoExt) {
+            unzipPaths.add(PathConverter.pathConverter("show_data/" + s, false));
+        }
+        //continue here
+        Unzip.unzip(absoluteArchivePaths, unzipPaths);
 
         // Parse package.ini file
-        File iniFile = new File(unzipPath + File.separator + "package.ini");
+        ArrayList<File> iniFile = new ArrayList<>();
+        for (String s : unzipPaths) {
+            iniFile.add(new File(s + File.separator + "package.ini"));
+        }
         Map<String, Map<String, String>> iniData = new HashMap<>();
+        for (File f : iniFile) {
+            try {
+                Scanner iniReader = new Scanner(f);
+                String currentSection = null;
+                while (iniReader.hasNextLine()) {
+                    String line = iniReader.nextLine().trim();
+                    // System.out.println(line);
 
-        try {
-            Scanner iniReader = new Scanner(iniFile);
-            String currentSection = null;
-            while (iniReader.hasNextLine()) {
-                String line = iniReader.nextLine().trim();
-                // System.out.println(line);
+                    // Skip empty lines and comments
+                    if (line.isEmpty() || line.startsWith(";") || line.startsWith("#")) {
+                        continue;
+                    }
 
-                // Skip empty lines and comments
-                if (line.isEmpty() || line.startsWith(";") || line.startsWith("#")) {
-                    continue;
+                    // Section headers
+                    if (line.startsWith("[") && line.endsWith("]")) {
+                        currentSection = line.substring(1, line.length() - 1).trim();
+                        iniData.putIfAbsent(currentSection, new HashMap<>());
+                    }
+                    // Key-value pairs
+                    else if (line.contains("=") && currentSection != null) {
+                        String[] parts = line.split("=", 2);
+                        String key = parts[0].trim();
+                        String value = parts.length > 1 ? parts[1].trim() : ""; // value may be empty
+                        iniData.get(currentSection).put(key, value);
+                    }
                 }
-
-                // Section headers
-                if (line.startsWith("[") && line.endsWith("]")) {
-                    currentSection = line.substring(1, line.length() - 1).trim();
-                    iniData.putIfAbsent(currentSection, new HashMap<>());
-                }
-                // Key-value pairs
-                else if (line.contains("=") && currentSection != null) {
-                    String[] parts = line.split("=", 2);
-                    String key = parts[0].trim();
-                    String value = parts.length > 1 ? parts[1].trim() : ""; // value may be empty
-                    iniData.get(currentSection).put(key, value);
-                }
+            } catch (FileNotFoundException e) {
+                throw new RuntimeException(e);
             }
-        } catch (FileNotFoundException e) {
-            throw new RuntimeException(e);
         }
 
         // See package.ini. Import available files
@@ -79,14 +102,17 @@ public class ImportArchive {
             if (entry.getValue().isEmpty()) {
                 continue;
             }
-            String componentPath = unzipPath + "/" + entry.getValue();
+            ArrayList<String> componentPaths = new ArrayList<>();
+            for (String s : unzipPaths) {
+                componentPaths.add(s + "/" + entry.getValue());
+            }
 
             // General-purpose callback
             importListener.onImport();
 
             // Import audio
             if (entry.getKey().equals("audio")) {
-                importAudio(componentPath);
+                importAudio(componentPaths);
             }
         }
 
@@ -96,9 +122,13 @@ public class ImportArchive {
         }
     }
 
-    private void importAudio(String path) {
-        System.out.println("Importing audio..." + path);
-        importListener.onAudioImport(new File(path));
+    private void importAudio(ArrayList<String> paths) {
+        ArrayList<File> audioFiles = new ArrayList<>();
+        for (String path : paths) {
+            System.out.println("Importing audio..." + path);
+            audioFiles.add(new File(path));
+        }
+        importListener.onAudioImport(audioFiles);
     }
 
     private void importDrill(String path) {
@@ -106,49 +136,68 @@ public class ImportArchive {
         importListener.onDrillImport(path);
     }
 
-    public void concatImport(String archiveSrc, String drillSrc) {
+    public void concatImport(ArrayList<File> archiveSrc, String drillSrc) {
 
         // ! NOTE ! Assume Working Directory is Emrick-Designer/
         System.out.println("Working Directory = " + System.getProperty("user.dir"));
-
+        ArrayList<String> archivePaths = new ArrayList<>();
+        for (File f : archiveSrc) {
+            archivePaths.add(f.getAbsolutePath());
+        }
         // Unzip into application resources/unzip/ subfolder. Within "AppData" on Windows, "Applications" on Mac
-        File archiveFile = new File(archiveSrc);
-        String fileNameNoExt = archiveFile.getName().replaceFirst("[.][^.]+$", "");
-        String unzipPath = PathConverter.pathConverter("show_data/" + fileNameNoExt, false);
+        ArrayList<File> copyArchiveSrc = new ArrayList<>();
+        for (String s : archivePaths) {
+            copyArchiveSrc.add(new File(s));
+        }
 
-        Unzip.unzip(archiveSrc, unzipPath);
+        ArrayList<String> fileNameNoExt = new ArrayList<>();
+        for (File f : copyArchiveSrc) {
+            fileNameNoExt.add(f.getName().replaceFirst("[.][^.]+$", ""));
+        }
+
+        ArrayList<String> unzipPaths = new ArrayList<>();
+        for (String s : fileNameNoExt) {
+            unzipPaths.add(PathConverter.pathConverter("show_data/" + s, false));
+        }
+
+        Unzip.unzip(archivePaths, unzipPaths);
 
         // Parse package.ini file
-        File iniFile = new File(unzipPath + File.separator + "package.ini");
+        ArrayList<File> iniFile = new ArrayList<>();
+        for (String s : unzipPaths) {
+            iniFile.add(new File(s + File.separator + "package.ini"));
+        }
         Map<String, Map<String, String>> iniData = new HashMap<>();
 
-        try {
-            Scanner iniReader = new Scanner(iniFile);
-            String currentSection = null;
-            while (iniReader.hasNextLine()) {
-                String line = iniReader.nextLine().trim();
-                // System.out.println(line);
+        for (File f : iniFile) {
+            try {
+                Scanner iniReader = new Scanner(f);
+                String currentSection = null;
+                while (iniReader.hasNextLine()) {
+                    String line = iniReader.nextLine().trim();
+                    // System.out.println(line);
 
-                // Skip empty lines and comments
-                if (line.isEmpty() || line.startsWith(";") || line.startsWith("#")) {
-                    continue;
-                }
+                    // Skip empty lines and comments
+                    if (line.isEmpty() || line.startsWith(";") || line.startsWith("#")) {
+                        continue;
+                    }
 
-                // Section headers
-                if (line.startsWith("[") && line.endsWith("]")) {
-                    currentSection = line.substring(1, line.length() - 1).trim();
-                    iniData.putIfAbsent(currentSection, new HashMap<>());
+                    // Section headers
+                    if (line.startsWith("[") && line.endsWith("]")) {
+                        currentSection = line.substring(1, line.length() - 1).trim();
+                        iniData.putIfAbsent(currentSection, new HashMap<>());
+                    }
+                    // Key-value pairs
+                    else if (line.contains("=") && currentSection != null) {
+                        String[] parts = line.split("=", 2);
+                        String key = parts[0].trim();
+                        String value = parts.length > 1 ? parts[1].trim() : ""; // value may be empty
+                        iniData.get(currentSection).put(key, value);
+                    }
                 }
-                // Key-value pairs
-                else if (line.contains("=") && currentSection != null) {
-                    String[] parts = line.split("=", 2);
-                    String key = parts[0].trim();
-                    String value = parts.length > 1 ? parts[1].trim() : ""; // value may be empty
-                    iniData.get(currentSection).put(key, value);
-                }
+            } catch (FileNotFoundException e) {
+                throw new RuntimeException(e);
             }
-        } catch (FileNotFoundException e) {
-            throw new RuntimeException(e);
         }
 
         // See package.ini. Import available files
@@ -159,14 +208,17 @@ public class ImportArchive {
             if (entry.getValue().isEmpty()) {
                 continue;
             }
-            String componentPath = unzipPath + "/" + entry.getValue();
+            ArrayList<String> componentPaths = new ArrayList<>();
+            for (String s : unzipPaths) {
+                componentPaths.add(s + "/" + entry.getValue());
+            }
 
             // General-purpose callback
             importListener.onImport();
 
             // Import audio
             if (entry.getKey().equals("audio")) {
-                concatImportAudio(componentPath);
+                concatImportAudio(componentPaths);
             }
         }
 
@@ -175,8 +227,12 @@ public class ImportArchive {
             importDrill(drillSrc);
         }
     }
-    private void concatImportAudio(String path) {
-        System.out.println("Importing audio..." + path);
-        importListener.onConcatAudioImport(new File(path));
+    private void concatImportAudio(ArrayList<String> paths) {
+        ArrayList<File> importFiles = new ArrayList<>();
+        for (String s : paths) {
+            System.out.println("Importing audio..." + s);
+            importFiles.add(new File(s));
+        }
+        importListener.onConcatAudioImport(importFiles);
     }
 }

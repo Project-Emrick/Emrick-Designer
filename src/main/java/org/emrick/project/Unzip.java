@@ -39,6 +39,51 @@ public class Unzip {
             e.printStackTrace();
         }
     }
+    public static void unzip(ArrayList<String> archiveSrc, ArrayList<String> archiveDest) {
+
+        ArrayList<File> destDirs = new ArrayList<>();
+        ArrayList<File> srcDirs = new ArrayList<>();
+        for (String src : archiveSrc) {
+            srcDirs.add(new File(src));
+        }
+        for (String dest : archiveDest) {
+            destDirs.add(new File(dest));
+        }
+        for (File f : destDirs) {
+            if (!f.exists()) {
+                f.mkdirs();
+            }
+        }
+        for (int i = 0; i < archiveDest.size(); i++) {
+            try (FileInputStream fis = new FileInputStream(archiveSrc.get(i));
+                 ZipInputStream zis = new ZipInputStream(fis)) {
+
+                ZipEntry ze = zis.getNextEntry();
+                while (ze != null) {
+                    String fileName = ze.getName();
+                    File newFile = new File(archiveDest.get(i) + File.separator + fileName);
+                    new File(newFile.getParent()).mkdirs(); // Ensure parent directories exist
+
+                    try (FileOutputStream fos = new FileOutputStream(newFile)) {
+                        byte[] buffer = new byte[1024];
+                        int len;
+                        while ((len = zis.read(buffer)) > 0) {
+                            fos.write(buffer, 0, len);
+                        }
+                    } catch (IOException e) {
+                        System.err.println("Error extracting file: " + fileName);
+                        e.printStackTrace();
+                    }
+
+                    ze = zis.getNextEntry();
+                }
+
+            } catch (IOException e) {
+                System.err.println("Error processing zip file: " + archiveSrc);
+                e.printStackTrace();
+            }
+        }
+    }
 
     public static void zip(ArrayList<String> files, String dest, boolean delete) {
         try {
