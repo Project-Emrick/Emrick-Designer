@@ -134,7 +134,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
     private JCheckBoxMenuItem showIndividualView;
 
     // Project info
-    private File archivePath = null;
+    private ArrayList<File> archivePaths = null;
     private File emrickPath = null;
     private File csvFile;
     private SerialTransmitter serialTransmitter;
@@ -216,7 +216,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                         audioPlayers.get(currentMovement - 1).pauseAudio();
                     }
                 }
-                if (archivePath != null) {
+                if (archivePaths != null) {
                     if (effectManager != null && !effectManager.getUndoStack().isEmpty()) {
                         int resp = JOptionPane.showConfirmDialog(frame,
                                 "Would you like to save before quitting?",
@@ -333,7 +333,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         RFTrigger.rfTriggerListener = this;
         Effect.effectListener = this;
 
-        if (archivePath != null) {
+        if (archivePaths != null) {
             frame.remove(mainContentPanel);
             frame.remove(effectViewPanel);
             frame.remove(timelinePanel);
@@ -447,7 +447,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
 
         fileMenu.addSeparator();
 
-        //Concatenate Projects (the current project will be appended to)
+        //Concatenate Projects (the current project will be appended to) and a copy of the old will be made
         JMenuItem concatenateItem = new JMenuItem(FILE_MENU_CONCATENATE);
         fileMenu.add(concatenateItem);
         concatenateItem.addActionListener(e -> {
@@ -650,7 +650,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         // TODO: FIX this feature
         JMenuItem selectByCrit = new JMenuItem("Select by Criteria");
         selectByCrit.addActionListener(e -> {
-            if (archivePath == null) {
+            if (archivePaths == null) {
                 System.out.println("no project loaded");
                 return;
             }
@@ -1025,7 +1025,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
 
 
         // Display the window
-        if (archivePath == null) {
+        if (archivePaths == null) {
             frame.setJMenuBar(menuBar);
             frame.pack();
             frame.setLocationRelativeTo(null);
@@ -1222,7 +1222,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             File f;
             // If a project is loaded, generate the packets from the project and write them to a temp file in project directory.
             // delete file after server is stopped.
-            if(archivePath == null) { //if no project open
+            if(archivePaths == null) { //if no project open
                 if (path.isEmpty()) {
                     JFileChooser fileChooser = new JFileChooser();
                     fileChooser.setDialogTitle("Select Packets (.pkt) file");
@@ -1396,7 +1396,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
     private void loadProject(File path) {
         try {
 
-            if (archivePath != null) {
+            if (archivePaths != null) {
                 // reinitialize everything
                 createAndShowGUI();
             }
@@ -1429,9 +1429,15 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             r.close();
             ImportArchive ia = new ImportArchive(this);
 
-            archivePath = new File(PathConverter.pathConverter("show_data/" + pf.archivePath, false));
+            if (pf == null) {
+                System.out.println("NULLlll");
+            }
+            archivePaths = new ArrayList<>();
+            for (String s : pf.archiveNames) {
+                archivePaths.add(new File(PathConverter.pathConverter("show_data/" + s, false)));
+            }
 
-            ia.fullImport(archivePath.getAbsolutePath(), null);
+            ia.fullImport(archivePaths, null);
             footballFieldPanel.drill = pf.drill;
             footballFieldPanel.drill.performers.sort(Comparator.comparingInt(Performer::getPerformerID));
             for (Performer p : footballFieldPanel.drill.performers) {
@@ -1527,9 +1533,17 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
 
             ImportArchive ia = new ImportArchive(this);
 
-            File newArchivePath = new File(PathConverter.pathConverter("show_data/" + pf.archivePath, false));
+            ArrayList<File> archivePaths = new ArrayList<>();
+            for (String s : pf.archiveNames) {
+                archivePaths.add(new File(PathConverter.pathConverter("show_data/" + s, false)));
+            }
+            ArrayList<String> archiveSrc = new ArrayList<>();
 
-            ia.concatImport(newArchivePath.getAbsolutePath(), null);
+            for (File f : archivePaths) {
+                archiveSrc.add(f.getName());
+            }
+            //ia.concatImport(archiveSrc, null);
+            ia.concatImport(archivePaths, null);
 
             //Append drill
             int oldNumSets = footballFieldPanel.drill.sets.size();
@@ -1679,6 +1693,9 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         }
         else {
             movementIndex = 2;  //only one movement in the old drill
+        }
+        if (movementIndex < 1) {
+            movementIndex = 1;
         }
         return movementIndex;
     }
@@ -1926,6 +1943,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
 
     private void concatenateDialog() {
         writeSysMsg("Concatenating Project");
+
         JFileChooser fileChooser = new JFileChooser();
         fileChooser.setDialogTitle("Choose Project");
         fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
@@ -1943,7 +1961,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
      * a save location before the project is saved.
      */
     private void saveProjectDialog() {
-        if (archivePath == null) {
+        if (archivePaths == null) {
             System.out.println("Nothing to save.");
             writeSysMsg("Nothing to save!");
             return;
@@ -1952,7 +1970,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         writeSysMsg("Saving Project...");
         if (emrickPath != null) {
             writeSysMsg("Saving file `" + emrickPath + "`.");
-            saveProject(emrickPath, archivePath);
+            saveProject(emrickPath, archivePaths);
         } else {
             saveAsProjectDialog();
         }
@@ -1962,7 +1980,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
      * Prompts the user for a location to save the current project.
      */
     private void saveAsProjectDialog() {
-        if (archivePath == null) {
+        if (archivePaths == null) {
             System.out.println("Nothing to save.");
             writeSysMsg("Nothing to save!");
             return;
@@ -1981,7 +1999,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                 path += ".emrick";
             }
             writeSysMsg("Saving file `" + path + "`.");
-            saveProject(new File(path), archivePath);
+            saveProject(new File(path), archivePaths);
         }
     }
 
@@ -2016,26 +2034,40 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
     }
 
     @Override
-    public void onFileSelect(File archivePath, File csvFile) {
-        if (this.archivePath != null) {
+    public void onFileSelect(ArrayList<File> archivePaths, File csvFile) {
+        if (this.archivePaths != null) {
             createAndShowGUI();
         }
-        this.archivePath = archivePath;
+        this.archivePaths = archivePaths;
+        /*
+        if (archivePaths != null) {
+            for (File f : archivePaths) {
+
+                if (f != null) {
+                    this.archivePaths.add(f);
+                }
+            }
+        }
+         */
         this.csvFile = csvFile;
         emrickPath = null;
     }
 
     @Override
-    public void onAudioImport(File audioFile) {
+    public void onAudioImport(ArrayList<File> audioFiles) {
         // Playing or pausing audio is done through the AudioPlayer service class
         audioPlayers = new ArrayList<AudioPlayer>();
-        audioPlayers.add(new AudioPlayer(audioFile));
-        scrubBarGUI.setAudioPlayer(audioPlayers);
+        for (File f : audioFiles) {
+            audioPlayers.add(new AudioPlayer(f));
+            scrubBarGUI.setAudioPlayer(audioPlayers);
+        }
 
     }
     @Override
-    public void onConcatAudioImport(File audioFile) {
-        audioPlayers.add(new AudioPlayer(audioFile));
+    public void onConcatAudioImport(ArrayList<File> audioFiles) {
+        for (File f : audioFiles) {
+            audioPlayers.add(new AudioPlayer(f));
+        }
         scrubBarGUI.setAudioPlayer(audioPlayers);
     }
 
@@ -2204,6 +2236,10 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
     public void onSetChange(int setIndex) {
         if (footballFieldPanel.getCurrentSet().label.contains("-")) {
             int nextSetMvmt = Integer.parseInt(footballFieldPanel.drill.sets.get(setIndex).label.substring(0,1));
+
+            if (nextSetMvmt < 1 || nextSetMvmt > audioPlayers.size()) {
+                return;
+            }
 
             if (currentMovement != nextSetMvmt) {
                 audioPlayers.get(currentMovement - 1).pauseAudio();
@@ -2593,9 +2629,9 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
     /**
      * Save the current project to a .emrick file.
      * @param path The file location to save the project.
-     * @param archivePath The location of the .3dz file in user files when the project is loaded.
+     * @param archivePaths The locations of the .3dz files in user files when the project is loaded.
      */
-    private void saveProject(File path, File archivePath) {
+    private void saveProject(File path, ArrayList<File> archivePaths) {
         ProjectFile pf;
 
         ArrayList<SelectionGroupGUI.SelectionGroup> groupsList = new ArrayList<>();
@@ -2605,16 +2641,26 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             groupsList.add(toAdd);
         }
 
-        String aPath = archivePath.getName();
         ArrayList<Performer> recoverPerformers = new ArrayList<>();
         for (LEDStrip ledStrip : footballFieldPanel.drill.ledStrips) {
             recoverPerformers.add(ledStrip.getPerformer());
             ledStrip.setPerformer(null);
         }
+
+        ArrayList<String> archiveNames = new ArrayList<>();
+        if (archivePaths == null) {
+            System.out.println("SHIIIII");
+        }
+        for (File f : archivePaths) {
+            archiveNames.add(f.getName());
+        }
+        if (archiveNames.size() <= 0) {
+            System.out.println("SIZEEEEEEEEE" + archiveNames.size());
+        }
         if (this.effectManager != null) {
-            pf = new ProjectFile(footballFieldPanel.drill, aPath, timeSync, startDelay, count2RFTrigger, effectManager.getIds(), groupsList);
+            pf = new ProjectFile(footballFieldPanel.drill, archiveNames, timeSync, startDelay, count2RFTrigger, effectManager.getIds(), groupsList);
         } else {
-            pf = new ProjectFile(footballFieldPanel.drill, aPath, timeSync, startDelay, count2RFTrigger, null, groupsList);
+            pf = new ProjectFile(footballFieldPanel.drill, archiveNames, timeSync, startDelay, count2RFTrigger, null, groupsList);
         }
         String g = gson.toJson(pf);
 
@@ -3301,7 +3347,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                     playbackTimer.cancel();
                     playbackTimer.purge();
                     playbackTimer = null;
-                    audioPlayers.get(currentMovement).pauseAudio();
+                    audioPlayers.get(currentMovement - 1).pauseAudio();
                     scrubBarGUI.setIsPlayingPlay();
                     canSeekAudio = true;
                     return;
