@@ -10,4 +10,5 @@ public interface ImportListener {
     void onFileSelect(File archivePath, File csvFile);
     void onAudioImport(File audioFile);
     void onDrillImport(String drill);
+    void onConcatAudioImport(File audioFile);
 }
