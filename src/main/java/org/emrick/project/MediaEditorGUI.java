@@ -34,6 +34,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         LEDConfigListener, ReplaceFilesListener {
 
     // String definitions
+    public static final String FILE_MENU_CONCATENATE = "Concatenate";
     public static final String FILE_MENU_NEW_PROJECT = "New Project";
     public static final String FILE_MENU_OPEN_PROJECT = "Open Project";
     public static final String FILE_MENU_SAVE = "Save Project";
@@ -69,8 +70,10 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
 
     // Audio Components
     //  May want to abstract this away into some DrillPlayer class in the future
-    public AudioPlayer audioPlayer;
+    public ArrayList<AudioPlayer> audioPlayers;
+    public AudioPlayer currentAudioPlayer;
     private boolean canSeekAudio = true;
+
 
     // Effect
     private EffectManager effectManager;
@@ -101,6 +104,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
     private float startDelay; // Drills might not start immediately, therefore use this. Unit: seconds.
     private float playbackSpeed = 1; // The selected playback speed. For example "0.5", "1.0", "1.5". Use as a multiplier
     private java.util.Timer playbackTimer = null;
+    public int currentMovement;
 
     // Web Server
     private HttpServer server;
@@ -208,8 +212,8 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                     playbackTimer.cancel();
                     playbackTimer.purge();
                     playbackTimer = null;
-                    if (audioPlayer != null) {
-                        audioPlayer.pauseAudio();
+                    if (audioPlayers.get(currentMovement - 1) != null) {
+                        audioPlayers.get(currentMovement - 1).pauseAudio();
                     }
                 }
                 if (archivePath != null) {
@@ -366,7 +370,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         flowViewGUI = new FlowViewGUI(new HashMap<>(), this);
 
         // Scrub Bar
-        scrubBarGUI = new ScrubBarGUI(frame, this, this, footballFieldPanel, getAudioPlayer());
+        scrubBarGUI = new ScrubBarGUI(frame, this, this, footballFieldPanel, getAudioPlayers());
 
         // Scrub bar cursor starts on first count of drill by default
         useStartDelay = true;
@@ -439,6 +443,15 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         fileMenu.add(saveAsItem);
         saveAsItem.addActionListener(e -> {
             saveAsProjectDialog();
+        });
+
+        fileMenu.addSeparator();
+
+        //Concatenate Projects (the current project will be appended to)
+        JMenuItem concatenateItem = new JMenuItem(FILE_MENU_CONCATENATE);
+        fileMenu.add(concatenateItem);
+        concatenateItem.addActionListener(e -> {
+            concatenateDialog();
         });
 
         fileMenu.addSeparator();
@@ -1379,6 +1392,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
      * Loads a new .emrick file to the viewport to be edited.
      * @param path Path pointing to the intended .emrick file
      */
+
     private void loadProject(File path) {
         try {
 
@@ -1462,11 +1476,211 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                 updateTimelinePanel();
                 updateEffectViewPanel(selectedEffectType);
             }
+            currentMovement = 1;
 
         } catch (JsonIOException | JsonSyntaxException | IOException e) {
             writeSysMsg("Failed to open to `" + path + "`.");
             throw new RuntimeException(e);
         }
+    }
+    private void concatenateProject(File path) {
+        try {
+
+            emrickPath = path;
+
+            File showDataDir = new File(PathConverter.pathConverter("show_data/", false));
+            showDataDir.mkdirs();
+            File[] cleanFiles = showDataDir.listFiles();
+            for (File f : cleanFiles) {
+                if (f.isDirectory()) {
+                    deleteDirectory(f);
+                } else {
+                    f.delete();
+                }
+            }
+            Unzip.unzip(path.getAbsolutePath(), PathConverter.pathConverter("show_data/", false));
+            File[] dataFiles = showDataDir.listFiles();
+            for (File f : dataFiles) {
+                if (!f.isDirectory()) {
+                    if (f.getName().substring(f.getName().lastIndexOf(".")).equals(".json")) {
+                        path = f;
+                    }
+                }
+            }
+
+
+            FileReader r = new FileReader(path);
+            Gson newGson;
+
+            GsonBuilder builder = new GsonBuilder();
+            builder.registerTypeAdapter(Color.class, new ColorAdapter());
+            builder.registerTypeAdapter(Point2D.class, new Point2DAdapter());
+            builder.registerTypeAdapter(SyncTimeGUI.Pair.class, new PairAdapter());
+            builder.registerTypeAdapter(Duration.class, new DurationAdapter());
+            builder.registerTypeAdapter(GeneratedEffect.class, new GeneratedEffectAdapter());
+            builder.registerTypeAdapter(JButton.class, new JButtonAdapter());
+            builder.serializeNulls();
+            newGson = builder.create();
+
+            ProjectFile pf = newGson.fromJson(r, ProjectFile.class);
+            r.close();
+
+            ImportArchive ia = new ImportArchive(this);
+
+            File newArchivePath = new File(PathConverter.pathConverter("show_data/" + pf.archivePath, false));
+
+            ia.concatImport(newArchivePath.getAbsolutePath(), null);
+
+            //Append drill
+            int oldNumSets = footballFieldPanel.drill.sets.size();
+            int movementIndex = getMovementIndex();
+
+            //ensure lists are sorted
+            footballFieldPanel.drill.performers.sort(Comparator.comparingInt(Performer::getPerformerID));
+            pf.drill.performers.sort(Comparator.comparingInt(Performer::getPerformerID));
+
+            //total time of last project
+            long oldProjectLenMs = 0;
+
+            int i = 0;
+            for (Map.Entry<Integer, Long> entry : timeManager.getCount2MSec().entrySet()) {
+                oldProjectLenMs += entry.getValue();
+            }
+
+
+
+            //enhanced for loop may result in concurrent modification exception
+            for (i = 0; i < pf.drill.performers.size(); i++) {
+                Performer current = pf.drill.performers.get(i);
+                for (int j = 0; j < current.getCoordinates().size(); j++) {
+                    current.getCoordinates().get(j).setSet(movementIndex + "-" + current.getCoordinates().get(j).getSet()
+                            .substring(current.getCoordinates().get(j).getSet().indexOf("-") + 1));
+                    footballFieldPanel.drill.performers.get(i).getCoordinates().add(current.getCoordinates().get(j));
+                }
+            }
+            i = 0;
+
+            //edit and append coordinates array from the drill class
+            for (Coordinate c : pf.drill.coordinates) {
+                c.setSet(movementIndex + "-" + c.getSet().substring(c.getSet().indexOf("-") + 1));
+                footballFieldPanel.drill.coordinates.add(c);
+            }
+
+
+            //I'm not sure if this is necessary since I don't know if the sets above are the same references
+            //as the sets below.
+            for (Set s : pf.drill.sets) {
+                s.label = movementIndex + "-" + s.label.substring(s.label.indexOf("-") + 1);
+                s.index += oldNumSets;
+                footballFieldPanel.drill.sets.add(s);
+            }
+
+            //again, I'm not sure if the references are identical so this is here just in case
+            if (pf.drill.sets.get(0).index < oldNumSets) {
+                for (Set s : pf.drill.sets) {
+                    s.index += oldNumSets;
+                    footballFieldPanel.drill.sets.add(s);
+                }
+            }
+
+            for (SyncTimeGUI.Pair p : pf.timeSync) {
+                p.setKey(movementIndex + p.getKey().substring(p.getKey().indexOf("-")));
+            }
+            timeSync.addAll(pf.timeSync);
+
+            footballFieldPanel.drill.ledStrips.sort(Comparator.comparingInt(LEDStrip::getId));
+            pf.drill.ledStrips.sort(Comparator.comparingInt(LEDStrip::getId));
+
+            int maxID = 0;
+            //find the highest effect ID so there is no ID overlap between movements
+            for (LEDStrip l : footballFieldPanel.drill.ledStrips) {
+                for (Effect e : l.getEffects()) {
+                    if (e.getId() > maxID) {
+                        maxID = e.getId();
+                    }
+                }
+            }
+
+            //increment all effect IDs by the maxID
+            for (LEDStrip l : pf.drill.ledStrips) {
+                for (Effect e : l.getEffects()) {
+                    e.setId(e.getId() + maxID);
+                    e.setStartTimeMSec(e.getStartTimeMSec() + oldProjectLenMs);
+                    e.setEndTimeMSec(e.getEndTimeMSec() + oldProjectLenMs);
+                    footballFieldPanel.drill.ledStrips.get(i).getEffects().add(e);
+                }
+            }
+
+            for (LEDStrip ledStrip : footballFieldPanel.drill.ledStrips) {
+                for (Effect e : ledStrip.getEffects()) {
+                    if (e.getEffectType() == EffectList.GRID) {
+                        GridShape[] shapes = ((GridEffect) e.getGeneratedEffect()).getShapes();
+                        for (GridShape g : shapes) {
+                            g.recoverLEDStrips(footballFieldPanel.drill.ledStrips);
+                        }
+                    }
+                }
+            }
+
+            for (SelectionGroupGUI.SelectionGroup group : pf.selectionGroups) {
+                if (!groupsGUI.getGroups().contains(group)) {
+                    groupsGUI.getGroups().add(group);
+                }
+            }
+
+            ArrayList<Integer> ids = new ArrayList<>();
+            ids.addAll(effectManager.getIds());
+
+            for (Integer id : pf.ids) {
+                if (!ids.contains(id)) {
+                    ids.add(id);
+                }
+            }
+            count2RFTrigger.putAll(pf.count2RFTrigger);
+
+            ledStripViewGUI = new LEDStripViewGUI(footballFieldPanel.drill.ledStrips, effectManager);
+            footballFieldPanel.setCurrentSet(footballFieldPanel.drill.sets.get(0));
+            ledStripViewGUI.setCurrentSet(footballFieldPanel.drill.sets.get(0));
+
+            groupsGUI.initializeButtons();
+
+            footballFieldBackground.justResized = true;
+            footballFieldBackground.repaint();
+
+            ledConfigurationGUI = new LEDConfigurationGUI(footballFieldPanel.drill, this);
+
+            onSync(timeSync, startDelay);
+
+            scrubBarGUI.setTimeSync(timeSync);
+            footballFieldPanel.setCount2RFTrigger(count2RFTrigger);
+            setupEffectView(ids);
+            rebuildPageTabCounts();
+            updateTimelinePanel();
+            updateEffectViewPanel(selectedEffectType);
+            currentMovement = 1;
+
+        } catch (JsonIOException | JsonSyntaxException | IOException e) {
+            writeSysMsg("Failed to open to `" + path + "`.");
+            e.printStackTrace();
+            throw new RuntimeException(e);
+        }
+    }
+
+
+    private int getMovementIndex() {
+        int movementIndex;
+
+        if (footballFieldPanel.drill.sets.get(0).label.contains("-")) {
+
+            //takes the last set in the old drill and finds the index value of its movement and adds one
+            movementIndex = Integer.parseInt(footballFieldPanel.drill.sets.get(footballFieldPanel.drill.sets.size() - 1)
+                    .label.substring(0, footballFieldPanel.drill.sets.get(footballFieldPanel.drill.sets.size() - 1)
+                            .label.indexOf('-'))) + 1;
+        }
+        else {
+            movementIndex = 2;  //only one movement in the old drill
+        }
+        return movementIndex;
     }
 
     /**
@@ -1710,6 +1924,19 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         }
     }
 
+    private void concatenateDialog() {
+        writeSysMsg("Concatenating Project");
+        JFileChooser fileChooser = new JFileChooser();
+        fileChooser.setDialogTitle("Choose Project");
+        fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
+        fileChooser.setFileFilter(new FileNameExtensionFilter("Emrick Project Files (*.emrick)", "emrick"));
+
+        if (fileChooser.showOpenDialog(null) == JFileChooser.APPROVE_OPTION) {
+            writeSysMsg("Opening file '" + fileChooser.getSelectedFile().getAbsolutePath() + "' for concatenation.");
+            concatenateProject(fileChooser.getSelectedFile());
+        }
+    }
+
     /**
      * Attempts to save the project to a file.
      * If the currently open project is a new project, the user will be prompted to specify
@@ -1801,8 +2028,15 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
     @Override
     public void onAudioImport(File audioFile) {
         // Playing or pausing audio is done through the AudioPlayer service class
-        audioPlayer = new AudioPlayer(audioFile);
-        scrubBarGUI.setAudioPlayer(audioPlayer);
+        audioPlayers = new ArrayList<AudioPlayer>();
+        audioPlayers.add(new AudioPlayer(audioFile));
+        scrubBarGUI.setAudioPlayer(audioPlayers);
+
+    }
+    @Override
+    public void onConcatAudioImport(File audioFile) {
+        audioPlayers.add(new AudioPlayer(audioFile));
+        scrubBarGUI.setAudioPlayer(audioPlayers);
     }
 
     @Override
@@ -1907,7 +2141,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                     "Playback Error", JOptionPane.ERROR_MESSAGE);
             return false;
         }
-        if (audioPlayer != null && scrubBarGUI.getAudioCheckbox().isSelected()) {
+        if (audioPlayers != null && scrubBarGUI.getAudioCheckbox().isSelected()) {
             playAudioFromCorrectPosition();
         }
         if (scrubBarGUI.isUseFps()) {
@@ -1930,8 +2164,8 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                     "Playback Error", JOptionPane.ERROR_MESSAGE);
             return false;
         }
-        if (audioPlayer != null) {
-            audioPlayer.pauseAudio();
+        if (audioPlayers != null) {
+            audioPlayers.get(currentMovement - 1).pauseAudio();
         }
         playbackTimer.cancel();
         playbackTimer.purge();
@@ -1968,8 +2202,20 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
 
     @Override
     public void onSetChange(int setIndex) {
+        if (footballFieldPanel.getCurrentSet().label.contains("-")) {
+            int nextSetMvmt = Integer.parseInt(footballFieldPanel.drill.sets.get(setIndex).label.substring(0,1));
+
+            if (currentMovement != nextSetMvmt) {
+                audioPlayers.get(currentMovement - 1).pauseAudio();
+                currentMovement = nextSetMvmt;
+                currentAudioPlayer = audioPlayers.get(currentMovement - 1);
+                currentAudioPlayer.playAudio(0);
+            }
+
+        }
         footballFieldPanel.setCurrentSet(footballFieldPanel.drill.sets.get(setIndex));
         ledStripViewGUI.setCurrentSet(footballFieldPanel.drill.sets.get(setIndex));
+
     }
 
     /**
@@ -1997,15 +2243,15 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
     private void playAudioFromCorrectPosition() {
         // Get audio to correct position before playing
         if (!scrubBarGUI.getAudioCheckbox().isSelected()) {
-            audioPlayer.pauseAudio();
+            audioPlayers.get(currentMovement).pauseAudio();
             return;
         }
         long timestampMillis = timeManager.getCount2MSec().get(footballFieldPanel.getCurrentCount());
         if (useStartDelay) {
             timestampMillis -= (long) (startDelay * 1000);
         }
-        audioPlayer.pauseAudio();
-        audioPlayer.playAudio(timestampMillis);
+        audioPlayers.get(currentMovement - 1).pauseAudio();
+        audioPlayers.get(currentMovement - 1).playAudio(timestampMillis);
     }
 
     @Override
@@ -2015,7 +2261,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         if (playbackSpeed != 1) {
             scrubBarGUI.getAudioCheckbox().setSelected(false);
             scrubBarGUI.getAudioCheckbox().setEnabled(false);
-            if (audioPlayer != null) audioPlayer.pauseAudio();
+            if (audioPlayers != null) audioPlayers.get(currentMovement).pauseAudio();
         } else {
             scrubBarGUI.getAudioCheckbox().setEnabled(true);
         }
@@ -3024,8 +3270,8 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
      * Get audio player
      * @return AudioPlayer object
      */
-    public AudioPlayer getAudioPlayer() {
-        return audioPlayer;
+    public ArrayList<AudioPlayer> getAudioPlayers() {
+        return audioPlayers;
     }
 
     /**
@@ -3042,7 +3288,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                     playbackTimer.cancel();
                     playbackTimer.purge();
                     playbackTimer = null;
-                    audioPlayer.pauseAudio();
+                    audioPlayers.get(currentMovement - 1).pauseAudio();
                     scrubBarGUI.setIsPlayingPlay();
                     canSeekAudio = true;
                     return;
@@ -3055,7 +3301,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                     playbackTimer.cancel();
                     playbackTimer.purge();
                     playbackTimer = null;
-                    audioPlayer.pauseAudio();
+                    audioPlayers.get(currentMovement).pauseAudio();
                     scrubBarGUI.setIsPlayingPlay();
                     canSeekAudio = true;
                     return;
