@@ -1563,7 +1563,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
 
 
 
-            //enhanced for loop may result in concurrent modification exception
+            //enhanced for loop may result in concurrent modification
             for (i = 0; i < pf.drill.performers.size(); i++) {
                 Performer current = pf.drill.performers.get(i);
                 for (int j = 0; j < current.getCoordinates().size(); j++) {
@@ -1650,23 +1650,39 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                     ids.add(id);
                 }
             }
-            count2RFTrigger.putAll(pf.count2RFTrigger);
 
+            int prevTotalCounts = 0;
+            for (Set s : footballFieldPanel.drill.sets) {
+                prevTotalCounts += s.duration; //add up total counts
+            }
             ledStripViewGUI = new LEDStripViewGUI(footballFieldPanel.drill.ledStrips, effectManager);
             footballFieldPanel.setCurrentSet(footballFieldPanel.drill.sets.get(0));
             ledStripViewGUI.setCurrentSet(footballFieldPanel.drill.sets.get(0));
-
-            groupsGUI.initializeButtons();
 
             footballFieldBackground.justResized = true;
             footballFieldBackground.repaint();
 
             ledConfigurationGUI = new LEDConfigurationGUI(footballFieldPanel.drill, this);
 
-            onSync(timeSync, startDelay);
+            groupsGUI.setGroups(pf.selectionGroups, footballFieldPanel.drill.ledStrips);
+            groupsGUI.initializeButtons();
 
+            //copy RFTriggers (onSync creates new table)
+            HashMap<Integer, RFTrigger> copy = new HashMap<>(count2RFTrigger);
+
+            onSync(timeSync, startDelay);
             scrubBarGUI.setTimeSync(timeSync);
+
+            //put RFTriggers back in
+            count2RFTrigger.putAll(copy);
+
+            //readjust the counts in the new RFTriggers and add them to count2RFTrigger
+            for (Map.Entry<Integer, RFTrigger> e : pf.count2RFTrigger.entrySet()) {
+                count2RFTrigger.put(e.getKey() + prevTotalCounts, pf.count2RFTrigger.get(e.getKey()));
+            }
+
             footballFieldPanel.setCount2RFTrigger(count2RFTrigger);
+
             setupEffectView(ids);
             rebuildPageTabCounts();
             updateTimelinePanel();
