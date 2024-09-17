@@ -22,6 +22,15 @@ public class Set {
         return false;
     }
 
+    @Override
+    public boolean equals(Object obj) {
+        if (obj instanceof Set s) {
+            return this.label.equals(s.label);
+        } else {
+            return false;
+        }
+    }
+
     public String toString() {
         return label;
     }

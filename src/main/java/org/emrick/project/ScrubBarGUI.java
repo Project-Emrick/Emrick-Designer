@@ -544,6 +544,7 @@ public class ScrubBarGUI extends JComponent implements ActionListener {
             nextCount();
         }
         else if (e.getSource().equals(syncButton)) {
+            System.out.println(isReady);
             if (isReady) {
                 new SyncTimeGUI(parent, syncListener, pageTab2Count, audioPlayer, totalCounts);
             }

@@ -53,7 +53,7 @@ public class Performer {
     public void loadCoordinates(ArrayList<Coordinate> coordinates) {
         this.coordinates = new ArrayList<>();
         for (Coordinate c : coordinates) {
-            if (c.id.equals(this.toString())) {
+            if (c.id.equals(this.getIdentifier())) {
                 this.coordinates.add(c);
             }
         }
