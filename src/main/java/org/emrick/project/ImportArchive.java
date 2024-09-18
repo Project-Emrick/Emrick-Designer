@@ -26,6 +26,7 @@ public class ImportArchive {
         this.importListener = importListener;
     }
 
+    //for current file types
     public void fullImport(ArrayList<File> archiveFiles, String drillSrc) {
         importListener.onBeginImport();
 
@@ -54,7 +55,7 @@ public class ImportArchive {
         for (String s : fileNamesNoExt) {
             unzipPaths.add(PathConverter.pathConverter("show_data/" + s, false));
         }
-        //continue here
+
         Unzip.unzip(absoluteArchivePaths, unzipPaths);
 
         // Parse package.ini file
@@ -122,6 +123,11 @@ public class ImportArchive {
         }
     }
 
+    private void importDrill(String path) {
+        System.out.println("Importing drill..." + path);
+        importListener.onDrillImport(path);
+    }
+
     private void importAudio(ArrayList<String> paths) {
         ArrayList<File> audioFiles = new ArrayList<>();
         for (String path : paths) {
@@ -129,11 +135,6 @@ public class ImportArchive {
             audioFiles.add(new File(path));
         }
         importListener.onAudioImport(audioFiles);
-    }
-
-    private void importDrill(String path) {
-        System.out.println("Importing drill..." + path);
-        importListener.onDrillImport(path);
     }
 
     public void concatImport(ArrayList<File> archiveSrc, String drillSrc) {
