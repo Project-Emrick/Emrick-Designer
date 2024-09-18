@@ -174,7 +174,7 @@ public class FootballFieldPanel extends JPanel implements RepaintListener {
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
         long currMS = 0;
-        if (effectManager != null) {
+        if (effectManager != null && effectManager.getTimeManager().getSet2MSec().get(currentSet.index).getValue() != null) {
             long setMS = effectManager.getTimeManager().getSet2MSec().get(currentSet.index).getValue();
             currMS = currentMS + setMS;
         }

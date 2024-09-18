@@ -46,7 +46,7 @@
  *     Contains files used to convert project data into a saveable format. The adapters are used as instructions to the Google Gson package for how data should be converted from objecct form to JSON form and vice versa.
  *
  *     Notable Files:
- *       ModernProjectFile.java - This file contains the object that is saved to a json file when saving the project. Any data that should be contained in the save file should be loaded into this object. If any errors are present when saving a particular object, it may be necessary to create an adapter object to help Gson parse the object.
+ *       ProjectFile.java - This file contains the object that is saved to a json file when saving the project. Any data that should be contained in the save file should be loaded into this object. If any errors are present when saving a particular object, it may be necessary to create an adapter object to help Gson parse the object.
  *
  * Message Alex Bolinger (alex.bolinger3514@gmail.com if he isn't still in the discord) if you have any further questions
  * </pre>

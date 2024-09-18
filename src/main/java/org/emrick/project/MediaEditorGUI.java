@@ -1386,20 +1386,19 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                 }
             }
 
-            ModernProjectFile pf = null;
-            ProjectFile opf = null;
+            ProjectFile pf = null;
+            OldProjectFile opf = null;
             FileReader r = new FileReader(path);
 
-            pf = gson.fromJson(r, ModernProjectFile.class);
+            pf = gson.fromJson(r, ProjectFile.class);
 
-            if (pf.archiveNames == null) {
+            //outdated file processing
+            if (pf == null || pf.archiveNames == null) {
                 r.close();
                 r = new FileReader(path);
-                opf = gson.fromJson(r, ProjectFile.class);
+                opf = gson.fromJson(r, OldProjectFile.class);
                 pf = null;
             }
-
-            //Old file
 
             r.close();
             ImportArchive ia = new ImportArchive(this);
@@ -1411,7 +1410,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                     archivePaths.add(new File(PathConverter.pathConverter("show_data/" + s, false)));
                 }
 
-
+                //System.out.println(archivePaths.get(0));
                 ia.fullImport(archivePaths, null);
                 footballFieldPanel.drill = pf.drill;
                 footballFieldPanel.drill.performers.sort(Comparator.comparingInt(Performer::getPerformerID));
@@ -1461,11 +1460,9 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             }
             else if (opf != null){
                 //for outdated .emrick files
-                archivePaths.add(new File(opf.archivePath));
+                archivePaths.add(new File(PathConverter.pathConverter("show_data/" + opf.archivePath, false)));
 
-                ArrayList<File> archiveFiles = new ArrayList<>();
-                archiveFiles.add(new File(opf.archivePath));
-                ia.fullImport(archiveFiles, null);
+                ia.fullImport(archivePaths, null);
                 footballFieldPanel.drill = opf.drill;
                 footballFieldPanel.drill.performers.sort(Comparator.comparingInt(Performer::getPerformerID));
                 for (Performer p : footballFieldPanel.drill.performers) {
@@ -1550,7 +1547,6 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
 
 
             FileReader r = new FileReader(path);
-            Gson newGson;
 
             GsonBuilder builder = new GsonBuilder();
             builder.registerTypeAdapter(Color.class, new ColorAdapter());
@@ -1560,17 +1556,18 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             builder.registerTypeAdapter(GeneratedEffect.class, new GeneratedEffectAdapter());
             builder.registerTypeAdapter(JButton.class, new JButtonAdapter());
             builder.serializeNulls();
-            newGson = builder.create();
 
-            ModernProjectFile pf = null;
-            ProjectFile opf = null;
+            ProjectFile pf = null;
+            OldProjectFile opf = null;
+            pf = gson.fromJson(r, ProjectFile.class);
 
-            try {
-                pf = gson.fromJson(r, ModernProjectFile.class);
-            } catch (JsonSyntaxException e) {
-                opf = gson.fromJson(r, ProjectFile.class);
+            if (pf == null || pf.archiveNames == null) {
+                r.close();
+                r = new FileReader(path);
+                opf = gson.fromJson(r, OldProjectFile.class);
                 pf = null;
             }
+
             r.close();
 
             ImportArchive ia = new ImportArchive(this);
@@ -1716,11 +1713,13 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
 
                 //readjust the counts in the new RFTriggers and add them to count2RFTrigger
                 for (Map.Entry<Integer, RFTrigger> e : pf.count2RFTrigger.entrySet()) {
+                    e.getValue().setCount(e.getValue().getCount() + prevTotalCounts);
+                    e.getValue().setTimestampMillis(e.getValue().getTimestampMillis() + oldProjectLenMs);
                     count2RFTrigger.put(e.getKey() + prevTotalCounts, pf.count2RFTrigger.get(e.getKey()));
                 }
             }
             else if (opf != null) {  //old emrick file support
-                archivePaths.add(new File(opf.archivePath));
+                archivePaths.add(new File(PathConverter.pathConverter("show_data/" + opf.archivePath, false)));
                 ia.concatImport(archivePaths, null);
 
                 //Append drill
@@ -1742,10 +1741,9 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
 
                 //enhanced for loop may result in concurrent modification
                 for (i = 0; i < opf.drill.performers.size(); i++) {
-                    Performer current = pf.drill.performers.get(i);
+                    Performer current = opf.drill.performers.get(i);
                     for (int j = 0; j < current.getCoordinates().size(); j++) {
-                        current.getCoordinates().get(j).setSet(movementIndex + "-" + current.getCoordinates().get(j).getSet()
-                                .substring(current.getCoordinates().get(j).getSet().indexOf("-") + 1));
+                        current.getCoordinates().get(j).setSet(movementIndex + "-" + current.getCoordinates().get(j).getSet());
                         footballFieldPanel.drill.performers.get(i).getCoordinates().add(current.getCoordinates().get(j));
                     }
                 }
@@ -1753,7 +1751,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
 
                 //edit and append coordinates array from the drill class
                 for (Coordinate c : opf.drill.coordinates) {
-                    c.setSet(movementIndex + "-" + c.getSet().substring(c.getSet().indexOf("-") + 1));
+                    c.setSet(movementIndex + "-" + c.getSet());
                     footballFieldPanel.drill.coordinates.add(c);
                 }
 
@@ -1761,7 +1759,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                 //I'm not sure if this is necessary since I don't know if the sets above are the same references
                 //as the sets below.
                 for (Set s : opf.drill.sets) {
-                    s.label = movementIndex + "-" + s.label.substring(s.label.indexOf("-") + 1);
+                    s.label = movementIndex + "-" + s.label;
                     s.index += oldNumSets;
                     footballFieldPanel.drill.sets.add(s);
                 }
@@ -1775,7 +1773,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                 }
 
                 for (SyncTimeGUI.Pair p : opf.timeSync) {
-                    p.setKey(movementIndex + p.getKey().substring(p.getKey().indexOf("-")));
+                    p.setKey(movementIndex + "-" + p.getKey());
                 }
                 timeSync.addAll(opf.timeSync);
 
@@ -1852,8 +1850,10 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                 //put RFTriggers back in
                 count2RFTrigger.putAll(copy);
 
-                //readjust the counts in the new RFTriggers and add them to count2RFTrigger
+                //readjust the counts and timestamps in the new RFTriggers and add them to count2RFTrigger
                 for (Map.Entry<Integer, RFTrigger> e : opf.count2RFTrigger.entrySet()) {
+                    e.getValue().setCount(e.getValue().getCount() + prevTotalCounts);
+                    e.getValue().setTimestampMillis(e.getValue().getTimestampMillis() + oldProjectLenMs);
                     count2RFTrigger.put(e.getKey() + prevTotalCounts, opf.count2RFTrigger.get(e.getKey()));
                 }
             }
@@ -2412,7 +2412,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             System.out.println("Called onScrub() -> Seeking audio...");
             playAudioFromCorrectPosition();
         }
-        if (timeManager != null) {
+        if (timeManager.getCount2MSec().get(footballFieldPanel.getCurrentCount()) != null) {
             return timeManager.getCount2MSec().get(footballFieldPanel.getCurrentCount());
         }
         return 0;
@@ -2457,8 +2457,11 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         }
         int currentCount = footballFieldPanel.getCurrentCount();
         RFTrigger currentRFTrigger = count2RFTrigger.get(currentCount);
-        rfTriggerGUI = new RFTriggerGUI(
-                currentCount, timeManager.getCount2MSec().get(currentCount), currentRFTrigger, this);
+        if (timeManager.getCount2MSec().get(currentCount) != null) {
+            rfTriggerGUI = new RFTriggerGUI(
+                    currentCount, timeManager.getCount2MSec().get(currentCount), currentRFTrigger, this);
+        }
+
 
         effectViewPanel.add(rfTriggerGUI.getCreateDeleteBtn(), BorderLayout.SOUTH);
         effectViewPanel.revalidate();
@@ -2824,7 +2827,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
      * @param archivePaths The locations of the .3dz files in user files when the project is loaded.
      */
     private void saveProject(File path, ArrayList<File> archivePaths) {
-        ModernProjectFile pf;
+        ProjectFile pf;
 
         ArrayList<SelectionGroupGUI.SelectionGroup> groupsList = new ArrayList<>();
         for(SelectionGroupGUI.SelectionGroup group: groupsGUI.getGroups()){
@@ -2850,9 +2853,9 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             System.out.println("SIZEEEEEEEEE" + archiveNames.size());
         }
         if (this.effectManager != null) {
-            pf = new ModernProjectFile(footballFieldPanel.drill, archiveNames, timeSync, startDelay, count2RFTrigger, effectManager.getIds(), groupsList);
+            pf = new ProjectFile(footballFieldPanel.drill, archiveNames, timeSync, startDelay, count2RFTrigger, effectManager.getIds(), groupsList);
         } else {
-            pf = new ModernProjectFile(footballFieldPanel.drill, archiveNames, timeSync, startDelay, count2RFTrigger, null, groupsList);
+            pf = new ProjectFile(footballFieldPanel.drill, archiveNames, timeSync, startDelay, count2RFTrigger, null, groupsList);
         }
         String g = gson.toJson(pf);
 
