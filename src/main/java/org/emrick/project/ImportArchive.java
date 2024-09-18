@@ -140,7 +140,6 @@ public class ImportArchive {
     public void concatImport(ArrayList<File> archiveSrc, String drillSrc) {
 
         // ! NOTE ! Assume Working Directory is Emrick-Designer/
-        System.out.println("Working Directory = " + System.getProperty("user.dir"));
         ArrayList<String> archivePaths = new ArrayList<>();
         for (File f : archiveSrc) {
             archivePaths.add(f.getAbsolutePath());
