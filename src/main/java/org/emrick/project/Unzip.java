@@ -42,10 +42,6 @@ public class Unzip {
     public static void unzip(ArrayList<String> archiveSrc, ArrayList<String> archiveDest) {
 
         ArrayList<File> destDirs = new ArrayList<>();
-        ArrayList<File> srcDirs = new ArrayList<>();
-        for (String src : archiveSrc) {
-            srcDirs.add(new File(src));
-        }
         for (String dest : archiveDest) {
             destDirs.add(new File(dest));
         }
@@ -55,6 +51,7 @@ public class Unzip {
             }
         }
         for (int i = 0; i < archiveDest.size(); i++) {
+            System.out.println(archiveSrc.get(i));
             try (FileInputStream fis = new FileInputStream(archiveSrc.get(i));
                  ZipInputStream zis = new ZipInputStream(fis)) {
 

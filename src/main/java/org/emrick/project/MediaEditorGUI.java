@@ -1386,65 +1386,135 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                 }
             }
 
-
+            ModernProjectFile pf = null;
+            ProjectFile opf = null;
             FileReader r = new FileReader(path);
-            ProjectFile pf = gson.fromJson(r, ProjectFile.class);
+
+            pf = gson.fromJson(r, ModernProjectFile.class);
+
+            if (pf.archiveNames == null) {
+                r.close();
+                r = new FileReader(path);
+                opf = gson.fromJson(r, ProjectFile.class);
+                pf = null;
+            }
+
+            //Old file
+
             r.close();
             ImportArchive ia = new ImportArchive(this);
 
-            if (pf == null) {
-                System.out.println("NULLlll");
-            }
+
             archivePaths = new ArrayList<>();
-            for (String s : pf.archiveNames) {
-                archivePaths.add(new File(PathConverter.pathConverter("show_data/" + s, false)));
-            }
+            if (pf != null) {
+                for (String s : pf.archiveNames) {
+                    archivePaths.add(new File(PathConverter.pathConverter("show_data/" + s, false)));
+                }
 
-            ia.fullImport(archivePaths, null);
-            footballFieldPanel.drill = pf.drill;
-            footballFieldPanel.drill.performers.sort(Comparator.comparingInt(Performer::getPerformerID));
-            for (Performer p : footballFieldPanel.drill.performers) {
-                p.setLedStrips(new ArrayList<>());
-            }
-            for (LEDStrip ledStrip : footballFieldPanel.drill.ledStrips) {
-                Performer p = footballFieldPanel.drill.performers.get(ledStrip.getPerformerID());
-                p.addLEDStrip(ledStrip.getId());
-                ledStrip.setPerformer(p);
 
-            }
-            for (LEDStrip ledStrip : footballFieldPanel.drill.ledStrips) {
-                for (Effect e : ledStrip.getEffects()) {
-                    if (e.getEffectType() == EffectList.GRID) {
-                        GridShape[] shapes = ((GridEffect) e.getGeneratedEffect()).getShapes();
-                        for (GridShape g : shapes) {
-                            g.recoverLEDStrips(footballFieldPanel.drill.ledStrips);
+                ia.fullImport(archivePaths, null);
+                footballFieldPanel.drill = pf.drill;
+                footballFieldPanel.drill.performers.sort(Comparator.comparingInt(Performer::getPerformerID));
+                for (Performer p : footballFieldPanel.drill.performers) {
+                    p.setLedStrips(new ArrayList<>());
+                }
+                for (LEDStrip ledStrip : footballFieldPanel.drill.ledStrips) {
+                    Performer p = footballFieldPanel.drill.performers.get(ledStrip.getPerformerID());
+                    p.addLEDStrip(ledStrip.getId());
+                    ledStrip.setPerformer(p);
+
+                }
+                for (LEDStrip ledStrip : footballFieldPanel.drill.ledStrips) {
+                    for (Effect e : ledStrip.getEffects()) {
+                        if (e.getEffectType() == EffectList.GRID) {
+                            GridShape[] shapes = ((GridEffect) e.getGeneratedEffect()).getShapes();
+                            for (GridShape g : shapes) {
+                                g.recoverLEDStrips(footballFieldPanel.drill.ledStrips);
+                            }
                         }
                     }
                 }
+                ledStripViewGUI = new LEDStripViewGUI(new ArrayList<>(), effectManager);
+                footballFieldPanel.setCurrentSet(footballFieldPanel.drill.sets.get(0));
+                ledStripViewGUI.setCurrentSet(footballFieldPanel.drill.sets.get(0));
+
+                footballFieldBackground.justResized = true;
+                footballFieldBackground.repaint();
+
+                ledConfigurationGUI = new LEDConfigurationGUI(footballFieldPanel.drill, this);
+
+                groupsGUI.setGroups(pf.selectionGroups, footballFieldPanel.drill.ledStrips);
+                groupsGUI.initializeButtons();
+
+                if (pf.timeSync != null && pf.startDelay != null) {
+                    timeSync = pf.timeSync;
+                    onSync(timeSync, pf.startDelay);
+                    scrubBarGUI.setTimeSync(timeSync);
+                    startDelay = pf.startDelay;
+                    count2RFTrigger = pf.count2RFTrigger;
+                    footballFieldPanel.setCount2RFTrigger(count2RFTrigger);
+                    setupEffectView(pf.ids);
+                    rebuildPageTabCounts();
+                    updateTimelinePanel();
+                    updateEffectViewPanel(selectedEffectType);
+                }
             }
-            ledStripViewGUI = new LEDStripViewGUI(new ArrayList<>(), effectManager);
-            footballFieldPanel.setCurrentSet(footballFieldPanel.drill.sets.get(0));
-            ledStripViewGUI.setCurrentSet(footballFieldPanel.drill.sets.get(0));
+            else if (opf != null){
+                //for outdated .emrick files
+                archivePaths.add(new File(opf.archivePath));
 
-            footballFieldBackground.justResized = true;
-            footballFieldBackground.repaint();
+                ArrayList<File> archiveFiles = new ArrayList<>();
+                archiveFiles.add(new File(opf.archivePath));
+                ia.fullImport(archiveFiles, null);
+                footballFieldPanel.drill = opf.drill;
+                footballFieldPanel.drill.performers.sort(Comparator.comparingInt(Performer::getPerformerID));
+                for (Performer p : footballFieldPanel.drill.performers) {
+                    p.setLedStrips(new ArrayList<>());
+                }
+                for (LEDStrip ledStrip : footballFieldPanel.drill.ledStrips) {
+                    Performer p = footballFieldPanel.drill.performers.get(ledStrip.getPerformerID());
+                    p.addLEDStrip(ledStrip.getId());
+                    ledStrip.setPerformer(p);
 
-            ledConfigurationGUI = new LEDConfigurationGUI(footballFieldPanel.drill, this);
+                }
+                for (LEDStrip ledStrip : footballFieldPanel.drill.ledStrips) {
+                    for (Effect e : ledStrip.getEffects()) {
+                        if (e.getEffectType() == EffectList.GRID) {
+                            GridShape[] shapes = ((GridEffect) e.getGeneratedEffect()).getShapes();
+                            for (GridShape g : shapes) {
+                                g.recoverLEDStrips(footballFieldPanel.drill.ledStrips);
+                            }
+                        }
+                    }
+                }
+                ledStripViewGUI = new LEDStripViewGUI(new ArrayList<>(), effectManager);
+                footballFieldPanel.setCurrentSet(footballFieldPanel.drill.sets.get(0));
+                ledStripViewGUI.setCurrentSet(footballFieldPanel.drill.sets.get(0));
 
-            groupsGUI.setGroups(pf.selectionGroups, footballFieldPanel.drill.ledStrips);
-            groupsGUI.initializeButtons();
+                footballFieldBackground.justResized = true;
+                footballFieldBackground.repaint();
 
-            if (pf.timeSync != null && pf.startDelay != null) {
-                timeSync = pf.timeSync;
-                onSync(timeSync, pf.startDelay);
-                scrubBarGUI.setTimeSync(timeSync);
-                startDelay = pf.startDelay;
-                count2RFTrigger = pf.count2RFTrigger;
-                footballFieldPanel.setCount2RFTrigger(count2RFTrigger);
-                setupEffectView(pf.ids);
-                rebuildPageTabCounts();
-                updateTimelinePanel();
-                updateEffectViewPanel(selectedEffectType);
+                ledConfigurationGUI = new LEDConfigurationGUI(footballFieldPanel.drill, this);
+
+                groupsGUI.setGroups(opf.selectionGroups, footballFieldPanel.drill.ledStrips);
+                groupsGUI.initializeButtons();
+
+                if (opf.timeSync != null && opf.startDelay != null) {
+                    timeSync = opf.timeSync;
+                    onSync(timeSync, opf.startDelay);
+                    scrubBarGUI.setTimeSync(timeSync);
+                    startDelay = opf.startDelay;
+                    count2RFTrigger = opf.count2RFTrigger;
+                    footballFieldPanel.setCount2RFTrigger(count2RFTrigger);
+                    setupEffectView(opf.ids);
+                    rebuildPageTabCounts();
+                    updateTimelinePanel();
+                    updateEffectViewPanel(selectedEffectType);
+                }
+            }
+            else {
+                System.out.println("Project File Null");
+                return;
             }
             currentMovement = 1;
 
@@ -1492,157 +1562,303 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             builder.serializeNulls();
             newGson = builder.create();
 
-            ProjectFile pf = newGson.fromJson(r, ProjectFile.class);
+            ModernProjectFile pf = null;
+            ProjectFile opf = null;
+
+            try {
+                pf = gson.fromJson(r, ModernProjectFile.class);
+            } catch (JsonSyntaxException e) {
+                opf = gson.fromJson(r, ProjectFile.class);
+                pf = null;
+            }
             r.close();
 
             ImportArchive ia = new ImportArchive(this);
 
             ArrayList<File> archivePaths = new ArrayList<>();
-            for (String s : pf.archiveNames) {
-                archivePaths.add(new File(PathConverter.pathConverter("show_data/" + s, false)));
-            }
-            ArrayList<String> archiveSrc = new ArrayList<>();
+            ArrayList<Integer> ids;
 
-            for (File f : archivePaths) {
-                archiveSrc.add(f.getName());
-            }
-            //ia.concatImport(archiveSrc, null);
-            ia.concatImport(archivePaths, null);
-
-            //Append drill
-            int oldNumSets = footballFieldPanel.drill.sets.size();
-            int movementIndex = getMovementIndex();
-
-            //ensure lists are sorted
-            footballFieldPanel.drill.performers.sort(Comparator.comparingInt(Performer::getPerformerID));
-            pf.drill.performers.sort(Comparator.comparingInt(Performer::getPerformerID));
-
-            //total time of last project
-            long oldProjectLenMs = 0;
-
-            int i = 0;
-            for (Map.Entry<Integer, Long> entry : timeManager.getCount2MSec().entrySet()) {
-                oldProjectLenMs += entry.getValue();
-            }
-
-
-
-            //enhanced for loop may result in concurrent modification
-            for (i = 0; i < pf.drill.performers.size(); i++) {
-                Performer current = pf.drill.performers.get(i);
-                for (int j = 0; j < current.getCoordinates().size(); j++) {
-                    current.getCoordinates().get(j).setSet(movementIndex + "-" + current.getCoordinates().get(j).getSet()
-                            .substring(current.getCoordinates().get(j).getSet().indexOf("-") + 1));
-                    footballFieldPanel.drill.performers.get(i).getCoordinates().add(current.getCoordinates().get(j));
+            if (pf != null) {
+                for (String s : pf.archiveNames) {
+                    archivePaths.add(new File(PathConverter.pathConverter("show_data/" + s, false)));
                 }
-            }
-            i = 0;
 
-            //edit and append coordinates array from the drill class
-            for (Coordinate c : pf.drill.coordinates) {
-                c.setSet(movementIndex + "-" + c.getSet().substring(c.getSet().indexOf("-") + 1));
-                footballFieldPanel.drill.coordinates.add(c);
-            }
+                ia.concatImport(archivePaths, null);
+
+                //Append drill
+                int oldNumSets = footballFieldPanel.drill.sets.size();
+                int movementIndex = getMovementIndex();
+
+                //ensure lists are sorted
+                footballFieldPanel.drill.performers.sort(Comparator.comparingInt(Performer::getPerformerID));
+                pf.drill.performers.sort(Comparator.comparingInt(Performer::getPerformerID));
+
+                //total time of last project
+                long oldProjectLenMs = 0;
+
+                int i = 0;
+                for (Map.Entry<Integer, Long> entry : timeManager.getCount2MSec().entrySet()) {
+                    oldProjectLenMs += entry.getValue();
+                }
 
 
-            //I'm not sure if this is necessary since I don't know if the sets above are the same references
-            //as the sets below.
-            for (Set s : pf.drill.sets) {
-                s.label = movementIndex + "-" + s.label.substring(s.label.indexOf("-") + 1);
-                s.index += oldNumSets;
-                footballFieldPanel.drill.sets.add(s);
-            }
+                //enhanced for loop may result in concurrent modification
+                for (i = 0; i < pf.drill.performers.size(); i++) {
+                    Performer current = pf.drill.performers.get(i);
+                    for (int j = 0; j < current.getCoordinates().size(); j++) {
+                        current.getCoordinates().get(j).setSet(movementIndex + "-" + current.getCoordinates().get(j).getSet()
+                                .substring(current.getCoordinates().get(j).getSet().indexOf("-") + 1));
+                        footballFieldPanel.drill.performers.get(i).getCoordinates().add(current.getCoordinates().get(j));
+                    }
+                }
+                i = 0;
 
-            //again, I'm not sure if the references are identical so this is here just in case
-            if (pf.drill.sets.get(0).index < oldNumSets) {
+                //edit and append coordinates array from the drill class
+                for (Coordinate c : pf.drill.coordinates) {
+                    c.setSet(movementIndex + "-" + c.getSet().substring(c.getSet().indexOf("-") + 1));
+                    footballFieldPanel.drill.coordinates.add(c);
+                }
+
+
+                //I'm not sure if this is necessary since I don't know if the sets above are the same references
+                //as the sets below.
                 for (Set s : pf.drill.sets) {
+                    s.label = movementIndex + "-" + s.label.substring(s.label.indexOf("-") + 1);
                     s.index += oldNumSets;
                     footballFieldPanel.drill.sets.add(s);
                 }
-            }
 
-            for (SyncTimeGUI.Pair p : pf.timeSync) {
-                p.setKey(movementIndex + p.getKey().substring(p.getKey().indexOf("-")));
-            }
-            timeSync.addAll(pf.timeSync);
-
-            footballFieldPanel.drill.ledStrips.sort(Comparator.comparingInt(LEDStrip::getId));
-            pf.drill.ledStrips.sort(Comparator.comparingInt(LEDStrip::getId));
-
-            int maxID = 0;
-            //find the highest effect ID so there is no ID overlap between movements
-            for (LEDStrip l : footballFieldPanel.drill.ledStrips) {
-                for (Effect e : l.getEffects()) {
-                    if (e.getId() > maxID) {
-                        maxID = e.getId();
+                //again, I'm not sure if the references are identical so this is here just in case
+                if (pf.drill.sets.get(0).index < oldNumSets) {
+                    for (Set s : pf.drill.sets) {
+                        s.index += oldNumSets;
+                        footballFieldPanel.drill.sets.add(s);
                     }
                 }
-            }
 
-            //increment all effect IDs by the maxID
-            for (LEDStrip l : pf.drill.ledStrips) {
-                for (Effect e : l.getEffects()) {
-                    e.setId(e.getId() + maxID);
-                    e.setStartTimeMSec(e.getStartTimeMSec() + oldProjectLenMs);
-                    e.setEndTimeMSec(e.getEndTimeMSec() + oldProjectLenMs);
-                    footballFieldPanel.drill.ledStrips.get(i).getEffects().add(e);
+                for (SyncTimeGUI.Pair p : pf.timeSync) {
+                    p.setKey(movementIndex + p.getKey().substring(p.getKey().indexOf("-")));
                 }
-            }
+                timeSync.addAll(pf.timeSync);
 
-            for (LEDStrip ledStrip : footballFieldPanel.drill.ledStrips) {
-                for (Effect e : ledStrip.getEffects()) {
-                    if (e.getEffectType() == EffectList.GRID) {
-                        GridShape[] shapes = ((GridEffect) e.getGeneratedEffect()).getShapes();
-                        for (GridShape g : shapes) {
-                            g.recoverLEDStrips(footballFieldPanel.drill.ledStrips);
+                footballFieldPanel.drill.ledStrips.sort(Comparator.comparingInt(LEDStrip::getId));
+                pf.drill.ledStrips.sort(Comparator.comparingInt(LEDStrip::getId));
+
+                int maxID = 0;
+                //find the highest effect ID so there is no ID overlap between movements
+                for (LEDStrip l : footballFieldPanel.drill.ledStrips) {
+                    for (Effect e : l.getEffects()) {
+                        if (e.getId() > maxID) {
+                            maxID = e.getId();
                         }
                     }
                 }
-            }
 
-            for (SelectionGroupGUI.SelectionGroup group : pf.selectionGroups) {
-                if (!groupsGUI.getGroups().contains(group)) {
-                    groupsGUI.getGroups().add(group);
+                //increment all effect IDs by the maxID
+                for (LEDStrip l : pf.drill.ledStrips) {
+                    for (Effect e : l.getEffects()) {
+                        e.setId(e.getId() + maxID);
+                        e.setStartTimeMSec(e.getStartTimeMSec() + oldProjectLenMs);
+                        e.setEndTimeMSec(e.getEndTimeMSec() + oldProjectLenMs);
+                        footballFieldPanel.drill.ledStrips.get(i).getEffects().add(e);
+                    }
+                }
+
+                for (LEDStrip ledStrip : footballFieldPanel.drill.ledStrips) {
+                    for (Effect e : ledStrip.getEffects()) {
+                        if (e.getEffectType() == EffectList.GRID) {
+                            GridShape[] shapes = ((GridEffect) e.getGeneratedEffect()).getShapes();
+                            for (GridShape g : shapes) {
+                                g.recoverLEDStrips(footballFieldPanel.drill.ledStrips);
+                            }
+                        }
+                    }
+                }
+
+                for (SelectionGroupGUI.SelectionGroup group : pf.selectionGroups) {
+                    if (!groupsGUI.getGroups().contains(group)) {
+                        groupsGUI.getGroups().add(group);
+                    }
+                }
+
+                ids = new ArrayList<>(effectManager.getIds());
+
+                for (Integer id : pf.ids) {
+                    if (!ids.contains(id)) {
+                        ids.add(id);
+                    }
+                }
+
+                int prevTotalCounts = 0;
+                for (Set s : footballFieldPanel.drill.sets) {
+                    prevTotalCounts += s.duration; //add up total counts
+                }
+                ledStripViewGUI = new LEDStripViewGUI(footballFieldPanel.drill.ledStrips, effectManager);
+                footballFieldPanel.setCurrentSet(footballFieldPanel.drill.sets.get(0));
+                ledStripViewGUI.setCurrentSet(footballFieldPanel.drill.sets.get(0));
+
+                footballFieldBackground.justResized = true;
+                footballFieldBackground.repaint();
+
+                ledConfigurationGUI = new LEDConfigurationGUI(footballFieldPanel.drill, this);
+
+                groupsGUI.setGroups(pf.selectionGroups, footballFieldPanel.drill.ledStrips);
+                groupsGUI.initializeButtons();
+
+                //copy RFTriggers (onSync creates new table)
+                HashMap<Integer, RFTrigger> copy = new HashMap<>(count2RFTrigger);
+
+                onSync(timeSync, startDelay);
+                scrubBarGUI.setTimeSync(timeSync);
+
+                //put RFTriggers back in
+                count2RFTrigger.putAll(copy);
+
+                //readjust the counts in the new RFTriggers and add them to count2RFTrigger
+                for (Map.Entry<Integer, RFTrigger> e : pf.count2RFTrigger.entrySet()) {
+                    count2RFTrigger.put(e.getKey() + prevTotalCounts, pf.count2RFTrigger.get(e.getKey()));
                 }
             }
+            else if (opf != null) {  //old emrick file support
+                archivePaths.add(new File(opf.archivePath));
+                ia.concatImport(archivePaths, null);
 
-            ArrayList<Integer> ids = new ArrayList<>();
-            ids.addAll(effectManager.getIds());
+                //Append drill
+                int oldNumSets = footballFieldPanel.drill.sets.size();
+                int movementIndex = getMovementIndex();
 
-            for (Integer id : pf.ids) {
-                if (!ids.contains(id)) {
-                    ids.add(id);
+                //ensure lists are sorted
+                footballFieldPanel.drill.performers.sort(Comparator.comparingInt(Performer::getPerformerID));
+                opf.drill.performers.sort(Comparator.comparingInt(Performer::getPerformerID));
+
+                //total time of last project
+                long oldProjectLenMs = 0;
+
+                int i = 0;
+                for (Map.Entry<Integer, Long> entry : timeManager.getCount2MSec().entrySet()) {
+                    oldProjectLenMs += entry.getValue();
+                }
+
+
+                //enhanced for loop may result in concurrent modification
+                for (i = 0; i < opf.drill.performers.size(); i++) {
+                    Performer current = pf.drill.performers.get(i);
+                    for (int j = 0; j < current.getCoordinates().size(); j++) {
+                        current.getCoordinates().get(j).setSet(movementIndex + "-" + current.getCoordinates().get(j).getSet()
+                                .substring(current.getCoordinates().get(j).getSet().indexOf("-") + 1));
+                        footballFieldPanel.drill.performers.get(i).getCoordinates().add(current.getCoordinates().get(j));
+                    }
+                }
+                i = 0;
+
+                //edit and append coordinates array from the drill class
+                for (Coordinate c : opf.drill.coordinates) {
+                    c.setSet(movementIndex + "-" + c.getSet().substring(c.getSet().indexOf("-") + 1));
+                    footballFieldPanel.drill.coordinates.add(c);
+                }
+
+
+                //I'm not sure if this is necessary since I don't know if the sets above are the same references
+                //as the sets below.
+                for (Set s : opf.drill.sets) {
+                    s.label = movementIndex + "-" + s.label.substring(s.label.indexOf("-") + 1);
+                    s.index += oldNumSets;
+                    footballFieldPanel.drill.sets.add(s);
+                }
+
+                //again, I'm not sure if the references are identical so this is here just in case
+                if (opf.drill.sets.get(0).index < oldNumSets) {
+                    for (Set s : opf.drill.sets) {
+                        s.index += oldNumSets;
+                        footballFieldPanel.drill.sets.add(s);
+                    }
+                }
+
+                for (SyncTimeGUI.Pair p : opf.timeSync) {
+                    p.setKey(movementIndex + p.getKey().substring(p.getKey().indexOf("-")));
+                }
+                timeSync.addAll(opf.timeSync);
+
+                footballFieldPanel.drill.ledStrips.sort(Comparator.comparingInt(LEDStrip::getId));
+                opf.drill.ledStrips.sort(Comparator.comparingInt(LEDStrip::getId));
+
+                int maxID = 0;
+                //find the highest effect ID so there is no ID overlap between movements
+                for (LEDStrip l : footballFieldPanel.drill.ledStrips) {
+                    for (Effect e : l.getEffects()) {
+                        if (e.getId() > maxID) {
+                            maxID = e.getId();
+                        }
+                    }
+                }
+
+                //increment all effect IDs by the maxID
+                for (LEDStrip l : opf.drill.ledStrips) {
+                    for (Effect e : l.getEffects()) {
+                        e.setId(e.getId() + maxID);
+                        e.setStartTimeMSec(e.getStartTimeMSec() + oldProjectLenMs);
+                        e.setEndTimeMSec(e.getEndTimeMSec() + oldProjectLenMs);
+                        footballFieldPanel.drill.ledStrips.get(i).getEffects().add(e);
+                    }
+                }
+
+                for (LEDStrip ledStrip : footballFieldPanel.drill.ledStrips) {
+                    for (Effect e : ledStrip.getEffects()) {
+                        if (e.getEffectType() == EffectList.GRID) {
+                            GridShape[] shapes = ((GridEffect) e.getGeneratedEffect()).getShapes();
+                            for (GridShape g : shapes) {
+                                g.recoverLEDStrips(footballFieldPanel.drill.ledStrips);
+                            }
+                        }
+                    }
+                }
+
+                for (SelectionGroupGUI.SelectionGroup group : opf.selectionGroups) {
+                    if (!groupsGUI.getGroups().contains(group)) {
+                        groupsGUI.getGroups().add(group);
+                    }
+                }
+
+                ids = new ArrayList<>(effectManager.getIds());
+
+                for (Integer id : opf.ids) {
+                    if (!ids.contains(id)) {
+                        ids.add(id);
+                    }
+                }
+
+                int prevTotalCounts = 0;
+                for (Set s : footballFieldPanel.drill.sets) {
+                    prevTotalCounts += s.duration; //add up total counts
+                }
+                ledStripViewGUI = new LEDStripViewGUI(footballFieldPanel.drill.ledStrips, effectManager);
+                footballFieldPanel.setCurrentSet(footballFieldPanel.drill.sets.get(0));
+                ledStripViewGUI.setCurrentSet(footballFieldPanel.drill.sets.get(0));
+
+                footballFieldBackground.justResized = true;
+                footballFieldBackground.repaint();
+
+                ledConfigurationGUI = new LEDConfigurationGUI(footballFieldPanel.drill, this);
+
+                groupsGUI.setGroups(opf.selectionGroups, footballFieldPanel.drill.ledStrips);
+                groupsGUI.initializeButtons();
+
+                //copy RFTriggers (onSync creates new table)
+                HashMap<Integer, RFTrigger> copy = new HashMap<>(count2RFTrigger);
+
+                onSync(timeSync, startDelay);
+                scrubBarGUI.setTimeSync(timeSync);
+
+                //put RFTriggers back in
+                count2RFTrigger.putAll(copy);
+
+                //readjust the counts in the new RFTriggers and add them to count2RFTrigger
+                for (Map.Entry<Integer, RFTrigger> e : opf.count2RFTrigger.entrySet()) {
+                    count2RFTrigger.put(e.getKey() + prevTotalCounts, opf.count2RFTrigger.get(e.getKey()));
                 }
             }
-
-            int prevTotalCounts = 0;
-            for (Set s : footballFieldPanel.drill.sets) {
-                prevTotalCounts += s.duration; //add up total counts
-            }
-            ledStripViewGUI = new LEDStripViewGUI(footballFieldPanel.drill.ledStrips, effectManager);
-            footballFieldPanel.setCurrentSet(footballFieldPanel.drill.sets.get(0));
-            ledStripViewGUI.setCurrentSet(footballFieldPanel.drill.sets.get(0));
-
-            footballFieldBackground.justResized = true;
-            footballFieldBackground.repaint();
-
-            ledConfigurationGUI = new LEDConfigurationGUI(footballFieldPanel.drill, this);
-
-            groupsGUI.setGroups(pf.selectionGroups, footballFieldPanel.drill.ledStrips);
-            groupsGUI.initializeButtons();
-
-            //copy RFTriggers (onSync creates new table)
-            HashMap<Integer, RFTrigger> copy = new HashMap<>(count2RFTrigger);
-
-            onSync(timeSync, startDelay);
-            scrubBarGUI.setTimeSync(timeSync);
-
-            //put RFTriggers back in
-            count2RFTrigger.putAll(copy);
-
-            //readjust the counts in the new RFTriggers and add them to count2RFTrigger
-            for (Map.Entry<Integer, RFTrigger> e : pf.count2RFTrigger.entrySet()) {
-                count2RFTrigger.put(e.getKey() + prevTotalCounts, pf.count2RFTrigger.get(e.getKey()));
+            else {
+                return;  //better option?
             }
 
             footballFieldPanel.setCount2RFTrigger(count2RFTrigger);
@@ -2608,7 +2824,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
      * @param archivePaths The locations of the .3dz files in user files when the project is loaded.
      */
     private void saveProject(File path, ArrayList<File> archivePaths) {
-        ProjectFile pf;
+        ModernProjectFile pf;
 
         ArrayList<SelectionGroupGUI.SelectionGroup> groupsList = new ArrayList<>();
         for(SelectionGroupGUI.SelectionGroup group: groupsGUI.getGroups()){
@@ -2634,9 +2850,9 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             System.out.println("SIZEEEEEEEEE" + archiveNames.size());
         }
         if (this.effectManager != null) {
-            pf = new ProjectFile(footballFieldPanel.drill, archiveNames, timeSync, startDelay, count2RFTrigger, effectManager.getIds(), groupsList);
+            pf = new ModernProjectFile(footballFieldPanel.drill, archiveNames, timeSync, startDelay, count2RFTrigger, effectManager.getIds(), groupsList);
         } else {
-            pf = new ProjectFile(footballFieldPanel.drill, archiveNames, timeSync, startDelay, count2RFTrigger, null, groupsList);
+            pf = new ModernProjectFile(footballFieldPanel.drill, archiveNames, timeSync, startDelay, count2RFTrigger, null, groupsList);
         }
         String g = gson.toJson(pf);
 
