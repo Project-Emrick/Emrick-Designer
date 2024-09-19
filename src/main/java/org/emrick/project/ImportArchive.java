@@ -25,9 +25,11 @@ public class ImportArchive {
     public ImportArchive(ImportListener importListener) {
         this.importListener = importListener;
     }
-
     //for current file types
     public void fullImport(ArrayList<File> archiveFiles, String drillSrc) {
+
+    public void fullImport(String archiveSrc, String drillSrc) {
+        // TODO: add null checks for input
         importListener.onBeginImport();
 
         ArrayList<String> absoluteArchivePaths = new ArrayList<>();
@@ -99,10 +101,15 @@ public class ImportArchive {
         //  Current support:  audio
         for (Map.Entry<String, String> entry : iniData.get("Files").entrySet()) {
 
+            // See package.ini. Import available files
+            //  Current support:  audio
+
             // File missing
             if (entry.getValue().isEmpty()) {
                 continue;
             }
+     
+
             ArrayList<String> componentPaths = new ArrayList<>();
             for (String s : unzipPaths) {
                 componentPaths.add(s + "/" + entry.getValue());

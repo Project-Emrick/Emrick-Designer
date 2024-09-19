@@ -170,6 +170,31 @@ public class FootballFieldPanel extends JPanel implements RepaintListener {
         }
     }
 
+    public Point2D calculatePosition(Performer p, Set s, double setRatio, int count, int setStartCount) {
+        Point2D location;
+        Coordinate c1 = p.getCoordinateFromSet(s.label);
+        if (s.index < drill.sets.size() - 1) {
+            Coordinate c2 = p.getCoordinateFromSet(drill.sets.get(s.index + 1).label);
+            if (c1.x == c2.x && c1.y == c2.y) {
+                location = dotToPoint(c1.x, c1.y);
+            } else {
+                if (useFps) {
+                    location = dotToPoint(
+                            (c2.x - c1.x) * setRatio + c1.x,
+                            (c2.y - c1.y) * setRatio + c1.y
+                    );
+                } else {
+                    int duration = drill.sets.get(s.index + 1).duration;
+                    location = dotToPoint((c2.x - c1.x) * (double) (count - setStartCount) /
+                            duration + c1.x, (c2.y - c1.y) * (double) (count - setStartCount) / duration + c1.y);
+                }
+            }
+        } else {
+            location = dotToPoint(c1.x, c1.y);
+        }
+        return location;
+    }
+
     @Override
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
@@ -201,26 +226,7 @@ public class FootballFieldPanel extends JPanel implements RepaintListener {
         // Draw performers with their colors
         for (Performer p : drill.performers) {
             if (!p.getLedStrips().isEmpty()) {
-                Coordinate c1 = p.getCoordinateFromSet(currentSet.label);
-                if (currentSet.index < drill.sets.size() - 1) {
-                    Coordinate c2 = p.getCoordinateFromSet(drill.sets.get(currentSet.index + 1).label);
-                    if (c1.x == c2.x && c1.y == c2.y) {
-                        p.currentLocation = dotToPoint(c1.x, c1.y);
-                    } else {
-                        if (useFps) {
-                            p.currentLocation = dotToPoint(
-                                    (c2.x - c1.x) * currentSetRatio + c1.x,
-                                    (c2.y - c1.y) * currentSetRatio + c1.y
-                            );
-                        } else {
-                            int duration = drill.sets.get(currentSet.index + 1).duration;
-                            p.currentLocation = dotToPoint((c2.x - c1.x) * (double) (currentCount - currentSetStartCount) /
-                                    duration + c1.x, (c2.y - c1.y) * (double) (currentCount - currentSetStartCount) / duration + c1.y);
-                        }
-                    }
-                } else {
-                    p.currentLocation = dotToPoint(c1.x, c1.y);
-                }
+                p.currentLocation = calculatePosition(p, currentSet, currentSetRatio, currentCount, currentSetStartCount);
                 double x = p.currentLocation.getX();
                 double y = p.currentLocation.getY();
 

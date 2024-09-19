@@ -190,7 +190,7 @@ public class SerialTransmitter {
         } catch (UnknownHostException uhe) {
             throw new RuntimeException(uhe);
         }
-        System.out.println(str);
+        //System.out.println(str);
         byte[] out = str.getBytes();
         sp.writeBytes(out, str.length());
         sp.flushIOBuffers();

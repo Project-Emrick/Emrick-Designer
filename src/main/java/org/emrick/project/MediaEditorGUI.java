@@ -31,7 +31,7 @@ import java.util.*;
  */
 public class MediaEditorGUI extends Component implements ImportListener, ScrubBarListener, SyncListener,
         FootballFieldListener, EffectListener, SelectListener, UserAuthListener, RFTriggerListener, RFSignalListener, RequestCompleteListener,
-        LEDConfigListener{
+        LEDConfigListener, ReplaceFilesListener {
 
     // String definitions
     public static final String FILE_MENU_CONCATENATE = "Concatenate";
@@ -116,7 +116,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
     private int token;
     private Color verificationColor;
     private Timer noRequestTimer;
-    private ArrayList<Integer> requestIDs;
+    private HashSet<Integer> requestIDs;
     private JMenuItem runWebServer;
     private JMenuItem runLightBoardWebServer;
     private JMenuItem stopWebServer;
@@ -351,7 +351,6 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         footballFieldPanel = new FootballFieldPanel(this, null);
         footballFieldPanel.setOpaque(false);
 
-        //footballFieldPanel.setBackground(Color.lightGray); // temp. Visual indicator for unfilled space
         JScrollPane fieldScrollPane = new JScrollPane(footballFieldPanel);
         fieldScrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
         fieldScrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
@@ -448,12 +447,22 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
 
         fileMenu.addSeparator();
 
+
         //Concatenate Projects (the current project will be appended to) and a copy of the old will be made
         JMenuItem concatenateItem = new JMenuItem(FILE_MENU_CONCATENATE);
         fileMenu.add(concatenateItem);
         concatenateItem.addActionListener(e -> {
             concatenateDialog();
         });
+
+
+        // Modify Drill/Audio
+        JMenuItem modifyProject = new JMenuItem("Modify Drill/Audio");
+        modifyProject.addActionListener(e -> {
+            ReplaceProjectFilesGUI replaceProjectFilesGUI = new ReplaceProjectFilesGUI(frame, this);
+            replaceProjectFilesGUI.setVisible(true);
+        });
+        fileMenu.add(modifyProject);
 
         fileMenu.addSeparator();
 
@@ -890,6 +899,12 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         hardwareMenu.add(verifyLightBoardItem);
         JMenuItem wirelessCheck = new JMenuItem("Wireless Check");
         hardwareMenu.add(wirelessCheck);
+        JMenuItem storageMode = new JMenuItem("Storage Mode");
+        hardwareMenu.add(storageMode);
+        JMenuItem batteryCheck = new JMenuItem("Battery Check");
+        hardwareMenu.add(batteryCheck);
+        JMenuItem massSleep = new JMenuItem("Mass Sleep");
+        hardwareMenu.add(massSleep);
         hardwareMenu.addSeparator();
         JMenuItem modifyBoardItem = new JMenuItem("Modify Board");
         hardwareMenu.add(modifyBoardItem);
@@ -913,6 +928,28 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             if (st == null) return;
 
             st.writeToSerialPort("c");
+        });
+
+        // For Storage Mode
+        storageMode.addActionListener(e -> {
+            SerialTransmitter st = comPortPrompt("Transmitter");
+            if (st == null) return;
+
+            st.writeToSerialPort("d");
+        });
+
+        batteryCheck.addActionListener(e -> {
+            SerialTransmitter st = comPortPrompt("Transmitter");
+            if (st == null) return;
+
+            st.writeToSerialPort("o");
+        });
+
+        massSleep.addActionListener(e -> {
+            SerialTransmitter st = comPortPrompt("Transmitter");
+            if (st == null) return;
+
+            st.writeToSerialPort("e");
         });
 
         modifyBoardItem.addActionListener(e -> {
@@ -1305,7 +1342,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
 
             server = HttpServer.create(new InetSocketAddress(port), 250);
             writeSysMsg("server started at " + port);
-            requestIDs = new ArrayList<>();
+            requestIDs = new HashSet<>();
 
             server.createContext("/", new GetHandler(PathConverter.pathConverter("tmp/", false), this));
             server.setExecutor(new ServerExecutor());
@@ -1833,6 +1870,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                 footballFieldPanel.setCurrentSet(footballFieldPanel.drill.sets.get(0));
                 ledStripViewGUI.setCurrentSet(footballFieldPanel.drill.sets.get(0));
 
+
                 footballFieldBackground.justResized = true;
                 footballFieldBackground.repaint();
 
@@ -1845,6 +1883,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                 HashMap<Integer, RFTrigger> copy = new HashMap<>(count2RFTrigger);
 
                 onSync(timeSync, startDelay);
+
                 scrubBarGUI.setTimeSync(timeSync);
 
                 //put RFTriggers back in
@@ -2319,12 +2358,16 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
     public void onSync(ArrayList<SyncTimeGUI.Pair> times, float startDelay) {
         writeSysMsg("Got Synced Times");
 
+        if (this.timeSync == null) {
+            count2RFTrigger = new HashMap<>();
+            footballFieldPanel.setCount2RFTrigger(count2RFTrigger);
+        }
+
         this.timeSync = times;
         this.startDelay = startDelay;
 
         scrubBarGUI.setTimeSync(timeSync);
-        count2RFTrigger = new HashMap<>();
-        footballFieldPanel.setCount2RFTrigger(count2RFTrigger);
+
 
         setupEffectView(null);
         ledStripViewGUI = new LEDStripViewGUI(new ArrayList<>(), effectManager);
@@ -3084,15 +3127,13 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
     }
 
     @Override
-    public synchronized void onRequestComplete(int id) {
+    public void onRequestComplete(int id) { // this technically isn't thread safe, but it has been tested with requests at a 1 ms delay so its probably fine
         if (id != -1) {
             requestIDs.add(id);
             programmingProgressBar.setValue(requestIDs.size());
             programmingProgressBar.setString(programmingProgressBar.getValue() + "/" + programmingProgressBar.getMaximum());
             programmingProgressBar.setStringPainted(true);
             programmingTracker.addCompletedStrip(id);
-            programmingTracker.revalidate();
-            programmingTracker.repaint();
         }
 
         int highestID = footballFieldPanel.drill.ledStrips.size() - 1;
@@ -3131,15 +3172,197 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         mainContentPanel.repaint();
     }
 
+    @Override
+    public boolean onNewFileSelect(File drill, File archive) {
+        ImportArchive importArchive = new ImportArchive(new ImportListener() {
+            @Override
+            public void onBeginImport() {}
+            @Override
+            public void onImport() {}
+            @Override
+            public void onFileSelect(File archivePath, File csvFile) {}
+
+            @Override
+            public void onAudioImport(File audioFile) {
+                audioPlayer = new AudioPlayer(audioFile);
+                scrubBarGUI.setAudioPlayer(audioPlayer);
+            }
+
+            @Override
+            public void onDrillImport(String drill) {
+                Drill newDrill = DrillParser.parseWholeDrill(DrillParser.extractText(drill));
+                Drill oldDrill = footballFieldPanel.drill;
+                boolean same = true;
+                for (int i = 0 ; i < oldDrill.sets.size(); i++) {
+                    if (newDrill.sets.size() > i) {
+                        if (!newDrill.sets.get(i).equals(oldDrill.sets.get(i))) {
+                            same = false;
+                            break;
+                        }
+                    } else {
+                        same = false;
+                        break;
+                    }
+                }
+                if (oldDrill.sets.size() != newDrill.sets.size()) {
+                    same = false;
+                }
+                /*
+                * Strategy
+                * Build edit list with insert new, add existing, update existing, and delete existing
+                * update should use add or delete process depending on change
+                * add existing is nop
+                *
+                * Build a sorted list of events from rf triggers and effects built from generated effects
+                * */
+
+                if (!same) {
+                    ArrayList<EditItem> editList = new ArrayList<>();
+                    int insertCount = 0;
+                    int deleteCount = 0;
+                    for (int i = 0; i < oldDrill.sets.size(); i++) {
+                        if (newDrill.sets.contains(oldDrill.sets.get(i))) {
+                            if (!oldDrill.sets.get(i).label.equals(newDrill.sets.get(i+insertCount).label)) {
+                                while (!oldDrill.sets.get(i).label.equals(newDrill.sets.get(i+insertCount).label)) {
+                                    editList.add(new EditItem("INSERT", newDrill.sets.get(i+insertCount)));
+                                    insertCount++;
+                                }
+                            } else if (oldDrill.sets.get(i).duration != newDrill.sets.get(i+insertCount).duration) {
+                                editList.add(new EditItem("UPDATE", newDrill.sets.get(i+insertCount)));
+                            } else {
+                                editList.add(new EditItem("NOP", oldDrill.sets.get(i)));
+                            }
+                        } else {
+                            editList.add(new EditItem("DELETE", oldDrill.sets.get(i)));
+                            insertCount--;
+                            deleteCount++;
+                        }
+                    }
+                    HashSet<TimelineEvent> eventSet = new HashSet<>();
+                    for (LEDStrip l : footballFieldPanel.drill.ledStrips) {
+                        for (Effect e : l.getEffects()) {
+                            eventSet.add(e.getGeneratedEffect().generateEffectObj());
+                        }
+                    }
+                    Iterator<RFTrigger> it = count2RFTrigger.values().iterator();
+                    while (it.hasNext()) {
+                        eventSet.add(it.next());
+                    }
+                    ArrayList<TimelineEvent> eventList = new ArrayList<>(eventSet);
+                    eventList.sort((o1, o2) -> {
+                        long time1;
+                        long time2;
+                        if (o1 instanceof RFTrigger) {
+                            time1 = ((RFTrigger) o1).getTimestampMillis();
+                        } else {
+                            time1 = ((Effect) o1).getStartTimeMSec();
+                        }
+                        if (o2 instanceof RFTrigger) {
+                            time2 = ((RFTrigger) o2).getTimestampMillis();
+                        } else {
+                            time2 = ((Effect) o2).getStartTimeMSec();
+                        }
+                        if (o1 instanceof RFTrigger && !(o2 instanceof RFTrigger) && time1 == time2) {
+                            time1--;
+                        }
+                        if (o2 instanceof RFTrigger && !(o1 instanceof RFTrigger) && time2 == time1) {
+                            time2--;
+                        }
+                        return (int) (time1 - time2);
+                    });
+
+                    //reverse traversal of editList
+                    int offset = oldDrill.sets.size() - editList.size();
+                    ArrayList<Map.Entry<String, Long>> set2MSec = timeManager.getSet2MSec();
+                    ArrayList<Map.Entry<String, Integer>> set2Count = timeManager.getSet2CountSorted();
+                    int[] deleteStartCounts = new int[deleteCount];
+                    int[] deleteEndCounts = new int[deleteCount];
+                    long[] deleteStartMsecs = new long[deleteCount];
+                    long[] deleteEndMsecs = new long[deleteCount];
+                    for (int i = editList.size() - 1; i >= 0; i--) {
+                        switch (editList.get(i).getOperation()) {
+                            case "INSERT": {
+
+                                break;
+                            }
+                            case "UPDATE": {
+                                break;
+                            }
+                            case "DELETE": {
+                                long startMsec;
+                                long endMsec;
+                                int startCount;
+                                int endCount;
+                                if (i != editList.size() - 1) {
+
+                                } else {
+
+                                }
+                                break;
+                            }
+                        }
+                    }
+
+                    // loop through event list and regenerate all effects
+
+
+                }
+
+                oldDrill.coordinates = newDrill.coordinates;
+                for (Performer p : oldDrill.performers) {
+                    p.loadCoordinates(oldDrill.coordinates);
+                }
+                footballFieldPanel.repaint();
+            }
+        });
+        String aPath = null;
+        String dPath = null;
+        if (archive != null) {
+            aPath = archive.getAbsolutePath();
+        }
+        if (drill != null) {
+            dPath = drill.getAbsolutePath();
+        }
+        importArchive.fullImport(aPath, dPath);
+        return true;
+    }
+
+    private class EditItem {
+        private String operation;
+        private Set set;
+
+        public EditItem(String operation, Set set) {
+            this.operation = operation;
+            this.set = set;
+        }
+
+        public String getOperation() {
+            return operation;
+        }
+
+        public void setOperation(String operation) {
+            this.operation = operation;
+        }
+
+        public Set getSet() {
+            return set;
+        }
+
+        public void setSet(Set set) {
+            this.set = set;
+        }
+    }
+
     /**
      * Object used to track the progress of programming led strips using the web server
      */
     private class ProgrammingTracker extends JPanel {
         private ArrayList<LEDStrip> allStrips;
-        private ArrayList<Integer> completedStrips;
+        private HashSet<Integer> completedStrips;
         private ArrayList<ProgrammableItem> items;
+        private boolean painting = false;
 
-        public ProgrammingTracker(ArrayList<LEDStrip> allStrips, ArrayList<Integer> completedStrips) {
+        public ProgrammingTracker(ArrayList<LEDStrip> allStrips, HashSet<Integer> completedStrips) {
             this.allStrips = allStrips;
             this.completedStrips = completedStrips;
             items = new ArrayList<ProgrammableItem>();
@@ -3162,17 +3385,20 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             this.allStrips = allStrips;
         }
 
-        public ArrayList<Integer> getCompletedStrips() {
+        public HashSet<Integer> getCompletedStrips() {
             return completedStrips;
         }
 
-        public void setCompletedStrips(ArrayList<Integer> completedStrips) {
+        public void setCompletedStrips(HashSet<Integer> completedStrips) {
             this.completedStrips = completedStrips;
         }
 
         public void addCompletedStrip(Integer ledStrip) {
-            completedStrips.add(ledStrip);
             setItemCompleted(ledStrip);
+            if (!painting) {
+                painting = true;
+                repaint();
+            }
         }
 
         private void setItemCompleted(Integer ledStrip) {
@@ -3181,6 +3407,12 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                     item.setProgrammed(true);
                 }
             }
+        }
+
+        @Override
+        public void paintComponent(Graphics g) {
+            super.paintComponent(g);
+            painting = false;
         }
 
         private class ProgrammableItem extends JPanel {
@@ -3255,7 +3487,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                             if (timeBeforeEffect(i, e, l.getEffects(), timesMS) > 1 || e.isDO_DELAY()) {
                                 flags += DO_DELAY;
                                 if (e.isDO_DELAY() && timeBeforeEffect(i, e, l.getEffects(), timesMS) > 1) {
-                                    out += "Size: 0, Strip_id: " + l.getPerformerID() + ", Set_id: " + getEffectTriggerIndex(e, timesMS)
+                                    out += "Size: 0, Strip_id: " + l.getId() + ", Set_id: " + getEffectTriggerIndex(e, timesMS)
                                             + ", Flags: 24, Start_color: 0, 0, 0, End_color: 0, 0, 0, Delay: " + timeBeforeEffect(i, e, l.getEffects(), timesMS)
                                             + ", Duration: 0, Function: 0, Timeout: 0\n";
                                     int count = Integer.valueOf(out.substring(out.indexOf(" ") + 1, out.indexOf(",")));
@@ -3275,7 +3507,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                                 flags += DEFAULT_FUNCTION;
                             }
                             out += "Size: " + e.getSize() + ", ";
-                            out += "Strip_id: " + l.getPerformerID() + ", ";
+                            out += "Strip_id: " + l.getId() + ", ";
                             out += "Set_id: " + getEffectTriggerIndex(e, timesMS) + ", ";
                             out += "Flags: " + flags + ", ";
                             Color startColor = e.getStartColor();
