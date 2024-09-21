@@ -511,6 +511,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                 System.out.println("CSV     | Selected file: " + selectedFile.getAbsoluteFile());
                 csvFile = selectedFile;
                 parseCsvFileForPerformerDeviceIDs(csvFile);
+                footballFieldPanel.repaint();
             }
         });
 
@@ -1614,9 +1615,9 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             pid++;
             LEDConfig c1 = new LEDConfig();
             c1.setLabel("L");
+            c1.sethOffset(1);
             LEDConfig c2 = new LEDConfig();
             c2.setLabel("R");
-            c2.sethOffset(1);
             LEDStrip l1 = new LEDStrip(id, p, c1);
             id++;
             LEDStrip l2 = new LEDStrip(id, p, c2);
@@ -1654,7 +1655,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             // The current code works so don't touch it unless major changes need to happen
             while (line != null && currStripID < size) {
                 if (!line.startsWith(",")) {
-                    String[] tmp = line.split(",");
+                    String[] tmp = line.replaceAll("\\.", "").split(",");
                     try {
                         if (footballFieldPanel.drill.performers.isEmpty()) {
                             break;
@@ -1671,7 +1672,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                     }
                 } else {
                     String[] tmp = line.split(",");
-                    String label = tmp[2];
+                    String label = tmp[2].substring(tmp[2].length() - 1);
                     int ledCount = Integer.parseInt(tmp[3]);
                     int height = Integer.parseInt(tmp[4]);
                     int width = Integer.parseInt(tmp[5]);
