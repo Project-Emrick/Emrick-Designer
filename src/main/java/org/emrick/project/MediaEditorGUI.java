@@ -2607,7 +2607,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         }
 
         int highestID = footballFieldPanel.drill.ledStrips.size() - 1;
-        if (currentID < highestID) {
+        if (currentID <= highestID) {
             currentID++;
         }
         noRequestTimer.stop();
@@ -2901,7 +2901,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             public void paintComponent(Graphics g) {
                 super.paintComponent(g);
                 if (programmed) {
-                    g.setColor(Color.GREEN);
+                    g.setColor(Color.BLUE);
                 } else {
                     g.setColor(Color.RED);
                 }
