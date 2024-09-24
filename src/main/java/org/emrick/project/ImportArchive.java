@@ -37,13 +37,13 @@ public class ImportArchive {
             String fileNameNoExt = archiveFile.getName().replaceFirst("[.][^.]+$", "");
             String unzipPath = PathConverter.pathConverter("show_data/" + fileNameNoExt, false);
 
-            Unzip.unzip(archiveSrc, unzipPath);
-
-            // Parse package.ini file
-            File iniFile = new File(unzipPath + File.separator + "package.ini");
-            Map<String, Map<String, String>> iniData = new HashMap<>();
 
             try {
+                Unzip.unzip(archiveSrc, unzipPath);
+
+                // Parse package.ini file
+                File iniFile = new File(unzipPath + File.separator + "package.ini");
+                Map<String, Map<String, String>> iniData = new HashMap<>();
                 Scanner iniReader = new Scanner(iniFile);
                 String currentSection = null;
                 while (iniReader.hasNextLine()) {
@@ -68,26 +68,26 @@ public class ImportArchive {
                         iniData.get(currentSection).put(key, value);
                     }
                 }
+
+                // See package.ini. Import available files
+                //  Current support:  audio
+                for (Map.Entry<String, String> entry : iniData.get("Files").entrySet()) {
+
+                    // File missing
+                    if (entry.getValue().isEmpty()) {
+                        continue;
+                    }
+                    String componentPath = unzipPath + "/" + entry.getValue();
+
+                    // General-purpose callback
+
+                    // Import audio
+                    if (entry.getKey().equals("audio")) {
+                        importAudio(componentPath);
+                    }
+                }
             } catch (FileNotFoundException e) {
-                throw new RuntimeException(e);
-            }
-
-            // See package.ini. Import available files
-            //  Current support:  audio
-            for (Map.Entry<String, String> entry : iniData.get("Files").entrySet()) {
-
-                // File missing
-                if (entry.getValue().isEmpty()) {
-                    continue;
-                }
-                String componentPath = unzipPath + "/" + entry.getValue();
-
-                // General-purpose callback
-
-                // Import audio
-                if (entry.getKey().equals("audio")) {
-                    importAudio(componentPath);
-                }
+                System.out.println("No audio file found");
             }
             importListener.onImport();
         }
