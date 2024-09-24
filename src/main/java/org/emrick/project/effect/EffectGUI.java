@@ -551,6 +551,7 @@ public class EffectGUI implements ActionListener {
         currentComponents[0] = speedLabel;
         setComponentSize(speedField, 100, 25);
         currentComponents[1] = speedField;
+        panelComponents.add(currentComponents);
 
         //////////////// 5th Row ////////////////
         currentComponents = new JComponent[1];
@@ -719,6 +720,7 @@ public class EffectGUI implements ActionListener {
         currentComponents[0] = speedLabel;
         setComponentSize(speedField, 100, 25);
         currentComponents[1] = speedField;
+        panelComponents.add(currentComponents);
 
         //////////////// 5th Row ////////////////
         currentComponents = new JComponent[1];
