@@ -89,7 +89,7 @@ public class TimelineGUI {
         // Create dummy triggers for display
         HashMap<Integer, RFTrigger> triggers = new HashMap<>();
         for (int i = 0; i < 5; i++) {
-            RFTrigger t = new RFTrigger(i, startTimeMSec + i);
+            RFTrigger t = new RFTrigger(i, startTimeMSec + i, "mytitle", "mydesc", "mycue");
             triggers.put(i, t);
         }
 

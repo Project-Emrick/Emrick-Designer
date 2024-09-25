@@ -68,7 +68,7 @@ public class FlowViewGUI extends JPanel {
         int i = 0;
         while(iterator.hasNext()) {
             RFTrigger curr = iterator.next();
-            items.add(new FlowViewItem(i, curr.getCount(), "placeholder", "placeholder", "placeholder"));
+            items.add(new FlowViewItem(i, curr.getCount(), curr.getTitle(), curr.getDescription(), curr.getCue()));
             i++;
         }
         items.sort(Comparator.comparingInt(FlowViewItem::getCount));
