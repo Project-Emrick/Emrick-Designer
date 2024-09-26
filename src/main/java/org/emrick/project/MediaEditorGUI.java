@@ -1535,10 +1535,10 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
 
                 if (opf.timeSync != null && opf.startDelay != null) {
                     timeSync = opf.timeSync;
-                    onSync(timeSync, opf.startDelay);
-                    scrubBarGUI.setTimeSync(timeSync);
                     startDelay = opf.startDelay;
                     count2RFTrigger = opf.count2RFTrigger;
+                    onSync(timeSync, opf.startDelay);
+                    scrubBarGUI.setTimeSync(timeSync);
                     footballFieldPanel.setCount2RFTrigger(count2RFTrigger);
                     setupEffectView(opf.ids);
                     rebuildPageTabCounts();
@@ -3223,13 +3223,15 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             public void onBeginImport() {}
             @Override
             public void onImport() {}
-            @Override
-            public void onFileSelect(File archivePath, File csvFile) {}
 
             @Override
-            public void onAudioImport(File audioFile) {
-                audioPlayer = new AudioPlayer(audioFile);
-                scrubBarGUI.setAudioPlayer(audioPlayer);
+            public void onFileSelect(ArrayList<File> archivePaths, File csvFile) {
+
+            }
+
+            @Override
+            public void onAudioImport(ArrayList<File> audioFiles) {
+
             }
 
             @Override
@@ -3358,6 +3360,11 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                 }
                 footballFieldPanel.repaint();
             }
+
+            @Override
+            public void onConcatAudioImport(ArrayList<File> audioFiles) {
+
+            }
         });
         String aPath = null;
         String dPath = null;
@@ -3367,7 +3374,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         if (drill != null) {
             dPath = drill.getAbsolutePath();
         }
-        importArchive.fullImport(aPath, dPath);
+        //importArchive.fullImport(aPath, dPath);
         return true;
     }
 

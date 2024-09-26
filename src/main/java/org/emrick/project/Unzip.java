@@ -52,8 +52,9 @@ public class Unzip {
         }
         for (int i = 0; i < archiveDest.size(); i++) {
             System.out.println(archiveSrc.get(i));
-            try (FileInputStream fis = new FileInputStream(archiveSrc.get(i));
-                 ZipInputStream zis = new ZipInputStream(fis)) {
+            try {
+                FileInputStream fis = new FileInputStream(archiveSrc.get(i));
+                ZipInputStream zis = new ZipInputStream(fis);
 
                 ZipEntry ze = zis.getNextEntry();
                 while (ze != null) {

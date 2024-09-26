@@ -91,31 +91,33 @@ public class ImportArchive {
                     }
                 }
             } catch (FileNotFoundException e) {
-                throw new RuntimeException(e);
+                e.printStackTrace();
             }
         }
 
                 // See package.ini. Import available files
                 //  Current support:  audio
-                for (Map.Entry<String, String> entry : iniData.get("Files").entrySet()) {
+        if (!iniData.isEmpty()) {
+            for (Map.Entry<String, String> entry : iniData.get("Files").entrySet()) {
 
-            // File missing
-            if (entry.getValue().isEmpty()) {
-                continue;
-            }
-            ArrayList<String> componentPaths = new ArrayList<>();
-            for (String s : unzipPaths) {
-                componentPaths.add(s + "/" + entry.getValue());
-            }
+                // File missing
+                if (entry.getValue().isEmpty()) {
+                    continue;
+                }
+                ArrayList<String> componentPaths = new ArrayList<>();
+                for (String s : unzipPaths) {
+                    componentPaths.add(s + "/" + entry.getValue());
+                }
 
-                    // General-purpose callback
+                // General-purpose callback
 
-            // Import audio
-            if (entry.getKey().equals("audio")) {
-                importAudio(componentPaths);
+                // Import audio
+                if (entry.getKey().equals("audio")) {
+                    importAudio(componentPaths);
+                }
             }
-            importListener.onImport();
         }
+        importListener.onImport();
 
         // Import drill
         if (drillSrc != null) {
