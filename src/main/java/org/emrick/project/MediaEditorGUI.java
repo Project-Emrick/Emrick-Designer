@@ -112,7 +112,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
     private String password;
     private int port;
     private int currentID;
-    private static int MAX_CONNECTIONS = 50;
+    private static int MAX_CONNECTIONS = 60;
     private int token;
     private Color verificationColor;
     private Timer noRequestTimer;
@@ -1632,8 +1632,11 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
 
                 int i = 0;
                 for (Map.Entry<Integer, Long> entry : timeManager.getCount2MSec().entrySet()) {
-                    oldProjectLenMs += entry.getValue();
+                    if (entry.getValue() > oldProjectLenMs) {
+                        oldProjectLenMs = entry.getValue();
+                    }
                 }
+
 
 
                 //enhanced for loop may result in concurrent modification
@@ -1689,6 +1692,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                 }
 
                 //increment all effect IDs by the maxID
+                i = 0;
                 for (LEDStrip l : pf.drill.ledStrips) {
                     for (Effect e : l.getEffects()) {
                         e.setId(e.getId() + maxID);
@@ -1696,6 +1700,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                         e.setEndTimeMSec(e.getEndTimeMSec() + oldProjectLenMs);
                         footballFieldPanel.drill.ledStrips.get(i).getEffects().add(e);
                     }
+                    i++;
                 }
 
                 for (LEDStrip ledStrip : footballFieldPanel.drill.ledStrips) {
@@ -1772,7 +1777,9 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
 
                 int i = 0;
                 for (Map.Entry<Integer, Long> entry : timeManager.getCount2MSec().entrySet()) {
-                    oldProjectLenMs += entry.getValue();
+                    if (entry.getValue() > oldProjectLenMs) {
+                        oldProjectLenMs = entry.getValue();
+                    }
                 }
 
 
@@ -2469,17 +2476,19 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
     public void onSetChange(int setIndex) {
         if (footballFieldPanel.getCurrentSet().label.contains("-")) {
             int nextSetMvmt = Integer.parseInt(footballFieldPanel.drill.sets.get(setIndex).label.substring(0,1));
-
+            /*
             if (nextSetMvmt < 1 || nextSetMvmt > audioPlayers.size()) {
                 return;
             }
-
+*/
             if (currentMovement != nextSetMvmt) {
-                audioPlayers.get(currentMovement - 1).pauseAudio();
+                //audioPlayers.get(currentMovement - 1).pauseAudio();
                 currentMovement = nextSetMvmt;
-                currentAudioPlayer = audioPlayers.get(currentMovement - 1);
-                currentAudioPlayer.playAudio(0);
+                //currentAudioPlayer = audioPlayers.get(currentMovement - 1);
+                //currentAudioPlayer.playAudio(0);
             }
+
+
 
         }
         footballFieldPanel.setCurrentSet(footballFieldPanel.drill.sets.get(setIndex));
