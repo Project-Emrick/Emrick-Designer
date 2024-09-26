@@ -15,9 +15,16 @@ public class RFTrigger implements TimelineEvent {
     long timestampMillis;
     public static RFTriggerListener rfTriggerListener;
 
-    public RFTrigger(int count, long timestampMillis) {
+    String title;
+    String description;
+    String cue;
+
+    public RFTrigger(int count, long timestampMillis, String title, String description, String cue) {
         this.count = count;
         this.timestampMillis = timestampMillis;
+        this.title = title;
+        this.description = description;
+        this.cue = cue;
     }
 
     public int getCount() {
@@ -34,6 +41,15 @@ public class RFTrigger implements TimelineEvent {
     public void setTimestampMillis(long timestampMillis) {
         this.timestampMillis = timestampMillis;
     }
+
+    public String getTitle() { return title; }
+    public void setTitle(String title ) {this.title = title; }
+
+    public String getDescription() { return description; }
+    public void setDescription(String description ) {this.description = description; }
+
+    public String getCue() { return cue; }
+    public void setCue(String cue ) {this.cue = cue; }
 
     @Override
     public JPanel getTimelineWidget() {
