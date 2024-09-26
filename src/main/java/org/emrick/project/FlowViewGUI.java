@@ -182,6 +182,9 @@ public class FlowViewGUI extends JPanel {
         }
 
         public static String wrap(String s) {
+            if (s == null) {
+                s = "";
+            }
             for (int i = 0; i < s.length() / 30; i += 30) {
                 while (i < s.length() && s.charAt(i) != ' ') {
                     i++;
