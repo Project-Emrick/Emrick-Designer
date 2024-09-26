@@ -1977,7 +1977,8 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
      */
     private void updateRFTriggerButton() {
         if (rfTriggerGUI != null) {
-            effectViewPanel.remove(rfTriggerGUI.getCreateDeleteBtn());
+            //effectViewPanel.remove(rfTriggerGUI.getCreateDeleteBtn());
+            effectViewPanel.remove(rfTriggerGUI.getCreateDeletePnl());
             effectViewPanel.revalidate();
             effectViewPanel.repaint();
         }
@@ -1986,7 +1987,9 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         rfTriggerGUI = new RFTriggerGUI(
                 currentCount, timeManager.getCount2MSec().get(currentCount), currentRFTrigger, this);
 
-        effectViewPanel.add(rfTriggerGUI.getCreateDeleteBtn(), BorderLayout.SOUTH);
+        //effectViewPanel.add(rfTriggerGUI.getCreateDeleteBtn(), BorderLayout.SOUTH);
+        effectViewPanel.add(rfTriggerGUI.getCreateDeletePnl(), BorderLayout.SOUTH);
+
         effectViewPanel.revalidate();
         effectViewPanel.repaint();
     }

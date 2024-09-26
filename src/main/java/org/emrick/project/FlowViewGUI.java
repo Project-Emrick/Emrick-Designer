@@ -68,7 +68,7 @@ public class FlowViewGUI extends JPanel {
         int i = 0;
         while(iterator.hasNext()) {
             RFTrigger curr = iterator.next();
-            items.add(new FlowViewItem(i, curr.getCount(), "placeholder", "placeholder", "placeholder"));
+            items.add(new FlowViewItem(i, curr.getCount(), curr.getTitle(), curr.getDescription(), curr.getCue()));
             i++;
         }
         items.sort(Comparator.comparingInt(FlowViewItem::getCount));
@@ -182,6 +182,9 @@ public class FlowViewGUI extends JPanel {
         }
 
         public static String wrap(String s) {
+            if (s == null) {
+                s = "";
+            }
             for (int i = 0; i < s.length() / 30; i += 30) {
                 while (i < s.length() && s.charAt(i) != ' ') {
                     i++;
