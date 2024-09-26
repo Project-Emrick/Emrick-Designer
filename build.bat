@@ -1,5 +1,5 @@
 @echo off
-SET VERSION="1.0.4"
+SET VERSION="1.0.5"
 SET DIR=".\build\dist\\%VERSION%\Emrick Designer"
 SET NAME="Emrick Designer"
 call .\gradlew.bat clean
