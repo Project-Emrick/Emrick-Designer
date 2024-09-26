@@ -1702,7 +1702,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                     }
                     i++;
                 }
-
+                System.out.println("nothing");
                 for (LEDStrip ledStrip : footballFieldPanel.drill.ledStrips) {
                     for (Effect e : ledStrip.getEffects()) {
                         if (e.getEffectType() == EffectList.GRID) {
