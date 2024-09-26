@@ -3,6 +3,8 @@ package org.emrick.project;
 import com.fazecast.jSerialComm.SerialPort;
 
 import java.awt.*;
+import java.io.IOException;
+import java.io.OutputStream;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 
@@ -12,7 +14,7 @@ public class SerialTransmitter {
     public SerialTransmitter() {
         SerialPort[] sps = SerialPort.getCommPorts();
         for (SerialPort s : sps) {
-            if (s.getDescriptivePortName().toLowerCase().contains("cp210x")) {
+            if (s.getDescriptivePortName().toLowerCase().contains("cp210")) {
                 sp = s;
                 type = getBoardType(sp.getDescriptivePortName());
                 break;
@@ -38,9 +40,10 @@ public class SerialTransmitter {
             }
         }
         if (s != null) {
-            if (s.getDescriptivePortName().toLowerCase().contains("cp210x")) {
+            if (s.getDescriptivePortName().toLowerCase().contains("cp210")) {
                 sp = s;
                 type = getBoardType(sp.getDescriptivePortName());
+                System.out.println(type);
                 return true;
             }
         }
@@ -68,19 +71,17 @@ public class SerialTransmitter {
             return;
         }
         sp.closePort();
-        sp.clearDTR();
-        sp.clearRTS();
+        //sp.clearDTR();
         sp.openPort();
         sp.flushIOBuffers();
-        try {
-            Thread.sleep(1000);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
+
         byte[] out = query.getBytes();
-        sp.writeBytes(out, query.length());
+
+        int num = sp.writeBytes(out, query.length());
         sp.flushIOBuffers();
         sp.closePort();
+        System.out.println("Made it" + " " + num);
+        System.out.println(query);
     }
 
     public void writeLEDCount(String ledCount) {
@@ -92,16 +93,12 @@ public class SerialTransmitter {
             return;
         }
         sp.closePort();
-        sp.clearDTR();
+        //sp.clearDTR();
         sp.clearRTS();
         sp.openPort();
         sp.flushIOBuffers();
-        try {
-            Thread.sleep(1000);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
         byte[] out = query.getBytes();
+        System.out.println(query);
         sp.writeBytes(out, query.length());
         sp.flushIOBuffers();
         sp.closePort();
@@ -117,7 +114,7 @@ public class SerialTransmitter {
         }
 
         if (s != null) {
-            if (s.getDescriptivePortName().toLowerCase().contains("cp210x")) {
+            if (s.getDescriptivePortName().toLowerCase().contains("cp210")) {
                 String query = "q";
                 if (!s.openPort()) {
                     System.out.println("Port is busy");
@@ -128,24 +125,34 @@ public class SerialTransmitter {
                 s.clearRTS();
                 s.openPort();
                 s.flushIOBuffers();
+                byte[] toWrite = query.getBytes();
+
                 try {
-                    Thread.sleep(1000);
+                    Thread.sleep(500);
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
-                s.writeBytes(query.getBytes(), query.length());
+                s.writeBytes(toWrite, toWrite.length);
+                s.flushIOBuffers();
                 byte[] buf = new byte[100];
                 s.setComPortTimeouts(SerialPort.TIMEOUT_READ_SEMI_BLOCKING, 1000, 0);
+
+
                 int read = s.readBytes(buf, 100);
+
                 s.closePort();
                 if (read > 0) {
                     char type = (char) buf[read-1];
+                    for (int i = 0; i < read; i++) {
+                        System.out.println("Read = " + (char) buf[i]);
+                    }
                     String out;
                     switch (type) {
                         case 'r' : out = "Receiver"; break;
                         case 't' : out = "Transmitter"; break;
                         default : out = "";
                     }
+                    System.out.println(out);
                     return out;
                 }
             }
@@ -155,7 +162,8 @@ public class SerialTransmitter {
 
     public void writeSet(int set, boolean isLightBoardMode) {
         sp.clearRTS();
-        sp.clearDTR();
+        //sp.clearDTR();
+
         if (!sp.openPort()) {
             System.out.println("Port is busy");
         }
@@ -167,14 +175,18 @@ public class SerialTransmitter {
         }
         str += set + "\n";
         byte[] out = str.getBytes();
-        sp.writeBytes(out, str.length());
-        sp.flushIOBuffers();
+        int len = str.length();
+
+        BlockingThread thread = new BlockingThread(out, len);
+        thread.run();
+
         sp.closePort();
+
+
     }
 
     public void enterProgMode(String ssid, String password, int port, int id, long token, Color verificationColor, boolean mode) {
         sp.clearRTS();
-        sp.clearDTR();
         if (!sp.openPort()) {
             System.out.println("Port is busy");
         }
@@ -190,7 +202,7 @@ public class SerialTransmitter {
         } catch (UnknownHostException uhe) {
             throw new RuntimeException(uhe);
         }
-        System.out.println(str);
+        //System.out.println(str);
         byte[] out = str.getBytes();
         sp.writeBytes(out, str.length());
         sp.flushIOBuffers();
@@ -199,13 +211,33 @@ public class SerialTransmitter {
 
     public void writeToSerialPort(String str) {
         sp.clearRTS();
-        sp.clearDTR();
         if (!sp.openPort()) {
             System.out.println("Port is busy");
         }
         byte[] out = str.getBytes();
-        sp.writeBytes(out, str.length());
+
+
+        int num = sp.writeBytes(out, str.length());
         sp.flushIOBuffers();
         sp.closePort();
+        System.out.println("INFO: " + sp.getDescriptivePortName() + " " + num + " " + str);
     }
+    public class BlockingThread implements Runnable {
+        byte[] out;
+        int len;
+        public BlockingThread(byte[] out, int len) {
+            this.out = out;
+            this.len = len;
+
+        }
+
+        public void run() {
+
+            //Thread.sleep(2000);
+            sp.writeBytes(out, len);
+            sp.flushIOBuffers();
+        }
+    }
+
 }
+

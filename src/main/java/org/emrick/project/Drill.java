@@ -48,6 +48,10 @@ public class Drill {
         }
     }
 
+    public ArrayList<LEDStrip> getLEDStrips() {
+        return ledStrips;
+    }
+
     public void addSet(Coordinate coordinate) {
         coordinates.add(coordinate);
     }
