@@ -1284,6 +1284,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                 bfw.flush();
                 bfw.close();
             }
+            currentID = Math.min(MAX_CONNECTIONS, footballFieldPanel.drill.ledStrips.size());
 
             ssid = ssidField.getText();
             char[] passwordChar = passwordField.getPassword();
@@ -1335,7 +1336,6 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             server.setExecutor(new ServerExecutor());
             server.start();
 
-            currentID = Math.min(MAX_CONNECTIONS, footballFieldPanel.drill.ledStrips.size());
             webServerFrame = new JFrame("Board Programming Tracker");
             webServerFrame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
             webServerFrame.setSize(800, 600);
