@@ -73,6 +73,10 @@ public class LEDStrip {
         this.effects = effects;
     }
 
+    public void addEffect(Effect effect) {
+        this.effects.add(effect);
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
