@@ -1880,10 +1880,69 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                 //increment all effect IDs by the maxID
                 for (LEDStrip l : opf.drill.getLEDStrips()) {
                     for (Effect e : l.getEffects()) {
-
-                        Effect copyEffect = new Effect(e.getStartTimeMSec(), e.getStartColor(), e.getEndColor(), e.getDelay(), e.getDuration(), e.getTimeout(),
-                        e.isUSE_DURATION(), e.isSET_TIMEOUT(), e.isDO_DELAY(), e.isINSTANT_COLOR(), e.getId());
-                        copyEffect.setEffectType(e.getEffectType());
+                        GeneratedEffect ge = e.getGeneratedEffect();
+                        Effect geEffect = ge.generateEffectObj();
+                        GeneratedEffect newGeneratedEffect;
+                        switch (geEffect.getEffectType()) {
+                            case GRID -> {
+                                newGeneratedEffect = GeneratedEffectLoader.generateGridEffectFromEffect(geEffect);
+                                GridEffect gridEffect = (GridEffect) newGeneratedEffect;
+                                gridEffect.setStartTime(geEffect.getStartTimeMSec() + oldProjectLenMs);
+                                gridEffect.setEndTime(geEffect.getEndTimeMSec() + oldProjectLenMs);
+                                gridEffect.setId(geEffect.getId() + maxID);
+                            }
+                            case WAVE -> {
+                                newGeneratedEffect = GeneratedEffectLoader.generateWaveEffectFromEffect(geEffect);
+                                WaveEffect waveEffect = (WaveEffect) newGeneratedEffect;
+                                waveEffect.setStartTime(geEffect.getStartTimeMSec() + oldProjectLenMs);
+                                waveEffect.setEndTime(geEffect.getEndTimeMSec() + oldProjectLenMs);
+                                waveEffect.setId(geEffect.getId() + maxID);
+                            }
+                            case CHASE -> {
+                                newGeneratedEffect = GeneratedEffectLoader.generateChaseEffectFromEffect(geEffect);
+                                ChaseEffect chaseEffect = (ChaseEffect) newGeneratedEffect;
+                                chaseEffect.setStartTime(geEffect.getStartTimeMSec() + oldProjectLenMs);
+                                chaseEffect.setEndTime(geEffect.getEndTimeMSec() + oldProjectLenMs);
+                                chaseEffect.setId(geEffect.getId() + maxID);
+                            }
+                            case RIPPLE -> {
+                                newGeneratedEffect = GeneratedEffectLoader.generateRippleEffectFromEffect(geEffect);
+                                RippleEffect rippleEffect = (RippleEffect) newGeneratedEffect;
+                                rippleEffect.setStartTime(geEffect.getStartTimeMSec() + oldProjectLenMs);
+                                rippleEffect.setEndTime(geEffect.getEndTimeMSec() + oldProjectLenMs);
+                                rippleEffect.setId(geEffect.getId() + maxID);
+                            }
+                            case CIRCLE_CHASE -> {
+                                newGeneratedEffect = GeneratedEffectLoader.generateCircleChaseEffectFromEffect(geEffect);
+                                CircleChaseEffect circleChaseEffect = (CircleChaseEffect) newGeneratedEffect;
+                                circleChaseEffect.setStartTime(geEffect.getStartTimeMSec() + oldProjectLenMs);
+                                circleChaseEffect.setEndTime(geEffect.getEndTimeMSec() + oldProjectLenMs);
+                                circleChaseEffect.setId(geEffect.getId() + maxID);
+                            }
+                            case GENERATED_FADE -> {
+                                newGeneratedEffect = GeneratedEffectLoader.generateFadeEffectFromEffect(geEffect);
+                                FadeEffect fadeEffect = (FadeEffect) newGeneratedEffect;
+                                fadeEffect.setStartTime(geEffect.getStartTimeMSec() + oldProjectLenMs);
+                                fadeEffect.setEndTime(geEffect.getEndTimeMSec() + oldProjectLenMs);
+                                fadeEffect.setId(geEffect.getId() + maxID);
+                            }
+                            case ALTERNATING_COLOR -> {
+                                newGeneratedEffect = GeneratedEffectLoader.generateAlternatingColorEffectFromEffect(geEffect);
+                                AlternatingColorEffect alternatingColorEffect = (AlternatingColorEffect) newGeneratedEffect;
+                                alternatingColorEffect.setStartTime(geEffect.getStartTimeMSec() + oldProjectLenMs);
+                                alternatingColorEffect.setEndTime(geEffect.getEndTimeMSec() + oldProjectLenMs);
+                                alternatingColorEffect.setId(geEffect.getId() + maxID);
+                            }
+                            default -> {
+                                newGeneratedEffect = GeneratedEffectLoader.generateStaticColorEffectFromEffect(geEffect);
+                                StaticColorEffect staticColorEffect = (StaticColorEffect) newGeneratedEffect;
+                                staticColorEffect.setStartTime(geEffect.getStartTimeMSec() + oldProjectLenMs);
+                                staticColorEffect.setEndTime(geEffect.getEndTimeMSec() + oldProjectLenMs);
+                                staticColorEffect.setId(geEffect.getId() + maxID);
+                            }
+                        }
+                        Effect copyEffect = e.clone();
+                        copyEffect.setGeneratedEffect(newGeneratedEffect);
                         copyEffect.setId(e.getId() + maxID);
                         copyEffect.setStartTimeMSec(e.getStartTimeMSec() + oldProjectLenMs);
                         copyEffect.setEndTimeMSec(e.getEndTimeMSec() + oldProjectLenMs);
