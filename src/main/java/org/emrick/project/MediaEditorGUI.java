@@ -781,14 +781,14 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         runMenu.add(runShowItem);
         flowViewerItem = new JMenuItem("Run Show via Flow View");
         runMenu.add(flowViewerItem);
-        lightBoardFlowViewerItem = new JMenuItem("Run Light Board via View");
+        lightBoardFlowViewerItem = new JMenuItem("Run Parade Mode via View");
         runMenu.add(lightBoardFlowViewerItem);
         stopShowItem = new JMenuItem("Stop show");
         stopShowItem.setEnabled(false);
         runMenu.add(stopShowItem);
         runMenu.addSeparator();
         runWebServer = new JMenuItem("Run Web Server");
-        runLightBoardWebServer = new JMenuItem("Run Light Board Web Server");
+        runLightBoardWebServer = new JMenuItem("Run Parade Mode Web Server");
         stopWebServer = new JMenuItem("Stop Web Server");
         runMenu.add(runWebServer);
         runMenu.add(runLightBoardWebServer);
