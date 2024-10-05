@@ -17,7 +17,7 @@ public class  Effect implements Cloneable, TimelineEvent {
     public static EffectListener effectListener;
 
     // Application
-    private final long startTimeMSec; // Based on position of scrub bar cursor when user first creates the effect
+    private long startTimeMSec; // Based on position of scrub bar cursor when user first creates the effect
     private long endTimeMSec; // Calculated from start time, delay, duration, and timeout
     private GeneratedEffect generatedEffect;
 
@@ -96,6 +96,10 @@ public class  Effect implements Cloneable, TimelineEvent {
         this.height = 0;
         this.width = 0;
         calculateEndTimeMSec();
+    }
+
+    public void setStartTimeMSec(long startTimeMSec) {
+        this.startTimeMSec = startTimeMSec;
     }
 
     public GridShape[] getShapes() {

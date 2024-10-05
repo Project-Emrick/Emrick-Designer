@@ -2213,7 +2213,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         if (timeManager != null) {
             count = timeManager.MSec2Count(ms);
         }
-        scrubBarGUI.setScrub(count-1);
+        scrubBarGUI.setScrub(count);
     }
 
     /**
@@ -2759,15 +2759,78 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                                 break;
                             }
                             case "UPDATE": {
+
                                 break;
                             }
                             case "DELETE": {
-                                long startMsec;
-                                long endMsec;
-                                int startCount;
-                                int endCount;
+                                long startMsec = 0;
+                                long endMsec = 0;
+                                int startCount = 0;
+                                int endCount = 0;
+                                ArrayList<Integer> removedIDs = new ArrayList<>();
                                 if (i != editList.size() - 1) {
+                                    /*
+                                    1. Find start and end time/count and thus duration
+                                    2. Loop though all effects/triggers for all performers and remove all overlapping effects
+                                    3. For non-overlapping effects, decrease their start/end times by the duration if they
+                                       are after the deleted set end time
+                                    4. Remove relevant item from timeSync
+                                     */
+                                    for (int j = 0; j < oldDrill.sets.size(); j++) { // find start/end time in seconds/counts
+                                        endMsec += (long) (timeSync.get(j).getValue() * 1000);
+                                        endCount += oldDrill.sets.get(j+1).duration;
+                                        if (j < i) {
+                                            startMsec += (long) (timeSync.get(j).getValue() * 1000);
+                                            startCount += oldDrill.sets.get(j+1).duration;
+                                        } else {
+                                            break;
+                                        }
+                                    }
+                                    for (int j = 0; j < footballFieldPanel.drill.ledStrips.size(); j++) { // adjust effects to match new sets
+                                        LEDStrip l = footballFieldPanel.drill.ledStrips.get(j);
+                                        ArrayList<Effect> removeEffects = new ArrayList<>();
+                                        for (Effect e : l.getEffects()) {
+                                            if (e.getStartTimeMSec() < endMsec && e.getEndTimeMSec() > startMsec) { // check if  effect overlaps with removed set
+                                                if (!removedIDs.contains(e.getId())) {
+                                                    removedIDs.add(e.getId());
+                                                }
+                                                removeEffects.add(e);
+                                            } else if (e.getStartTimeMSec() > endMsec) { // check if effect is after removed set
+                                                // update effect and generated effect times to subtract duration of removed set
+                                                e.setStartTimeMSec(e.getStartTimeMSec() - (endMsec - startMsec - 2));
+                                                e.setEndTimeMSec(e.getEndTimeMSec() - (endMsec - startMsec - 2));
+                                                e.getGeneratedEffect().setStartTime(e.getGeneratedEffect().getStartTime() - (endMsec - startMsec - 2));
+                                                e.getGeneratedEffect().setEndTime(e.getGeneratedEffect().getEndTime() - (endMsec - startMsec - 2));
+                                                System.out.println(e.getGeneratedEffect().getStartTime());
+                                            }
+                                        }
+                                        for (Effect e : removeEffects) { // remove overlapped effects
+                                            l.getEffects().remove(e);
+                                        }
+                                    }
+                                    ArrayList<Integer> ids = effectManager.getIds();
+                                    for (Integer rem : removedIDs) { // delete effect ids of removed effects
+                                        ids.remove(rem);
+                                    }
+                                    timeSync.remove(i); // remove timesync item that corresponds to removed effect
+                                    for (int j = startCount; j < endCount; j++) { // remove rf triggers that existed in the removed set
+                                        count2RFTrigger.remove(j);
+                                    }
 
+                                    ArrayList<RFTrigger> moveRFTriggers = new ArrayList<>();
+
+                                    for (RFTrigger rfTrigger : count2RFTrigger.values()) {
+                                        if (rfTrigger.getCount() > startCount) {
+                                            moveRFTriggers.add(rfTrigger);
+                                        }
+                                    }
+                                    for (RFTrigger rfTrigger : moveRFTriggers) {
+                                        int oldCount = rfTrigger.getCount();
+                                        rfTrigger.setCount(oldCount - (endCount - startCount));
+                                        rfTrigger.setTimestampMillis(rfTrigger.getTimestampMillis() - (endMsec - startMsec - 2));
+                                        count2RFTrigger.remove(oldCount);
+                                        count2RFTrigger.put(rfTrigger.getCount(), rfTrigger);
+                                    }
                                 } else {
 
                                 }
@@ -2775,8 +2838,11 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                             }
                         }
                     }
-
-                    // loop through event list and regenerate all effects
+                    oldDrill.sets = newDrill.sets;
+                    onSync(timeSync, 0);
+                    rebuildPageTabCounts();
+                    setupEffectView(effectManager.getIds());
+                    updateTimelinePanel();
 
 
                 }
@@ -2796,6 +2862,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         if (drill != null) {
             dPath = drill.getAbsolutePath();
         }
+        scrubBarGUI.setScrub(0);
         importArchive.fullImport(aPath, dPath);
         return true;
     }

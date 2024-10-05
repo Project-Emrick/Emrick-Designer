@@ -39,6 +39,10 @@ public class RFTrigger implements TimelineEvent {
         return timestampMillis;
     }
 
+    public void setTimestampMillis(long timestampMillis) {
+        this.timestampMillis = timestampMillis;
+    }
+
     public String getTitle() { return title; }
     public void setTitle(String title ) {this.title = title; }
 

@@ -72,7 +72,7 @@ public class TimeManager {
 
     public int MSec2Count(long ms) {
         for (Map.Entry<Integer, Long> entry : count2MSec.entrySet()) {
-            if (entry.getValue() > ms) return entry.getKey();
+            if (entry.getValue() >= ms) return entry.getKey();
         }
         return count2MSec.size();
     } // not entirely sure if this returns count or count + 1
