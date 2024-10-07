@@ -1387,6 +1387,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             throw new RuntimeException(ioe);
         }
     }
+    //
 
     /**
      * Loads a new .emrick file to the viewport to be edited.
