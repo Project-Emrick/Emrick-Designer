@@ -106,7 +106,7 @@ public class DrillParser {
         Performer performer = new Performer(symbol, label, id);
         String[] lines = text.split("\n");
         for (int i = 1; i < lines.length-2; i++) {
-            String set = lines[i].split(" ")[0];
+            String set = "1-" + lines[i].split(" ")[0];
             int duration;
             String[] splitLine = lines[i].split(" ");
             int j = 1;

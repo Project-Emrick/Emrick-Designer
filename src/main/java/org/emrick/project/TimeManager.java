@@ -10,7 +10,7 @@ public class TimeManager {
     private HashMap<Integer, Long> count2MSec;                      // Count : The milliseconds it takes to get there
 
     // Additional
-    private final Map<String, Integer> set2Count;                   // Set : The count it begins on
+    private Map<String, Integer> set2Count;                   // Set : The count it begins on
     private ArrayList<Map.Entry<String, Integer>> set2CountSorted;  // Set : The count it begins on
     private ArrayList<Map.Entry<String, Integer>> set2NumCounts;    // Set : The number of counts in the set
     private ArrayList<Map.Entry<String, Long>> set2MSec;            // Set : The milliseconds it takes to get there
@@ -45,6 +45,7 @@ public class TimeManager {
         // Calculate count2MSec
         int currentCount = 0;
         long prevCountMSec = (long) (startDelay * 1000); // Count 0 will begin at startDelay seconds
+
         for (Map.Entry<String, Integer> set2NumCountsEntry : set2NumCounts) {
             String set = set2NumCountsEntry.getKey();
             int numCounts = set2NumCountsEntry.getValue();

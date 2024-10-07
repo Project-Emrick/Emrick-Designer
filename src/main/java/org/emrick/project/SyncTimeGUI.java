@@ -374,6 +374,12 @@ public class SyncTimeGUI implements ActionListener {
         public float getValue() {
             return value;
         }
+        public void setKey(String key) {
+            this.key = key;
+        }
+        public void setValue(float value) {
+            this.value = value;
+        }
     }
     public static class PairCountMS {
         private int key;
