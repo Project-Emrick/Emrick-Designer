@@ -242,11 +242,6 @@ public class ScrubBarGUI extends JComponent implements ActionListener {
 
     public void setPlaybackTime() {
         //TODO rewrite
-        boolean wasPlaying = false;
-        if (isPlaying) {
-            wasPlaying = true;
-            currAudioPlayer.pauseAudio();
-        }
         float setSyncDuration = timeSync.get(getCurrentSetIndex()).getValue();
         float setDuration = this.getCurrSetDuration(); // in counts
         float pastSetTime = 0;
@@ -259,11 +254,6 @@ public class ScrubBarGUI extends JComponent implements ActionListener {
         scrubBarListener.onSetChange(getCurrentSetIndex());
         footballFieldPanel.setCurrentSetRatio(Math.min(ratio, 1));
         footballFieldPanel.repaint();
-
-        if (wasPlaying) {
-            wasPlaying = false;
-            currAudioPlayer.playAudio();
-        }
     }
 
     public boolean nextStep(double playbackSpeed) {
