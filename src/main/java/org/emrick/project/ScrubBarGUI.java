@@ -32,6 +32,7 @@ public class ScrubBarGUI extends JComponent implements ActionListener {
     private final JFrame parent;
 
     private ArrayList<AudioPlayer> audioPlayers;
+    private AudioPlayer currAudioPlayer;
 
     // Status
     private long currTimeMSec;
@@ -241,19 +242,27 @@ public class ScrubBarGUI extends JComponent implements ActionListener {
 
     public void setPlaybackTime() {
         //TODO rewrite
-        if (!isPlaying) {
-            float setSyncDuration = timeSync.get(getCurrentSetIndex()).getValue();
-            float setDuration = this.getCurrSetDuration(); // in counts
-            float pastSetTime = 0;
-            for (int i = 0; i < getCurrentSetIndex(); i++) {
-                pastSetTime += timeSync.get(i).getValue();
-            }
-            time = (float) (topSlider.getValue() - getCurrentSetStart()) / setDuration * setSyncDuration + pastSetTime;
-            scrubBarListener.onTimeChange((long) ((Math.round(time * 1000.0) / 1000.0 - pastSetTime) * 1000));
-            double ratio = (time - pastSetTime) / setSyncDuration;
-            scrubBarListener.onSetChange(getCurrentSetIndex());
-            footballFieldPanel.setCurrentSetRatio(Math.min(ratio, 1));
-            footballFieldPanel.repaint();
+        boolean wasPlaying = false;
+        if (isPlaying) {
+            wasPlaying = true;
+            currAudioPlayer.pauseAudio();
+        }
+        float setSyncDuration = timeSync.get(getCurrentSetIndex()).getValue();
+        float setDuration = this.getCurrSetDuration(); // in counts
+        float pastSetTime = 0;
+        for (int i = 0; i < getCurrentSetIndex(); i++) {
+            pastSetTime += timeSync.get(i).getValue();
+        }
+        time = (float) (topSlider.getValue() - getCurrentSetStart()) / setDuration * setSyncDuration + pastSetTime;
+        scrubBarListener.onTimeChange((long) ((Math.round(time * 1000.0) / 1000.0 - pastSetTime) * 1000));
+        double ratio = (time - pastSetTime) / setSyncDuration;
+        scrubBarListener.onSetChange(getCurrentSetIndex());
+        footballFieldPanel.setCurrentSetRatio(Math.min(ratio, 1));
+        footballFieldPanel.repaint();
+
+        if (wasPlaying) {
+            wasPlaying = false;
+            currAudioPlayer.playAudio();
         }
     }
 
@@ -710,6 +719,12 @@ public class ScrubBarGUI extends JComponent implements ActionListener {
     }
     public void setAudioPlayer(ArrayList<AudioPlayer> audioPlayers) {
         this.audioPlayers = audioPlayers;
+    }
+    public void setCurrAudioPlayer(AudioPlayer ap) {
+        this.currAudioPlayer = ap;
+    }
+    public void setTime(int time) {
+        this.time = time;
     }
 
     public JButton getSyncButton() {

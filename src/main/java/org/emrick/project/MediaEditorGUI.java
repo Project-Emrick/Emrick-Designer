@@ -1514,6 +1514,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                 return;
             }
             currentMovement = 1;
+            scrubBarGUI.setCurrAudioPlayer(this.currentAudioPlayer);
 
         } catch (JsonIOException | JsonSyntaxException | IOException e) {
             writeSysMsg("Failed to open to `" + path + "`.");
@@ -1791,13 +1792,54 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                 }
 
                 //increment all effect IDs by the maxID
-                for (LEDStrip l : opf.drill.ledStrips) {
+                for (LEDStrip l : opf.drill.getLedStrips()) {
                     for (Effect e : l.getEffects()) {
-                        e.setId(e.getId() + maxID);
-                        e.setStartTimeMSec(e.getStartTimeMSec() + oldProjectLenMs);
-                        e.setEndTimeMSec(e.getEndTimeMSec() + oldProjectLenMs);
-                        footballFieldPanel.drill.ledStrips.get(i).getEffects().add(e);
+
+                        Effect copyEffect = new Effect(e.getStartTimeMSec(),
+                                e.getStartColor(), e.getEndColor(), e.getDelay(), e.getDuration(), e.getTimeout(),
+                                e.isUSE_DURATION(), e.isSET_TIMEOUT(), e.isDO_DELAY(), e.isINSTANT_COLOR(), e.getId());
+                        copyEffect.setEffectType(e.getEffectType());
+                        copyEffect.setId(e.getId() + maxID);
+                        copyEffect.setStartTimeMSec(e.getStartTimeMSec() + oldProjectLenMs);
+                        copyEffect.setEndTimeMSec(e.getEndTimeMSec() + oldProjectLenMs);
+                        copyEffect.setChaseSequence(e.getChaseSequence());
+                        copyEffect.setFunction(e.getFunction());
+                        copyEffect.setUpOrSide(e.isUpOrSide());
+                        copyEffect.setSpeed(e.getSpeed());
+                        /*
+                        GeneratedEffect ge = e.getGeneratedEffect();
+                        Effect geEffect = ge.generateEffectObj();
+                        GeneratedEffect genEffect;
+                        switch (e.getEffectType()) {
+                            case CHASE -> genEffect = GeneratedEffectLoader.generateChaseEffectFromEffect(geEffect);
+                            case GRID -> genEffect = GeneratedEffectLoader.generateGridEffectFromEffect(geEffect);
+                            case RIPPLE -> genEffect = GeneratedEffectLoader.generateRippleEffectFromEffect(geEffect);
+                            case WAVE -> genEffect = GeneratedEffectLoader.generateWaveEffectFromEffect(geEffect);
+                            case CIRCLE_CHASE -> genEffect = GeneratedEffectLoader.generateCircleChaseEffectFromEffect(geEffect);
+                            case GENERATED_FADE -> genEffect = GeneratedEffectLoader.generateFadeEffectFromEffect(geEffect);
+                            case ALTERNATING_COLOR -> genEffect = GeneratedEffectLoader.generateAlternatingColorEffectFromEffect(geEffect);
+                            case STATIC_COLOR -> genEffect = GeneratedEffectLoader.generateStaticColorEffectFromEffect(geEffect);
+                        }
+                        //copyEffect.setGeneratedEffect(e.getGeneratedEffect());
+                        copyEffect.getGeneratedEffect();
+                        copyEffect.getGeneratedEffect().generateEffectObj().setStartTimeMSec(e.getStartTimeMSec() + oldProjectLenMs);
+
+                         */
+                        copyEffect.setAngle(e.getAngle());
+                        copyEffect.setDirection(e.isDirection());
+                        copyEffect.setHeight(e.getHeight());
+                        copyEffect.setShapes(e.getShapes());
+                        copyEffect.setSize(e.getSize());
+                        copyEffect.setWidth(e.getWidth());
+
+
+
+
+
+                        footballFieldPanel.drill.ledStrips.get(i).addEffect(copyEffect);
+                        System.out.println("START TIME = " + copyEffect.getStartTimeMSec() + "ID = " + copyEffect.getId());
                     }
+                    i++;
                 }
 
                 for (LEDStrip ledStrip : footballFieldPanel.drill.ledStrips) {
@@ -2437,6 +2479,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                 audioPlayers.get(currentMovement - 1).pauseAudio();
                 currentMovement = nextSetMvmt;
                 currentAudioPlayer = audioPlayers.get(currentMovement - 1);
+                scrubBarGUI.setCurrAudioPlayer(currentAudioPlayer);
                 currentAudioPlayer.playAudio(0);
             }
 

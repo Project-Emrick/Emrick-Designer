@@ -59,6 +59,9 @@ public class Drill {
     public void addPerformer(Performer performer) {
         performers.add(performer);
     }
+    public ArrayList<LEDStrip> getLedStrips() {
+        return this.ledStrips;
+    }
 
 
     /**

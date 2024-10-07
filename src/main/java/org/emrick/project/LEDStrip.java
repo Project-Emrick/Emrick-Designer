@@ -72,6 +72,9 @@ public class LEDStrip {
     public void setEffects(ArrayList<Effect> effects) {
         this.effects = effects;
     }
+    public void addEffect(Effect e) {
+        this.effects.add(e);
+    }
 
     @Override
     public boolean equals(Object o) {
