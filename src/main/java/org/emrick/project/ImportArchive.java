@@ -7,7 +7,6 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Scanner;
@@ -91,31 +90,33 @@ public class ImportArchive {
                     }
                 }
             } catch (FileNotFoundException e) {
-                throw new RuntimeException(e);
+                e.printStackTrace();
             }
         }
 
-        // See package.ini. Import available files
-        //  Current support:  audio
-        for (Map.Entry<String, String> entry : iniData.get("Files").entrySet()) {
+                // See package.ini. Import available files
+                //  Current support:  audio
+        if (!iniData.isEmpty()) {
+            for (Map.Entry<String, String> entry : iniData.get("Files").entrySet()) {
 
-            // File missing
-            if (entry.getValue().isEmpty()) {
-                continue;
-            }
-            ArrayList<String> componentPaths = new ArrayList<>();
-            for (String s : unzipPaths) {
-                componentPaths.add(s + "/" + entry.getValue());
-            }
+                // File missing
+                if (entry.getValue().isEmpty()) {
+                    continue;
+                }
+                ArrayList<String> componentPaths = new ArrayList<>();
+                for (String s : unzipPaths) {
+                    componentPaths.add(s + "/" + entry.getValue());
+                }
 
-            // General-purpose callback
-            importListener.onImport();
+                // General-purpose callback
 
-            // Import audio
-            if (entry.getKey().equals("audio")) {
-                importAudio(componentPaths);
+                // Import audio
+                if (entry.getKey().equals("audio")) {
+                    importAudio(componentPaths);
+                }
             }
         }
+        importListener.onImport();
 
         // Import drill
         if (drillSrc != null) {

@@ -314,44 +314,4 @@ public class SelectFileGUI implements ActionListener {
 
         return fileChooser;
     }
-
-    // For testing
-//    public static void main(String[] args) {
-//
-//        // Run Swing programs on the Event Dispatch Thread (EDT)
-//        SwingUtilities.invokeLater(new Runnable() {
-//            @Override
-//            public void run() {
-//                ImportListener importListener = new ImportListener() {
-//                    @Override
-//                    public void onImport() {
-//                        System.out.println("onImport called.");
-//                    }
-//
-//                    @Override
-//                    public void onFloorCoverImport(Image image) {
-//                        System.out.println("onFloorCoverImport called.");
-//                    }
-//
-//                    @Override
-//                    public void onSurfaceImport(Image image) {
-//                        System.out.println("onSurfaceImport called.");
-//                    }
-//
-//                    @Override
-//                    public void onAudioImport(File audioFile) {
-//                        System.out.println("onAudioImport called.");
-//                    }
-//
-//                    @Override
-//                    public void onDrillImport(String drill) {
-//                        System.out.println("onDrillImport called.");
-//                    }
-//                };
-//
-//                SelectFileGUI selectFileGUI = new SelectFileGUI(importListener);
-//                selectFileGUI.show();
-//            }
-//        });
-//    }
 }
