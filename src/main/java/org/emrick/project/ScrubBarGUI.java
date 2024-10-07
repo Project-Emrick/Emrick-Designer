@@ -266,6 +266,8 @@ public class ScrubBarGUI extends JComponent implements ActionListener {
             pastSetTime += timeSync.get(i).getValue();
         }
 
+
+
         float setSyncDuration = timeSync.get(getCurrentSetIndex()).getValue();
         float setDuration = getCurrSetDuration(); // in counts
 

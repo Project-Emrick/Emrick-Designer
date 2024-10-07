@@ -370,7 +370,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         flowViewGUI = new FlowViewGUI(new HashMap<>(), this);
 
         // Scrub Bar
-        scrubBarGUI = new ScrubBarGUI(frame, this, this, footballFieldPanel, getAudioPlayers());
+        scrubBarGUI = new ScrubBarGUI(frame, this, this, footballFieldPanel, audioPlayers);
 
         // Scrub bar cursor starts on first count of drill by default
         useStartDelay = true;
@@ -2567,6 +2567,8 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         playbackTimer.cancel();
         playbackTimer.purge();
         playbackTimer = null;
+        updateRFTriggerButton();
+        updateEffectViewPanel(selectedEffectType);
         return true;
     }
 
@@ -2611,7 +2613,9 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                 currentMovement = nextSetMvmt;
                 currentAudioPlayer = audioPlayers.get(currentMovement - 1);
                 scrubBarGUI.setCurrAudioPlayer(currentAudioPlayer);
-                currentAudioPlayer.playAudio(0);
+                if (scrubBarGUI.isPlaying() && scrubBarGUI.getAudioCheckbox().isSelected()) {
+                    playAudioFromCorrectPosition();
+                }
             }
 
         }
@@ -2624,8 +2628,12 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
      * Create a create/delete button depending on whether there is RF trigger at current count.
      */
     private void updateRFTriggerButton() {
+
+        if (isPlaying()) {
+            return;
+        }
         if (rfTriggerGUI != null) {
-            effectViewPanel.remove(rfTriggerGUI.getCreateDeleteBtn());
+            effectViewPanel.remove(rfTriggerGUI.getCreateDeletePnl());
             effectViewPanel.revalidate();
             effectViewPanel.repaint();
         }
@@ -2634,10 +2642,9 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         if (timeManager.getCount2MSec().get(currentCount) != null) {
             rfTriggerGUI = new RFTriggerGUI(
                     currentCount, timeManager.getCount2MSec().get(currentCount), currentRFTrigger, this);
+            effectViewPanel.add(rfTriggerGUI.getCreateDeletePnl(), BorderLayout.SOUTH);
         }
 
-
-        effectViewPanel.add(rfTriggerGUI.getCreateDeleteBtn(), BorderLayout.SOUTH);
         effectViewPanel.revalidate();
         effectViewPanel.repaint();
     }
@@ -2656,7 +2663,16 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             timestampMillis -= (long) (startDelay * 1000);
         }
         audioPlayers.get(currentMovement - 1).pauseAudio();
-        audioPlayers.get(currentMovement - 1).playAudio(timestampMillis);
+        //finds correct time stamp for audio player based upon the point in the show and the total duration of the players that were before it
+        audioPlayers.get(currentMovement - 1).playAudio(timestampMillis - getPrevAudioPlayerDurations(currentMovement - 1));
+    }
+
+    public long getPrevAudioPlayerDurations(int index) {
+        long totalMS = 0;
+        for (int i = 0; i < index; i++) {
+            totalMS += audioPlayers.get(i).getAudioLength();
+        }
+        return totalMS;
     }
 
     @Override
@@ -2736,6 +2752,11 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
 
     @Override
     public void onUpdateEffectPanel(Effect effect, boolean isNew, int index) {
+
+        //this keeps the effect panel from flickering while the show is playing
+        if (isPlaying()) {
+            return;
+        }
         this.effectViewPanel.remove(effectGUI.getEffectPanel());
         effectGUI = new EffectGUI(effect, effect.getStartTimeMSec(), this, effect.getEffectType(), isNew, index);
         this.effectViewPanel.add(effectGUI.getEffectPanel());
@@ -2869,6 +2890,11 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
      * @param effectType - The type of effect that is currently selected.
      */
     private void updateEffectViewPanel(EffectList effectType) {
+        //do not update effect view while it is playing. It will update once it is paused
+        //this keeps the panel from flickering when the show is playing.
+        if (isPlaying()) {
+            return;
+        }
 
         // No point in updating effect view if can't use effects
         if (effectManager == null) return;

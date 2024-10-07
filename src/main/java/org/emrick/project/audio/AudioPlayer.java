@@ -43,7 +43,6 @@ public class AudioPlayer extends Thread {
 
     private void initializeAudio() {
         if (audioFile.getName().endsWith(".mid") || audioFile.getName().endsWith(".midi")) {
-
             // MIDI file
             try {
                 sequencer = MidiSystem.getSequencer();
@@ -55,7 +54,6 @@ public class AudioPlayer extends Thread {
             }
         }
         else if (audioFile.getName().endsWith(".wav")) {
-
             // WAV file
             try {
                 AudioInputStream audioInputStream = AudioSystem.getAudioInputStream(audioFile);
@@ -67,7 +65,6 @@ public class AudioPlayer extends Thread {
             }
         }
         else if (audioFile.getName().endsWith(".ogg")) {
-
             // OGG file
             try (InputStream inputStream = new FileInputStream(audioFile)) {
                 OggDecoder oggDecoder = new OggDecoder();
@@ -132,6 +129,17 @@ public class AudioPlayer extends Thread {
         }
         else if (clip != null) {
             clip.stop();
+        }
+    }
+    public long getAudioLength() {
+        if (sequencer != null) {
+            return sequencer.getMicrosecondLength() / 1000;
+        }
+        else if (clip != null){
+            return clip.getMicrosecondLength() / 1000;
+        }
+        else {
+            return 0;
         }
     }
 
