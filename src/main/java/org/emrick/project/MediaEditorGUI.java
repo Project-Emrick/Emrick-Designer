@@ -1942,7 +1942,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             else {
                 return;  //better option?
             }
-//
+
             updateTimelinePanel();
             setupEffectView(ids);
             //updateEffectViewPanel(selectedEffectType);
