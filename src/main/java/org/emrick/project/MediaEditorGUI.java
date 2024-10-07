@@ -2721,50 +2721,77 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                             deleteCount++;
                         }
                     }
-                    HashSet<TimelineEvent> eventSet = new HashSet<>();
-                    for (LEDStrip l : footballFieldPanel.drill.ledStrips) {
-                        for (Effect e : l.getEffects()) {
-                            eventSet.add(e.getGeneratedEffect().generateEffectObj());
-                        }
-                    }
-                    Iterator<RFTrigger> it = count2RFTrigger.values().iterator();
-                    while (it.hasNext()) {
-                        eventSet.add(it.next());
-                    }
-                    ArrayList<TimelineEvent> eventList = new ArrayList<>(eventSet);
-                    eventList.sort((o1, o2) -> {
-                        long time1;
-                        long time2;
-                        if (o1 instanceof RFTrigger) {
-                            time1 = ((RFTrigger) o1).getTimestampMillis();
-                        } else {
-                            time1 = ((Effect) o1).getStartTimeMSec();
-                        }
-                        if (o2 instanceof RFTrigger) {
-                            time2 = ((RFTrigger) o2).getTimestampMillis();
-                        } else {
-                            time2 = ((Effect) o2).getStartTimeMSec();
-                        }
-                        if (o1 instanceof RFTrigger && !(o2 instanceof RFTrigger) && time1 == time2) {
-                            time1--;
-                        }
-                        if (o2 instanceof RFTrigger && !(o1 instanceof RFTrigger) && time2 == time1) {
-                            time2--;
-                        }
-                        return (int) (time1 - time2);
-                    });
 
                     //reverse traversal of editList
-                    int offset = oldDrill.sets.size() - editList.size();
-                    ArrayList<Map.Entry<String, Long>> set2MSec = timeManager.getSet2MSec();
-                    ArrayList<Map.Entry<String, Integer>> set2Count = timeManager.getSet2CountSorted();
-                    int[] deleteStartCounts = new int[deleteCount];
-                    int[] deleteEndCounts = new int[deleteCount];
-                    long[] deleteStartMsecs = new long[deleteCount];
-                    long[] deleteEndMsecs = new long[deleteCount];
+
                     for (int i = editList.size() - 1; i >= 0; i--) {
                         switch (editList.get(i).getOperation()) {
                             case "INSERT": {
+                                int modIndex = 0;
+                                for (Set set : newDrill.sets) {
+                                    if (set.equals(editList.get(i).set)) {
+                                        break;
+                                    } else if (oldDrill.sets.contains(set)) {
+                                        modIndex = set.index;
+                                    }
+                                }
+                                long sliceMsec = 0;
+                                int sliceCount = 0;
+                                JLabel tempoLabel = new JLabel("Enter tempo for set: " + editList.get(i).set.label);
+                                JTextField tempoField = new JTextField();
+                                Object[] input = {tempoLabel, tempoField};
+                                JOptionPane.showInputDialog(frame, input, "Tempo for set: " + editList.get(i).set.label);
+                                long durationCounts = editList.get(i).set.duration;
+                                long durationMsec = (long)((float) durationCounts / Float.parseFloat(tempoField.getText()) * 60000);
+                                for (int j = 0; j < oldDrill.sets.size(); j++) { // find slice time in seconds/counts
+                                    sliceMsec += (long) (timeSync.get(j).getValue() * 1000);
+                                    sliceCount += oldDrill.sets.get(j+1).duration;
+                                    if (j == modIndex - 1) {
+                                        break;
+                                    }
+                                }
+
+                                ArrayList<Integer> removedIDs = new ArrayList<>();
+                                for (int j = 0; j < oldDrill.ledStrips.size(); j++) {
+                                    ArrayList<Effect> removeEffects = new ArrayList<>();
+                                    LEDStrip l = oldDrill.ledStrips.get(j);
+                                    for (Effect e : l.getEffects()) {
+                                        if (e.getStartTimeMSec() < sliceMsec && e.getEndTimeMSec() > sliceMsec) {
+                                            removeEffects.add(e);
+                                            if (!removedIDs.contains(e.getId())) {
+                                                removedIDs.add(e.getId());
+                                            }
+                                        } else if (e.getStartTimeMSec() > sliceCount) {
+                                            e.setStartTimeMSec(e.getStartTimeMSec() + durationMsec);
+                                            e.setEndTimeMSec(e.getEndTimeMSec() + durationMsec);
+                                            e.getGeneratedEffect().setStartTime(e.getGeneratedEffect().getStartTime() + durationMsec);
+                                            e.getGeneratedEffect().setEndTime(e.getGeneratedEffect().getEndTime() + durationMsec);
+                                        }
+                                    }
+                                    for (Effect e : removeEffects) {
+                                        l.getEffects().remove(e);
+                                    }
+                                }
+                                ArrayList<Integer> ids = effectManager.getIds();
+                                for (Integer rem: removedIDs) {
+                                    ids.remove(rem);
+                                }
+
+                                timeSync.add(modIndex + 1, new SyncTimeGUI.Pair(editList.get(i).set.label, durationMsec));
+
+                                ArrayList<RFTrigger> moveRFTriggers = new ArrayList<>();
+                                for (RFTrigger rfTrigger : count2RFTrigger.values()) {
+                                    if (rfTrigger.getCount() > sliceCount) {
+                                        moveRFTriggers.add(rfTrigger);
+                                    }
+                                }
+                                for (RFTrigger rfTrigger : moveRFTriggers) {
+                                    int oldCount = rfTrigger.getCount();
+                                    rfTrigger.setCount(oldCount + sliceCount);
+                                    rfTrigger.setTimestampMillis(rfTrigger.getTimestampMillis() + durationMsec);
+                                    count2RFTrigger.remove(oldCount);
+                                    count2RFTrigger.put(rfTrigger.getCount(), rfTrigger);
+                                }
 
                                 break;
                             }
@@ -2800,7 +2827,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                                 int countDiff = newDurationCounts - durationCounts;
                                 long msecDiff = newDurationMsec - durationMsec;
                                 if (countDiff > 0) {
-
+                                    // TODO
                                 } else {
                                     startCount = endCount + countDiff;
                                     startMsec = endMsec + msecDiff;
