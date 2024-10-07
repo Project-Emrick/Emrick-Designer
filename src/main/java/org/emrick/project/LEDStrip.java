@@ -72,6 +72,9 @@ public class LEDStrip {
     public void setEffects(ArrayList<Effect> effects) {
         this.effects = effects;
     }
+    public void addEffect(Effect e) {
+        this.effects.add(e);
+    }
 
     public void addEffect(Effect effect) {
         this.effects.add(effect);

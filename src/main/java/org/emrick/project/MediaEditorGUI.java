@@ -112,7 +112,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
     private String password;
     private int port;
     private int currentID;
-    private static int MAX_CONNECTIONS = 60;
+    private static int MAX_CONNECTIONS = 50;
     private int token;
     private Color verificationColor;
     private Timer noRequestTimer;
@@ -1551,6 +1551,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                 return;
             }
             currentMovement = 1;
+            scrubBarGUI.setCurrAudioPlayer(this.currentAudioPlayer);
 
         } catch (JsonIOException | JsonSyntaxException | IOException e) {
             writeSysMsg("Failed to open to `" + path + "`.");
@@ -1878,22 +1879,56 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                 }
                 i = 0;
                 //increment all effect IDs by the maxID
-                for (LEDStrip l : opf.drill.getLEDStrips()) {
+                for (LEDStrip l : opf.drill.getLedStrips()) {
                     for (Effect e : l.getEffects()) {
 
-                        Effect copyEffect = new Effect(e.getStartTimeMSec(), e.getStartColor(), e.getEndColor(), e.getDelay(), e.getDuration(), e.getTimeout(),
-                        e.isUSE_DURATION(), e.isSET_TIMEOUT(), e.isDO_DELAY(), e.isINSTANT_COLOR(), e.getId());
+                        Effect copyEffect = new Effect(e.getStartTimeMSec(),
+                                e.getStartColor(), e.getEndColor(), e.getDelay(), e.getDuration(), e.getTimeout(),
+                                e.isUSE_DURATION(), e.isSET_TIMEOUT(), e.isDO_DELAY(), e.isINSTANT_COLOR(), e.getId());
                         copyEffect.setEffectType(e.getEffectType());
                         copyEffect.setId(e.getId() + maxID);
                         copyEffect.setStartTimeMSec(e.getStartTimeMSec() + oldProjectLenMs);
                         copyEffect.setEndTimeMSec(e.getEndTimeMSec() + oldProjectLenMs);
+                        copyEffect.setChaseSequence(e.getChaseSequence());
+                        copyEffect.setFunction(e.getFunction());
+                        copyEffect.setUpOrSide(e.isUpOrSide());
+                        copyEffect.setSpeed(e.getSpeed());
+                        /*
+                        GeneratedEffect ge = e.getGeneratedEffect();
+                        Effect geEffect = ge.generateEffectObj();
+                        GeneratedEffect genEffect;
+                        switch (e.getEffectType()) {
+                            case CHASE -> genEffect = GeneratedEffectLoader.generateChaseEffectFromEffect(geEffect);
+                            case GRID -> genEffect = GeneratedEffectLoader.generateGridEffectFromEffect(geEffect);
+                            case RIPPLE -> genEffect = GeneratedEffectLoader.generateRippleEffectFromEffect(geEffect);
+                            case WAVE -> genEffect = GeneratedEffectLoader.generateWaveEffectFromEffect(geEffect);
+                            case CIRCLE_CHASE -> genEffect = GeneratedEffectLoader.generateCircleChaseEffectFromEffect(geEffect);
+                            case GENERATED_FADE -> genEffect = GeneratedEffectLoader.generateFadeEffectFromEffect(geEffect);
+                            case ALTERNATING_COLOR -> genEffect = GeneratedEffectLoader.generateAlternatingColorEffectFromEffect(geEffect);
+                            case STATIC_COLOR -> genEffect = GeneratedEffectLoader.generateStaticColorEffectFromEffect(geEffect);
+                        }
+                        //copyEffect.setGeneratedEffect(e.getGeneratedEffect());
+                        copyEffect.getGeneratedEffect();
+                        copyEffect.getGeneratedEffect().generateEffectObj().setStartTimeMSec(e.getStartTimeMSec() + oldProjectLenMs);
+
+                         */
+                        copyEffect.setAngle(e.getAngle());
+                        copyEffect.setDirection(e.isDirection());
+                        copyEffect.setHeight(e.getHeight());
+                        copyEffect.setShapes(e.getShapes());
+                        copyEffect.setSize(e.getSize());
+                        copyEffect.setWidth(e.getWidth());
+
+
+
+
 
                         footballFieldPanel.drill.ledStrips.get(i).addEffect(copyEffect);
                         System.out.println("START TIME = " + copyEffect.getStartTimeMSec() + "ID = " + copyEffect.getId());
                     }
                     i++;
                 }
-/*
+
                 for (LEDStrip ledStrip : footballFieldPanel.drill.ledStrips) {
                     for (Effect e : ledStrip.getEffects()) {
                         if (e.getEffectType() == EffectList.GRID) {
@@ -1905,7 +1940,6 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                     }
                 }
 
- */
                 for (SelectionGroupGUI.SelectionGroup group : opf.selectionGroups) {
                     if (!groupsGUI.getGroups().contains(group)) {
                         for (LEDStrip l : group.getLEDStrips()) {
@@ -1926,6 +1960,10 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                     }
                 }
 
+                int prevTotalCounts = 0;
+                for (Set s : footballFieldPanel.drill.sets) {
+                    prevTotalCounts += s.duration; //add up total counts
+                }
                 ledStripViewGUI = new LEDStripViewGUI(footballFieldPanel.drill.ledStrips, effectManager);
                 footballFieldPanel.setCurrentSet(footballFieldPanel.drill.sets.get(0));
                 ledStripViewGUI.setCurrentSet(footballFieldPanel.drill.sets.get(0));
@@ -1938,17 +1976,33 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                 groupsGUI.setGroups(opf.selectionGroups, footballFieldPanel.drill.ledStrips);
                 groupsGUI.initializeButtons();
 
+                //copy RFTriggers (onSync creates new table)
+                HashMap<Integer, RFTrigger> copy = new HashMap<>(count2RFTrigger);
+
+                onSync(timeSync, startDelay);
+                scrubBarGUI.setTimeSync(timeSync);
+
+                //put RFTriggers back in
+                count2RFTrigger.putAll(copy);
+
+                //readjust the counts and timestamps in the new RFTriggers and add them to count2RFTrigger
+                for (Map.Entry<Integer, RFTrigger> e : opf.count2RFTrigger.entrySet()) {
+                    e.getValue().setCount(e.getValue().getCount() + prevTotalCounts);
+                    e.getValue().setTimestampMillis(e.getValue().getTimestampMillis() + oldProjectLenMs);
+                    count2RFTrigger.put(e.getKey() + prevTotalCounts, opf.count2RFTrigger.get(e.getKey()));
+                }
             }
             else {
                 return;  //better option?
             }
 
-            updateTimelinePanel();
+            footballFieldPanel.setCount2RFTrigger(count2RFTrigger);
+
             setupEffectView(ids);
-            //updateEffectViewPanel(selectedEffectType);
+            rebuildPageTabCounts();
+            updateTimelinePanel();
+            updateEffectViewPanel(selectedEffectType);
             currentMovement = 1;
-
-
 
         } catch (JsonIOException | JsonSyntaxException | IOException e) {
             writeSysMsg("Failed to open to `" + path + "`.");
@@ -1956,6 +2010,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             throw new RuntimeException(e);
         }
     }
+
 
     private int getMovementIndex() {
         int movementIndex;
@@ -2125,6 +2180,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             c1.sethOffset(1);
             LEDConfig c2 = new LEDConfig();
             c2.setLabel("R");
+            c2.sethOffset(1);
             LEDStrip l1 = new LEDStrip(id, p, c1);
             id++;
             LEDStrip l2 = new LEDStrip(id, p, c2);
@@ -2162,13 +2218,11 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             // The current code works so don't touch it unless major changes need to happen
             while (line != null && currStripID < size) {
                 if (!line.startsWith(",")) {
-                    String[] tmp = line.replaceAll("\\.", "").split(",");
+                    String[] tmp = line.split(",");
                     try {
                         if (footballFieldPanel.drill.performers.isEmpty()) {
                             break;
                         }
-
-                        //TODO: Make sure that the performer is actually in the set. If not, skip next two lines.
                         currPerformer = footballFieldPanel.drill.performers.stream().filter(p -> p.getIdentifier().equals(tmp[0])).findFirst().get();
                         footballFieldPanel.drill.performers.remove(currPerformer);
                         currPerformer.setLedStrips(new ArrayList<>());
@@ -2410,7 +2464,8 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         this.startDelay = startDelay;
 
         scrubBarGUI.setTimeSync(timeSync);
-
+        count2RFTrigger = new HashMap<>();
+        footballFieldPanel.setCount2RFTrigger(count2RFTrigger);
 
         setupEffectView(null);
         ledStripViewGUI = new LEDStripViewGUI(new ArrayList<>(), effectManager);
@@ -2514,19 +2569,18 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
     public void onSetChange(int setIndex) {
         if (footballFieldPanel.getCurrentSet().label.contains("-")) {
             int nextSetMvmt = Integer.parseInt(footballFieldPanel.drill.sets.get(setIndex).label.substring(0,1));
-            /*
+
             if (nextSetMvmt < 1 || nextSetMvmt > audioPlayers.size()) {
                 return;
             }
-*/
+
             if (currentMovement != nextSetMvmt) {
-                //audioPlayers.get(currentMovement - 1).pauseAudio();
+                audioPlayers.get(currentMovement - 1).pauseAudio();
                 currentMovement = nextSetMvmt;
-                //currentAudioPlayer = audioPlayers.get(currentMovement - 1);
-                //currentAudioPlayer.playAudio(0);
+                currentAudioPlayer = audioPlayers.get(currentMovement - 1);
+                scrubBarGUI.setCurrAudioPlayer(currentAudioPlayer);
+                currentAudioPlayer.playAudio(0);
             }
-
-
 
         }
         footballFieldPanel.setCurrentSet(footballFieldPanel.drill.sets.get(setIndex));
@@ -2539,8 +2593,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
      */
     private void updateRFTriggerButton() {
         if (rfTriggerGUI != null) {
-            //effectViewPanel.remove(rfTriggerGUI.getCreateDeleteBtn());
-            effectViewPanel.remove(rfTriggerGUI.getCreateDeletePnl());
+            effectViewPanel.remove(rfTriggerGUI.getCreateDeleteBtn());
             effectViewPanel.revalidate();
             effectViewPanel.repaint();
         }
@@ -2552,9 +2605,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         }
 
 
-        //effectViewPanel.add(rfTriggerGUI.getCreateDeleteBtn(), BorderLayout.SOUTH);
-        effectViewPanel.add(rfTriggerGUI.getCreateDeletePnl(), BorderLayout.SOUTH);
-
+        effectViewPanel.add(rfTriggerGUI.getCreateDeleteBtn(), BorderLayout.SOUTH);
         effectViewPanel.revalidate();
         effectViewPanel.repaint();
     }
