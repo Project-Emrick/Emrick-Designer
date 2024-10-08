@@ -37,12 +37,7 @@ public class Drill {
         for (int i = 0; i < c.size(); i++) {
             sets.add(new Set(c.get(i).set, i, c.get(i).duration));
         }
-        Collections.sort(sets, new Comparator<Set>() {
-            @Override
-            public int compare(Set o1, Set o2) {
-                return o1.compareTo(o2);
-            }
-        });
+        sets.sort(Set::compareTo);
         for (int i = 0; i < sets.size(); i++) {
             sets.get(i).index = i;
         }
