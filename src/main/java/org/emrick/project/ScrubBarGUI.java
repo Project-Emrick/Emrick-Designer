@@ -698,10 +698,42 @@ public class ScrubBarGUI extends JComponent implements ActionListener {
 
     public void setTimeSync(ArrayList<SyncTimeGUI.Pair> timeSync) {
         this.timeSync = timeSync;
-        this.timeSync.sort(new Comparator<SyncTimeGUI.Pair>() {
-            @Override
-            public int compare(SyncTimeGUI.Pair o1, SyncTimeGUI.Pair o2) {
-                return o1.getKey().compareTo(o2.getKey());
+        this.timeSync.sort((o1, o2) -> {
+            String[] thisComponents = o1.getKey().split("-");
+            String[] thatComponents = o2.getKey().split("-");
+            if (thisComponents.length != thatComponents.length) {
+                if (thisComponents.length < thatComponents.length) {
+                    return -1;
+                } else {
+                    return 1;
+                }
+            }
+            int thisSetIndex;
+            int thatSetIndex;
+            if (thisComponents.length > 1) {
+                int thisMovementIndex = Integer.parseInt(thisComponents[0]);
+                int thatMovementIndex = Integer.parseInt(thatComponents[0]);
+                if (thisMovementIndex != thatMovementIndex) {
+                    return thisMovementIndex - thatMovementIndex;
+                }
+                String thisSetLabel = thisComponents[1].replaceAll("[^0-9.]", "");
+                String thatSetLabel = thatComponents[1].replaceAll("[^0-9.]", "");
+                thisSetIndex = Integer.parseInt(thisSetLabel);
+                thatSetIndex = Integer.parseInt(thatSetLabel);
+                if (thisSetIndex != thatSetIndex) {
+                    return thisSetIndex - thatSetIndex;
+                } else {
+                    return thisSetLabel.compareTo(thatSetLabel);
+                }
+            }
+            String thisSetLabel = thisComponents[0].replaceAll("[^0-9.]", "");
+            String thatSetLabel = thatComponents[0].replaceAll("[^0-9.]", "");
+            thisSetIndex = Integer.parseInt(thisSetLabel);
+            thatSetIndex = Integer.parseInt(thatSetLabel);
+            if (thisSetIndex != thatSetIndex) {
+                return thisSetIndex - thatSetIndex;
+            } else {
+                return thisSetLabel.compareTo(thatSetLabel);
             }
         });
     }
