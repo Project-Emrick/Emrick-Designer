@@ -65,7 +65,7 @@ public class RFTriggerGUI {
         cueField = new JTextField(20);
 
         createDeletePnl = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        createDeletePnl.setPreferredSize(new Dimension(300, 300));
+        createDeletePnl.setPreferredSize(new Dimension(300, 250));
         createDeletePnl.add(titleLabel, BorderLayout.WEST);
         createDeletePnl.add(titleField, BorderLayout.EAST);
         createDeletePnl.add(cueLabel, BorderLayout.WEST);

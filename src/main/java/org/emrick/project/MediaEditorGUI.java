@@ -2893,6 +2893,9 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
      */
     private void updateEffectViewPanel(EffectList effectType) {
 
+        if (timeManager.getCount2MSec().get(footballFieldPanel.getCurrentCount()) == null) {
+            return;
+        }
         // No point in updating effect view if can't use effects
         if (effectManager == null) return;
 
