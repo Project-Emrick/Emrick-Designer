@@ -1606,9 +1606,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                 opf = gson.fromJson(r, OldProjectFile.class);
                 pf = null;
             }
-
             r.close();
-
             ImportArchive ia = new ImportArchive(this);
 
             ArrayList<File> archivePaths = new ArrayList<>();
@@ -1632,17 +1630,12 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                 //total time of last project
                 long oldProjectLenMs = 0;
 
-                int i = 0;
-                int count = 0;
+                int i;
                 for (Map.Entry<Integer, Long> entry : timeManager.getCount2MSec().entrySet()) {
                     if (entry.getValue() > oldProjectLenMs) {
                         oldProjectLenMs = entry.getValue();
                     }
-                    count++;
                 }
-
-                System.out.println("OLD LEN = " + oldProjectLenMs);
-                System.out.println("Count = " + count);
 
                 int oldNumCounts = 0;
                 for (Set s : footballFieldPanel.drill.sets) {
@@ -1650,7 +1643,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                 }
                 oldNumCounts++;
 
-                //enhanced for loop may result in concurrent modification
+                //enhanced for loop may result in concurrent modification exception
                 for (i = 0; i < pf.drill.performers.size(); i++) {
                     Performer current = pf.drill.performers.get(i);
                     for (int j = 0; j < current.getCoordinates().size(); j++) {
@@ -1659,7 +1652,6 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                         footballFieldPanel.drill.performers.get(i).getCoordinates().add(current.getCoordinates().get(j));
                     }
                 }
-                i = 0;
 
                 //edit and append coordinates array from the drill class
                 for (Coordinate c : pf.drill.coordinates) {
@@ -1672,7 +1664,6 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                     s.index += oldNumSets;
                     footballFieldPanel.drill.sets.add(s);
                 }
-                /*
                 //again, I'm not sure if the references are identical so this is here just in case
                 if (pf.drill.sets.get(0).index < oldNumSets) {
                     for (Set s : pf.drill.sets) {
@@ -1680,11 +1671,12 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                         footballFieldPanel.drill.sets.add(s);
                     }
                 }
-                */
+
                 for (SyncTimeGUI.Pair p : pf.timeSync) {
                     p.setKey(movementIndex + p.getKey().substring(p.getKey().indexOf("-")));
                 }
                 timeSync.addAll(pf.timeSync);
+
                 //readjust the counts and timestamps in the new RFTriggers and add them to count2RFTrigger
                 for (Map.Entry<Integer, RFTrigger> e: pf.count2RFTrigger.entrySet()) {
                     e.getValue().setCount(e.getValue().getCount() + oldNumCounts);
@@ -1767,7 +1759,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                     }
                     i++;
                 }
-                /*
+
                 for (LEDStrip ledStrip : footballFieldPanel.drill.ledStrips) {
                     for (Effect e : ledStrip.getEffects()) {
                         if (e.getEffectType() == EffectList.GRID) {
@@ -1778,7 +1770,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                         }
                     }
                 }
-                */
+
                 for (SelectionGroupGUI.SelectionGroup group : pf.selectionGroups) {
                     if (!groupsGUI.getGroups().contains(group)) {
                         for (LEDStrip l : group.getLEDStrips()) {
@@ -1790,7 +1782,6 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                         groupsGUI.getGroups().add(group);
                     }
                 }
-
                 ids = new ArrayList<>(effectManager.getIds());
 
                 for (Integer id : pf.ids) {
@@ -1827,7 +1818,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                 //total time of last project
                 long oldProjectLenMs = 0;
 
-                int i = 0;
+                int i;
                 int count = 0;
                 for (Map.Entry<Integer, Long> entry : timeManager.getCount2MSec().entrySet()) {
                     if (entry.getValue() > oldProjectLenMs) {
@@ -1836,14 +1827,11 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                     count++;
                 }
 
-                System.out.println("Count = " + count);
                 int oldNumCounts = 0;
                 for (Set s : footballFieldPanel.drill.sets) {
                     oldNumCounts += s.duration;
                 }
                 oldNumCounts++;
-
-                System.out.println("OLD LEN = " + oldProjectLenMs);
 
                 //enhanced for loop may result in concurrent modification
                 for (i = 0; i < opf.drill.performers.size(); i++) {
@@ -1853,7 +1841,6 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                         footballFieldPanel.drill.performers.get(i).getCoordinates().add(current.getCoordinates().get(j));
                     }
                 }
-                i = 0;
 
                 //edit and append coordinates array from the drill class
                 for (Coordinate c : opf.drill.coordinates) {
@@ -1870,7 +1857,6 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                     footballFieldPanel.drill.sets.add(s);
                 }
 
-/*
                 //again, I'm not sure if the references are identical so this is here just in case
                 if (opf.drill.sets.get(0).index < oldNumSets) {
                     for (Set s : opf.drill.sets) {
@@ -1878,8 +1864,6 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                         footballFieldPanel.drill.sets.add(s);
                     }
                 }
-
- */
 
                 for (SyncTimeGUI.Pair p : opf.timeSync) {
                     p.setKey(movementIndex + "-" + p.getKey());
@@ -2551,6 +2535,12 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         }
         playbackTimer = new java.util.Timer();
         playbackTimer.scheduleAtFixedRate(new PlaybackTask(), 0, period);
+
+        effectViewPanel.remove(rfTriggerGUI.getCreateDeletePnl());
+
+        effectViewPanel.revalidate();
+        effectViewPanel.repaint();
+
         return true;
     }
 
@@ -2628,10 +2618,11 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
      * Create a create/delete button depending on whether there is RF trigger at current count.
      */
     private void updateRFTriggerButton() {
-
+        //don't update if playing
         if (isPlaying()) {
             return;
         }
+
         if (rfTriggerGUI != null) {
             effectViewPanel.remove(rfTriggerGUI.getCreateDeletePnl());
             effectViewPanel.revalidate();
@@ -2830,6 +2821,17 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         updateTimelinePanel();
     }
 
+    public void onUpdateRFTrigger(RFTrigger rfTrigger, int count) {
+        if (!effectManager.isValid(rfTrigger)) {
+            return;
+        }
+        count2RFTrigger.remove(count);
+        count2RFTrigger.put(count, rfTrigger);
+        footballFieldPanel.setCount2RFTrigger(count2RFTrigger);
+        updateRFTriggerButton();
+        updateTimelinePanel();
+    }
+
     @Override
     public void onDeleteRFTrigger(int count) {
         count2RFTrigger.remove(count);
@@ -2890,11 +2892,6 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
      * @param effectType - The type of effect that is currently selected.
      */
     private void updateEffectViewPanel(EffectList effectType) {
-        //do not update effect view while it is playing. It will update once it is paused
-        //this keeps the panel from flickering when the show is playing.
-        if (isPlaying()) {
-            return;
-        }
 
         // No point in updating effect view if can't use effects
         if (effectManager == null) return;

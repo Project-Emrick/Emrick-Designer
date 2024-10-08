@@ -18,6 +18,7 @@ public class RFTriggerGUI {
     private RFTrigger rfTrigger;
     private final RFTriggerListener rfTriggerListener;
     private JButton createDeleteBtn;
+    private JButton updateBtn;
     private JTextField titleField;
     private JTextArea descField;
     private JTextField cueField;
@@ -55,13 +56,24 @@ public class RFTriggerGUI {
         if (createDeletePnl != null) {
             createDeletePnl.remove(createDeleteBtn);
         }
+
+        JLabel titleLabel = new JLabel("Title:");
+        JLabel descLabel = new JLabel("Description:");
+        JLabel cueLabel = new JLabel("Cue:");
+        titleField = new JTextField(20);
+        descField = new JTextArea(3,20);
+        cueField = new JTextField(20);
+
+        createDeletePnl = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        createDeletePnl.setPreferredSize(new Dimension(300, 300));
+        createDeletePnl.add(titleLabel, BorderLayout.WEST);
+        createDeletePnl.add(titleField, BorderLayout.EAST);
+        createDeletePnl.add(cueLabel, BorderLayout.WEST);
+        createDeletePnl.add(cueField, BorderLayout.EAST);
+        createDeletePnl.add(descLabel, BorderLayout.WEST);
+        createDeletePnl.add(descField, BorderLayout.EAST);
+
         if (rfTrigger == null) {
-            JLabel titleLabel = new JLabel("Title:");
-            JLabel descLabel = new JLabel("Description:");
-            JLabel cueLabel = new JLabel("Cue:");
-            titleField = new JTextField(20);
-            descField = new JTextArea(3,20);
-            cueField = new JTextField(20);
             createDeleteBtn = new JButton("Create RF Trigger");
 
             createDeleteBtn.addActionListener(e -> {
@@ -70,25 +82,30 @@ public class RFTriggerGUI {
                 rfTriggerListener.onCreateRFTrigger(rfTrigger);
             });
 
-            createDeletePnl = new JPanel(new FlowLayout(FlowLayout.LEFT));
-            createDeletePnl.setPreferredSize(new Dimension(300, 225));
-            createDeletePnl.add(titleLabel, BorderLayout.WEST);
-            createDeletePnl.add(titleField, BorderLayout.EAST);
-            createDeletePnl.add(cueLabel, BorderLayout.WEST);
-            createDeletePnl.add(cueField, BorderLayout.EAST);
-            createDeletePnl.add(descLabel, BorderLayout.WEST);
-            createDeletePnl.add(descField, BorderLayout.EAST);
             createDeletePnl.add(createDeleteBtn, BorderLayout.SOUTH);
         } else {
             createDeleteBtn = new JButton("Delete RF Trigger");
             createDeleteBtn.setBackground(new Color(32, 136, 203));
             createDeleteBtn.setForeground(Color.WHITE);
 
+            updateBtn = new JButton("Update RF Trigger");
+
+            updateBtn.addActionListener(e -> {
+                rfTrigger = new RFTrigger(count, timestampMillis, titleField.getText(), descField.getText(), cueField.getText());
+                rfTriggerListener.onUpdateRFTrigger(rfTrigger, count);
+            });
+
+
+
             createDeleteBtn.addActionListener(e -> {
                 rfTriggerListener.onDeleteRFTrigger(count);
             });
 
-            createDeletePnl = new JPanel();
+            titleField.setText(rfTrigger.getTitle());
+            descField.setText(rfTrigger.getDescription());
+            cueField.setText(rfTrigger.getCue());
+
+            createDeletePnl.add(updateBtn);
             createDeletePnl.add(createDeleteBtn);
         }
     }
@@ -112,6 +129,9 @@ public class RFTriggerGUI {
             public void onCreateRFTrigger(RFTrigger rfTrigger) {
                 System.out.println("RF Create");
             }
+
+            @Override
+            public void onUpdateRFTrigger(RFTrigger rfTrigger, int count) {System.out.println("RF Update");}
 
             @Override
             public void onDeleteRFTrigger(int count) {
