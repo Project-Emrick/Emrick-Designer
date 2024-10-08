@@ -5,7 +5,7 @@ plugins {
 }
 
 group 'org.emrick.project'
-version '1.0.6'
+version '1.0.7'
 var jarTitle = "Emrick-Designer-$version"
 
 repositories {
