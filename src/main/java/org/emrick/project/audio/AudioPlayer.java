@@ -13,9 +13,11 @@ public class AudioPlayer extends Thread {
     private File audioFile;
     private Sequencer sequencer; // MIDI - is different from waveform audio: use a Sequencer instead of Clip.
     private Clip clip; // WAV and OGG
+    private boolean isPlaying;
 
     public AudioPlayer(File audioFile) {
         this.audioFile = audioFile;
+        this.isPlaying = false;
         initialize();
     }
 
@@ -100,6 +102,7 @@ public class AudioPlayer extends Thread {
         else if (clip != null) {
             clip.start();
         }
+        isPlaying = true;
     }
 
     public void playAudio(long timestampMillis) {
@@ -121,6 +124,7 @@ public class AudioPlayer extends Thread {
         } else if (sequencer != null) {
             // TODO: Handle navigation for sequencer, less common
         }
+        isPlaying = true;
     }
 
     public void pauseAudio() {
@@ -130,6 +134,7 @@ public class AudioPlayer extends Thread {
         else if (clip != null) {
             clip.stop();
         }
+        isPlaying = false;
     }
     public long getAudioLength() {
         if (sequencer != null) {
@@ -141,6 +146,9 @@ public class AudioPlayer extends Thread {
         else {
             return 0;
         }
+    }
+    public boolean isPlaying() {
+        return isPlaying;
     }
 
     @Override

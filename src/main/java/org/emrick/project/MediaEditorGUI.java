@@ -2429,6 +2429,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             applyDefaultLEDConfiguration();
         }
         footballFieldPanel.addSetToField(footballFieldPanel.drill.sets.get(0));
+        currentMovement = 1;  //cannot be other movements if drill is being imported
         count2RFTrigger = new HashMap<>();
         footballFieldPanel.setCount2RFTrigger(count2RFTrigger);
         footballFieldBackground.justResized = true;
@@ -2653,9 +2654,15 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         if (useStartDelay) {
             timestampMillis -= (long) (startDelay * 1000);
         }
-        audioPlayers.get(currentMovement - 1).pauseAudio();
-        //finds correct time stamp for audio player based upon the point in the show and the total duration of the players that were before it
-        audioPlayers.get(currentMovement - 1).playAudio(timestampMillis - getPrevAudioPlayerDurations(currentMovement - 1));
+        if (currentMovement < 1) {
+            audioPlayers.get(0).playAudio(timestampMillis);
+            System.out.println("Less than one");
+        }
+        else {
+            audioPlayers.get(currentMovement - 1).pauseAudio();
+            //finds correct time stamp for audio player based upon the point in the show and the total duration of the players that were before it
+            audioPlayers.get(currentMovement - 1).playAudio(timestampMillis - getPrevAudioPlayerDurations(currentMovement - 1));
+        }
     }
 
     public long getPrevAudioPlayerDurations(int index) {
@@ -2893,9 +2900,6 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
      */
     private void updateEffectViewPanel(EffectList effectType) {
 
-        if (timeManager.getCount2MSec().get(footballFieldPanel.getCurrentCount()) == null) {
-            return;
-        }
         // No point in updating effect view if can't use effects
         if (effectManager == null) return;
 
