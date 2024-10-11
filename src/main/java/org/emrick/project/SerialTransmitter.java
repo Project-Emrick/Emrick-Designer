@@ -158,10 +158,7 @@ public class SerialTransmitter {
 
     public void writeSet(int set, boolean isLightBoardMode) {
         sp.clearRTS();
-        if (System.getProperty("os.name").toLowerCase().contains("windows")) {
-            sp.clearDTR();
-        }
-
+        sp.clearDTR();
         if (!sp.openPort()) {
             System.out.println("Port is busy");
         }
@@ -173,14 +170,9 @@ public class SerialTransmitter {
         }
         str += set + "\n";
         byte[] out = str.getBytes();
-        int len = str.length();
-
-        BlockingThread thread = new BlockingThread(out, len);
-        thread.run();
-
+        sp.writeBytes(out, str.length());
+        sp.flushIOBuffers();
         sp.closePort();
-
-
     }
 
     public void enterProgMode(String ssid, String password, int port, int id, long token, Color verificationColor, boolean mode) {
