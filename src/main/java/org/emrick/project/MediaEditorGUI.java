@@ -3275,7 +3275,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                             if (e.isUSE_DURATION()) {
                                 flags += USE_DURATION;
                             }
-                            if (e.isINSTANT_COLOR()) {
+                            if (e.getEffectType() == EffectList.STATIC_COLOR) {
                                 flags += INSTANT_COLOR;
                             }
                             if (e.getFunction() == LightingDisplay.Function.DEFAULT) {
