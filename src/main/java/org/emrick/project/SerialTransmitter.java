@@ -118,7 +118,7 @@ public class SerialTransmitter {
         }
 
         if (s != null) {
-            if (s.getDescriptivePortName().toLowerCase().contains("cp210")) {
+            if (s.getDescriptivePortName().toLowerCase().contains("cp210x")) {
                 String query = "q";
                 if (!s.openPort()) {
                     System.out.println("Port is busy");
@@ -129,34 +129,24 @@ public class SerialTransmitter {
                 s.clearRTS();
                 s.openPort();
                 s.flushIOBuffers();
-                byte[] toWrite = query.getBytes();
-
                 try {
-                    Thread.sleep(500);
+                    Thread.sleep(1000);
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
-                s.writeBytes(toWrite, toWrite.length);
-                s.flushIOBuffers();
+                s.writeBytes(query.getBytes(), query.length());
                 byte[] buf = new byte[100];
                 s.setComPortTimeouts(SerialPort.TIMEOUT_READ_SEMI_BLOCKING, 1000, 0);
-
-
                 int read = s.readBytes(buf, 100);
-
                 s.closePort();
                 if (read > 0) {
                     char type = (char) buf[read-1];
-                    for (int i = 0; i < read; i++) {
-                        System.out.println("Read = " + (char) buf[i]);
-                    }
                     String out;
                     switch (type) {
                         case 'r' : out = "Receiver"; break;
                         case 't' : out = "Transmitter"; break;
                         default : out = "";
                     }
-                    System.out.println(out);
                     return out;
                 }
             }
