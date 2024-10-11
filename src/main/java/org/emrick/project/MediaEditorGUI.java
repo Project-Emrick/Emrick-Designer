@@ -3800,7 +3800,11 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             dPath = drill.getAbsolutePath();
         }
         scrubBarGUI.setScrub(0);
-        importArchive.fullImport(aPath, dPath);
+        ArrayList<File> paths = new ArrayList<>();
+        if (aPath != null) {
+            paths.add(new File(aPath));
+        }
+        importArchive.fullImport(paths, dPath);
         return true;
     }
 
