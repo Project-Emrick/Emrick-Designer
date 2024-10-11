@@ -71,7 +71,9 @@ public class SerialTransmitter {
             return;
         }
         sp.closePort();
-        //sp.clearDTR();
+        if (System.getProperty("os.name").toLowerCase().contains("windows")) {
+            sp.clearDTR();
+        }
         sp.openPort();
         sp.flushIOBuffers();
 
@@ -93,7 +95,9 @@ public class SerialTransmitter {
             return;
         }
         sp.closePort();
-        //sp.clearDTR();
+        if (System.getProperty("os.name").toLowerCase().contains("windows")) {
+            sp.clearDTR();
+        }
         sp.clearRTS();
         sp.openPort();
         sp.flushIOBuffers();
@@ -162,7 +166,9 @@ public class SerialTransmitter {
 
     public void writeSet(int set, boolean isLightBoardMode) {
         sp.clearRTS();
-        //sp.clearDTR();
+        if (System.getProperty("os.name").toLowerCase().contains("windows")) {
+            sp.clearDTR();
+        }
 
         if (!sp.openPort()) {
             System.out.println("Port is busy");
