@@ -1502,6 +1502,20 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
 
                 ia.fullImport(archivePaths, null);
                 footballFieldPanel.drill = opf.drill;
+                for (Set s : footballFieldPanel.drill.sets) {
+                    s.label = "1-" + s.label;
+                }
+                for (SyncTimeGUI.Pair time : opf.timeSync) {
+                    time.setKey("1-" + time.getKey());
+                }
+                for (Coordinate c : footballFieldPanel.drill.coordinates) {
+                    c.set = "1-" + c.set;
+                }
+                for (Performer p : footballFieldPanel.drill.performers) {
+                    for (Coordinate c : p.getCoordinates()) {
+                        c.set = "1-" + c.set;
+                    }
+                }
                 footballFieldPanel.drill.performers.sort(Comparator.comparingInt(Performer::getPerformerID));
                 for (Performer p : footballFieldPanel.drill.performers) {
                     p.setLedStrips(new ArrayList<>());
@@ -1522,6 +1536,8 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                         }
                     }
                 }
+
+
                 ledStripViewGUI = new LEDStripViewGUI(new ArrayList<>(), effectManager);
                 footballFieldPanel.setCurrentSet(footballFieldPanel.drill.sets.get(0));
                 ledStripViewGUI.setCurrentSet(footballFieldPanel.drill.sets.get(0));
