@@ -2829,6 +2829,8 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                                 if (countDiff > 0) {
                                     int sliceCount = endCount;
                                     long sliceMsec = endMsec;
+                                    durationCounts += countDiff;
+                                    durationMsec += msecDiff;
                                     ArrayList<Integer> removedIDs = new ArrayList<>();
                                     for (int j = 0; j < oldDrill.ledStrips.size(); j++) {
                                         ArrayList<Effect> removeEffects = new ArrayList<>();
@@ -2839,11 +2841,11 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                                                 if (!removedIDs.contains(e.getId())) {
                                                     removedIDs.add(e.getId());
                                                 }
-                                            } else if (e.getStartTimeMSec() > sliceCount) {
-                                                e.setStartTimeMSec(e.getStartTimeMSec() + durationMsec);
-                                                e.setEndTimeMSec(e.getEndTimeMSec() + durationMsec);
-                                                e.getGeneratedEffect().setStartTime(e.getGeneratedEffect().getStartTime() + durationMsec);
-                                                e.getGeneratedEffect().setEndTime(e.getGeneratedEffect().getEndTime() + durationMsec);
+                                            } else if (e.getStartTimeMSec() > sliceMsec) {
+                                                e.setStartTimeMSec(e.getStartTimeMSec() + msecDiff);
+                                                e.setEndTimeMSec(e.getEndTimeMSec() + msecDiff);
+                                                e.getGeneratedEffect().setStartTime(e.getGeneratedEffect().getStartTime() + msecDiff);
+                                                e.getGeneratedEffect().setEndTime(e.getGeneratedEffect().getEndTime() + msecDiff);
                                             }
                                         }
                                         for (Effect e : removeEffects) {
@@ -2855,7 +2857,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                                         ids.remove(rem);
                                     }
 
-                                    timeSync.set(modIndex, new SyncTimeGUI.Pair(oldDrill.sets.get(modIndex - 1).label, durationMsec));
+                                    timeSync.set(modIndex - 1, new SyncTimeGUI.Pair(oldDrill.sets.get(modIndex - 1).label, ((float) durationMsec) / 1000));
 
                                     ArrayList<RFTrigger> moveRFTriggers = new ArrayList<>();
                                     for (RFTrigger rfTrigger : count2RFTrigger.values()) {
@@ -2866,7 +2868,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                                     for (RFTrigger rfTrigger : moveRFTriggers) {
                                         int oldCount = rfTrigger.getCount();
                                         rfTrigger.setCount(oldCount + sliceCount);
-                                        rfTrigger.setTimestampMillis(rfTrigger.getTimestampMillis() + durationMsec);
+                                        rfTrigger.setTimestampMillis(rfTrigger.getTimestampMillis() + msecDiff);
                                         count2RFTrigger.remove(oldCount);
                                         count2RFTrigger.put(rfTrigger.getCount(), rfTrigger);
                                     }
