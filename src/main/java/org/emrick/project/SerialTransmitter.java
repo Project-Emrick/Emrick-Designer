@@ -71,19 +71,19 @@ public class SerialTransmitter {
             return;
         }
         sp.closePort();
-        if (System.getProperty("os.name").toLowerCase().contains("windows")) {
-            sp.clearDTR();
-        }
+        sp.clearDTR();
+        sp.clearRTS();
         sp.openPort();
         sp.flushIOBuffers();
-
+        try {
+            Thread.sleep(1000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
         byte[] out = query.getBytes();
-
-        int num = sp.writeBytes(out, query.length());
+        sp.writeBytes(out, query.length());
         sp.flushIOBuffers();
         sp.closePort();
-        System.out.println("Made it" + " " + num);
-        System.out.println(query);
     }
 
     public void writeLEDCount(String ledCount) {
@@ -95,14 +95,16 @@ public class SerialTransmitter {
             return;
         }
         sp.closePort();
-        if (System.getProperty("os.name").toLowerCase().contains("windows")) {
-            sp.clearDTR();
-        }
+        sp.clearDTR();
         sp.clearRTS();
         sp.openPort();
         sp.flushIOBuffers();
+        try {
+            Thread.sleep(1000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
         byte[] out = query.getBytes();
-        System.out.println(query);
         sp.writeBytes(out, query.length());
         sp.flushIOBuffers();
         sp.closePort();
