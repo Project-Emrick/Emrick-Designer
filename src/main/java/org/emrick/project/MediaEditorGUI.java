@@ -1331,7 +1331,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                     JOptionPane.showMessageDialog(null, new JTextArea("The token for this show is: " + token + "\n Save this token in case some boards are not programmed"));
                 } else {
                     token = Integer.parseInt(input);
-                    currentID = footballFieldPanel.drill.performers.size();
+                    currentID = footballFieldPanel.drill.ledStrips.size();
                 }
             } else {
                 stopWebServer.setEnabled(false);
