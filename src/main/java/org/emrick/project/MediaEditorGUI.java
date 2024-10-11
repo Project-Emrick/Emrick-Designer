@@ -2727,6 +2727,9 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                     for (int i = editList.size() - 1; i >= 0; i--) {
                         switch (editList.get(i).getOperation()) {
                             case "INSERT": {
+                                /*
+                                NOT CURRENTLY FUNCTIONAL - DO NOT USE
+                                 */
                                 int modIndex = 0;
                                 for (Set set : newDrill.sets) {
                                     if (set.equals(editList.get(i).set)) {
@@ -2740,7 +2743,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                                 JLabel tempoLabel = new JLabel("Enter tempo for set: " + editList.get(i).set.label);
                                 JTextField tempoField = new JTextField();
                                 Object[] input = {tempoLabel, tempoField};
-                                JOptionPane.showInputDialog(frame, input, "Tempo for set: " + editList.get(i).set.label);
+                                JOptionPane.showInputDialog(frame, input);
                                 long durationCounts = editList.get(i).set.duration;
                                 long durationMsec = (long)((float) durationCounts / Float.parseFloat(tempoField.getText()) * 60000);
                                 for (int j = 0; j < oldDrill.sets.size(); j++) { // find slice time in seconds/counts
