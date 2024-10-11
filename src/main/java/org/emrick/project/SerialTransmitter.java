@@ -177,6 +177,7 @@ public class SerialTransmitter {
 
     public void enterProgMode(String ssid, String password, int port, int id, long token, Color verificationColor, boolean mode) {
         sp.clearRTS();
+        sp.clearDTR();
         if (!sp.openPort()) {
             System.out.println("Port is busy");
         }
