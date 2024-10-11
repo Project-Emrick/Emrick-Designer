@@ -17,8 +17,8 @@ public class  Effect implements Cloneable, TimelineEvent {
     public static EffectListener effectListener;
 
     // Application
-    private long startTimeMSec; // Based on position of scrub bar cursor when user first creates the effect
-    private long endTimeMSec; // Calculated from start time, delay, duration, and timeout
+    public long startTimeMSec; // Based on position of scrub bar cursor when user first creates the effect
+    public long endTimeMSec; // Calculated from start time, delay, duration, and timeout
     private GeneratedEffect generatedEffect;
 
     // Main Parameters
@@ -30,7 +30,7 @@ public class  Effect implements Cloneable, TimelineEvent {
     private double speed;
     private double angle;
     private EffectList effectType;
-    private int id;
+    public int id;
     private LightingDisplay.Function function;
     private int size;
     private ArrayList<Color> chaseSequence;
@@ -337,6 +337,35 @@ public class  Effect implements Cloneable, TimelineEvent {
             throw new AssertionError();
         }
     }
+
+    public Effect makeDeepCopy() {
+        Effect deepCopy = new Effect(this.getStartTimeMSec(),
+                this.getStartColor(),
+                this.getEndColor(),
+                this.getDelay(),
+                this.getDuration(),
+                this.getTimeout(),
+                this.isUSE_DURATION(),
+                this.isSET_TIMEOUT(),
+                this.isDO_DELAY(),
+                this.isINSTANT_COLOR(),
+                this.getId());
+        deepCopy.setSpeed(this.getSpeed());
+        deepCopy.setAngle(this.getAngle());
+        deepCopy.setEffectType(this.getEffectType());
+        deepCopy.setEndTimeMSec(this.getEndTimeMSec());
+        deepCopy.setGeneratedEffect(this.getGeneratedEffect());
+        deepCopy.setFunction(this.getFunction());
+        deepCopy.setSize(this.size);
+        deepCopy.setChaseSequence(this.getChaseSequence());
+        deepCopy.setHeight(this.getHeight());
+        deepCopy.setWidth(this.getWidth());
+        deepCopy.setShapes(this.getShapes());
+        deepCopy.setUpOrSide(this.upOrSide);
+        deepCopy.setDirection(this.direction);
+        return deepCopy;
+    }
+
 
     @Override
     public boolean equals(Object o) {
