@@ -472,44 +472,48 @@ public class ScrubBarGUI extends JComponent implements ActionListener {
             currSetEndCount = currSetStartCount;
             return;
         }
-        String prefix = set.substring(0, set.indexOf("-") + 1);
-        String num = set.substring(set.indexOf("-") + 1);
 
-        // Find end count of set
-        Pattern digitPattern = Pattern.compile("\\d+"); // Digit, one or more
-        Pattern letterPattern = Pattern.compile("\\D+"); // Non digit, one or more
-
-        Matcher digitMatcher = digitPattern.matcher(num);
-        Matcher letterMatcher = letterPattern.matcher(num);
-
-        //int setNum = digitMatcher.find() ? Integer.parseInt(digitMatcher.group()) : -1;
-        String setNum = digitMatcher.find() ? digitMatcher.group() : "-1";
-        char subSetChar = letterMatcher.find() ? letterMatcher.group().charAt(0) : '!';
-
-        // The character is not 'Z'
-        if (subSetChar != 'Z') {
-
-            // There is a character
-            if (subSetChar != '!') {
-
-                // Consider existence of next sub-set (e.g., if "2A", consider "2B")
-                subSetChar += 1;
-
-                if (pageTab2Count.get(prefix + setNum + subSetChar) != null) {
-                    currSetEndCount = pageTab2Count.get(prefix + setNum + subSetChar);
-                    return;
+        ArrayList<String> sets = new ArrayList<>(pageTab2Count.keySet());
+        sets.sort((o1,o2) -> {
+            String[] thisComponents = o1.split("-");
+            String[] thatComponents = o2.split("-");
+            if (thisComponents.length != thatComponents.length) {
+                if (thisComponents.length < thatComponents.length) {
+                    return -1;
+                } else {
+                    return 1;
                 }
             }
-
-            // There is NO character
-            else {
-                if (pageTab2Count.get(prefix + setNum + "A") != null) {
-                    currSetEndCount = pageTab2Count.get(prefix + setNum + "A");
-                    return;
+            int thisSetIndex;
+            int thatSetIndex;
+            if (thisComponents.length > 1) {
+                int thisMovementIndex = Integer.parseInt(thisComponents[0]);
+                int thatMovementIndex = Integer.parseInt(thatComponents[0]);
+                if (thisMovementIndex != thatMovementIndex) {
+                    return thisMovementIndex - thatMovementIndex;
+                }
+                String thisSetLabel = thisComponents[1].replaceAll("[^0-9.]", "");
+                String thatSetLabel = thatComponents[1].replaceAll("[^0-9.]", "");
+                thisSetIndex = Integer.parseInt(thisSetLabel);
+                thatSetIndex = Integer.parseInt(thatSetLabel);
+                if (thisSetIndex != thatSetIndex) {
+                    return thisSetIndex - thatSetIndex;
+                } else {
+                    return thisSetLabel.compareTo(thatSetLabel);
                 }
             }
-        }
-        currSetEndCount = pageTab2Count.get(String.valueOf(Integer.parseInt(setNum) + 1));
+            String thisSetLabel = thisComponents[0].replaceAll("[^0-9.]", "");
+            String thatSetLabel = thatComponents[0].replaceAll("[^0-9.]", "");
+            thisSetIndex = Integer.parseInt(thisSetLabel);
+            thatSetIndex = Integer.parseInt(thatSetLabel);
+            if (thisSetIndex != thatSetIndex) {
+                return thisSetIndex - thatSetIndex;
+            } else {
+                return thisSetLabel.compareTo(thatSetLabel);
+            }
+        });
+        int index = sets.indexOf(set) + 1;
+        currSetEndCount = pageTab2Count.get(sets.get(index));
     }
 
 
