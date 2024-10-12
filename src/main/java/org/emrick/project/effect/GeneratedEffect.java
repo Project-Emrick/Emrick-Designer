@@ -9,4 +9,8 @@ public interface GeneratedEffect {
     EffectList getEffectType();
     Effect generateEffectObj();
     ArrayList<EffectLEDStripMap> generateEffects(ArrayList<LEDStrip> ledStrips);
+    void setStartTime(long startTime);
+    long getStartTime();
+    void setEndTime(long endTime);
+    long getEndTime();
 }
