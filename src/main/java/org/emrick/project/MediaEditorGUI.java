@@ -908,6 +908,8 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         hardwareMenu.addSeparator();
         JMenuItem modifyBoardItem = new JMenuItem("Modify Board");
         hardwareMenu.add(modifyBoardItem);
+        JMenuItem checkColor = new JMenuItem("Check Color");
+        hardwareMenu.add(checkColor);
 
         verifyShowItem.addActionListener(e -> {
             SerialTransmitter st = comPortPrompt("Transmitter");
@@ -989,6 +991,25 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                 }
                 if (enableLedCount.isSelected()) {
                     st.writeLEDCount(ledCountField.getText());
+                }
+            }
+        });
+
+        checkColor.addActionListener(e -> {
+            SerialTransmitter st = comPortPrompt("Receiver");
+            if (!st.getType().equals("Receiver")) return;
+
+            JLabel idLabel = new JLabel("Enter LED strip label to test color at current time");
+            JTextField idField = new JTextField();
+
+            Object[] inputs = {idLabel, idField};
+            int option = JOptionPane.showConfirmDialog(frame, inputs, "Enter LED Strip label", JOptionPane.OK_CANCEL_OPTION);
+            if (option == JOptionPane.OK_OPTION) {
+                LEDStrip l = footballFieldPanel.drill.ledStrips.stream().filter(led -> led.getLabel().equalsIgnoreCase(idField.getText())).findFirst().orElse(null);
+                if (l != null) {
+                    Color c = footballFieldPanel.calculateColor(effectManager.getEffect(l, (long)(scrubBarGUI.getTime() * 1000)));
+                    System.out.println(c);
+                    st.writeColorCheck(c);
                 }
             }
         });

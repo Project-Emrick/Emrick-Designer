@@ -110,6 +110,30 @@ public class SerialTransmitter {
         sp.closePort();
     }
 
+    public void writeColorCheck(Color color) {
+        String query = "c" + color.getRed() + "\n" + color.getGreen() + "\n" + color.getBlue() + "\n";
+        sp.setDTR();
+        sp.setRTS();
+        if (!sp.openPort()) {
+            System.out.println("Port is busy");
+            return;
+        }
+        sp.closePort();
+        sp.clearDTR();
+        sp.clearRTS();
+        sp.openPort();
+        sp.flushIOBuffers();
+        try {
+            Thread.sleep(1000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        byte[] out = query.getBytes();
+        sp.writeBytes(out, query.length());
+        sp.flushIOBuffers();
+        sp.closePort();
+    }
+
     public String getBoardType(String port) {
         SerialPort[] allPorts = SerialPort.getCommPorts();
         SerialPort s = null;
