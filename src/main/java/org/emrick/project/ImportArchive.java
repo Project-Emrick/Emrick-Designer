@@ -59,14 +59,12 @@ public class ImportArchive {
         Unzip.unzip(absoluteArchivePaths, unzipPaths);
 
         // Parse package.ini file
-        ArrayList<File> iniFile = new ArrayList<>();
+        ArrayList<String> audioPaths = new ArrayList<>();
         for (String s : unzipPaths) {
-            iniFile.add(new File(s + File.separator + "package.ini"));
-        }
-        Map<String, Map<String, String>> iniData = new HashMap<>();
-        for (File f : iniFile) {
+            Map<String, Map<String, String>> iniData = new HashMap<>();
             try {
-                Scanner iniReader = new Scanner(f);
+                File iniFile = new File(s + File.separator + "package.ini");
+                Scanner iniReader = new Scanner(iniFile);
                 String currentSection = null;
                 while (iniReader.hasNextLine()) {
                     String line = iniReader.nextLine().trim();
@@ -90,33 +88,31 @@ public class ImportArchive {
                         iniData.get(currentSection).put(key, value);
                     }
                 }
+                // See package.ini. Import available files
+                //  Current support:  audio
+                if (!iniData.isEmpty()) {
+                    for (Map.Entry<String, String> entry : iniData.get("Files").entrySet()) {
+
+                        // File missing
+                        if (entry.getValue().isEmpty()) {
+                            continue;
+                        }
+
+                        // Import audio
+                        if (entry.getKey().equals("audio")) {
+                            audioPaths.add(s + "/" + entry.getValue());
+                        }
+                    }
+                }
             } catch (FileNotFoundException e) {
                 e.printStackTrace();
             }
+
+        }
+        if (audioPaths.size() > 0) {
+            importAudio(audioPaths);
         }
 
-                // See package.ini. Import available files
-                //  Current support:  audio
-        if (!iniData.isEmpty()) {
-            for (Map.Entry<String, String> entry : iniData.get("Files").entrySet()) {
-
-                // File missing
-                if (entry.getValue().isEmpty()) {
-                    continue;
-                }
-                ArrayList<String> componentPaths = new ArrayList<>();
-                for (String s : unzipPaths) {
-                    componentPaths.add(s + "/" + entry.getValue());
-                }
-
-                // General-purpose callback
-
-                // Import audio
-                if (entry.getKey().equals("audio")) {
-                    importAudio(componentPaths);
-                }
-            }
-        }
         importListener.onImport();
 
         // Import drill

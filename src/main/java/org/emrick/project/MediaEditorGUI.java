@@ -1581,15 +1581,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             emrickPath = path;
 
             File showDataDir = new File(PathConverter.pathConverter("show_data/", false));
-            showDataDir.mkdirs();
-            File[] cleanFiles = showDataDir.listFiles();
-            for (File f : cleanFiles) {
-                if (f.isDirectory()) {
-                    deleteDirectory(f);
-                } else {
-                    f.delete();
-                }
-            }
+
             Unzip.unzip(path.getAbsolutePath(), PathConverter.pathConverter("show_data/", false));
             File[] dataFiles = showDataDir.listFiles();
             for (File f : dataFiles) {
@@ -1625,18 +1617,20 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             r.close();
             ImportArchive ia = new ImportArchive(this);
 
-            ArrayList<File> archivePaths = new ArrayList<>();
+            ArrayList<File> aPaths = new ArrayList<>();
             ArrayList<Integer> ids;
 
             if (pf != null) {
                 for (String s : pf.archiveNames) {
-                    archivePaths.add(new File(PathConverter.pathConverter("show_data/" + s, false)));
+                    aPaths.add(new File(PathConverter.pathConverter("show_data/" + s, false)));
                 }
 
-                ia.concatImport(archivePaths, null);
+                ia.concatImport(aPaths, null);
+                archivePaths.addAll(aPaths);
 
                 //Append drill
                 int oldNumSets = footballFieldPanel.drill.sets.size();
+                pf.drill.sets.get(0).duration = 1;
                 int movementIndex = getMovementIndex();
 
                 //ensure lists are sorted
@@ -1700,17 +1694,6 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                     count2RFTrigger.put(e.getKey() + oldNumCounts, pf.count2RFTrigger.get(e.getKey()));
                 }
 
-                //copy RFTriggers (onSync creates new Table)
-                HashMap<Integer, RFTrigger> copy = new HashMap<>(count2RFTrigger);
-                onSync(timeSync, startDelay);
-                scrubBarGUI.setTimeSync(timeSync);
-
-                //putRFTriggers back in
-                count2RFTrigger.putAll(copy);
-
-                rebuildPageTabCounts();
-                footballFieldPanel.setCount2RFTrigger(count2RFTrigger);
-
                 footballFieldPanel.drill.ledStrips.sort(Comparator.comparingInt(LEDStrip::getId));
                 pf.drill.ledStrips.sort(Comparator.comparingInt(LEDStrip::getId));
 
@@ -1723,6 +1706,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                         }
                     }
                 }
+                maxID++;
 
                 //increment all effect IDs by the maxID
                 i = 0;
@@ -1740,9 +1724,10 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                         copyEffect.setFunction(e.getFunction());
                         copyEffect.setUpOrSide(e.isUpOrSide());
                         copyEffect.setSpeed(e.getSpeed());
-                        /*
+
                         GeneratedEffect ge = e.getGeneratedEffect();
                         Effect geEffect = ge.generateEffectObj();
+                        geEffect.setId(copyEffect.getId());
                         GeneratedEffect genEffect;
                         switch (e.getEffectType()) {
                             case CHASE -> genEffect = GeneratedEffectLoader.generateChaseEffectFromEffect(geEffect);
@@ -1752,22 +1737,19 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                             case CIRCLE_CHASE -> genEffect = GeneratedEffectLoader.generateCircleChaseEffectFromEffect(geEffect);
                             case GENERATED_FADE -> genEffect = GeneratedEffectLoader.generateFadeEffectFromEffect(geEffect);
                             case ALTERNATING_COLOR -> genEffect = GeneratedEffectLoader.generateAlternatingColorEffectFromEffect(geEffect);
-                            case STATIC_COLOR -> genEffect = GeneratedEffectLoader.generateStaticColorEffectFromEffect(geEffect);
+                            default -> genEffect = GeneratedEffectLoader.generateStaticColorEffectFromEffect(geEffect);
                         }
-                        //copyEffect.setGeneratedEffect(e.getGeneratedEffect());
-                        copyEffect.getGeneratedEffect();
-                        copyEffect.getGeneratedEffect().generateEffectObj().setStartTimeMSec(e.getStartTimeMSec() + oldProjectLenMs);
+                        genEffect.setStartTime(genEffect.getStartTime() + oldProjectLenMs);
+                        genEffect.setEndTime(genEffect.getEndTime() + oldProjectLenMs);
+                        copyEffect.setGeneratedEffect(genEffect);
 
-                         */
+
                         copyEffect.setAngle(e.getAngle());
                         copyEffect.setDirection(e.isDirection());
                         copyEffect.setHeight(e.getHeight());
                         copyEffect.setShapes(e.getShapes());
                         copyEffect.setSize(e.getSize());
                         copyEffect.setWidth(e.getWidth());
-
-
-
 
 
                         footballFieldPanel.drill.ledStrips.get(i).addEffect(copyEffect);
@@ -1786,23 +1768,29 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                         }
                     }
                 }
-
-                for (SelectionGroupGUI.SelectionGroup group : pf.selectionGroups) {
-                    if (!groupsGUI.getGroups().contains(group)) {
-                        for (LEDStrip l : group.getLEDStrips()) {
-                            for (Effect e : l.getEffects()) {
-                                e.setStartTimeMSec(e.getStartTimeMSec() + oldProjectLenMs);
-                                e.setEndTimeMSec(e.getEndTimeMSec() + oldProjectLenMs);
-                            }
-                        }
-                        groupsGUI.getGroups().add(group);
-                    }
-                }
                 ids = new ArrayList<>(effectManager.getIds());
 
                 for (Integer id : pf.ids) {
+                    id += maxID;
                     if (!ids.contains(id)) {
                         ids.add(id);
+                    }
+                }
+
+                //copy RFTriggers (onSync creates new Table)
+                HashMap<Integer, RFTrigger> copy = new HashMap<>(count2RFTrigger);
+                onSync(timeSync, startDelay);
+                scrubBarGUI.setTimeSync(timeSync);
+
+                //putRFTriggers back in
+                count2RFTrigger.putAll(copy);
+
+                rebuildPageTabCounts();
+                footballFieldPanel.setCount2RFTrigger(count2RFTrigger);
+
+                for (SelectionGroupGUI.SelectionGroup group : pf.selectionGroups) {
+                    if (!groupsGUI.getGroups().contains(group)) {
+                        groupsGUI.getGroups().add(group);
                     }
                 }
 
@@ -1815,16 +1803,16 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
 
                 ledConfigurationGUI = new LEDConfigurationGUI(footballFieldPanel.drill, this);
 
-                groupsGUI.setGroups(pf.selectionGroups, footballFieldPanel.drill.ledStrips);
                 groupsGUI.initializeButtons();
 
             }
             else if (opf != null) {  //old emrick file support
-                archivePaths.add(new File(PathConverter.pathConverter("show_data/" + opf.archivePath, false)));
-                ia.concatImport(archivePaths, null);
-
+                aPaths.add(new File(PathConverter.pathConverter("show_data/" + opf.archivePath, false)));
+                ia.concatImport(aPaths, null);
+                archivePaths.addAll(aPaths);
                 //Append drill
                 int oldNumSets = footballFieldPanel.drill.sets.size();
+                opf.drill.sets.get(0).duration = 1;
                 int movementIndex = getMovementIndex();
 
                 //ensure lists are sorted
@@ -1893,18 +1881,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                     count2RFTrigger.put(e.getKey() + oldNumCounts, opf.count2RFTrigger.get(e.getKey()));
                 }
 
-                //copy RFTriggers (onSync creates new table)
-                HashMap<Integer, RFTrigger> copy = new HashMap<>(count2RFTrigger);
 
-                onSync(timeSync, startDelay);
-                scrubBarGUI.setTimeSync(timeSync);
-
-                //put RFTriggers back in
-                count2RFTrigger.putAll(copy);
-                System.out.println(oldNumCounts);
-
-                rebuildPageTabCounts();
-                footballFieldPanel.setCount2RFTrigger(count2RFTrigger);
 
                 footballFieldPanel.drill.ledStrips.sort(Comparator.comparingInt(LEDStrip::getId));
                 opf.drill.ledStrips.sort(Comparator.comparingInt(LEDStrip::getId));
@@ -1918,6 +1895,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                         }
                     }
                 }
+                maxID++;
                 i = 0;
                 //increment all effect IDs by the maxID
                 for (LEDStrip l : opf.drill.getLedStrips()) {
@@ -1927,16 +1905,17 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                                 e.getStartColor(), e.getEndColor(), e.getDelay(), e.getDuration(), e.getTimeout(),
                                 e.isUSE_DURATION(), e.isSET_TIMEOUT(), e.isDO_DELAY(), e.isINSTANT_COLOR(), e.getId());
                         copyEffect.setEffectType(e.getEffectType());
-                        copyEffect.setId(e.getId() + maxID);
+                        copyEffect.setId(e.getId() + maxID+1);
                         copyEffect.setStartTimeMSec(e.getStartTimeMSec() + oldProjectLenMs);
                         copyEffect.setEndTimeMSec(e.getEndTimeMSec() + oldProjectLenMs);
                         copyEffect.setChaseSequence(e.getChaseSequence());
                         copyEffect.setFunction(e.getFunction());
                         copyEffect.setUpOrSide(e.isUpOrSide());
                         copyEffect.setSpeed(e.getSpeed());
-                        /*
+
                         GeneratedEffect ge = e.getGeneratedEffect();
                         Effect geEffect = ge.generateEffectObj();
+                        geEffect.setId(copyEffect.getId());
                         GeneratedEffect genEffect;
                         switch (e.getEffectType()) {
                             case CHASE -> genEffect = GeneratedEffectLoader.generateChaseEffectFromEffect(geEffect);
@@ -1946,22 +1925,18 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                             case CIRCLE_CHASE -> genEffect = GeneratedEffectLoader.generateCircleChaseEffectFromEffect(geEffect);
                             case GENERATED_FADE -> genEffect = GeneratedEffectLoader.generateFadeEffectFromEffect(geEffect);
                             case ALTERNATING_COLOR -> genEffect = GeneratedEffectLoader.generateAlternatingColorEffectFromEffect(geEffect);
-                            case STATIC_COLOR -> genEffect = GeneratedEffectLoader.generateStaticColorEffectFromEffect(geEffect);
+                            default -> genEffect = GeneratedEffectLoader.generateStaticColorEffectFromEffect(geEffect);
                         }
-                        //copyEffect.setGeneratedEffect(e.getGeneratedEffect());
-                        copyEffect.getGeneratedEffect();
-                        copyEffect.getGeneratedEffect().generateEffectObj().setStartTimeMSec(e.getStartTimeMSec() + oldProjectLenMs);
+                        genEffect.setStartTime(genEffect.getStartTime() + oldProjectLenMs);
+                        genEffect.setEndTime(genEffect.getEndTime() + oldProjectLenMs);
+                        copyEffect.setGeneratedEffect(genEffect);
 
-                         */
                         copyEffect.setAngle(e.getAngle());
                         copyEffect.setDirection(e.isDirection());
                         copyEffect.setHeight(e.getHeight());
                         copyEffect.setShapes(e.getShapes());
                         copyEffect.setSize(e.getSize());
                         copyEffect.setWidth(e.getWidth());
-
-
-
 
 
                         footballFieldPanel.drill.ledStrips.get(i).addEffect(copyEffect);
@@ -1981,25 +1956,33 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                     }
                 }
 
-                for (SelectionGroupGUI.SelectionGroup group : opf.selectionGroups) {
-                    if (!groupsGUI.getGroups().contains(group)) {
-                        for (LEDStrip l : group.getLEDStrips()) {
-                            for (Effect e : l.getEffects()) {
-                                e.setStartTimeMSec(e.getStartTimeMSec() + oldProjectLenMs);
-                                e.setEndTimeMSec(e.getEndTimeMSec() + oldProjectLenMs);
-                            }
-                        }
-                        groupsGUI.getGroups().add(group);
-                    }
-                }
-
                 ids = new ArrayList<>(effectManager.getIds());
 
                 for (Integer id : opf.ids) {
+                    id += maxID;
                     if (!ids.contains(id)) {
                         ids.add(id);
                     }
                 }
+
+                //copy RFTriggers (onSync creates new table)
+                HashMap<Integer, RFTrigger> copy = new HashMap<>(count2RFTrigger);
+
+                onSync(timeSync, startDelay);
+
+                //put RFTriggers back in
+                count2RFTrigger.putAll(copy);
+                System.out.println(oldNumCounts);
+
+                rebuildPageTabCounts();
+                footballFieldPanel.setCount2RFTrigger(count2RFTrigger);
+
+                for (SelectionGroupGUI.SelectionGroup group : opf.selectionGroups) {
+                    if (!groupsGUI.getGroups().contains(group)) {
+                        groupsGUI.getGroups().add(group);
+                    }
+                }
+
 
                 int prevTotalCounts = 0;
                 for (Set s : footballFieldPanel.drill.sets) {
@@ -2014,15 +1997,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
 
                 ledConfigurationGUI = new LEDConfigurationGUI(footballFieldPanel.drill, this);
 
-                groupsGUI.setGroups(opf.selectionGroups, footballFieldPanel.drill.ledStrips);
                 groupsGUI.initializeButtons();
-
-                //readjust the counts and timestamps in the new RFTriggers and add them to count2RFTrigger
-                for (Map.Entry<Integer, RFTrigger> e : opf.count2RFTrigger.entrySet()) {
-                    e.getValue().setCount(e.getValue().getCount() + prevTotalCounts);
-                    e.getValue().setTimestampMillis(e.getValue().getTimestampMillis() + oldProjectLenMs);
-                    count2RFTrigger.put(e.getKey() + prevTotalCounts, opf.count2RFTrigger.get(e.getKey()));
-                }
             }
             else {
                 return;  //better option?

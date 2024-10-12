@@ -52,13 +52,13 @@ public class TimeManager {
             long durationPerCount = (long) (timeSyncMap.get(set) / numCounts * 1000);
 
             // Account for set 1, which also contains count 0. Need to iterate an additional time
-            if (set.equals("1")) numCounts += 1;
+            if (set.equals("1-1")) numCounts += 1;
 
             // Create count2MSec entries for counts of this set
             for (int i = 0; i < numCounts; i++) {
 
                 // Account for count 0 which does not use durationPerCount, but only startDelay
-                if (set.equals("1") && i == 0)
+                if (set.equals("1-1") && i == 0)
                     count2MSec.put(currentCount++, prevCountMSec);
                 else {
                     prevCountMSec += durationPerCount;

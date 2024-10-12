@@ -204,24 +204,26 @@ public class ScrubBarGUI extends JComponent implements ActionListener {
             int val = ((JSlider)e.getSource()).getValue();
             String set = labelTable.get(getCurrentSetStart()).getText();
             statusLabel.setText("Set: " + set);
+            if (!isPlaying) {
+                scrubBarListener.onSetChange(getCurrentSetIndex());
+                footballFieldPanel.setCurrentSetStartCount(getCurrentSetStart());
+                footballFieldPanel.setCurrentCount(val);
 
-            scrubBarListener.onSetChange(getCurrentSetIndex());
-            footballFieldPanel.setCurrentSetStartCount(getCurrentSetStart());
-            footballFieldPanel.setCurrentCount(val);
-
-
-            long currTimeMSec = scrubBarListener.onScrub();
-            if (!isUseFps()) {
-                float pastSetTime = 0;
-                for (int i = 0; i < getCurrentSetIndex(); i++) {
-                    pastSetTime += timeSync.get(i).getValue();
+                long currTimeMSec = scrubBarListener.onScrub();
+                if (!isUseFps()) {
+                    float pastSetTime = 0;
+                    for (int i = 0; i < getCurrentSetIndex(); i++) {
+                        pastSetTime += timeSync.get(i).getValue();
+                    }
+                    time = ((float) currTimeMSec + pastSetTime) / 1000;
+                    scrubBarListener.onTimeChange((long) ((time - pastSetTime) * 1000));
                 }
-                time = ((float) currTimeMSec + pastSetTime) / 1000;
-                scrubBarListener.onTimeChange((long) ((time - pastSetTime) * 1000));
-            }
-            timeLabel.setText(TimeManager.getFormattedTime(currTimeMSec));
+                timeLabel.setText(TimeManager.getFormattedTime(currTimeMSec));
 
-            setPlaybackTime();
+                setPlaybackTime();
+            } else {
+                timeLabel.setText(TimeManager.getFormattedTime((long)(time * 1000)));
+            }
         });
 
         sliderPanel.add(topSlider, BorderLayout.CENTER);
@@ -264,9 +266,12 @@ public class ScrubBarGUI extends JComponent implements ActionListener {
             pastSetTime += timeSync.get(i).getValue();
         }
 
-
-
         float setSyncDuration = timeSync.get(getCurrentSetIndex()).getValue();
+        if (setSyncDuration == 0) {
+            nextSet();
+            currentSetIndex = getCurrentSetIndex();
+            setSyncDuration = timeSync.get(getCurrentSetIndex()).getValue();
+        }
         float setDuration = getCurrSetDuration(); // in counts
 
         double ratio = (time - pastSetTime) / setSyncDuration;
