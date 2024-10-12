@@ -2208,7 +2208,6 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             c1.sethOffset(1);
             LEDConfig c2 = new LEDConfig();
             c2.setLabel("R");
-            c2.sethOffset(1);
             LEDStrip l1 = new LEDStrip(id, p, c1);
             id++;
             LEDStrip l2 = new LEDStrip(id, p, c2);
