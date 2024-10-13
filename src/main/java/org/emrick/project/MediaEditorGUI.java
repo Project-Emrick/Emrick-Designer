@@ -1138,6 +1138,13 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         });
         lightMenuPopup.add(gridPattern);
 
+        JMenuItem randomNoisePattern = new JMenuItem("Create Random Noise Effect");
+        randomNoisePattern.addActionListener(e -> {
+           selectedEffectType = EffectList.NOISE;
+           updateEffectViewPanel(selectedEffectType);
+        });
+        lightMenuPopup.add(randomNoisePattern);
+
 
         // Button that triggers the popup menu
         JButton lightButton = new JButton("Effect Options");
@@ -2658,7 +2665,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
     private void playAudioFromCorrectPosition() {
         // Get audio to correct position before playing
         if (!scrubBarGUI.getAudioCheckbox().isSelected()) {
-            audioPlayers.get(currentMovement).pauseAudio();
+            audioPlayers.get(currentMovement - 1).pauseAudio();
             return;
         }
         long timestampMillis = timeManager.getCount2MSec().get(footballFieldPanel.getCurrentCount());
@@ -2987,6 +2994,9 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                 } else if (currentEffect.getEffectType() == EffectList.GRID) {
                     GridEffect gridEffect = (GridEffect) currentEffect.getGeneratedEffect();
                     currentEffect = gridEffect.generateEffectObj();
+                } else if (currentEffect.getEffectType() == EffectList.NOISE) {
+                    RandomNoiseEffect randomNoiseEffect = (RandomNoiseEffect) currentEffect.getGeneratedEffect();
+                    currentEffect = randomNoiseEffect.generateEffectObj();
                 }
             }
             effectGUI = new EffectGUI(currentEffect, currentMSec, this, selectedEffectType, false, -1);
@@ -3998,7 +4008,15 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                             if (e.getFunction() == LightingDisplay.Function.DEFAULT) {
                                 flags += DEFAULT_FUNCTION;
                             }
-                            out += "Size: " + e.getSize() + ", ";
+                            if (e.getEffectType() != EffectList.NOISE) {
+                                out += "Size: " + e.getSize() + ", ";
+                            } else {
+                                int size = e.getNoiseCheckpoints().size() * 5 + 1;
+                                if (e.isFade()) {
+                                    size--;
+                                }
+                                out += "Size: " + size + ", ";
+                            }
                             out += "Strip_id: " + l.getId() + ", ";
                             out += "Set_id: " + getEffectTriggerIndex(e, timesMS) + ", ";
                             out += "Flags: " + flags + ", ";
@@ -4026,6 +4044,16 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                                 out += ", ExtraParameters: " + e.getChaseSequence().size() + "," + e.getSpeed();
                                 for (Color c : e.getChaseSequence()) {
                                     out += "," + c.getRed() + "," + c.getGreen() + "," + c.getBlue();
+                                }
+                            }
+                            if (e.getFunction() == LightingDisplay.Function.NOISE) {
+                                out += ", ExtraParameters: " + (e.isFade() ? 1 : 0);
+                                for (Checkpoint c : e.getNoiseCheckpoints()) {
+                                    if (c.time() != 0) {
+                                        out += "," + c.time();
+                                    }
+                                    out += "," + c.color().getRed() + "," + c.color().getGreen() + "," + c.color().getBlue();
+                                    out += "," + c.brightness();
                                 }
                             }
                             out += "\n";

@@ -37,6 +37,16 @@ public class  Effect implements Cloneable, TimelineEvent {
     private int height;
     private int width;
     private GridShape[] shapes;
+    private boolean varyBrightness;
+    private boolean varyColor;
+    private boolean varyTime;
+    private boolean fade;
+    private float colorVariance;
+    private float minBrightness;
+    private float maxBrightness;
+    private long maxTime;
+    private long minTime;
+    private ArrayList<Checkpoint> noiseCheckpoints;
 
     // Bitflags
     private boolean USE_DURATION;
@@ -68,6 +78,16 @@ public class  Effect implements Cloneable, TimelineEvent {
         this.chaseSequence = new ArrayList<>();
         this.height = 0;
         this.width = 0;
+        this.varyBrightness = false;
+        this.varyColor = false;
+        this.varyTime = false;
+        this.fade = false;
+        this.colorVariance = 0;
+        this.minBrightness = 0;
+        this.maxBrightness = 0;
+        this.maxTime = 0;
+        this.minTime = 0;
+        this.noiseCheckpoints = new ArrayList<>();
         calculateEndTimeMSec();
     }
 
@@ -95,7 +115,97 @@ public class  Effect implements Cloneable, TimelineEvent {
         this.chaseSequence = new ArrayList<>();
         this.height = 0;
         this.width = 0;
+        this.varyBrightness = false;
+        this.varyColor = false;
+        this.varyTime = false;
+        this.fade = false;
+        this.colorVariance = 0;
+        this.minBrightness = 0;
+        this.maxBrightness = 0;
+        this.maxTime = 0;
+        this.minTime = 0;
+        this.noiseCheckpoints = new ArrayList<>();
         calculateEndTimeMSec();
+    }
+
+    public boolean isVaryBrightness() {
+        return varyBrightness;
+    }
+
+    public void setVaryBrightness(boolean varyBrightness) {
+        this.varyBrightness = varyBrightness;
+    }
+
+    public boolean isVaryColor() {
+        return varyColor;
+    }
+
+    public void setVaryColor(boolean varyColor) {
+        this.varyColor = varyColor;
+    }
+
+    public boolean isVaryTime() {
+        return varyTime;
+    }
+
+    public void setVaryTime(boolean varyTime) {
+        this.varyTime = varyTime;
+    }
+
+    public boolean isFade() {
+        return fade;
+    }
+
+    public void setFade(boolean fade) {
+        this.fade = fade;
+    }
+
+    public float getColorVariance() {
+        return colorVariance;
+    }
+
+    public void setColorVariance(float colorVariance) {
+        this.colorVariance = colorVariance;
+    }
+
+    public float getMinBrightness() {
+        return minBrightness;
+    }
+
+    public void setMinBrightness(float minBrightness) {
+        this.minBrightness = minBrightness;
+    }
+
+    public float getMaxBrightness() {
+        return maxBrightness;
+    }
+
+    public void setMaxBrightness(float maxBrightness) {
+        this.maxBrightness = maxBrightness;
+    }
+
+    public long getMaxTime() {
+        return maxTime;
+    }
+
+    public void setMaxTime(long maxTime) {
+        this.maxTime = maxTime;
+    }
+
+    public long getMinTime() {
+        return minTime;
+    }
+
+    public void setMinTime(long minTime) {
+        this.minTime = minTime;
+    }
+
+    public ArrayList<Checkpoint> getNoiseCheckpoints() {
+        return noiseCheckpoints;
+    }
+
+    public void setNoiseCheckpoints(ArrayList<Checkpoint> noiseCheckpoints) {
+        this.noiseCheckpoints = noiseCheckpoints;
     }
 
     public void setStartTimeMSec(long startTimeMSec) {
@@ -146,6 +256,7 @@ public class  Effect implements Cloneable, TimelineEvent {
                 case CIRCLE_CHASE: generatedEffect = GeneratedEffectLoader.generateCircleChaseEffectFromEffect(this); break;
                 case CHASE: generatedEffect = GeneratedEffectLoader.generateChaseEffectFromEffect(this); break;
                 case GRID: generatedEffect = GeneratedEffectLoader.generateGridEffectFromEffect(this); break;
+                case NOISE : generatedEffect = GeneratedEffectLoader.generateRandomNoiseEffectFromEffect(this); break;
             }
         }
         return generatedEffect;
@@ -398,6 +509,7 @@ public class  Effect implements Cloneable, TimelineEvent {
             case CIRCLE_CHASE: timeLineLabel = "Circle Chase"; break;
             case CHASE: timeLineLabel = "Chase"; break;
             case GRID: timeLineLabel = "Grid"; break;
+            case NOISE: timeLineLabel = "Random Noise"; break;
             default : timeLineLabel = "Default Pattern"; break;
         }
 

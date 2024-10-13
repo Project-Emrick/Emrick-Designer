@@ -95,8 +95,9 @@ public class LEDStripViewGUI extends JPanel {
                 switch (e.getEffectType()) {
                     case ALTERNATING_COLOR: {
                         colors = new ArrayList<>();
+                        Color c = LightingDisplay.alternatingColorFunction(e, 0, currMS);
                         for (int i = 0; i < ledStrip.getLedConfig().getLEDCount(); i++) {
-                            colors.add(LightingDisplay.alternatingColorFunction(e, 0, currMS));
+                            colors.add(c);
                         }
                         break;
                     }
@@ -104,10 +105,19 @@ public class LEDStripViewGUI extends JPanel {
                         colors = LightingDisplay.chaseFunction(e, ledStrip, 0, currMS);
                         break;
                     }
+                    case NOISE : {
+                        colors = new ArrayList<>();
+                        Color c = LightingDisplay.randomNoiseFunction(e, 0, currMS);
+                        for (int i = 0; i < ledStrip.getLedConfig().getLEDCount(); i++) {
+                            colors.add(c);
+                        }
+                        break;
+                    }
                     default: {
                         colors = new ArrayList<>();
+                        Color c = LightingDisplay.defaultLEDFunction(e, 0, currMS);
                         for (int i = 0; i < ledStrip.getLedConfig().getLEDCount(); i++) {
-                            colors.add(LightingDisplay.defaultLEDFunction(e, 0, currMS));
+                            colors.add(c);
                         }
                         break;
                     }

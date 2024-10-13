@@ -166,6 +166,7 @@ public class FootballFieldPanel extends JPanel implements RepaintListener {
 
         switch(e.getFunction()) {
             case ALTERNATING_COLOR : return LightingDisplay.alternatingColorFunction(e, setMS, currMS);
+            case NOISE : return LightingDisplay.randomNoiseFunction(e, setMS, currMS);
             default : return LightingDisplay.defaultLEDFunction(e, setMS, currMS);
         }
     }
