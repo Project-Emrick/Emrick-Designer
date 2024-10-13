@@ -823,6 +823,11 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                 mainContentPanel.revalidate();
                 mainContentPanel.repaint();
             }
+            /* Adding a Signal to Turn Status LED back on */
+            SerialTransmitter st = comPortPrompt("Transmitter");
+            if (st == null) return;
+            st.writeToSerialPort("h");
+
             serialTransmitter = null;
             stopShowItem.setEnabled(false);
             runShowItem.setEnabled(true);
