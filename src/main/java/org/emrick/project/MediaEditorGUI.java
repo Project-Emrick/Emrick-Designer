@@ -1138,6 +1138,13 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         });
         lightMenuPopup.add(gridPattern);
 
+        JMenuItem randomNoisePattern = new JMenuItem("Create Random Noise Effect");
+        randomNoisePattern.addActionListener(e -> {
+           selectedEffectType = EffectList.NOISE;
+           updateEffectViewPanel(selectedEffectType);
+        });
+        lightMenuPopup.add(randomNoisePattern);
+
 
         // Button that triggers the popup menu
         JButton lightButton = new JButton("Effect Options");
@@ -2658,7 +2665,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
     private void playAudioFromCorrectPosition() {
         // Get audio to correct position before playing
         if (!scrubBarGUI.getAudioCheckbox().isSelected()) {
-            audioPlayers.get(currentMovement).pauseAudio();
+            audioPlayers.get(currentMovement - 1).pauseAudio();
             return;
         }
         long timestampMillis = timeManager.getCount2MSec().get(footballFieldPanel.getCurrentCount());
@@ -2987,6 +2994,9 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                 } else if (currentEffect.getEffectType() == EffectList.GRID) {
                     GridEffect gridEffect = (GridEffect) currentEffect.getGeneratedEffect();
                     currentEffect = gridEffect.generateEffectObj();
+                } else if (currentEffect.getEffectType() == EffectList.NOISE) {
+                    RandomNoiseEffect randomNoiseEffect = (RandomNoiseEffect) currentEffect.getGeneratedEffect();
+                    currentEffect = randomNoiseEffect.generateEffectObj();
                 }
             }
             effectGUI = new EffectGUI(currentEffect, currentMSec, this, selectedEffectType, false, -1);

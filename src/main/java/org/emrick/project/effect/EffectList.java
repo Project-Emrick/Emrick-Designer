@@ -10,5 +10,6 @@ public enum EffectList {
     WAVE,
     CIRCLE_CHASE,
     CHASE,
-    GRID
+    GRID,
+    NOISE
 }

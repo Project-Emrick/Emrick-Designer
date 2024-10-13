@@ -264,6 +264,44 @@ public class GeneratedEffectAdapter extends TypeAdapter<GeneratedEffect> {
             writer.name("effectType");
             writer.value(gridEffect.getEffectType().ordinal());
             writer.endObject();
+        } else if (generatedEffect.getEffectType() == EffectList.NOISE) {
+            RandomNoiseEffect noiseEffect = (RandomNoiseEffect) generatedEffect;
+            writer.beginObject();
+            writer.name("startTime");
+            writer.value(noiseEffect.getStartTime());
+            writer.name("endTime");
+            writer.value(noiseEffect.getEndTime());
+            writer.name("duration");
+            writer.value(noiseEffect.getDuration().toMillis());
+            writer.name("varyBrightness");
+            writer.value(noiseEffect.isVaryBrightness());
+            writer.name("varyColor");
+            writer.value(noiseEffect.isVaryColor());
+            writer.name("varyTime");
+            writer.value(noiseEffect.isVaryTime());
+            writer.name("fade");
+            writer.value(noiseEffect.isFade());
+            writer.name("colorVariance");
+            writer.value(noiseEffect.getColorVariance());
+            writer.name("minBrightness");
+            writer.value(noiseEffect.getMinBrightness());
+            writer.name("maxBrightness");
+            writer.value(noiseEffect.getMaxBrightness());
+            writer.name("maxTime");
+            writer.value(noiseEffect.getMaxTime());
+            writer.name("minTime");
+            writer.value(noiseEffect.getMinTime());
+            writer.name("startColorR");
+            writer.value(noiseEffect.getColor().getRed());
+            writer.name("startColorG");
+            writer.value(noiseEffect.getColor().getGreen());
+            writer.name("startColorB");
+            writer.value(noiseEffect.getColor().getBlue());
+            writer.name("id");
+            writer.value(noiseEffect.getId());
+            writer.name("effectType");
+            writer.value(noiseEffect.getEffectType().ordinal());
+            writer.endObject();
         } else {
             writer.nullValue();
         }
@@ -306,6 +344,16 @@ public class GeneratedEffectAdapter extends TypeAdapter<GeneratedEffect> {
         Integer gridSpeed = null;
         ArrayList<Color> chaseSequence = null;
         ArrayList<GridShape> gridShapes = null;
+        Boolean varyBrightness = null;
+        Boolean varyColor = null;
+        Boolean varyTime = null;
+        Boolean fade = null;
+        Float colorVariance = null;
+        Float minBrightness = null;
+        Float maxBrightness = null;
+        Long maxTime = null;
+        Long minTime = null;
+
         if (reader.peek().equals(JsonToken.NULL)) {
             reader.nextNull();
             return null;
@@ -381,6 +429,24 @@ public class GeneratedEffectAdapter extends TypeAdapter<GeneratedEffect> {
                 height = reader.nextInt();
             } else if ("width".equals(fieldname)) {
                 width = reader.nextInt();
+            } else if ("varyBrightness".equals(fieldname)) {
+                varyBrightness = reader.nextBoolean();
+            } else if ("varyColor".equals(fieldname)) {
+                varyColor = reader.nextBoolean();
+            } else if ("varyTime".equals(fieldname)) {
+                varyTime = reader.nextBoolean();
+            } else if ("fade".equals(fieldname)) {
+                fade = reader.nextBoolean();
+            } else if ("colorVariance".equals(fieldname)) {
+                colorVariance = (float) reader.nextDouble();
+            } else if ("minBrightness".equals(fieldname)) {
+                minBrightness = (float) reader.nextDouble();
+            } else if ("maxBrightness".equals(fieldname)) {
+                maxBrightness = (float) reader.nextDouble();
+            } else if ("maxTime".equals(fieldname)) {
+                maxTime = reader.nextLong();
+            } else if ("minTime".equals(fieldname)) {
+                minTime = reader.nextLong();
             } else if (isChaseSequenceMember(fieldname)) {
                 int data = reader.nextInt();
                 int index = Integer.parseInt(fieldname.substring(6));
@@ -680,6 +746,44 @@ public class GeneratedEffectAdapter extends TypeAdapter<GeneratedEffect> {
                 }
                 GridShape[] shapes = new GridShape[gridShapes.size()];
                 return new GridEffect(startTime, endTime, height, width, gridShapes.toArray(shapes), Duration.ofMillis(duration), id);
+            } else if (effectType == EffectList.NOISE.ordinal()) {
+                if (startTime == null) {
+                    throw new IOException("failed to get startTime component for GeneratedEffect");
+                } else if (endTime == null) {
+                    throw new IOException("failed to get endTime component for GeneratedEffect");
+                } else if (duration == null) {
+                    throw new IOException("failed to get duration component for GeneratedEffect");
+                } else if (id == null) {
+                    throw new IOException("failed to get id component for GeneratedEffect");
+                } else if (startColorR == null) {
+                    throw new IOException("failed to get startColorR component for GeneratedEffect");
+                } else if (startColorG == null) {
+                    throw new IOException("failed to get startColorG component for GeneratedEffect");
+                } else if (startColorB == null) {
+                    throw new IOException("failed to get startColorB component for GeneratedEffect");
+                } else if (varyBrightness == null) {
+                    throw new IOException("failed to get varyBrightness component for GeneratedEffect");
+                } else if (varyTime == null) {
+                    throw new IOException("failed to get varyTime component for GeneratedEffect");
+                } else if (varyColor == null) {
+                    throw new IOException("failed to get varyColor component for GeneratedEffect");
+                } else if (fade == null) {
+                    throw new IOException("failed to get faded component for GeneratedEffect");
+                } else if (colorVariance == null) {
+                    throw new IOException("failed to get colorVariance component for GeneratedEffect");
+                } else if (minBrightness == null) {
+                    throw new IOException("failed to get minBrightness component for GeneratedEffect");
+                } else if (maxBrightness == null) {
+                    throw new IOException("failed to get maxBrightness component for GeneratedEffect");
+                } else if (maxTime == null) {
+                    throw new IOException("failed to get maxTime component for GeneratedEffect");
+                } else if (minTime == null) {
+                    throw new IOException("failed to get minTime component for GeneratedEffect");
+                }
+
+                return new RandomNoiseEffect(startTime, endTime, Duration.ofMillis(duration), varyBrightness,
+                                            varyColor, varyTime, fade, colorVariance, minBrightness, maxBrightness,
+                                            maxTime, minTime, new Color(startColorR, startColorG, startColorB), id);
             }
         }  else {
             throw new IOException("failed to get effectType component for GeneratedEffect");
