@@ -4008,7 +4008,15 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                             if (e.getFunction() == LightingDisplay.Function.DEFAULT) {
                                 flags += DEFAULT_FUNCTION;
                             }
-                            out += "Size: " + e.getSize() + ", ";
+                            if (e.getEffectType() != EffectList.NOISE) {
+                                out += "Size: " + e.getSize() + ", ";
+                            } else {
+                                int size = e.getNoiseCheckpoints().size() * 5 + 1;
+                                if (e.isFade()) {
+                                    size--;
+                                }
+                                out += "Size: " + size + ", ";
+                            }
                             out += "Strip_id: " + l.getId() + ", ";
                             out += "Set_id: " + getEffectTriggerIndex(e, timesMS) + ", ";
                             out += "Flags: " + flags + ", ";
