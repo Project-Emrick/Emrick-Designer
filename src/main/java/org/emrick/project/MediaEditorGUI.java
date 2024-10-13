@@ -823,6 +823,11 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                 mainContentPanel.revalidate();
                 mainContentPanel.repaint();
             }
+            /* Adding a Signal to Turn Status LED back on */
+            SerialTransmitter st = comPortPrompt("Transmitter");
+            if (st == null) return;
+            st.writeToSerialPort("h");
+
             serialTransmitter = null;
             stopShowItem.setEnabled(false);
             runShowItem.setEnabled(true);
@@ -891,26 +896,20 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             stopShowItem.setEnabled(true);
         });
 
-        JMenu hardwareMenu = new JMenu("Hardware");
-        menuBar.add(hardwareMenu);
+        /* Verify Menu */
+        JMenu verifyMenu = new JMenu("Verify");
+        menuBar.add(verifyMenu);
         JMenuItem verifyShowItem = new JMenuItem("Verify Show");
-        hardwareMenu.add(verifyShowItem);
+        verifyMenu.add(verifyShowItem);
         JMenuItem verifyLightBoardItem = new JMenuItem("Verify Light Board");
-        hardwareMenu.add(verifyLightBoardItem);
-        JMenuItem wirelessCheck = new JMenuItem("Wireless Check");
-        hardwareMenu.add(wirelessCheck);
-        JMenuItem storageMode = new JMenuItem("Storage Mode");
-        hardwareMenu.add(storageMode);
-        JMenuItem batteryCheck = new JMenuItem("Battery Check");
-        hardwareMenu.add(batteryCheck);
-        JMenuItem massSleep = new JMenuItem("Mass Sleep");
-        hardwareMenu.add(massSleep);
-        hardwareMenu.addSeparator();
-        JMenuItem modifyBoardItem = new JMenuItem("Modify Board");
-        hardwareMenu.add(modifyBoardItem);
-        JMenuItem checkColor = new JMenuItem("Check Color");
-        hardwareMenu.add(checkColor);
+        verifyMenu.add(verifyLightBoardItem);
+        verifyMenu.addSeparator();
 
+        JMenuItem checkColor = new JMenuItem("Check Color");
+        verifyMenu.add(checkColor);
+
+        /* Action Listeners For Buttons */
+        // Verify Show
         verifyShowItem.addActionListener(e -> {
             SerialTransmitter st = comPortPrompt("Transmitter");
             if (st == null) return;
@@ -918,6 +917,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             st.writeToSerialPort("v");
         });
 
+        // Verify Light Board
         verifyLightBoardItem.addActionListener(e -> {
             SerialTransmitter st = comPortPrompt("Transmitter");
             if (st == null) return;
@@ -925,21 +925,50 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             st.writeToSerialPort("w");
         });
 
-        wirelessCheck.addActionListener(e -> {
-            SerialTransmitter st = comPortPrompt("Transmitter");
-            if (st == null) return;
+        // Check Color
+        checkColor.addActionListener(e -> {
+            SerialTransmitter st = comPortPrompt("Receiver");
+            if (!st.getType().equals("Receiver")) return;
 
-            st.writeToSerialPort("c");
+            JLabel idLabel = new JLabel("Enter LED strip label to test color at current time");
+            JTextField idField = new JTextField();
+
+            Object[] inputs = {idLabel, idField};
+            int option = JOptionPane.showConfirmDialog(frame, inputs, "Enter LED Strip label", JOptionPane.OK_CANCEL_OPTION);
+            if (option == JOptionPane.OK_OPTION) {
+                LEDStrip l = footballFieldPanel.drill.ledStrips.stream().filter(led -> led.getLabel().equalsIgnoreCase(idField.getText())).findFirst().orElse(null);
+                if (l != null) {
+                    Color c = footballFieldPanel.calculateColor(effectManager.getEffect(l, (long)(scrubBarGUI.getTime() * 1000)));
+                    System.out.println(c);
+                    st.writeColorCheck(c);
+                }
+            }
         });
 
-        // For Storage Mode
-        storageMode.addActionListener(e -> {
-            SerialTransmitter st = comPortPrompt("Transmitter");
-            if (st == null) return;
+        /* Hardware Menu */
+        JMenu hardwareMenu = new JMenu("Hardware");
+        menuBar.add(hardwareMenu);
+        JMenuItem batteryCheck = new JMenuItem("Battery Check");
+        hardwareMenu.add(batteryCheck);
+        JMenuItem chargingCheck = new JMenuItem("Charging Check");
+        hardwareMenu.add(chargingCheck);
+        hardwareMenu.addSeparator();
 
-            st.writeToSerialPort("d");
-        });
+        JMenuItem storageMode = new JMenuItem("Storage Mode");
+        hardwareMenu.add(storageMode);
+        JMenuItem massReset = new JMenuItem("Mass Reset");
+        hardwareMenu.add(massReset);
+        JMenuItem massSleep = new JMenuItem("Mass Sleep");
+        hardwareMenu.add(massSleep);
+        hardwareMenu.addSeparator();
 
+        JMenuItem wirelessCheck = new JMenuItem("Wireless Check");
+        hardwareMenu.add(wirelessCheck);
+        JMenuItem modifyBoardItem = new JMenuItem("Modify Board");
+        hardwareMenu.add(modifyBoardItem);
+
+        /* Action Listeners For Buttons */
+        // Battery Check
         batteryCheck.addActionListener(e -> {
             SerialTransmitter st = comPortPrompt("Transmitter");
             if (st == null) return;
@@ -947,6 +976,31 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             st.writeToSerialPort("o");
         });
 
+        // Charging Check
+        chargingCheck.addActionListener(e -> {
+            SerialTransmitter st = comPortPrompt("Transmitter");
+            if (st == null) return;
+
+            st.writeToSerialPort("j");
+        });
+
+        // Storage Mode
+        storageMode.addActionListener(e -> {
+            SerialTransmitter st = comPortPrompt("Transmitter");
+            if (st == null) return;
+
+            st.writeToSerialPort("d");
+        });
+
+        // Mass Reset
+        massReset.addActionListener(e -> {
+            SerialTransmitter st = comPortPrompt("Transmitter");
+            if (st == null) return;
+
+            st.writeToSerialPort("r");
+        });
+
+        // Mass Sleep
         massSleep.addActionListener(e -> {
             SerialTransmitter st = comPortPrompt("Transmitter");
             if (st == null) return;
@@ -954,6 +1008,15 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             st.writeToSerialPort("e");
         });
 
+        // Wireless Check
+        wirelessCheck.addActionListener(e -> {
+            SerialTransmitter st = comPortPrompt("Transmitter");
+            if (st == null) return;
+
+            st.writeToSerialPort("c");
+        });
+
+        // Modify Board
         modifyBoardItem.addActionListener(e -> {
             SerialTransmitter st = comPortPrompt("Receiver");
             if (!st.getType().equals("Receiver")) {
@@ -991,25 +1054,6 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                 }
                 if (enableLedCount.isSelected()) {
                     st.writeLEDCount(ledCountField.getText());
-                }
-            }
-        });
-
-        checkColor.addActionListener(e -> {
-            SerialTransmitter st = comPortPrompt("Receiver");
-            if (!st.getType().equals("Receiver")) return;
-
-            JLabel idLabel = new JLabel("Enter LED strip label to test color at current time");
-            JTextField idField = new JTextField();
-
-            Object[] inputs = {idLabel, idField};
-            int option = JOptionPane.showConfirmDialog(frame, inputs, "Enter LED Strip label", JOptionPane.OK_CANCEL_OPTION);
-            if (option == JOptionPane.OK_OPTION) {
-                LEDStrip l = footballFieldPanel.drill.ledStrips.stream().filter(led -> led.getLabel().equalsIgnoreCase(idField.getText())).findFirst().orElse(null);
-                if (l != null) {
-                    Color c = footballFieldPanel.calculateColor(effectManager.getEffect(l, (long)(scrubBarGUI.getTime() * 1000)));
-                    System.out.println(c);
-                    st.writeColorCheck(c);
                 }
             }
         });
