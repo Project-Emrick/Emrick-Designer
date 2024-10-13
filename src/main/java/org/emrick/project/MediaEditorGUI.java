@@ -4038,6 +4038,16 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                                     out += "," + c.getRed() + "," + c.getGreen() + "," + c.getBlue();
                                 }
                             }
+                            if (e.getFunction() == LightingDisplay.Function.NOISE) {
+                                out += ", ExtraParameters: " + (e.isFade() ? 1 : 0);
+                                for (Checkpoint c : e.getNoiseCheckpoints()) {
+                                    if (c.time() != 0) {
+                                        out += "," + c.time();
+                                    }
+                                    out += "," + c.color().getRed() + "," + c.color().getGreen() + "," + c.color().getBlue();
+                                    out += "," + c.brightness();
+                                }
+                            }
                             out += "\n";
                         }
                         bfw.write(out);
