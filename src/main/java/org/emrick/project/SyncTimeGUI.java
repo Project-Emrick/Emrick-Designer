@@ -4,10 +4,7 @@ import org.emrick.project.audio.AudioPlayer;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.KeyEvent;
-import java.awt.event.KeyListener;
+import java.awt.event.*;
 import java.io.File;
 import java.lang.reflect.Array;
 import java.util.*;
@@ -82,6 +79,16 @@ public class SyncTimeGUI implements ActionListener {
         dialogWindow = new JDialog(parent, true);
         dialogWindow.setTitle("Sync Time to Original Drill");
         dialogWindow.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+        dialogWindow.addWindowListener(new WindowAdapter() {
+
+            @Override
+            public void windowClosing(WindowEvent e) {
+                if (audioPlayer.isPlaying()) {
+                    audioPlayer.pauseAudio();
+                }
+                super.windowClosing(new WindowEvent(dialogWindow, WindowEvent.WINDOW_CLOSING));
+            }
+        });
         dialogWindow.setSize(400, 400);
         dialogWindow.setLayout(new BorderLayout(10, 10));
         dialogWindow.setResizable(false);
@@ -203,30 +210,25 @@ public class SyncTimeGUI implements ActionListener {
         titleLabel.setFont(new Font("Arial", Font.BOLD, 14));
 
         //TODO: Create a string object of the text below
-        JLabel instrLabel = new JLabel("When ready, tap the spacebar at the starting tempo. The audio will start automatically." +
-                " The window will close once all of the show counts have been tapped.");
+        JLabel instrLabel1 = new JLabel("When ready, tap the spacebar at the starting tempo.");
+        JLabel instrLabel2 = new JLabel("The tab will close once all counts have been tapped.");
 
         JPanel tapTempoPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 5));
 
         titlePanel.add(titleLabel, BorderLayout.NORTH);
-        titlePanel.add(instrLabel, BorderLayout.SOUTH);
+        titlePanel.add(instrLabel1, BorderLayout.SOUTH);
+        titlePanel.add(instrLabel2, BorderLayout.SOUTH);
 
-
-        System.out.println(totalCounts);
         counts = new ArrayList<>();
         tapAction = new TapAction();
 
         tapTempoPanel.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke(' '), "tapAction");
         tapTempoPanel.getActionMap().put("tapAction", tapAction);
 
-        tapTempoPanel.add(new JLabel("TAP HERE"));
         tapTempoPanel.setFocusable(true);
 
         mainPanel.add(titlePanel, BorderLayout.NORTH);
         mainPanel.add(tapTempoPanel, BorderLayout.SOUTH);
-
-
-          //time in ms that the last beat occurred
 
         return mainPanel;
     }
@@ -374,6 +376,12 @@ public class SyncTimeGUI implements ActionListener {
         public float getValue() {
             return value;
         }
+        public void setKey(String key) {
+            this.key = key;
+        }
+        public void setValue(float value) {
+            this.value = value;
+        }
     }
     public static class PairCountMS {
         private int key;
@@ -392,15 +400,16 @@ public class SyncTimeGUI implements ActionListener {
         }
     }
 
-
     @Override
     public void actionPerformed(ActionEvent e) {
         if (e.getSource().equals(cancelButton)) {
             dialogWindow.dispose();
-            if (audioPlayer.isAlive()) {
+            if (audioPlayer.isPlaying()) {
                 audioPlayer.pauseAudio();
             }
-        } else if (e.getSource().equals(syncButton)) {
+        }
+
+        else if (e.getSource().equals(syncButton)) {
 
             // This currently expects the text input to be a duration, despite the help text implying it needs to be a timestamp.
             //  this is planned to be changed to beats per minute, so plan accordingly!
@@ -642,7 +651,7 @@ public class SyncTimeGUI implements ActionListener {
                 currentTime = System.currentTimeMillis();
                 counts.add(new PairCountMS(currentCount - 1, currentTime - prevCountTime));
                 currentCount = 0;
-                if (audioPlayer.isAlive()) {
+                if (audioPlayer.isPlaying()) {
                     audioPlayer.pauseAudio();
                 }
                 ArrayList<Pair> times = new ArrayList<>();

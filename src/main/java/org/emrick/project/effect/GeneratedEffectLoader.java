@@ -32,4 +32,9 @@ public class GeneratedEffectLoader {
     public static GridEffect generateGridEffectFromEffect(Effect e) {
         return new GridEffect(e.getStartTimeMSec(), e.getEndTimeMSec(), e.getHeight(), e.getWidth(), e.getShapes(), e.getDuration(), e.getId());
     }
+
+    public static RandomNoiseEffect generateRandomNoiseEffectFromEffect(Effect e) {
+        return new RandomNoiseEffect(e.getStartTimeMSec(), e.getEndTimeMSec(), e.getDuration(), e.isVaryBrightness(), e.isVaryColor(), e.isVaryTime(), e.isFade(), e.getColorVariance(),
+                                    e.getMinBrightness(), e.getMaxBrightness(), e.getMaxTime(), e.getMinTime(), e.getStartColor(), e.getId());
+    }
 }

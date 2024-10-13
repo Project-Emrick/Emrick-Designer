@@ -5,6 +5,7 @@ import javax.swing.filechooser.FileFilter;
 import java.awt.*;
 import java.awt.event.*;
 import java.io.*;
+import java.nio.file.Path;
 import java.util.*;
 
 /**
@@ -35,7 +36,7 @@ public class SelectFileGUI implements ActionListener {
     private final ImportArchive importArchive;
     // Paths to selected files
     private File coordsFile;
-    private File archiveFile;
+    private ArrayList<File> archiveFiles;
     private File csvFile;
 
     /**
@@ -50,7 +51,7 @@ public class SelectFileGUI implements ActionListener {
         importArchive = new ImportArchive(importListener);
 
         coordsFile = null;
-        archiveFile = null;
+        archiveFiles = new ArrayList<>();
 
         dialogWindow = new JDialog(parent, true);
         dialogWindow.setTitle("New Project - Import");
@@ -150,7 +151,7 @@ public class SelectFileGUI implements ActionListener {
 
     private void autoImport(String coordsFilePath, String archiveFilePath) {
         this.coordsFile = new File(coordsFilePath);
-        this.archiveFile = new File(archiveFilePath);
+        this.archiveFiles.add(new File(archiveFilePath));
         this.importButton.doClick();
     }
 
@@ -193,7 +194,7 @@ public class SelectFileGUI implements ActionListener {
                     File selectedFile = fileChooser.getSelectedFile();
                     System.out.println("Archive     | Selected file: " + selectedFile.getAbsoluteFile());
                     ulArchiveFilename.setText(selectedFile.getName());
-                    archiveFile = selectedFile;
+                    this.archiveFiles.add(selectedFile);
                 }
             }
 
@@ -223,7 +224,7 @@ public class SelectFileGUI implements ActionListener {
                                                   "Upload Error",
                                                   JOptionPane.ERROR_MESSAGE);
                     return;
-                } else if (archiveFile == null) {
+                } else if (archiveFiles == null) {
                     JOptionPane.showMessageDialog(dialogWindow,
                                                   "Please select the Pyware archive (.3dz) file.",
                                                   "Upload Error",
@@ -242,18 +243,26 @@ public class SelectFileGUI implements ActionListener {
                 // TODO: Import Coordinates Pdf and Pyware Archive
 
                 ArrayList<String> files = new ArrayList<>();
-                files.add(archiveFile.getAbsolutePath());
+                for (File f : archiveFiles) {
+                    files.add(f.getAbsolutePath());
+                }
                 if (csvFile != null) {
                     files.add(csvFile.getAbsolutePath());
                 }
                 copyFiles(files, PathConverter.pathConverter("show_data", false));
-                archiveFile = new File(PathConverter.pathConverter("show_data/" + archiveFile.getName(), false));
+                ArrayList<File> archiveFilesCopy = new ArrayList<>();
+
+                for (File f : archiveFiles) {
+                    archiveFilesCopy.add(new File(PathConverter.pathConverter("show_data/" + f.getName(), false)));
+                }
+                this.archiveFiles = archiveFilesCopy;
+
                 if (csvFile != null) {
                     csvFile = new File(PathConverter.pathConverter("show_data/" + csvFile.getName(), false));
                 }
 
-                importListener.onFileSelect(archiveFile, csvFile);
-                importArchive.fullImport(archiveFile.getAbsolutePath(), coordsFile.getAbsolutePath());
+                importListener.onFileSelect(archiveFiles, csvFile);
+                importArchive.fullImport(archiveFiles, coordsFile.getAbsolutePath());
 
                 dialogWindow.dispose();
             }
@@ -305,44 +314,4 @@ public class SelectFileGUI implements ActionListener {
 
         return fileChooser;
     }
-
-    // For testing
-//    public static void main(String[] args) {
-//
-//        // Run Swing programs on the Event Dispatch Thread (EDT)
-//        SwingUtilities.invokeLater(new Runnable() {
-//            @Override
-//            public void run() {
-//                ImportListener importListener = new ImportListener() {
-//                    @Override
-//                    public void onImport() {
-//                        System.out.println("onImport called.");
-//                    }
-//
-//                    @Override
-//                    public void onFloorCoverImport(Image image) {
-//                        System.out.println("onFloorCoverImport called.");
-//                    }
-//
-//                    @Override
-//                    public void onSurfaceImport(Image image) {
-//                        System.out.println("onSurfaceImport called.");
-//                    }
-//
-//                    @Override
-//                    public void onAudioImport(File audioFile) {
-//                        System.out.println("onAudioImport called.");
-//                    }
-//
-//                    @Override
-//                    public void onDrillImport(String drill) {
-//                        System.out.println("onDrillImport called.");
-//                    }
-//                };
-//
-//                SelectFileGUI selectFileGUI = new SelectFileGUI(importListener);
-//                selectFileGUI.show();
-//            }
-//        });
-//    }
 }

@@ -10,7 +10,7 @@ public class TimeManager {
     private HashMap<Integer, Long> count2MSec;                      // Count : The milliseconds it takes to get there
 
     // Additional
-    private final Map<String, Integer> set2Count;                   // Set : The count it begins on
+    private Map<String, Integer> set2Count;                   // Set : The count it begins on
     private ArrayList<Map.Entry<String, Integer>> set2CountSorted;  // Set : The count it begins on
     private ArrayList<Map.Entry<String, Integer>> set2NumCounts;    // Set : The number of counts in the set
     private ArrayList<Map.Entry<String, Long>> set2MSec;            // Set : The milliseconds it takes to get there
@@ -45,19 +45,20 @@ public class TimeManager {
         // Calculate count2MSec
         int currentCount = 0;
         long prevCountMSec = (long) (startDelay * 1000); // Count 0 will begin at startDelay seconds
+
         for (Map.Entry<String, Integer> set2NumCountsEntry : set2NumCounts) {
             String set = set2NumCountsEntry.getKey();
             int numCounts = set2NumCountsEntry.getValue();
             long durationPerCount = (long) (timeSyncMap.get(set) / numCounts * 1000);
 
             // Account for set 1, which also contains count 0. Need to iterate an additional time
-            if (set.equals("1")) numCounts += 1;
+            if (set.equals("1-1")) numCounts += 1;
 
             // Create count2MSec entries for counts of this set
             for (int i = 0; i < numCounts; i++) {
 
                 // Account for count 0 which does not use durationPerCount, but only startDelay
-                if (set.equals("1") && i == 0)
+                if (set.equals("1-1") && i == 0)
                     count2MSec.put(currentCount++, prevCountMSec);
                 else {
                     prevCountMSec += durationPerCount;
@@ -72,7 +73,7 @@ public class TimeManager {
 
     public int MSec2Count(long ms) {
         for (Map.Entry<Integer, Long> entry : count2MSec.entrySet()) {
-            if (entry.getValue() > ms) return entry.getKey();
+            if (entry.getValue() >= ms) return entry.getKey();
         }
         return count2MSec.size();
     } // not entirely sure if this returns count or count + 1

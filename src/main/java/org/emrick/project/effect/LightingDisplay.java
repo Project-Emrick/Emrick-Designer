@@ -10,7 +10,8 @@ public class LightingDisplay {
     public enum Function {
         DEFAULT,
         ALTERNATING_COLOR,
-        CHASE
+        CHASE,
+        NOISE
     }
 
     public static Color defaultLEDFunction(Effect e, long setMS, long currMS) {
@@ -151,5 +152,92 @@ public class LightingDisplay {
             }
         }
         return colors;
+    }
+
+    public static Color randomNoiseFunction(Effect e, long setMS, long currMS) {
+        if (e.getStartTimeMSec() + e.getDuration().toMillis() >= currMS) {
+            ArrayList<Checkpoint> checkpoints = e.getNoiseCheckpoints();
+            long start = e.getStartTimeMSec();
+            int i = 0;
+            long checkPointStart = start;
+            while (checkPointStart + checkpoints.get(i).time() <= currMS) {
+                checkPointStart += checkpoints.get(i).time();
+                i++;
+            }
+            Checkpoint curr = checkpoints.get(i);
+            if (e.isFade()) {
+                Checkpoint next = checkpoints.get(i + 1);
+                long startGradient = checkPointStart;
+                float shiftProgress = (float) (currMS - startGradient) / (float) curr.time();
+                float[] hsvs = new float[3];
+                Color.RGBtoHSB(curr.color().getRed(), curr.color().getGreen(), curr.color().getBlue(), hsvs);
+                hsvs[0] *= 360;
+                float startHue = hsvs[0];
+                float[] hsve = new float[3];
+                Color.RGBtoHSB(next.color().getRed(), next.color().getGreen(), next.color().getBlue(), hsve);
+                hsve[0] *= 360;
+                float endHue = hsve[0];
+                if (curr.color().equals(Color.black)) {
+                    hsvs[0] = hsve[0];
+                    startHue = hsvs[0];
+                    hsvs[1] = hsve[1];
+                }
+                if (next.color().equals(Color.black)) {
+                    hsve[0] = hsvs[0];
+                    endHue = hsve[0];
+                    hsve[1] = hsvs[1];
+                }
+                float h, s, v;
+                if (startHue != endHue) {
+                    boolean clockwise = true;
+                    if (endHue > startHue) {
+                        if (endHue - startHue > 180) {
+                            clockwise = false;
+                        }
+                    } else {
+                        if (startHue - endHue < 180) {
+                            clockwise = false;
+                        }
+                    }
+                    // the math to make this work sucks and probably has redundancies but it works and I refuse to touch it
+                    if (clockwise) {
+                        if (hsve[0] >= hsvs[0]) {
+                            h = ((hsve[0] - hsvs[0]) * shiftProgress + hsvs[0]) % 360;
+                        } else {
+                            h = ((hsve[0] + 360 - hsvs[0]) * shiftProgress + hsvs[0]) % 360;
+                        }
+                    } else {
+                        if (hsve[0] >= hsvs[0]) {
+                            h = ((hsvs[0] + 360 - (hsvs[0] - (hsve[0] - 360)) * shiftProgress)) % 360;
+                        } else {
+                            h = (hsvs[0] - (hsvs[0] - hsve[0]) * shiftProgress) % 360;
+                        }
+                    }
+                } else {
+                    h = hsvs[0];
+                }
+                s = (hsve[1] - hsvs[1]) * shiftProgress + hsvs[1];
+                v = (hsve[2] - hsvs[2]) * shiftProgress + hsvs[2];
+                h /= 360;
+                Color pbs = new Color(Color.HSBtoRGB(h,s,v)); // pre-brightness scaling
+                float b = curr.brightness() + (next.brightness() - curr.brightness()) * shiftProgress;
+                return new Color((int)(pbs.getRed() * b), (int)(pbs.getGreen() * b), (int)(pbs.getBlue() * b));
+            } else {
+                Color pbs = curr.color(); // pre-brightness scaling
+                float b = curr.brightness();
+                try {
+                    return new Color((int)(pbs.getRed() * b), (int)(pbs.getGreen() * b), (int)(pbs.getBlue() * b));
+                } catch (IllegalArgumentException ex) {
+                    System.out.println(pbs.getRed() * b + ", " + pbs.getGreen() * b + ", " + pbs.getBlue() * b);
+                }
+            }
+        }
+
+        if (e.isSET_TIMEOUT()) {
+            if (e.getStartTimeMSec() + e.getDelay().toMillis() + e.getDuration().toMillis() + e.getTimeout().toMillis() > currMS) {
+                return e.getNoiseCheckpoints().get(e.getNoiseCheckpoints().size() - 1).color();
+            }
+        }
+        return Color.black;
     }
 }

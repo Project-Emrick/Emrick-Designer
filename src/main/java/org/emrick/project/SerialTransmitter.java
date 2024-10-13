@@ -3,6 +3,8 @@ package org.emrick.project;
 import com.fazecast.jSerialComm.SerialPort;
 
 import java.awt.*;
+import java.io.IOException;
+import java.io.OutputStream;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 
@@ -12,7 +14,7 @@ public class SerialTransmitter {
     public SerialTransmitter() {
         SerialPort[] sps = SerialPort.getCommPorts();
         for (SerialPort s : sps) {
-            if (s.getDescriptivePortName().toLowerCase().contains("cp210x")) {
+            if (s.getDescriptivePortName().toLowerCase().contains("cp210")) {
                 sp = s;
                 type = getBoardType(sp.getDescriptivePortName());
                 break;
@@ -38,9 +40,10 @@ public class SerialTransmitter {
             }
         }
         if (s != null) {
-            if (s.getDescriptivePortName().toLowerCase().contains("cp210x")) {
+            if (s.getDescriptivePortName().toLowerCase().contains("cp210")) {
                 sp = s;
                 type = getBoardType(sp.getDescriptivePortName());
+                System.out.println(type);
                 return true;
             }
         }
@@ -85,6 +88,30 @@ public class SerialTransmitter {
 
     public void writeLEDCount(String ledCount) {
         String query = "l" + ledCount + "\n";
+        sp.setDTR();
+        sp.setRTS();
+        if (!sp.openPort()) {
+            System.out.println("Port is busy");
+            return;
+        }
+        sp.closePort();
+        sp.clearDTR();
+        sp.clearRTS();
+        sp.openPort();
+        sp.flushIOBuffers();
+        try {
+            Thread.sleep(1000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        byte[] out = query.getBytes();
+        sp.writeBytes(out, query.length());
+        sp.flushIOBuffers();
+        sp.closePort();
+    }
+
+    public void writeColorCheck(Color color) {
+        String query = "c" + color.getRed() + "\n" + color.getGreen() + "\n" + color.getBlue() + "\n";
         sp.setDTR();
         sp.setRTS();
         if (!sp.openPort()) {
@@ -190,7 +217,7 @@ public class SerialTransmitter {
         } catch (UnknownHostException uhe) {
             throw new RuntimeException(uhe);
         }
-        System.out.println(str);
+        //System.out.println(str);
         byte[] out = str.getBytes();
         sp.writeBytes(out, str.length());
         sp.flushIOBuffers();
@@ -204,8 +231,27 @@ public class SerialTransmitter {
             System.out.println("Port is busy");
         }
         byte[] out = str.getBytes();
-        sp.writeBytes(out, str.length());
+        int num = sp.writeBytes(out, str.length());
         sp.flushIOBuffers();
         sp.closePort();
+        System.out.println("INFO: " + sp.getDescriptivePortName() + " " + num + " " + str);
     }
+    public class BlockingThread implements Runnable {
+        byte[] out;
+        int len;
+        public BlockingThread(byte[] out, int len) {
+            this.out = out;
+            this.len = len;
+
+        }
+
+        public void run() {
+
+            //Thread.sleep(2000);
+            sp.writeBytes(out, len);
+            sp.flushIOBuffers();
+        }
+    }
+
 }
+

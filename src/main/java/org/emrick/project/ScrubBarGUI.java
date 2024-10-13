@@ -3,8 +3,6 @@ package org.emrick.project;
 import org.emrick.project.audio.AudioPlayer;
 
 import javax.swing.*;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -31,7 +29,8 @@ public class ScrubBarGUI extends JComponent implements ActionListener {
     private JPanel scrubBarPanel;
     private final JFrame parent;
 
-    private AudioPlayer audioPlayer;
+    private ArrayList<AudioPlayer> audioPlayers;
+    private AudioPlayer currAudioPlayer;
 
     // Status
     private long currTimeMSec;
@@ -76,10 +75,10 @@ public class ScrubBarGUI extends JComponent implements ActionListener {
     private ArrayList<SyncTimeGUI.Pair> timeSync = null;
 
     public ScrubBarGUI(JFrame parent, ScrubBarListener scrubBarListener, SyncListener syncListener,
-                       FootballFieldPanel footballFieldPanel, AudioPlayer audioPlayer) {
+                       FootballFieldPanel footballFieldPanel, ArrayList<AudioPlayer> audioPlayers) {
         this.parent = parent;
 
-        this.audioPlayer = audioPlayer;
+        this.audioPlayers = audioPlayers;
         // Placeholder. E.g., When Emrick Designer is first opened, no project is loaded.
         this.pageTab2Count = new HashMap<>();
         this.pageTab2Count.put("1", 0);
@@ -112,7 +111,7 @@ public class ScrubBarGUI extends JComponent implements ActionListener {
         }
 
         // Can't find Page Tab 1
-        else if (pageTabCounts.get("1") == null) {
+        else if (pageTabCounts.get("1-1") == null && pageTabCounts.get("1") == null) {
             System.out.println("Note: Can't find page tab 1.");
             return;
         }
@@ -125,7 +124,7 @@ public class ScrubBarGUI extends JComponent implements ActionListener {
      */
     private void reinitialize() {
         updateLastCount();
-        updateCurrSetCounts("1");
+        updateCurrSetCounts(footballFieldPanel.drill.sets.get(0).label);
 
         // Debugging - Existing components cause UI bugging
         scrubBarPanel.removeAll();
@@ -205,24 +204,26 @@ public class ScrubBarGUI extends JComponent implements ActionListener {
             int val = ((JSlider)e.getSource()).getValue();
             String set = labelTable.get(getCurrentSetStart()).getText();
             statusLabel.setText("Set: " + set);
+            if (!isPlaying) {
+                scrubBarListener.onSetChange(getCurrentSetIndex());
+                footballFieldPanel.setCurrentSetStartCount(getCurrentSetStart());
+                footballFieldPanel.setCurrentCount(val);
 
-            scrubBarListener.onSetChange(getCurrentSetIndex());
-            footballFieldPanel.setCurrentSetStartCount(getCurrentSetStart());
-            footballFieldPanel.setCurrentCount(val);
-
-
-            long currTimeMSec = scrubBarListener.onScrub();
-            if (!isUseFps()) {
-                float pastSetTime = 0;
-                for (int i = 0; i < getCurrentSetIndex(); i++) {
-                    pastSetTime += timeSync.get(i).getValue();
+                long currTimeMSec = scrubBarListener.onScrub();
+                if (!isUseFps()) {
+                    float pastSetTime = 0;
+                    for (int i = 0; i < getCurrentSetIndex(); i++) {
+                        pastSetTime += timeSync.get(i).getValue();
+                    }
+                    time = ((float) currTimeMSec + pastSetTime) / 1000;
+                    scrubBarListener.onTimeChange((long) ((time - pastSetTime) * 1000));
                 }
-                time = ((float) currTimeMSec + pastSetTime) / 1000;
-                scrubBarListener.onTimeChange((long) ((time - pastSetTime) * 1000));
-            }
-            timeLabel.setText(TimeManager.getFormattedTime(currTimeMSec));
+                timeLabel.setText(TimeManager.getFormattedTime(currTimeMSec));
 
-            setPlaybackTime();
+                setPlaybackTime();
+            } else {
+                timeLabel.setText(TimeManager.getFormattedTime((long)(time * 1000)));
+            }
         });
 
         sliderPanel.add(topSlider, BorderLayout.CENTER);
@@ -241,20 +242,18 @@ public class ScrubBarGUI extends JComponent implements ActionListener {
 
     public void setPlaybackTime() {
         //TODO rewrite
-        if (!isPlaying) {
-            float setSyncDuration = timeSync.get(getCurrentSetIndex()).getValue();
-            float setDuration = this.getCurrSetDuration(); // in counts
-            float pastSetTime = 0;
-            for (int i = 0; i < getCurrentSetIndex(); i++) {
-                pastSetTime += timeSync.get(i).getValue();
-            }
-            time = (float) (topSlider.getValue() - getCurrentSetStart()) / setDuration * setSyncDuration + pastSetTime;
-            scrubBarListener.onTimeChange((long) ((Math.round(time * 1000.0) / 1000.0 - pastSetTime) * 1000));
-            double ratio = (time - pastSetTime) / setSyncDuration;
-            scrubBarListener.onSetChange(getCurrentSetIndex());
-            footballFieldPanel.setCurrentSetRatio(Math.min(ratio, 1));
-            footballFieldPanel.repaint();
+        float setSyncDuration = timeSync.get(getCurrentSetIndex()).getValue();
+        float setDuration = this.getCurrSetDuration(); // in counts
+        float pastSetTime = 0;
+        for (int i = 0; i < getCurrentSetIndex(); i++) {
+            pastSetTime += timeSync.get(i).getValue();
         }
+        time = (float) (topSlider.getValue() - getCurrentSetStart()) / setDuration * setSyncDuration + pastSetTime;
+        scrubBarListener.onTimeChange((long) ((Math.round(time * 1000.0) / 1000.0 - pastSetTime) * 1000));
+        double ratio = (time - pastSetTime) / setSyncDuration;
+        scrubBarListener.onSetChange(getCurrentSetIndex());
+        footballFieldPanel.setCurrentSetRatio(Math.min(ratio, 1));
+        footballFieldPanel.repaint();
     }
 
     public boolean nextStep(double playbackSpeed) {
@@ -268,6 +267,11 @@ public class ScrubBarGUI extends JComponent implements ActionListener {
         }
 
         float setSyncDuration = timeSync.get(getCurrentSetIndex()).getValue();
+        if (setSyncDuration == 0) {
+            nextSet();
+            currentSetIndex = getCurrentSetIndex();
+            setSyncDuration = timeSync.get(getCurrentSetIndex()).getValue();
+        }
         float setDuration = getCurrSetDuration(); // in counts
 
         double ratio = (time - pastSetTime) / setSyncDuration;
@@ -303,7 +307,9 @@ public class ScrubBarGUI extends JComponent implements ActionListener {
         List<Map.Entry<String, Integer>> list = sortMap(pageTab2Count);
 
         for (Map.Entry<String, Integer> entry : list) {
-            labelTable.put(entry.getValue(), new JLabel(entry.getKey()));
+            JLabel label = new JLabel(entry.getKey());
+            label.setFont(new Font(Font.SERIF, Font.PLAIN, 8));
+            labelTable.put(entry.getValue(), label);
         }
 
         return labelTable;
@@ -467,41 +473,47 @@ public class ScrubBarGUI extends JComponent implements ActionListener {
             return;
         }
 
-        // Find end count of set
-        Pattern digitPattern = Pattern.compile("\\d+"); // Digit, one or more
-        Pattern letterPattern = Pattern.compile("\\D+"); // Non digit, one or more
-
-        Matcher digitMatcher = digitPattern.matcher(set);
-        Matcher letterMatcher = letterPattern.matcher(set);
-
-        int setNum = digitMatcher.find() ? Integer.parseInt(digitMatcher.group()) : -1;
-        char subSetChar = letterMatcher.find() ? letterMatcher.group().charAt(0) : '!';
-
-        // The character is not 'Z'
-        if (subSetChar != 'Z') {
-
-            // There is a character
-            if (subSetChar != '!') {
-
-                // Consider existence of next sub-set (e.g., if "2A", consider "2B")
-                subSetChar += 1;
-
-                if (pageTab2Count.get(Integer.toString(setNum) + subSetChar) != null) {
-                    currSetEndCount = pageTab2Count.get(Integer.toString(setNum) + subSetChar);
-                    return;
+        ArrayList<String> sets = new ArrayList<>(pageTab2Count.keySet());
+        sets.sort((o1,o2) -> {
+            String[] thisComponents = o1.split("-");
+            String[] thatComponents = o2.split("-");
+            if (thisComponents.length != thatComponents.length) {
+                if (thisComponents.length < thatComponents.length) {
+                    return -1;
+                } else {
+                    return 1;
                 }
             }
-
-            // There is NO character
-            else {
-                if (pageTab2Count.get(setNum + "A") != null) {
-                    currSetEndCount = pageTab2Count.get(setNum + "A");
-                    return;
+            int thisSetIndex;
+            int thatSetIndex;
+            if (thisComponents.length > 1) {
+                int thisMovementIndex = Integer.parseInt(thisComponents[0]);
+                int thatMovementIndex = Integer.parseInt(thatComponents[0]);
+                if (thisMovementIndex != thatMovementIndex) {
+                    return thisMovementIndex - thatMovementIndex;
+                }
+                String thisSetLabel = thisComponents[1].replaceAll("[^0-9.]", "");
+                String thatSetLabel = thatComponents[1].replaceAll("[^0-9.]", "");
+                thisSetIndex = Integer.parseInt(thisSetLabel);
+                thatSetIndex = Integer.parseInt(thatSetLabel);
+                if (thisSetIndex != thatSetIndex) {
+                    return thisSetIndex - thatSetIndex;
+                } else {
+                    return thisSetLabel.compareTo(thatSetLabel);
                 }
             }
-        }
-
-        currSetEndCount = pageTab2Count.get(Integer.toString(setNum + 1));
+            String thisSetLabel = thisComponents[0].replaceAll("[^0-9.]", "");
+            String thatSetLabel = thatComponents[0].replaceAll("[^0-9.]", "");
+            thisSetIndex = Integer.parseInt(thisSetLabel);
+            thatSetIndex = Integer.parseInt(thatSetLabel);
+            if (thisSetIndex != thatSetIndex) {
+                return thisSetIndex - thatSetIndex;
+            } else {
+                return thisSetLabel.compareTo(thatSetLabel);
+            }
+        });
+        int index = sets.indexOf(set) + 1;
+        currSetEndCount = pageTab2Count.get(sets.get(index));
     }
 
 
@@ -544,8 +556,9 @@ public class ScrubBarGUI extends JComponent implements ActionListener {
             nextCount();
         }
         else if (e.getSource().equals(syncButton)) {
+            System.out.println(isReady);
             if (isReady) {
-                new SyncTimeGUI(parent, syncListener, pageTab2Count, audioPlayer, totalCounts);
+                new SyncTimeGUI(parent, syncListener, pageTab2Count, audioPlayers.get(0), totalCounts);
             }
         }
         else if (e.getSource().equals(playbackSpeedsBox)) {
@@ -697,15 +710,53 @@ public class ScrubBarGUI extends JComponent implements ActionListener {
 
     public void setTimeSync(ArrayList<SyncTimeGUI.Pair> timeSync) {
         this.timeSync = timeSync;
-        this.timeSync.sort(new Comparator<SyncTimeGUI.Pair>() {
-            @Override
-            public int compare(SyncTimeGUI.Pair o1, SyncTimeGUI.Pair o2) {
-                return o1.getKey().compareTo(o2.getKey());
+        this.timeSync.sort((o1, o2) -> {
+            String[] thisComponents = o1.getKey().split("-");
+            String[] thatComponents = o2.getKey().split("-");
+            if (thisComponents.length != thatComponents.length) {
+                if (thisComponents.length < thatComponents.length) {
+                    return -1;
+                } else {
+                    return 1;
+                }
+            }
+            int thisSetIndex;
+            int thatSetIndex;
+            if (thisComponents.length > 1) {
+                int thisMovementIndex = Integer.parseInt(thisComponents[0]);
+                int thatMovementIndex = Integer.parseInt(thatComponents[0]);
+                if (thisMovementIndex != thatMovementIndex) {
+                    return thisMovementIndex - thatMovementIndex;
+                }
+                String thisSetLabel = thisComponents[1].replaceAll("[^0-9.]", "");
+                String thatSetLabel = thatComponents[1].replaceAll("[^0-9.]", "");
+                thisSetIndex = Integer.parseInt(thisSetLabel);
+                thatSetIndex = Integer.parseInt(thatSetLabel);
+                if (thisSetIndex != thatSetIndex) {
+                    return thisSetIndex - thatSetIndex;
+                } else {
+                    return thisSetLabel.compareTo(thatSetLabel);
+                }
+            }
+            String thisSetLabel = thisComponents[0].replaceAll("[^0-9.]", "");
+            String thatSetLabel = thatComponents[0].replaceAll("[^0-9.]", "");
+            thisSetIndex = Integer.parseInt(thisSetLabel);
+            thatSetIndex = Integer.parseInt(thatSetLabel);
+            if (thisSetIndex != thatSetIndex) {
+                return thisSetIndex - thatSetIndex;
+            } else {
+                return thisSetLabel.compareTo(thatSetLabel);
             }
         });
     }
-    public void setAudioPlayer(AudioPlayer audioPlayer) {
-        this.audioPlayer = audioPlayer;
+    public void setAudioPlayer(ArrayList<AudioPlayer> audioPlayers) {
+        this.audioPlayers = audioPlayers;
+    }
+    public void setCurrAudioPlayer(AudioPlayer ap) {
+        this.currAudioPlayer = ap;
+    }
+    public void setTime(int time) {
+        this.time = time;
     }
 
     public JButton getSyncButton() {

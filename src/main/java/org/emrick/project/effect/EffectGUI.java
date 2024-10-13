@@ -80,6 +80,15 @@ public class EffectGUI implements ActionListener {
     JComboBox<String> rotationSelect = new JComboBox<>(rotationOptions);
     String[] directionOptions = {"Right", "Left", "Up", "Down"};
     JComboBox<String> directionSelect = new JComboBox<>(directionOptions);
+    JCheckBox varyBrightnessBox = new JCheckBox("Vary Brightness");
+    JCheckBox varyColorBox = new JCheckBox("Vary Color");
+    JCheckBox varyTimeBox = new JCheckBox("Vary Time");
+    JCheckBox fadeBox = new JCheckBox("Fade");
+    JTextField colorVarianceField = new JTextField(10);
+    JTextField minBrightnessField = new JTextField(10);
+    JTextField maxBrightnessField = new JTextField(10);
+    JTextField maxTimeField = new JTextField(10);
+    JTextField minTimeField = new JTextField(10);
 
     private JLabel placeholderLabel;
     private EffectList effectType;
@@ -140,7 +149,8 @@ public class EffectGUI implements ActionListener {
             case RIPPLE -> setupRippleGUI();
             case CIRCLE_CHASE -> setupCircleChaseGUI();
             case CHASE -> setupChaseGUI();
-            case  GRID -> setupGridGUI();
+            case GRID -> setupGridGUI();
+            case NOISE -> setupNoiseGUI();
         }
     }
 
@@ -157,6 +167,7 @@ public class EffectGUI implements ActionListener {
             case CIRCLE_CHASE -> effectTitle = "Circle Chase Effect";
             case CHASE -> effectTitle = "Chase Effect";
             case GRID -> effectTitle = "Grid Effect";
+            case NOISE -> effectTitle = "Noise Effect";
         }
         Border innerBorder = BorderFactory.createTitledBorder(effectTitle);
         Border outerBorder = BorderFactory.createEmptyBorder(5, 5, 5, 5);
@@ -178,6 +189,145 @@ public class EffectGUI implements ActionListener {
         component.setPreferredSize(new Dimension(width,height));
         component.setMaximumSize(new Dimension(width,height));
         component.setMinimumSize(new Dimension(width,height));
+    }
+
+    private void setupNoiseGUI() {
+        this.effectPanel = new JPanel();
+        startColorBtn.setPreferredSize(new Dimension(20, 20));
+        startColorBtn.setFocusable(false);
+        startColorBtn.addActionListener(this);
+
+        durationField.getDocument().addDocumentListener(getDocumentListener());
+
+        durationTypeSelect.addActionListener(this);
+
+        applyBtn.addActionListener(this);
+        deleteBtn.addActionListener(this);
+
+
+        //////////////// 0th Row ////////////////
+        JComponent[] currentComponents = new JComponent[2];
+        currentComponents[0] = startTimeLabel;
+        currentComponents[1] = endTimeLabel;
+        panelComponents.add(currentComponents);
+
+        //////////////// 1st Row ////////////////
+        currentComponents = new JComponent[2];
+        currentComponents[0] = new JLabel("Set count by: ");
+        setComponentSize(durationTypeSelect, 100, 25);
+        currentComponents[1] = durationTypeSelect;
+        panelComponents.add(currentComponents);
+
+        //////////////// 1st Row ////////////////
+        currentComponents = new JComponent[2];
+        currentComponents[0] = startColorLabel;
+        setComponentSize(startColorBtn, 20, 20);
+        currentComponents[1] = startColorBtn;
+        panelComponents.add(currentComponents);
+
+
+        currentComponents = new JComponent[2];
+        currentComponents[0] = durationLabel;
+        setComponentSize(durationField, 100,  25);
+        currentComponents[1] = durationField;
+        panelComponents.add(currentComponents);
+
+
+        currentComponents = new JComponent[1];
+        varyTimeBox.setSelected(effectMod.isVaryTime());
+        varyTimeBox.addActionListener(e -> {
+            applyToEffectMod();
+            effectMod.setVaryTime(varyTimeBox.isSelected());
+            effectListener.onUpdateEffectPanel(effectMod, this.isNewEffect, showGridIndex);
+        });
+        currentComponents[0] = varyTimeBox;
+        panelComponents.add(currentComponents);
+
+        currentComponents = new JComponent[1];
+        varyBrightnessBox.setSelected(effectMod.isVaryBrightness());
+        varyBrightnessBox.addActionListener(e -> {
+            applyToEffectMod();
+            effectMod.setVaryBrightness(varyBrightnessBox.isSelected());
+            effectListener.onUpdateEffectPanel(effectMod, this.isNewEffect, showGridIndex);
+        });
+        currentComponents[0] = varyBrightnessBox;
+        panelComponents.add(currentComponents);
+
+        currentComponents = new JComponent[1];
+        varyColorBox.setSelected(effectMod.isVaryColor());
+        varyColorBox.addActionListener(e -> {
+            applyToEffectMod();
+            effectMod.setVaryColor(varyColorBox.isSelected());
+            effectListener.onUpdateEffectPanel(effectMod, this.isNewEffect, showGridIndex);
+        });
+        currentComponents[0] = varyColorBox;
+        panelComponents.add(currentComponents);
+
+        currentComponents = new JComponent[1];
+        fadeBox.setSelected(effectMod.isFade());
+        fadeBox.addActionListener(e -> {
+            applyToEffectMod();
+            effectMod.setFade(fadeBox.isSelected());
+        });
+        currentComponents[0] = fadeBox;
+        panelComponents.add(currentComponents);
+
+        if (effectMod.isVaryTime()) {
+            currentComponents = new JComponent[2];
+            currentComponents[0] = new JLabel("Max Time (ms): ");
+            setComponentSize(maxTimeField, 100, 25);
+            currentComponents[1] = maxTimeField;
+            panelComponents.add(currentComponents);
+
+            currentComponents = new JComponent[2];
+            currentComponents[0] = new JLabel("Min Time (ms): ");
+            setComponentSize(minTimeField, 100, 25);
+            currentComponents[1] = minTimeField;
+            panelComponents.add(currentComponents);
+        } else {
+            currentComponents = new JComponent[2];
+            currentComponents[0] = new JLabel("Time (ms): ");
+            setComponentSize(maxTimeField, 100, 25);
+            currentComponents[1] = maxTimeField;
+            panelComponents.add(currentComponents);
+        }
+
+        if (effectMod.isVaryBrightness()) {
+            currentComponents = new JComponent[2];
+            currentComponents[0] = new JLabel("Max Brightness: ");
+            setComponentSize(maxBrightnessField, 100, 25);
+            currentComponents[1] = maxBrightnessField;
+            panelComponents.add(currentComponents);
+
+            currentComponents = new JComponent[2];
+            currentComponents[0] = new JLabel("Min Brightness: ");
+            setComponentSize(minBrightnessField, 100, 25);
+            currentComponents[1] = minBrightnessField;
+            panelComponents.add(currentComponents);
+        } else {
+            currentComponents = new JComponent[2];
+            currentComponents[0] = new JLabel("Brightness: ");
+            setComponentSize(maxBrightnessField, 100, 25);
+            currentComponents[1] = maxBrightnessField;
+            panelComponents.add(currentComponents);
+        }
+
+        if (effectMod.isVaryColor()) {
+            currentComponents = new JComponent[2];
+            currentComponents[0] = new JLabel("Color Variance: ");
+            setComponentSize(colorVarianceField, 100, 25);
+            currentComponents[1] = colorVarianceField;
+            panelComponents.add(currentComponents);
+        }
+
+        currentComponents = new JComponent[2];
+        currentComponents[0] = deleteBtn;
+        currentComponents[1] = applyBtn;
+        panelComponents.add(currentComponents);
+
+        setupGUI();
+
+        loadEffectToGUI(effectMod);
     }
 
     private void setupGridGUI() {
@@ -527,7 +677,7 @@ public class EffectGUI implements ActionListener {
 
         //////////////// 1st Row ////////////////
         currentComponents = new JComponent[2];
-        currentComponents[0] = staticColorLabel;
+        currentComponents[0] = startColorLabel;
         setComponentSize(startColorBtn, 20, 20);
         currentComponents[1] = startColorBtn;
         panelComponents.add(currentComponents);
@@ -551,6 +701,7 @@ public class EffectGUI implements ActionListener {
         currentComponents[0] = speedLabel;
         setComponentSize(speedField, 100, 25);
         currentComponents[1] = speedField;
+        panelComponents.add(currentComponents);
 
         //////////////// 5th Row ////////////////
         currentComponents = new JComponent[1];
@@ -719,6 +870,7 @@ public class EffectGUI implements ActionListener {
         currentComponents[0] = speedLabel;
         setComponentSize(speedField, 100, 25);
         currentComponents[1] = speedField;
+        panelComponents.add(currentComponents);
 
         //////////////// 5th Row ////////////////
         currentComponents = new JComponent[1];
@@ -986,6 +1138,11 @@ public class EffectGUI implements ActionListener {
         timeoutField.setText(timeoutStr);
         speedField.setText(speedStr);
         angleField.setText(angleStr);
+        maxTimeField.setText(String.valueOf(effect.getMaxTime()));
+        minTimeField.setText(String.valueOf(effect.getMinTime()));
+        maxBrightnessField.setText(String.valueOf(effect.getMaxBrightness()));
+        minBrightnessField.setText(String.valueOf(effect.getMinBrightness()));
+        colorVarianceField.setText(String.valueOf(effect.getColorVariance()));
 
         if (effect.isDirection()) {
             if (effect.isUpOrSide()) {
@@ -1243,6 +1400,12 @@ public class EffectGUI implements ActionListener {
         this.effectMod.setTimeout(timeout);
         this.effectMod.setSpeed(Double.parseDouble(speedField.getText()));
         this.effectMod.setAngle(Double.parseDouble(angleField.getText()));
+        this.effectMod.setMaxBrightness(Float.parseFloat(maxBrightnessField.getText()));
+        this.effectMod.setMinBrightness(Float.parseFloat(minBrightnessField.getText()));
+        this.effectMod.setMaxTime(Long.parseLong(maxTimeField.getText()));
+        this.effectMod.setMinTime(Long.parseLong(minTimeField.getText()));
+        this.effectMod.setColorVariance(Float.parseFloat(colorVarianceField.getText()));
+
         if (effectType == EffectList.GRID && showGridIndex != -1) {
             this.effectMod.getShapes()[showGridIndex].setMovement(
                     new Point(Integer.parseInt(hMovementField.getText()),
