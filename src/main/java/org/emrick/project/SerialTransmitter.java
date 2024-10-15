@@ -199,9 +199,14 @@ public class SerialTransmitter {
         sp.closePort();
     }
 
-    public void enterProgMode(String ssid, String password, int port, int id, long token, Color verificationColor, boolean mode) {
+    public synchronized void enterProgMode(String ssid, String password, int port, int id, long token, Color verificationColor, boolean mode) {
         sp.clearRTS();
         sp.clearDTR();
+        try {
+            Thread.sleep(250);
+        } catch(InterruptedException e) {
+            e.printStackTrace();
+        }
         if (!sp.openPort()) {
             System.out.println("Port is busy");
         }
@@ -217,7 +222,7 @@ public class SerialTransmitter {
         } catch (UnknownHostException uhe) {
             throw new RuntimeException(uhe);
         }
-        //System.out.println(str);
+        //System.out.println(str.replaceAll("\n", ","));
         byte[] out = str.getBytes();
         sp.writeBytes(out, str.length());
         sp.flushIOBuffers();

@@ -113,6 +113,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
     private int port;
     private int currentID;
     private static int MAX_CONNECTIONS = 50;
+    private long lastRun = System.currentTimeMillis();
     private int token;
     private Color verificationColor;
     private Timer noRequestTimer;
@@ -292,7 +293,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             tmppkt.delete();
         }
 
-        noRequestTimer = new Timer(25000, e -> {
+        noRequestTimer = new Timer(10000, e -> {
             onRequestComplete(-1);
         });
 
@@ -3379,8 +3380,11 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             }
         }
         if (!allReceived) {
-            serialTransmitter.enterProgMode(ssid, password, port, currentID, token, verificationColor, lightBoardMode);
-            noRequestTimer.setDelay(25000);
+            if (lastRun + 2000 < System.currentTimeMillis()) {
+                serialTransmitter.enterProgMode(ssid, password, port, currentID, token, verificationColor, lightBoardMode);
+                lastRun = System.currentTimeMillis();
+            }
+            noRequestTimer.setDelay(10000);
             noRequestTimer.start();
         } else {
             server.stop(0);
