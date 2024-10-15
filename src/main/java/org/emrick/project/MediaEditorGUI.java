@@ -1491,7 +1491,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             File[] dataFiles = showDataDir.listFiles();
             for (File f : dataFiles) {
                 if (!f.isDirectory()) {
-                    if (f.getName().substring(f.getName().lastIndexOf(".")).equals(".json")) {
+                    if (f.getName().substring(f.getName().lastIndexOf(".")).equals(".json") && f.getName().contains(path.getName().substring(0, path.getName().indexOf(".")))) {
                         path = f;
                     }
                 }
@@ -1659,7 +1659,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             File[] dataFiles = showDataDir.listFiles();
             for (File f : dataFiles) {
                 if (!f.isDirectory()) {
-                    if (f.getName().substring(f.getName().lastIndexOf(".")).equals(".json")) {
+                    if (f.getName().substring(f.getName().lastIndexOf(".")).equals(".json") && f.getName().contains(path.getName().substring(0, path.getName().indexOf(".")))) {
                         path = f;
                     }
                 }
@@ -1786,17 +1786,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                 for (LEDStrip l : pf.drill.getLedStrips()) {
                     for (Effect e : l.getEffects()) {
 
-                        Effect copyEffect = new Effect(e.getStartTimeMSec(),
-                                e.getStartColor(), e.getEndColor(), e.getDelay(), e.getDuration(), e.getTimeout(),
-                                e.isUSE_DURATION(), e.isSET_TIMEOUT(), e.isDO_DELAY(), e.isINSTANT_COLOR(), e.getId());
-                        copyEffect.setEffectType(e.getEffectType());
-                        copyEffect.setId(e.getId() + maxID);
-                        copyEffect.setStartTimeMSec(e.getStartTimeMSec() + oldProjectLenMs);
-                        copyEffect.setEndTimeMSec(e.getEndTimeMSec() + oldProjectLenMs);
-                        copyEffect.setChaseSequence(e.getChaseSequence());
-                        copyEffect.setFunction(e.getFunction());
-                        copyEffect.setUpOrSide(e.isUpOrSide());
-                        copyEffect.setSpeed(e.getSpeed());
+                        Effect copyEffect = e.clone();
 
                         GeneratedEffect ge = e.getGeneratedEffect();
                         Effect geEffect = ge.generateEffectObj();
@@ -1815,14 +1805,6 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                         genEffect.setStartTime(genEffect.getStartTime() + oldProjectLenMs);
                         genEffect.setEndTime(genEffect.getEndTime() + oldProjectLenMs);
                         copyEffect.setGeneratedEffect(genEffect);
-
-
-                        copyEffect.setAngle(e.getAngle());
-                        copyEffect.setDirection(e.isDirection());
-                        copyEffect.setHeight(e.getHeight());
-                        copyEffect.setShapes(e.getShapes());
-                        copyEffect.setSize(e.getSize());
-                        copyEffect.setWidth(e.getWidth());
 
 
                         footballFieldPanel.drill.ledStrips.get(i).addEffect(copyEffect);
