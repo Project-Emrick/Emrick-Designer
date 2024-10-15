@@ -474,6 +474,17 @@ public class  Effect implements Cloneable, TimelineEvent {
         deepCopy.setShapes(this.getShapes());
         deepCopy.setUpOrSide(this.upOrSide);
         deepCopy.setDirection(this.direction);
+        deepCopy.setVaryBrightness(this.varyBrightness);
+        deepCopy.setVaryColor(this.varyColor);
+        deepCopy.setVaryTime(this.varyTime);
+        deepCopy.setFade(this.fade);
+        deepCopy.setColorVariance(this.colorVariance);
+        deepCopy.setMaxBrightness(this.maxBrightness);
+        deepCopy.setMinBrightness(this.minBrightness);
+        deepCopy.setMaxTime(this.maxTime);
+        deepCopy.setMinTime(this.minTime);
+        deepCopy.setNoiseCheckpoints(this.noiseCheckpoints);
+
         return deepCopy;
     }
 

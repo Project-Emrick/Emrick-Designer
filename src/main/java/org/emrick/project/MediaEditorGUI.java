@@ -1786,7 +1786,10 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                 for (LEDStrip l : pf.drill.getLedStrips()) {
                     for (Effect e : l.getEffects()) {
 
-                        Effect copyEffect = e.clone();
+                        Effect copyEffect = e.makeDeepCopy();
+                        copyEffect.setId(e.getId() + maxID);
+                        copyEffect.setStartTimeMSec(e.getStartTimeMSec() + oldProjectLenMs);
+                        copyEffect.setEndTimeMSec(e.getEndTimeMSec() + oldProjectLenMs);
 
                         GeneratedEffect ge = e.getGeneratedEffect();
                         Effect geEffect = ge.generateEffectObj();
