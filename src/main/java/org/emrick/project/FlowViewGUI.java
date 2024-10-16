@@ -69,6 +69,11 @@ public class FlowViewGUI extends JPanel {
                     }
 
                     setCurrentTriggerVisible();
+                } else if (e.getKeyCode() == KeyEvent.VK_ENTER) {
+                    rfSignalListener.onRFSignal(currentTrigger % items.size());
+                    System.out.println("Current Trigger: " + currentTrigger % items.size());
+
+                    setCurrentTriggerVisible();
                 }
             }
         });
