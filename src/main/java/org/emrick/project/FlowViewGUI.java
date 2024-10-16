@@ -8,10 +8,7 @@ import java.awt.*;
 import java.awt.event.*;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.Iterator;
+import java.util.*;
 
 public class FlowViewGUI extends JPanel {
     private ArrayList<FlowViewItem> items;
@@ -27,8 +24,12 @@ public class FlowViewGUI extends JPanel {
     private JLabel descriptionLabel = new JLabel("Description");
     private JLabel cueLabel = new JLabel("Cue");
     private JLabel executeLabel = new JLabel("Execute");
+    private ArrayList<Set> sets;
+    private ArrayList<Integer> setStartCounts = new ArrayList<>();
+    private ArrayList<Integer> movementStartCounts = new ArrayList<>();
+    private ArrayList<Integer> movements = new ArrayList<>();
 
-    public FlowViewGUI(HashMap<Integer, RFTrigger> count2RFTrigger, RFSignalListener rfSignalListener) {
+    public FlowViewGUI(HashMap<Integer, RFTrigger> count2RFTrigger, RFSignalListener rfSignalListener, ArrayList<Set> sets) {
         this.rfSignalListener = rfSignalListener;
         Iterator<RFTrigger> iterator = count2RFTrigger.values().iterator();
         currentTrigger = 0;
@@ -41,6 +42,23 @@ public class FlowViewGUI extends JPanel {
                 this.requestFocusInWindow();
             }
         });
+        this.sets = sets;
+        if (!sets.isEmpty() && sets.get(0).label.contains("-")) {
+            setStartCounts.add(0);
+            movementStartCounts.add(0);
+            String label = sets.get(0).label;
+            movements.add(Integer.parseInt(label.substring(0, label.indexOf("-"))));
+            int sum = 0;
+            for (int i = 1; i < sets.size(); i++) {
+                sum += sets.get(i).duration;
+                setStartCounts.add(sum);
+                label = sets.get(i).label;
+                if (!movements.contains(Integer.parseInt(label.substring(0, label.indexOf("-"))))) {
+                    movements.add(Integer.parseInt(label.substring(0, label.indexOf("-"))));
+                    movementStartCounts.add(sum);
+                }
+            }
+        }
 
         this.addKeyListener(new KeyListener() {
             @Override
@@ -157,7 +175,36 @@ public class FlowViewGUI extends JPanel {
     public void reinitializeFlowViewPanel() {
         scrollablePanel.removeAll();
         scrollablePanel.add(headerPanel);
-        for (FlowViewItem fvi : items) {
+        for (int i = 0; i < items.size(); i++) {
+            FlowViewItem fvi = items.get(i);
+            if (i > 0) {
+                int j = 0;
+                while (movementStartCounts.get(j) < fvi.count) {
+                    if (j == movements.size() - 1) {
+                        break;
+                    } else if (movementStartCounts.get(j+1) > fvi.count) {
+                        break;
+                    }
+                    j++;
+                }
+                if (items.get(i-1).count < movementStartCounts.get(j)) {
+                    JPanel spacer = new JPanel();
+                    spacer.setMaximumSize(new Dimension(800, 30));
+                    spacer.setMinimumSize(new Dimension(800, 30));
+                    spacer.setPreferredSize(new Dimension(800, 30));
+                    JLabel spacerLabel = new JLabel("Movement " + movements.get(j));
+                    spacer.add(spacerLabel, BorderLayout.CENTER);
+                    scrollablePanel.add(spacer);
+                }
+            } else {
+                JPanel spacer = new JPanel();
+                spacer.setMaximumSize(new Dimension(800, 30));
+                spacer.setMinimumSize(new Dimension(800, 30));
+                spacer.setPreferredSize(new Dimension(800, 30));
+                JLabel spacerLabel = new JLabel("Movement " + movements.get(0));
+                spacer.add(spacerLabel, BorderLayout.CENTER);
+                scrollablePanel.add(spacer);
+            }
             fvi.generateLabels();
             scrollablePanel.add(fvi);
         }
