@@ -1491,7 +1491,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             File[] dataFiles = showDataDir.listFiles();
             for (File f : dataFiles) {
                 if (!f.isDirectory()) {
-                    if (f.getName().substring(f.getName().lastIndexOf(".")).equals(".json") && f.getName().contains(path.getName().substring(0, path.getName().indexOf(".")))) {
+                    if (f.getName().substring(f.getName().lastIndexOf(".")).equals(".json")) {
                         path = f;
                     }
                 }
