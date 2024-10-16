@@ -156,7 +156,37 @@ public class FlowViewGUI extends JPanel {
         headerPanel.add(executeLabel);
         scrollablePanel.add(headerPanel);
         for (int i = 0; i< items.size(); i++){
+            FlowViewItem fvi = items.get(i);
             scrollablePanel.add(Box.createVerticalStrut(5));
+            if (i > 0) {
+                int j = 0;
+                while (movementStartCounts.get(j) < fvi.count) {
+                    if (j == movements.size() - 1) {
+                        break;
+                    } else if (movementStartCounts.get(j+1) > fvi.count) {
+                        break;
+                    }
+                    j++;
+                }
+                if (items.get(i-1).count < movementStartCounts.get(j)) {
+                    JPanel spacer = new JPanel();
+                    spacer.setMaximumSize(new Dimension(800, 30));
+                    spacer.setMinimumSize(new Dimension(800, 30));
+                    spacer.setPreferredSize(new Dimension(800, 30));
+                    JLabel spacerLabel = new JLabel("Movement " + movements.get(j));
+                    spacer.add(spacerLabel, BorderLayout.CENTER);
+                    scrollablePanel.add(spacer);
+                }
+            } else {
+                JPanel spacer = new JPanel();
+                spacer.setMaximumSize(new Dimension(800, 30));
+                spacer.setMinimumSize(new Dimension(800, 30));
+                spacer.setPreferredSize(new Dimension(800, 30));
+                JLabel spacerLabel = new JLabel("Movement " + movements.get(0));
+                spacer.add(spacerLabel, BorderLayout.CENTER);
+                scrollablePanel.add(spacer);
+                scrollablePanel.revalidate();
+            }
             scrollablePanel.add(items.get(i));
         }
         scrollPane = new JScrollPane(scrollablePanel);
@@ -164,7 +194,8 @@ public class FlowViewGUI extends JPanel {
         scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
         scrollPane.getVerticalScrollBar().setUnitIncrement(20);
         scrollPane.getVerticalScrollBar().addAdjustmentListener(e -> {
-            reinitializeFlowViewPanel();
+            scrollPane.revalidate();
+            scrollPane.repaint();
         });
         scrollPane.setBackground(new Color(0, 0, 0, 0));
         scrollPane.setVisible(true);
@@ -175,6 +206,7 @@ public class FlowViewGUI extends JPanel {
     public void reinitializeFlowViewPanel() {
         scrollablePanel.removeAll();
         scrollablePanel.add(headerPanel);
+        scrollablePanel.add(Box.createVerticalStrut(5));
         for (int i = 0; i < items.size(); i++) {
             FlowViewItem fvi = items.get(i);
             if (i > 0) {
@@ -204,14 +236,12 @@ public class FlowViewGUI extends JPanel {
                 JLabel spacerLabel = new JLabel("Movement " + movements.get(0));
                 spacer.add(spacerLabel, BorderLayout.CENTER);
                 scrollablePanel.add(spacer);
+                scrollablePanel.revalidate();
             }
             fvi.generateLabels();
             scrollablePanel.add(fvi);
+            scrollPane.repaint();
         }
-        scrollPane.revalidate();
-        scrollPane.repaint();
-        scrollPane.revalidate();
-        scrollPane.repaint();
     }
 
     private class FlowViewItem extends JPanel{
