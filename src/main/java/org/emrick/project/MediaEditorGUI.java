@@ -368,7 +368,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
 
         footballField = new JPanel();
 
-        flowViewGUI = new FlowViewGUI(new HashMap<>(), this);
+        flowViewGUI = new FlowViewGUI(new HashMap<>(), this, footballFieldPanel.drill.sets);
 
         // Scrub Bar
         scrubBarGUI = new ScrubBarGUI(frame, this, this, footballFieldPanel, audioPlayers);
@@ -845,7 +845,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             flowViewerItem.setEnabled(false);
             lightBoardFlowViewerItem.setEnabled(false);
             stopShowItem.setEnabled(true);
-            flowViewGUI = new FlowViewGUI(count2RFTrigger, this);
+            flowViewGUI = new FlowViewGUI(count2RFTrigger, this, footballFieldPanel.drill.sets);
             if (footballField.isShowing()) {
                 mainContentPanel.remove(footballField);
             } else if (ledStripViewGUI.isShowing()) {
@@ -869,7 +869,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             flowViewerItem.setEnabled(false);
             lightBoardFlowViewerItem.setEnabled(false);
             stopShowItem.setEnabled(true);
-            flowViewGUI = new FlowViewGUI(count2RFTrigger, this);
+            flowViewGUI = new FlowViewGUI(count2RFTrigger, this, footballFieldPanel.drill.sets);
             if (footballField.isShowing()) {
                 mainContentPanel.remove(footballField);
             } else if (ledStripViewGUI.isShowing()) {
