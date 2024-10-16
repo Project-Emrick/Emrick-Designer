@@ -53,7 +53,8 @@ public class LEDConfigurationGUI extends JPanel {
         scrollPane.setVisible(true);
         // this listener gets rid of some nasty visual bugs, however it also introduces some lag when using the scroll wheel
         scrollPane.getVerticalScrollBar().addAdjustmentListener(e -> {
-            reinitializeLEDConfigPanel();
+            scrollPane.revalidate();
+            scrollPane.repaint();
         });
 
         JButton selectAllButton = new JButton("Select All");
@@ -204,9 +205,6 @@ public class LEDConfigurationGUI extends JPanel {
         }
         performerConfigPanels = newPerformerConfigPanels;
         scrollPane.revalidate();
-        scrollPane.repaint();
-        scrollPane.revalidate();
-        scrollPane.repaint();
     }
 
     public void undo() {
