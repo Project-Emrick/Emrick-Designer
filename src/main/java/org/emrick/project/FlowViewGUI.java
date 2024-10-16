@@ -336,8 +336,8 @@ public class FlowViewGUI extends JPanel {
 
         public ActionListener initializeExecuteListener() {
             return e -> {
+                System.out.println("Current Trigger: " + currentTrigger % items.size());
                 currentTrigger = index+1;
-                System.out.println(index);
                 rfSignalListener.onRFSignal(index);
                 setCurrentTriggerVisible();
             };
