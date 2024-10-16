@@ -648,9 +648,8 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         JMenu selectMenu = new JMenu("Select");
         menuBar.add(selectMenu);
 
-        // TODO: FIX this feature
-        JMenuItem selectByCrit = new JMenuItem("Select by Criteria");
-        selectByCrit.addActionListener(e -> {
+        JMenuItem selectByLabel = new JMenuItem("Select By Label");
+        selectByLabel.addActionListener(e -> {
             if (archivePaths == null) {
                 System.out.println("no project loaded");
                 return;
@@ -665,7 +664,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             FilterSelect filterSelect = new FilterSelect(frame, this, labels, symbols);
             filterSelect.show();
         });
-        selectMenu.add(selectByCrit);
+        selectMenu.add(selectByLabel);
 
         JMenuItem boxSelect = new JMenuItem("Box Selection");
         JMenuItem lassoSelect = new JMenuItem("Lasso Selection");
@@ -2120,8 +2119,9 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
 
     @Override
     public void onMultiSelect(HashSet<Integer> labels, HashSet<String> symbols) {
+        footballFieldPanel.selectedLEDStrips.clear();
         for (Performer p : footballFieldPanel.drill.performers) {
-            if (labels.contains(p.getLabel()) || symbols.contains(p.getSymbol())) {
+            if (labels.contains(p.getLabel()) && symbols.contains(p.getSymbol())) {
                 for (Integer i : p.getLedStrips()) {
                     LEDStrip l = footballFieldPanel.drill.ledStrips.get(i);
                     footballFieldPanel.selectedLEDStrips.add(l);
