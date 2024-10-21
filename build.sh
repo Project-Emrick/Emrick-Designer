@@ -15,9 +15,11 @@ DIR="./build/dist/$VERSION/emrick-designer"
 NAME="emrick-designer"
 
 ./gradlew clean
+mkdir "./build"
+mkdir "./build/tmp"
+cp -r ./src/main/resources "./build/tmp/res/"
 ./gradlew jpackage
 
 mkdir -p $DIR
-cp -r ./src/main/resources "$DIR/res/"
-echo "File Copied"
 jpackage --type deb --app-image "$DIR" --name "$NAME" --app-version "$VERSION" -d "./build/dist" --file-associations "FAemrick.properties" --file-associations "FApacket.properties" --linux-package-name "$NAME"
+rm -rf "./build/tmp/res"
