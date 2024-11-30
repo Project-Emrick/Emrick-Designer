@@ -83,7 +83,7 @@ public class SyncTimeGUI implements ActionListener {
 
             @Override
             public void windowClosing(WindowEvent e) {
-                if (audioPlayer.isPlaying()) {
+                if (audioPlayer != null && audioPlayer.isPlaying()) {
                     audioPlayer.pauseAudio();
                 }
                 super.windowClosing(new WindowEvent(dialogWindow, WindowEvent.WINDOW_CLOSING));
@@ -404,7 +404,7 @@ public class SyncTimeGUI implements ActionListener {
     public void actionPerformed(ActionEvent e) {
         if (e.getSource().equals(cancelButton)) {
             dialogWindow.dispose();
-            if (audioPlayer.isPlaying()) {
+            if (audioPlayer != null && audioPlayer.isPlaying()) {
                 audioPlayer.pauseAudio();
             }
         }
@@ -645,13 +645,15 @@ public class SyncTimeGUI implements ActionListener {
             //System.out.println(prevCountTime + " ms");
             if (currentCount == 0) {
                 prevCountTime = System.currentTimeMillis();
-                audioPlayer.playAudio(0);
+                if (audioPlayer != null) {
+                    audioPlayer.playAudio(0);
+                }
                 currentCount++;
             } else if (currentCount >= totalCounts - 1) {
                 currentTime = System.currentTimeMillis();
                 counts.add(new PairCountMS(currentCount - 1, currentTime - prevCountTime));
                 currentCount = 0;
-                if (audioPlayer.isPlaying()) {
+                if (audioPlayer != null && audioPlayer.isPlaying()) {
                     audioPlayer.pauseAudio();
                 }
                 ArrayList<Pair> times = new ArrayList<>();
@@ -660,9 +662,6 @@ public class SyncTimeGUI implements ActionListener {
                 if (isSuccess) {
                     syncListener.onSync(times, 0);
                     dialogWindow.dispose();
-                }
-                else {
-                    System.out.println("Womp womp");
                 }
             }
             else {

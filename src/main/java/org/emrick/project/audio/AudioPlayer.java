@@ -18,7 +18,13 @@ public class AudioPlayer extends Thread {
     public AudioPlayer(File audioFile) {
         this.audioFile = audioFile;
         this.isPlaying = false;
-        initialize();
+        if (audioFile != null) {
+            initialize();
+        }
+        else {
+            sequencer = null;
+            clip = null;
+        }
     }
 
     public void setAudioFile(File audioFile) {
@@ -44,6 +50,9 @@ public class AudioPlayer extends Thread {
     // TODO: Test with WAV and MIDI (not tested)
 
     private void initializeAudio() {
+        if (audioFile == null) {
+            return;
+        }
         if (audioFile.getName().endsWith(".mid") || audioFile.getName().endsWith(".midi")) {
             // MIDI file
             try {

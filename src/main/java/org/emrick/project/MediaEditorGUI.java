@@ -2456,14 +2456,22 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         audioPlayers = new ArrayList<AudioPlayer>();
         for (File f : audioFiles) {
             audioPlayers.add(new AudioPlayer(f));
-            scrubBarGUI.setAudioPlayer(audioPlayers);
         }
+        if (audioPlayers.isEmpty()) {
+            //adds dummy audio player
+            audioPlayers.add(new AudioPlayer(null));
+            System.out.println("Dummy audio added");
+        }
+        scrubBarGUI.setAudioPlayer(audioPlayers);
 
     }
     @Override
     public void onConcatAudioImport(ArrayList<File> audioFiles) {
         for (File f : audioFiles) {
             audioPlayers.add(new AudioPlayer(f));
+        }
+        if (audioPlayers.isEmpty()) {
+            audioPlayers.add(new AudioPlayer(null));
         }
         scrubBarGUI.setAudioPlayer(audioPlayers);
     }
@@ -2644,7 +2652,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         if (footballFieldPanel.getCurrentSet().label.contains("-")) {
             int nextSetMvmt = Integer.parseInt(footballFieldPanel.drill.sets.get(setIndex).label.substring(0,1));
 
-            if (nextSetMvmt < 1 || nextSetMvmt > audioPlayers.size()) {
+            if (audioPlayers == null || nextSetMvmt < 1 || nextSetMvmt > audioPlayers.size()) {
                 return;
             }
 
@@ -2694,6 +2702,10 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
      * Begin playing audio in sync with the drill playback
      */
     private void playAudioFromCorrectPosition() {
+
+        if (audioPlayers == null) {
+            return;
+        }
         // Get audio to correct position before playing
         if (!scrubBarGUI.getAudioCheckbox().isSelected()) {
             audioPlayers.get(currentMovement - 1).pauseAudio();
