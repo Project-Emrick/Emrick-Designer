@@ -869,6 +869,11 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         });
 
         lightBoardFlowViewerItem.addActionListener(e -> {
+            if (count2RFTrigger == null) {
+                writeSysMsg("Open a project to run show");
+                return;
+            }
+
             isLightBoardMode = true;
             serialTransmitter = comPortPrompt("Transmitter");
             if (!serialTransmitter.getType().equals("Transmitter")) {
