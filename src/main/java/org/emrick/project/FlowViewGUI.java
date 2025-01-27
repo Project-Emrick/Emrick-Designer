@@ -80,7 +80,6 @@ public class FlowViewGUI extends JPanel {
                     System.out.println("Current Trigger: " + currentTrigger % items.size());
 
                     if (e.getKeyCode() == KeyEvent.VK_SPACE) { //When spacebar is hit, move to next trigger
-                        System.out.println("83:spacebar key released event");
                         currentTrigger++;
                     }
 
@@ -329,7 +328,6 @@ public class FlowViewGUI extends JPanel {
 
         public ActionListener initializeExecuteListener() {
             return e -> {
-                System.out.println("331:click event");
                 System.out.println("Current Trigger: " + currentTrigger % items.size());
                 currentTrigger = index+1;
                 rfSignalListener.onRFSignal(index);
