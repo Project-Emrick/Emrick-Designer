@@ -841,11 +841,19 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             if (!serialTransmitter.getType().equals("Transmitter")) {
                 return;
             }
+
+            if (count2RFTrigger == null) {
+                writeSysMsg("Open a project to run show");
+                return;
+            }
+
             runShowItem.setEnabled(false);
             flowViewerItem.setEnabled(false);
             lightBoardFlowViewerItem.setEnabled(false);
             stopShowItem.setEnabled(true);
+
             flowViewGUI = new FlowViewGUI(count2RFTrigger, this, footballFieldPanel.drill.sets);
+
             if (footballField.isShowing()) {
                 mainContentPanel.remove(footballField);
             } else if (ledStripViewGUI.isShowing()) {

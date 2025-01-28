@@ -60,20 +60,7 @@ public class FlowViewGUI extends JPanel {
             }
         }
 
-        this.addKeyListener(new KeyListener() {
-            @Override
-            public void keyTyped(KeyEvent e) {
-                if (e.getKeyChar() == ' ') { //When spacebar is hit, move to next trigger
-                    rfSignalListener.onRFSignal(currentTrigger % items.size());
-                    System.out.println("Current Trigger: " + currentTrigger % items.size());
-                    currentTrigger++;
-
-                    setCurrentTriggerVisible();
-                }
-            }
-
-            @Override
-            public void keyPressed(KeyEvent e){}
+        this.addKeyListener(new KeyAdapter() {
             @Override
             public void keyReleased(KeyEvent e) {
                 if (e.getKeyCode() == KeyEvent.VK_DOWN) { //When down is pressed, move highlight to next trigger but don't execute
@@ -87,9 +74,15 @@ public class FlowViewGUI extends JPanel {
                     }
 
                     setCurrentTriggerVisible();
-                } else if (e.getKeyCode() == KeyEvent.VK_ENTER) {
+                } else if (e.getKeyCode() == KeyEvent.VK_ENTER ||
+                           e.getKeyCode() == KeyEvent.VK_SPACE) {
                     rfSignalListener.onRFSignal(currentTrigger % items.size());
                     System.out.println("Current Trigger: " + currentTrigger % items.size());
+
+                    if (e.getKeyCode() == KeyEvent.VK_SPACE) { //When spacebar is hit, move to next trigger
+                        System.out.println("83:spacebar key released event");
+                        currentTrigger++;
+                    }
 
                     setCurrentTriggerVisible();
                 }
@@ -336,6 +329,7 @@ public class FlowViewGUI extends JPanel {
 
         public ActionListener initializeExecuteListener() {
             return e -> {
+                System.out.println("331:click event");
                 System.out.println("Current Trigger: " + currentTrigger % items.size());
                 currentTrigger = index+1;
                 rfSignalListener.onRFSignal(index);
