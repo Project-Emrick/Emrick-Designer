@@ -837,7 +837,8 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         });
         flowViewerItem.addActionListener(e -> {
             if (count2RFTrigger == null) {
-                writeSysMsg("Open a project to run show");
+                JOptionPane.showMessageDialog(null, "There is no project currently open. Please open a project file to run show.",
+                        "Error", JOptionPane.ERROR_MESSAGE);
                 return;
             }
 
@@ -870,7 +871,8 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
 
         lightBoardFlowViewerItem.addActionListener(e -> {
             if (count2RFTrigger == null) {
-                writeSysMsg("Open a project to run show");
+                JOptionPane.showMessageDialog(null, "There is no project currently open. Please open a project file to run show.",
+                                               "Error", JOptionPane.ERROR_MESSAGE);
                 return;
             }
 
