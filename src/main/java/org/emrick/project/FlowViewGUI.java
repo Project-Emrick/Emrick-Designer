@@ -29,6 +29,10 @@ public class FlowViewGUI extends JPanel {
     private ArrayList<Integer> movementStartCounts = new ArrayList<>();
     private ArrayList<Integer> movements = new ArrayList<>();
 
+    private static final int MIN_INTERVAL = 250; // in milliseconds
+    private static final int NANO_TO_MILLI_FACTOR = 1000000;
+    private long timestamp = 0;
+
     public FlowViewGUI(HashMap<Integer, RFTrigger> count2RFTrigger, RFSignalListener rfSignalListener, ArrayList<Set> sets) {
         this.rfSignalListener = rfSignalListener;
         Iterator<RFTrigger> iterator = count2RFTrigger.values().iterator();
@@ -76,11 +80,12 @@ public class FlowViewGUI extends JPanel {
                     setCurrentTriggerVisible();
                 } else if (e.getKeyCode() == KeyEvent.VK_ENTER ||
                            e.getKeyCode() == KeyEvent.VK_SPACE) {
-                    rfSignalListener.onRFSignal(currentTrigger % items.size());
-                    System.out.println("Current Trigger: " + currentTrigger % items.size());
-
-                    if (e.getKeyCode() == KeyEvent.VK_SPACE) { //When spacebar is hit, move to next trigger
-                        currentTrigger++;
+                    if (executeCurrentTrigger()) {
+                        if (e.getKeyCode() == KeyEvent.VK_SPACE) { //When spacebar is hit, move to next trigger
+                            currentTrigger++;
+                        }
+                    } else {
+                        System.out.println("88: wait!!!");
                     }
 
                     setCurrentTriggerVisible();
@@ -110,6 +115,33 @@ public class FlowViewGUI extends JPanel {
             scrollPane.getVerticalScrollBar().setValue(items.get(currentTrigger % items.size()).getLocation().y - 50);
         }
         reinitializeFlowViewPanel();
+    }
+
+    /**
+     * Executes the current trigger if enough time has passed since
+     * the last trigger call
+     *
+     * @return true if trigger executed, false if user needs to wait longer
+     */
+    private boolean executeCurrentTrigger() {
+        long current = System.nanoTime();
+
+        if (currentTrigger >= items.size()) {
+            currentTrigger %= items.size();
+        }
+
+        // System.out.println("133: " + current + " - " + timestamp);
+        long diff = (current - timestamp) / NANO_TO_MILLI_FACTOR;
+
+        if (diff >= MIN_INTERVAL) {
+            rfSignalListener.onRFSignal(currentTrigger);
+            System.out.println("Current Trigger: " + currentTrigger);
+
+            timestamp = current;
+            return true;
+        }
+
+        return false;
     }
 
     public void initializeFlowViewPanel(){
@@ -328,9 +360,12 @@ public class FlowViewGUI extends JPanel {
 
         public ActionListener initializeExecuteListener() {
             return e -> {
-                System.out.println("Current Trigger: " + currentTrigger % items.size());
-                currentTrigger = index+1;
-                rfSignalListener.onRFSignal(index);
+                currentTrigger = index;
+
+                if (executeCurrentTrigger()) {
+                    currentTrigger++;
+                }
+
                 setCurrentTriggerVisible();
             };
         }
