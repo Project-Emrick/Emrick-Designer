@@ -69,6 +69,9 @@ public class FlowViewGUI extends JPanel {
             public void keyReleased(KeyEvent e) {
                 if (e.getKeyCode() == KeyEvent.VK_DOWN) { //When down is pressed, move highlight to next trigger but don't execute
                     currentTrigger++;
+                    if (currentTrigger >= items.size()) {
+                        currentTrigger %= items.size();
+                    }
 
                     setCurrentTriggerVisible();
                 } else if (e.getKeyCode() == KeyEvent.VK_UP) { //When down is pressed, move highlight to previous trigger but don't execute
