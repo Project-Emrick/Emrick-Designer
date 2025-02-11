@@ -836,16 +836,26 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             lightBoardFlowViewerItem.setEnabled(true);
         });
         flowViewerItem.addActionListener(e -> {
+            if (count2RFTrigger == null) {
+                JOptionPane.showMessageDialog(null, "There is no project currently open. Please open a project file to run show.",
+                        "Error", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+
             isLightBoardMode = false;
             serialTransmitter = comPortPrompt("Transmitter");
+
             if (!serialTransmitter.getType().equals("Transmitter")) {
                 return;
             }
+
             runShowItem.setEnabled(false);
             flowViewerItem.setEnabled(false);
             lightBoardFlowViewerItem.setEnabled(false);
             stopShowItem.setEnabled(true);
+
             flowViewGUI = new FlowViewGUI(count2RFTrigger, this, footballFieldPanel.drill.sets);
+
             if (footballField.isShowing()) {
                 mainContentPanel.remove(footballField);
             } else if (ledStripViewGUI.isShowing()) {
@@ -860,6 +870,12 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         });
 
         lightBoardFlowViewerItem.addActionListener(e -> {
+            if (count2RFTrigger == null) {
+                JOptionPane.showMessageDialog(null, "There is no project currently open. Please open a project file to run show.",
+                                               "Error", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+
             isLightBoardMode = true;
             serialTransmitter = comPortPrompt("Transmitter");
             if (!serialTransmitter.getType().equals("Transmitter")) {
