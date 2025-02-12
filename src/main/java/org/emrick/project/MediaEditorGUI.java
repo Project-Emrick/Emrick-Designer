@@ -2661,7 +2661,11 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         }
         footballFieldPanel.setCurrentSet(footballFieldPanel.drill.sets.get(setIndex));
         ledStripViewGUI.setCurrentSet(footballFieldPanel.drill.sets.get(setIndex));
+    }
 
+    @Override
+    public void onVolumeChange() {
+        audioPlayers.get(currentMovement - 1).adjustVolume(scrubBarGUI.volume);
     }
 
     /**
@@ -2694,6 +2698,8 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
      * Begin playing audio in sync with the drill playback
      */
     private void playAudioFromCorrectPosition() {
+        // ensure volume is correct
+        audioPlayers.get(currentMovement - 1).adjustVolume(scrubBarGUI.volume);
         // Get audio to correct position before playing
         if (!scrubBarGUI.getAudioCheckbox().isSelected()) {
             audioPlayers.get(currentMovement - 1).pauseAudio();
@@ -2704,6 +2710,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             timestampMillis -= (long) (startDelay * 1000);
         }
         if (currentMovement < 1) {
+
             audioPlayers.get(0).playAudio(timestampMillis);
             System.out.println("Less than one");
         }

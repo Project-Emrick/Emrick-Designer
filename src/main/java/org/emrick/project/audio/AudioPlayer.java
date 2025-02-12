@@ -155,4 +155,31 @@ public class AudioPlayer extends Thread {
     public void run() {
         // Suppress warning "Instantiating a 'AudioPlayer' with default 'run()' method "
     }
+
+    //volume methods
+
+    public void adjustVolume(int volume) {
+        if (clip != null) {
+            FloatControl controller = (FloatControl) clip.getControl(FloatControl.Type.MASTER_GAIN);
+            if ((volume <= 100) && (volume >= 0)) {
+                if (volume != 0) {
+                    float max = controller.getMaximum();
+                    float min = controller.getMinimum();
+
+                    // most of the default range is very quiet, so set a new minimum
+                    float halfway = (max - min) / 2;
+
+                    // (max - min) = range of possible values
+                    // (volume / 100) gets slider position as a value from 0.0 - 1.0
+                    // range * position = value in range at that position
+                    // adding min places the value back into the min to max range
+                    float volValue = (float) volume / (float) 100;
+                    float result = (halfway * volValue) + halfway + min;
+                    controller.setValue(result);
+                } else {
+                    controller.setValue(controller.getMinimum());
+                }
+            }
+        }
+    }
 }

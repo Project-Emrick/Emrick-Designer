@@ -38,6 +38,8 @@ public class ScrubBarGUI extends JComponent implements ActionListener {
     // Scrub Bars / Sliders
     private JSlider topSlider;
 
+    private JSlider volumeSlider;
+
     // Scrub-Bar Status
     private boolean isReady; // Whether the drill is ready to play
     private boolean isPlaying; // Whether the drill is being played
@@ -73,6 +75,10 @@ public class ScrubBarGUI extends JComponent implements ActionListener {
     private double time = 0;
     private boolean useFps = false;
     private ArrayList<SyncTimeGUI.Pair> timeSync = null;
+
+    // Volume
+
+    public int volume = 50;
 
     public ScrubBarGUI(JFrame parent, ScrubBarListener scrubBarListener, SyncListener syncListener,
                        FootballFieldPanel footballFieldPanel, ArrayList<AudioPlayer> audioPlayers) {
@@ -199,7 +205,6 @@ public class ScrubBarGUI extends JComponent implements ActionListener {
         // Change Listeners
 
         topSlider.addChangeListener(e -> {
-
             // Status label
             int val = ((JSlider)e.getSource()).getValue();
             String set = labelTable.get(getCurrentSetStart()).getText();
@@ -226,7 +231,15 @@ public class ScrubBarGUI extends JComponent implements ActionListener {
             }
         });
 
+        // Volume Slider
+        volumeSlider = new JSlider(JSlider.HORIZONTAL, 0, 100, 50);
+        volumeSlider.addChangeListener(e -> {
+            volume = volumeSlider.getValue();
+            scrubBarListener.onVolumeChange();
+        });
+
         sliderPanel.add(topSlider, BorderLayout.CENTER);
+        sliderPanel.add(volumeSlider, BorderLayout.SOUTH);
 
         scrubBarPanel.add(sliderPanel, BorderLayout.CENTER);
     }
