@@ -312,7 +312,9 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             createAndShowGUI();
         }
 
-
+        // Load all error codes from file
+        // how to store errors.csv file?
+        Error.load(PathConverter.pathConverter("res/errors.csv", true));
     }
 
     /**
@@ -837,8 +839,9 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         });
         flowViewerItem.addActionListener(e -> {
             if (count2RFTrigger == null) {
-                JOptionPane.showMessageDialog(null, "There is no project currently open. Please open a project file to run show.",
-                        "Error", JOptionPane.ERROR_MESSAGE);
+//                JOptionPane.showMessageDialog(null, "There is no project currently open. Please open a project file to run show.",
+//                        "Error", JOptionPane.ERROR_MESSAGE);
+                Error.alert(1);
                 return;
             }
 
@@ -871,8 +874,9 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
 
         lightBoardFlowViewerItem.addActionListener(e -> {
             if (count2RFTrigger == null) {
-                JOptionPane.showMessageDialog(null, "There is no project currently open. Please open a project file to run show.",
-                                               "Error", JOptionPane.ERROR_MESSAGE);
+//                JOptionPane.showMessageDialog(null, "There is no project currently open. Please open a project file to run show.",
+//                                               "Error", JOptionPane.ERROR_MESSAGE);
+                Error.alert(1);
                 return;
             }
 
