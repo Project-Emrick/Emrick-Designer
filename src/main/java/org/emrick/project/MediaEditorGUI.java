@@ -969,6 +969,8 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         hardwareMenu.add(batteryCheck);
         JMenuItem chargingCheck = new JMenuItem("Charging Check");
         hardwareMenu.add(chargingCheck);
+        JMenuItem wirelessCheck = new JMenuItem("Wireless Check");
+        hardwareMenu.add(wirelessCheck);
         hardwareMenu.addSeparator();
 
         JMenuItem storageMode = new JMenuItem("Storage Mode");
@@ -979,10 +981,10 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         hardwareMenu.add(massSleep);
         hardwareMenu.addSeparator();
 
-        JMenuItem wirelessCheck = new JMenuItem("Wireless Check");
-        hardwareMenu.add(wirelessCheck);
         JMenuItem modifyBoardItem = new JMenuItem("Modify Board");
         hardwareMenu.add(modifyBoardItem);
+        JMenuItem wiredProgramming = new JMenuItem("Wired Show Programming");
+        hardwareMenu.add(wiredProgramming);
 
         /* Action Listeners For Buttons */
         // Battery Check
@@ -999,6 +1001,14 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             if (st == null) return;
 
             st.writeToSerialPort("j");
+        });
+
+        // Wireless Check
+        wirelessCheck.addActionListener(e -> {
+            SerialTransmitter st = comPortPrompt("Transmitter");
+            if (st == null) return;
+
+            st.writeToSerialPort("c");
         });
 
         // Storage Mode
@@ -1025,20 +1035,32 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             st.writeToSerialPort("e");
         });
 
-        // Wireless Check
-        wirelessCheck.addActionListener(e -> {
-            SerialTransmitter st = comPortPrompt("Transmitter");
-            if (st == null) return;
-
-            st.writeToSerialPort("c");
-        });
-
         // Modify Board
         modifyBoardItem.addActionListener(e -> {
-            SerialTransmitter st = comPortPrompt("Receiver");
-            if (!st.getType().equals("Receiver")) {
+            try {
+                SerialTransmitter st = comPortPrompt("Receiver");
+                if (!st.getType().equals("Receiver")) {
+                    throw new IllegalStateException("Not a receiver");
+                }
+            } catch (IllegalStateException er) {
+                JOptionPane.showMessageDialog(
+                        null,
+                        "Transmitter Detected, Please plug in a receiver.",
+                        "Error",
+                        JOptionPane.ERROR_MESSAGE
+                );
+                return;
+            } catch (Exception err) {
+                JOptionPane.showMessageDialog(
+                        null,
+                        "Please plug a board in before proceeding.",
+                        "Error",
+                        JOptionPane.ERROR_MESSAGE
+                );
                 return;
             }
+            /* Create st Object for Later Handling */
+            SerialTransmitter st = comPortPrompt("Receiver");
 
             JTextField boardIDField = new JTextField();
             JCheckBox boardIDEnable = new JCheckBox("Write new Board ID");
@@ -1072,6 +1094,83 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                 if (enableLedCount.isSelected()) {
                     st.writeLEDCount(ledCountField.getText());
                 }
+            }
+        });
+
+        // Wired Show Programming
+        wiredProgramming.addActionListener(j -> {
+            /* Check for Board Receiver Type */
+            try {
+                SerialTransmitter st = comPortPrompt("Receiver");
+                if (!st.getType().equals("Receiver")) {
+                    throw new IllegalStateException("Not a receiver");
+                }
+            } catch (IllegalStateException e) {
+                JOptionPane.showMessageDialog(
+                        null,
+                        "Transmitter Detected, Please plug in a receiver.",
+                        "Error",
+                        JOptionPane.ERROR_MESSAGE
+                );
+                return;
+            } catch (Exception e) {
+                JOptionPane.showMessageDialog(
+                        null,
+                        "Please plug a board in before proceeding.",
+                        "Error",
+                        JOptionPane.ERROR_MESSAGE
+                );
+                return;
+            }
+
+            /* Check for Windows OS */
+            String os = System.getProperty("os.name").toLowerCase();
+
+            if (!os.contains("win")) {
+                JOptionPane.showMessageDialog(null,
+                        "PlatformIO check is only supported on Windows at this time.",
+                        "Unsupported OS",
+                        JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+
+            /* Check for Platform.io Default Location */
+            boolean isPlatformIOInstalled = PlatformIOFunction.verifyInstallation();
+
+            if(isPlatformIOInstalled) {
+                System.out.println("PlatformIO is installed and accessible.");
+            } else {
+                JOptionPane.showMessageDialog(null,
+                        "PlatformIO not found or an error occurred. Please install PlatformIO.",
+                        "PlatformIO Error",
+                        JOptionPane.ERROR_MESSAGE);
+            }
+
+            /* Create New Text Pop-up For Parameter Entry */
+            JTextField pathToDataFolderField = new JTextField();
+            JTextField showTokenField = new JTextField();
+            JTextField verificationColorField = new JTextField();
+            JTextField marcherLabelField = new JTextField();
+
+            Object[] inputs = {
+                    new JLabel("Path to Data Directory: "), pathToDataFolderField,
+                    new JLabel("Show Token: "), showTokenField,
+                    new JLabel("RGB Verification Color ('R,G,B'): "), verificationColor,
+                    new JLabel("Marcher Label: "), marcherLabelField
+            };
+
+            int option = JOptionPane.showConfirmDialog(null, inputs, "Enter board parameters:", JOptionPane.OK_CANCEL_OPTION);
+
+            if (option == JOptionPane.OK_OPTION) {
+                /* Get Data Ready */
+                File dataDir = new File(pathToDataFolderField.toString());
+                //File packetDir = new File();
+                //File csv = new File();
+                String token = (showTokenField.toString());
+                String color = (verificationColorField.toString());
+                //String ledCount =
+                String label = (marcherLabelField.toString());
+
             }
         });
 
