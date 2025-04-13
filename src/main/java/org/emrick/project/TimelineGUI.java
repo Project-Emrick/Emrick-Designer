@@ -16,7 +16,7 @@ public class TimelineGUI {
     private final ArrayList<RFTrigger> triggers;
     private JScrollPane timelineScrollPane;
     private JPanel timelinePanel;
-    private ArrayList<Map.Entry<Long, Map.Entry<TimelineEvent, JPanel>>> timelineEvents;
+    List<List<TimeRange>> rows;
     
     // Zoom controls
     private JPanel zoomPanel;
@@ -41,7 +41,7 @@ public class TimelineGUI {
             this.effects = new ArrayList<>();
         }
         triggers = new ArrayList<>();
-        timelineEvents = new ArrayList<>();
+        ArrayList<Map.Entry<Long, Map.Entry<TimelineEvent, JPanel>>> timelineEvents = new ArrayList<>();
         
         // Sort and store all timeline events
         for (Map.Entry<Integer, RFTrigger> entry : count2RFTrigger.entrySet()) {
@@ -121,8 +121,7 @@ public class TimelineGUI {
 
     private void updateTimelineLayout() {
         int width = calculateTimelineWidth();
-        // get num of rows * row height
-        timelinePanel.setPreferredSize(new Dimension(width, calculateTimelinePanelHeight()));
+        timelinePanel.setPreferredSize(new Dimension(width, TRIGGER_ROW_HEIGHT + ROW_HEIGHT));
         updateComponentPositions();
         timelinePanel.revalidate();
         timelinePanel.repaint();
@@ -188,16 +187,14 @@ public class TimelineGUI {
             }
             rows.get(rowIndex).add(effectRange);
         }
+        timelinePanel.setPreferredSize(new Dimension(calculateTimelineWidth(), TRIGGER_ROW_HEIGHT + rows.size() * ROW_HEIGHT));
     }
 
     private void createTimelinePane() {
         timelinePanel = new JPanel(null);
-        timelinePanel.setPreferredSize(new Dimension(
-            calculateTimelineWidth(), calculateTimelinePanelHeight()
-        ));
-        
+        timelinePanel.setPreferredSize(new Dimension(calculateTimelineWidth(),  TRIGGER_ROW_HEIGHT + ROW_HEIGHT));
         updateComponentPositions();
-        
+
         timelineScrollPane = new JScrollPane(timelinePanel);
         timelineScrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
         timelineScrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
@@ -211,16 +208,6 @@ public class TimelineGUI {
     private int calculateEffectWidth(Effect effect) {
         long durationMillis = effect.getDuration().toMillis();
         return (int)((durationMillis / 1000.0) * PIXELS_PER_SECOND * zoomFactor);
-    }
-
-    private int calculateTimelinePanelHeight() {
-        java.util.Set<Integer> occupiedRows = new java.util.HashSet<>();
-        for (Effect effect : effects) {
-            occupiedRows.add((int)(effect.getStartTimeMSec() / 1000));
-        }
-        
-        int numEffectRows = Math.max(1, occupiedRows.size());
-        return TRIGGER_ROW_HEIGHT + (numEffectRows * ROW_HEIGHT) + 20;
     }
 
     private int findAvailableRow(List<List<TimeRange>> rows, TimeRange newRange) {
