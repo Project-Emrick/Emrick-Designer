@@ -409,9 +409,9 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         hSplitPane.setResizeWeight(0.8);
         JSplitPane vSplitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT, hSplitPane, timelinePanel);
         vSplitPane.setOneTouchExpandable(true);
-        vSplitPane.setDividerLocation(0.8);
+        vSplitPane.setDividerLocation(0.6);
         vSplitPane.setDividerSize(10);
-        vSplitPane.setResizeWeight(0.8);
+        vSplitPane.setResizeWeight(0.6);
 
         vSplitPane.setPreferredSize(frame.getSize());
         frame.add(vSplitPane);
@@ -2967,6 +2967,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             count = timeManager.MSec2Count(ms);
         }
         scrubBarGUI.setScrub(count);
+        timelineGUI.scrubTimeline(ms);
     }
 
     /**
