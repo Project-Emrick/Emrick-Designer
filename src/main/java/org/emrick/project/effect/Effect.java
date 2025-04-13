@@ -546,8 +546,6 @@ public class  Effect implements Cloneable, TimelineEvent {
         widgetPanel.add(startColorPanel);
         widgetPanel.add(endColorPanel);
 
-        widgetPanel.setPreferredSize(new Dimension(110, 85));
-
         widgetPanel.addMouseListener(new MouseAdapter() {
 
             @Override
@@ -565,6 +563,7 @@ public class  Effect implements Cloneable, TimelineEvent {
             public void mousePressed(MouseEvent e) {
                 // signals scrub to this rf trigger on press
                 effectListener.onPressEffect(Effect.this);
+                widgetPanel.setBorder(BorderFactory.createLineBorder(Color.red, 2, true));
             }
         });
 

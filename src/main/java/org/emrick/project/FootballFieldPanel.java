@@ -60,7 +60,6 @@ public class FootballFieldPanel extends JPanel implements RepaintListener {
 
     public FootballFieldPanel(FootballFieldListener footballFieldListener, HashMap<Integer, RFTrigger> count2RFTrigger) {
 //        setPreferredSize(new Dimension(fieldWidth + 2*margin, fieldHeight + 2*margin)); // Set preferred size for the drawing area
-        setMinimumSize(new Dimension(1042, 548));
         drill = new Drill();
         selectedLEDStrips = new HashSet<>();
         innerSelectedLEDStrips = new HashSet<>();

@@ -13,8 +13,7 @@ import javax.imageio.ImageIO;
 import javax.swing.Timer;
 import javax.swing.*;
 import javax.swing.filechooser.*;
-import java.awt.Font;
-import java.awt.Image;
+
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.geom.*;
@@ -200,7 +199,10 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         Image icon = Toolkit.getDefaultToolkit().getImage(PathConverter.pathConverter("res/images/icon.png", true));
         frame.setIconImage(icon);
         frame.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
-        frame.setSize(1200, 600);
+        
+        Toolkit toolkit = Toolkit.getDefaultToolkit();
+        Dimension screenSize = toolkit.getScreenSize();
+        frame.setSize((int) (screenSize.width * 0.75), (int) (screenSize.height * 0.75));
 
         windowListener = new WindowAdapter() {
             @Override
@@ -387,23 +389,32 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         // Scrub Bar Panel
         buildScrubBarPanel();
 
-        frame.add(mainContentPanel, BorderLayout.CENTER);
 
         // Timeline panel
         timelinePanel = new JPanel(new BorderLayout());
         timelinePanel.setBorder(BorderFactory.createTitledBorder("Timeline"));
-        timelinePanel.setPreferredSize(new Dimension(frame.getWidth(), 120));
-        frame.add(timelinePanel, BorderLayout.SOUTH);
 
         // Effect View panel
         effectGUI = new EffectGUI(EffectGUI.noProjectSyncMsg);
         groupsGUI = new SelectionGroupGUI(this);
         effectViewPanel = new JPanel();
         effectViewPanel.setLayout(new BorderLayout());
-        effectViewPanel.setPreferredSize(new Dimension(300, frame.getHeight()));
         effectViewPanel.setBorder(BorderFactory.createTitledBorder("Effect View"));
         effectViewPanel.add(effectGUI.getEffectPanel());
-        frame.add(effectViewPanel, BorderLayout.EAST);
+
+        JSplitPane hSplitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, mainContentPanel, effectViewPanel);
+        hSplitPane.setOneTouchExpandable(true);
+        hSplitPane.setDividerLocation(0.8);
+        hSplitPane.setDividerSize(10);
+        hSplitPane.setResizeWeight(0.8);
+        JSplitPane vSplitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT, hSplitPane, timelinePanel);
+        vSplitPane.setOneTouchExpandable(true);
+        vSplitPane.setDividerLocation(0.6);
+        vSplitPane.setDividerSize(10);
+        vSplitPane.setResizeWeight(0.6);
+
+        vSplitPane.setPreferredSize(frame.getSize());
+        frame.add(vSplitPane);
 
         ////////////////////////// Menu //////////////////////////
 
@@ -2223,7 +2234,6 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
 
         scrubBarPanel = scrubBarGUI.getScrubBarPanel();
         scrubBarPanel.setBorder(BorderFactory.createTitledBorder("Scrub Bar"));
-        scrubBarPanel.setPreferredSize(new Dimension(650, 120));
 
         mainContentPanel.add(scrubBarPanel, BorderLayout.SOUTH);
 
@@ -3056,6 +3066,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             count = timeManager.MSec2Count(ms);
         }
         scrubBarGUI.setScrub(count);
+        timelineGUI.scrubTimeline(ms);
     }
 
     /**

@@ -59,14 +59,13 @@ public class RFTrigger implements TimelineEvent {
         JPanel widgetPanel = new JPanel(new GridLayout(5,1));
         widgetPanel.setBorder(BorderFactory.createCompoundBorder(outerBorder, innerBorder));
 
-        JLabel titleLabel = new JLabel("<html><b>RF Trigger</b></html>");
+        JLabel titleLabel = new JLabel("<html><b>" + title + "</b></html>");
         JLabel countLabel = new JLabel("Count: " + count);
         JLabel timeLabel = new JLabel("Time: " + TimeManager.getFormattedTime(timestampMillis));
 
         widgetPanel.add(titleLabel);
         widgetPanel.add(countLabel);
         widgetPanel.add(timeLabel);
-        widgetPanel.setPreferredSize(new Dimension(100, 85));
 
         widgetPanel.addMouseListener(new MouseAdapter() {
 

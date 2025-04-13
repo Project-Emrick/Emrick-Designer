@@ -8,12 +8,32 @@ import javax.swing.*;
 import java.awt.*;
 import java.time.Duration;
 import java.util.*;
+import java.util.List;
 
 public class TimelineGUI {
-
+    private JPanel mainPanel;
     private ArrayList<Effect> effects;
     private final ArrayList<RFTrigger> triggers;
     private JScrollPane timelineScrollPane;
+    private JPanel timelinePanel;
+    private ArrayList<Map.Entry<Long, Map.Entry<TimelineEvent, JPanel>>> timelineEvents;
+    
+    // Zoom controls
+    private JPanel zoomPanel;
+    private static double zoomFactor = 1.0;
+    private static final double MIN_ZOOM = 0.1;
+    private static final double MAX_ZOOM = 5.0;
+    private static final double ZOOM_STEP = 0.1;
+    
+    // Base dimensions
+    private static final int ROW_HEIGHT = 70;
+    private static final int TRIGGER_ROW_HEIGHT = 60;
+    private static final int HORIZONTAL_GAP = 10;
+    private static final int PIXELS_PER_SECOND = 20; // Base scale: 20 pixels per second at zoom 1.0
+    
+    // Track the total duration for scaling
+    private long totalDurationMSec;
+    private static long curMSec;
 
     public TimelineGUI(ArrayList<Effect> effects, HashMap<Integer, RFTrigger> count2RFTrigger) {
         this.effects = effects;
@@ -21,75 +41,277 @@ public class TimelineGUI {
             this.effects = new ArrayList<>();
         }
         triggers = new ArrayList<>();
+        timelineEvents = new ArrayList<>();
+        
+        // Sort and store all timeline events
         for (Map.Entry<Integer, RFTrigger> entry : count2RFTrigger.entrySet()) {
-            triggers.add(entry.getValue());
+            RFTrigger trigger = entry.getValue();
+            triggers.add(trigger);
+            timelineEvents.add(new AbstractMap.SimpleEntry<>(
+                trigger.getTimestampMillis(),
+                new AbstractMap.SimpleEntry<>(trigger, trigger.getTimelineWidget())
+            ));
         }
+        
+        // Sort triggers by timestamp
+        triggers.sort(Comparator.comparingLong(RFTrigger::getTimestampMillis));
+        
+        for (Effect effect : effects) {
+            timelineEvents.add(new AbstractMap.SimpleEntry<>(
+                effect.getStartTimeMSec() + effect.getDuration().toMillis(),
+                new AbstractMap.SimpleEntry<>(effect, effect.getTimelineWidget())
+            ));
+        }
+        
+        // Sort timeline events by timestamp
+        timelineEvents.sort(Comparator.comparing(Map.Entry::getKey));
+        
+        // Set total duration from the last event
+        totalDurationMSec = timelineEvents.isEmpty() ? 1000 : 
+                           timelineEvents.get(timelineEvents.size() - 1).getKey() + 1000;
+        
         createTimelinePane();
+        createZoomControls();
+
+        mainPanel = new JPanel(new BorderLayout());
+        mainPanel.add(zoomPanel, BorderLayout.NORTH);
+        mainPanel.add(timelineScrollPane, BorderLayout.CENTER);
+
+        scrubTimeline(curMSec);
+        System.out.println("curMSec: " + curMSec);
+    }
+
+    private void createZoomControls() {
+        zoomPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        
+        JButton zoomInButton = new JButton("+");
+        JButton zoomOutButton = new JButton("-");
+        JButton resetZoomButton = new JButton("Reset Zoom");
+        JLabel zoomLabel = new JLabel(String.format("Zoom: %.1fx", zoomFactor));
+        
+        zoomInButton.addActionListener(e -> {
+            if (zoomFactor + ZOOM_STEP < MAX_ZOOM) {
+                zoomFactor += ZOOM_STEP;
+                updateZoom(zoomLabel);
+            }
+        });
+        
+        zoomOutButton.addActionListener(e -> {
+            if (zoomFactor - ZOOM_STEP > MIN_ZOOM) {
+                zoomFactor -= ZOOM_STEP;
+                updateZoom(zoomLabel);
+            }
+        });
+        
+        resetZoomButton.addActionListener(e -> {
+            zoomFactor = 1.0;
+            updateZoom(zoomLabel);
+        });
+        
+        zoomPanel.add(zoomOutButton);
+        zoomPanel.add(zoomLabel);
+        zoomPanel.add(zoomInButton);
+        zoomPanel.add(resetZoomButton);
+    }
+
+    private void updateZoom(JLabel zoomLabel) {
+        zoomLabel.setText(String.format("Zoom: %.1fx", zoomFactor));
+        updateTimelineLayout();
+    }
+
+    private void updateTimelineLayout() {
+        int width = calculateTimelineWidth();
+        // get num of rows * row height
+        timelinePanel.setPreferredSize(new Dimension(width, calculateTimelinePanelHeight()));
+        updateComponentPositions();
+        timelinePanel.revalidate();
+        timelinePanel.repaint();
+    }
+
+    private int calculateTimelineWidth() {
+        return (int)((totalDurationMSec / 1000.0) * PIXELS_PER_SECOND * zoomFactor) + (2 * HORIZONTAL_GAP);
+    }
+
+    private void updateComponentPositions() {
+        timelinePanel.removeAll();
+        
+        // Add RF Triggers (first row)
+        ArrayList<RFTrigger> sortedTriggers = new ArrayList<>(triggers);
+        sortedTriggers.sort(Comparator.comparingLong(RFTrigger::getTimestampMillis));
+        
+        for (int i = 0; i < sortedTriggers.size(); i++) {
+            RFTrigger trigger = sortedTriggers.get(i);
+            JPanel triggerWidget = trigger.getTimelineWidget();
+            int xPosition = calculateXPosition(trigger.getTimestampMillis());
+            
+            // Calculate width to next trigger or end
+            int width;
+            if (i < sortedTriggers.size() - 1) {
+                long nextTriggerTime = sortedTriggers.get(i + 1).getTimestampMillis();
+                width = calculateXPosition(nextTriggerTime) - xPosition;
+            } else {
+                width = calculateXPosition(totalDurationMSec) - xPosition;
+            }
+            
+            // Ensure minimum width and prevent overlap
+            width = width - 2; // Subtract 2 pixels to prevent overlap
+            
+            triggerWidget.setBounds(xPosition, 0, width, TRIGGER_ROW_HEIGHT);
+            timelinePanel.add(triggerWidget);
+        }
+        
+        // Add Effects (subsequent rows)
+        List<List<TimeRange>> rows = new ArrayList<>();
+        rows.add(new ArrayList<>()); // First effect row
+        
+        ArrayList<Effect> sortedEffects = new ArrayList<>(effects);
+        sortedEffects.sort(Comparator.comparingLong(Effect::getStartTimeMSec));
+        
+        for (Effect effect : sortedEffects) {
+            TimeRange effectRange = new TimeRange(
+                effect.getStartTimeMSec(),
+                effect.getStartTimeMSec() + effect.getDuration().toMillis()
+            );
+            
+            int rowIndex = findAvailableRow(rows, effectRange);
+            
+            JPanel effectWidget = effect.getTimelineWidget();
+            int xPosition = calculateXPosition(effect.getStartTimeMSec());
+            int width = calculateEffectWidth(effect);
+            int yPosition = TRIGGER_ROW_HEIGHT + (rowIndex * ROW_HEIGHT);
+            
+            effectWidget.setBounds(xPosition, yPosition, width, ROW_HEIGHT - 2);
+            timelinePanel.add(effectWidget);
+            
+            while (rows.size() <= rowIndex) {
+                rows.add(new ArrayList<>());
+            }
+            rows.get(rowIndex).add(effectRange);
+        }
     }
 
     private void createTimelinePane() {
-
-        // Store the effects and triggers into common timeline map
-        ArrayList<Map.Entry<Long, TimelineEvent>> timelineEvents = new ArrayList<>();
-        for (RFTrigger t : triggers) {
-            timelineEvents.add(new AbstractMap.SimpleEntry<>(t.getTimestampMillis(), t));
-        }
-        for (Effect e : effects) {
-            timelineEvents.add(new AbstractMap.SimpleEntry<>(e.getStartTimeMSec(), e));
-        }
-
-        // Sort by timestamp
-        sortMap(timelineEvents);
-        // Add the effect and trigger widgets to the scroll pane
-        JPanel timelinePanel = new JPanel(new FlowLayout());
-        for (Map.Entry<Long, TimelineEvent> event : timelineEvents) {
-            timelinePanel.add(event.getValue().getTimelineWidget());
-        }
+        timelinePanel = new JPanel(null);
+        timelinePanel.setPreferredSize(new Dimension(
+            calculateTimelineWidth(), calculateTimelinePanelHeight()
+        ));
+        
+        updateComponentPositions();
+        
         timelineScrollPane = new JScrollPane(timelinePanel);
-        timelineScrollPane.setBorder(BorderFactory.createEmptyBorder());
+        timelineScrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
         timelineScrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+        timelineScrollPane.setBorder(BorderFactory.createEmptyBorder());
     }
 
-    public static void sortMap(ArrayList<Map.Entry<Long, TimelineEvent>> timelineEvents) {
-        timelineEvents.sort(Map.Entry.comparingByKey());
+    private int calculateXPosition(long timestampMillis) {
+        return HORIZONTAL_GAP + (int)((timestampMillis / 1000.0) * PIXELS_PER_SECOND * zoomFactor);
     }
 
-    public JScrollPane getTimelineScrollPane() {
-        return timelineScrollPane;
+    private int calculateEffectWidth(Effect effect) {
+        long durationMillis = effect.getDuration().toMillis();
+        return (int)((durationMillis / 1000.0) * PIXELS_PER_SECOND * zoomFactor);
+    }
+
+    private int calculateTimelinePanelHeight() {
+        java.util.Set<Integer> occupiedRows = new java.util.HashSet<>();
+        for (Effect effect : effects) {
+            occupiedRows.add((int)(effect.getStartTimeMSec() / 1000));
+        }
+        
+        int numEffectRows = Math.max(1, occupiedRows.size());
+        return TRIGGER_ROW_HEIGHT + (numEffectRows * ROW_HEIGHT) + 20;
+    }
+
+    private int findAvailableRow(List<List<TimeRange>> rows, TimeRange newRange) {
+        for (int i = 0; i < rows.size(); i++) {
+            if (isRowAvailable(rows.get(i), newRange)) {
+                return i;
+            }
+        }
+        rows.add(new ArrayList<>());
+        return rows.size() - 1;
+    }
+
+    private boolean isRowAvailable(List<TimeRange> row, TimeRange newRange) {
+        for (TimeRange range : row) {
+            if (range.overlaps(newRange)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    public JPanel getTimelineScrollPane() {
+        return mainPanel;
+    }
+
+    private static class TimeRange {
+        long start;
+        long end;
+        
+        TimeRange(long start, long end) {
+            this.start = start;
+            this.end = end;
+        }
+        
+        boolean overlaps(TimeRange other) {
+            return !(this.end <= other.start || other.end <= this.start);
+        }
+    }
+
+    public void scrubTimeline(long ms) {
+        // Calculate the x position for the given time
+        int xPosition = calculateXPosition(ms);
+        // Get the viewport width (this dont work no matter what i do)
+        // Calculate the scroll position to center the time
+        int scrollPosition = (int) Math.max(0, xPosition - ((PIXELS_PER_SECOND / zoomFactor) * 20));
+        curMSec = ms;
+        
+        // Update the scroll position
+        SwingUtilities.invokeLater(() -> {
+            timelineScrollPane.getHorizontalScrollBar().setValue(scrollPosition);
+        });
+    }
+
+    public static void setCurMSec(long curMSec) {
+        TimelineGUI.curMSec = curMSec;
+        System.out.println("TimelineGUI: setCurMSec = " + curMSec);
     }
 
     public static void main(String[] args) {
-        JFrame frame = new JFrame();
-        frame.setPreferredSize(new Dimension(120, 120));
+        JFrame frame = new JFrame("Timeline Demo");
+        frame.setPreferredSize(new Dimension(900, 400));
         frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         frame.setLocationRelativeTo(null);
 
-        long startTimeMSec = Duration.ofMillis(500).toMillis();
-
-        Color startColor = new Color(0, 255, 0);
-        Color endColor = new Color(255, 0, 0);
-
-        Duration delay = Duration.ofSeconds(1).plusMillis(105);
-        Duration duration = Duration.ofSeconds(2).plusMillis(205);
-        Duration timeout = Duration.ofSeconds(3).plusMillis(305);
-
-        boolean TIME_GRADIENT = true;
-        boolean SET_TIMEOUT = true;
-        boolean DO_DELAY = true;
-        boolean INSTANT_COLOR = true;
-
-        // Create dummy effects for display
         ArrayList<Effect> effects = new ArrayList<>();
-        for (int i = 0; i < 5; i += 1) {
-            Effect e = new Effect(startTimeMSec + i, startColor, endColor, delay, duration, timeout, TIME_GRADIENT,
-                    SET_TIMEOUT, DO_DELAY, INSTANT_COLOR, 0);
+        for (int i = 0; i < 5; i++) {
+            long startTime = Duration.ofSeconds(i * 2).toMillis();
+            Duration duration = Duration.ofSeconds(3);
+            Duration delay = Duration.ofMillis(100);
+            Duration timeout = Duration.ofSeconds(5);
+            
+            Effect e = new Effect(startTime, 
+                                Color.GREEN, Color.RED,
+                                delay, duration, timeout,
+                                true, true, true, true, 0);
             effects.add(e);
         }
 
-        // Create dummy triggers for display
+        // Add an overlapping effect to test row placement
+        effects.add(new Effect(Duration.ofSeconds(1).toMillis(),
+                             Color.BLUE, Color.YELLOW,
+                             Duration.ZERO, Duration.ofSeconds(4), Duration.ofSeconds(5),
+                             true, true, false, true, 0));
+
         HashMap<Integer, RFTrigger> triggers = new HashMap<>();
-        for (int i = 0; i < 5; i++) {
-            RFTrigger t = new RFTrigger(i, startTimeMSec + i, "mytitle", "mydesc", "mycue");
+        for (int i = 0; i < 3; i++) {
+            RFTrigger t = new RFTrigger(i, 
+                                      Duration.ofSeconds(i * 3).toMillis(),
+                                      "Trigger " + i,
+                                      "Description " + i,
+                                      "Cue " + i);
             triggers.put(i, t);
         }
 
@@ -99,5 +321,4 @@ public class TimelineGUI {
         frame.pack();
         frame.setVisible(true);
     }
-
 }
