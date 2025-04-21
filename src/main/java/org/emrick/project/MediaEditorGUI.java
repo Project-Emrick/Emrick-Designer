@@ -2663,6 +2663,9 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
     public void onTimeChange(long time) {
         footballFieldPanel.currentMS = time;
         ledStripViewGUI.setCurrentMS(time);
+
+        // sync timeline with scrub bar
+        timelineGUI.scrubTimeline(scrubBarGUI.getTime() * 1000);
     }
 
     @Override
@@ -2967,7 +2970,6 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             count = timeManager.MSec2Count(ms);
         }
         scrubBarGUI.setScrub(count);
-        timelineGUI.scrubTimeline(ms);
     }
 
     /**

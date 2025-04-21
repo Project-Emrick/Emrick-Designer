@@ -28,12 +28,11 @@ public class TimelineGUI {
     // Base dimensions
     private static final int ROW_HEIGHT = 70;
     private static final int TRIGGER_ROW_HEIGHT = 60;
-    private static final int HORIZONTAL_GAP = 10;
     private static final int PIXELS_PER_SECOND = 20; // Base scale: 20 pixels per second at zoom 1.0
     
     // Track the total duration for scaling
-    private long totalDurationMSec;
-    private static long curMSec;
+    private double totalDurationMSec;
+    private static double curMSec;
 
     public TimelineGUI(ArrayList<Effect> effects, HashMap<Integer, RFTrigger> count2RFTrigger) {
         this.effects = effects;
@@ -117,6 +116,7 @@ public class TimelineGUI {
     private void updateZoom(JLabel zoomLabel) {
         zoomLabel.setText(String.format("Zoom: %.1fx", zoomFactor));
         updateTimelineLayout();
+        scrubTimeline(curMSec);
     }
 
     private void updateTimelineLayout() {
@@ -125,10 +125,6 @@ public class TimelineGUI {
         updateComponentPositions();
         timelinePanel.revalidate();
         timelinePanel.repaint();
-    }
-
-    private int calculateTimelineWidth() {
-        return (int)((totalDurationMSec / 1000.0) * PIXELS_PER_SECOND * zoomFactor) + (2 * HORIZONTAL_GAP);
     }
 
     private void updateComponentPositions() {
@@ -191,7 +187,25 @@ public class TimelineGUI {
     }
 
     private void createTimelinePane() {
-        timelinePanel = new JPanel(null);
+        timelinePanel = new JPanel(null) {
+            @Override
+            protected void paintComponent(Graphics g) {
+                super.paintComponent(g);
+            }
+            
+            @Override
+            protected void paintChildren(Graphics g) {
+                super.paintChildren(g);
+                
+                // Draw the redline at current time position after all children are drawn
+                Graphics2D g2d = (Graphics2D) g;
+                g2d.setColor(new Color(255, 0, 0, 128)); // Semi-transparent red
+                g2d.setStroke(new BasicStroke(2.0f));
+                
+                int xPosition = calculateXPosition(curMSec);
+                g2d.drawLine(xPosition, 0, xPosition, getHeight());
+            }
+        };
         timelinePanel.setPreferredSize(new Dimension(calculateTimelineWidth(),  TRIGGER_ROW_HEIGHT + ROW_HEIGHT));
         updateComponentPositions();
 
@@ -201,13 +215,17 @@ public class TimelineGUI {
         timelineScrollPane.setBorder(BorderFactory.createEmptyBorder());
     }
 
-    private int calculateXPosition(long timestampMillis) {
-        return HORIZONTAL_GAP + (int)((timestampMillis / 1000.0) * PIXELS_PER_SECOND * zoomFactor);
+    private int calculateXPosition(double timestampMillis) {
+        return (int)((timestampMillis * PIXELS_PER_SECOND * zoomFactor) / 1000);
     }
 
     private int calculateEffectWidth(Effect effect) {
         long durationMillis = effect.getDuration().toMillis();
-        return (int)((durationMillis / 1000.0) * PIXELS_PER_SECOND * zoomFactor);
+        return (int)((durationMillis * PIXELS_PER_SECOND * zoomFactor) / 1000);
+    }
+
+    private int calculateTimelineWidth() {
+        return (int)((totalDurationMSec * PIXELS_PER_SECOND * zoomFactor) / 1000);
     }
 
     private int findAvailableRow(List<List<TimeRange>> rows, TimeRange newRange) {
@@ -247,17 +265,17 @@ public class TimelineGUI {
         }
     }
 
-    public void scrubTimeline(long ms) {
+    public void scrubTimeline(double ms) {
         // Calculate the x position for the given time
         int xPosition = calculateXPosition(ms);
-        // Get the viewport width (this dont work no matter what i do)
-        // Calculate the scroll position to center the time
-        int scrollPosition = (int) Math.max(0, xPosition - ((PIXELS_PER_SECOND / zoomFactor) * 20));
+        // Get the viewport width
+        int scrollPosition = (int) Math.max(0, xPosition - (PIXELS_PER_SECOND * 20));
         curMSec = ms;
         
-        // Update the scroll position
+        // Update the scroll position and redraw the timeline
         SwingUtilities.invokeLater(() -> {
             timelineScrollPane.getHorizontalScrollBar().setValue(scrollPosition);
+            timelinePanel.repaint(); // Add this line to trigger redraw
         });
     }
 
