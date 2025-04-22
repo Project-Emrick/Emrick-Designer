@@ -58,6 +58,9 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
     private JPanel effectViewPanel;
     private JPanel timelinePanel;
 
+    private JSplitPane hSplitPane;
+    private JSplitPane vSplitPane;
+
     // dots
     private final JLabel sysMsg = new JLabel("Welcome to Emrick Designer!", SwingConstants.RIGHT);
     private final Timer clearSysMsg = new Timer(5000, e -> {
@@ -338,8 +341,8 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
 
         if (archivePaths != null) {
             frame.remove(mainContentPanel);
-            frame.remove(effectViewPanel);
-            frame.remove(timelinePanel);
+            frame.remove(hSplitPane);
+            frame.remove(vSplitPane);
             frame.revalidate();
             frame.repaint();
         }
@@ -402,12 +405,12 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         effectViewPanel.setBorder(BorderFactory.createTitledBorder("Effect View"));
         effectViewPanel.add(effectGUI.getEffectPanel());
 
-        JSplitPane hSplitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, mainContentPanel, effectViewPanel);
+        hSplitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, mainContentPanel, effectViewPanel);
         hSplitPane.setOneTouchExpandable(true);
         hSplitPane.setDividerLocation(0.8);
         hSplitPane.setDividerSize(10);
         hSplitPane.setResizeWeight(0.8);
-        JSplitPane vSplitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT, hSplitPane, timelinePanel);
+        vSplitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT, hSplitPane, timelinePanel);
         vSplitPane.setOneTouchExpandable(true);
         vSplitPane.setDividerLocation(0.6);
         vSplitPane.setDividerSize(10);
