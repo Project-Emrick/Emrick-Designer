@@ -1833,6 +1833,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                             case CIRCLE_CHASE -> genEffect = GeneratedEffectLoader.generateCircleChaseEffectFromEffect(geEffect);
                             case GENERATED_FADE -> genEffect = GeneratedEffectLoader.generateFadeEffectFromEffect(geEffect);
                             case ALTERNATING_COLOR -> genEffect = GeneratedEffectLoader.generateAlternatingColorEffectFromEffect(geEffect);
+                            case NOISE -> genEffect = GeneratedEffectLoader.generateRandomNoiseEffectFromEffect(geEffect);
                             default -> genEffect = GeneratedEffectLoader.generateStaticColorEffectFromEffect(geEffect);
                         }
                         genEffect.setStartTime(genEffect.getStartTime() + oldProjectLenMs);
@@ -2013,6 +2014,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                             case CIRCLE_CHASE -> genEffect = GeneratedEffectLoader.generateCircleChaseEffectFromEffect(geEffect);
                             case GENERATED_FADE -> genEffect = GeneratedEffectLoader.generateFadeEffectFromEffect(geEffect);
                             case ALTERNATING_COLOR -> genEffect = GeneratedEffectLoader.generateAlternatingColorEffectFromEffect(geEffect);
+                            case NOISE -> genEffect = GeneratedEffectLoader.generateRandomNoiseEffectFromEffect(geEffect);
                             default -> genEffect = GeneratedEffectLoader.generateStaticColorEffectFromEffect(geEffect);
                         }
                         genEffect.setStartTime(genEffect.getStartTime() + oldProjectLenMs);
