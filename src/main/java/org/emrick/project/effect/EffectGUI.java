@@ -41,20 +41,20 @@ public class EffectGUI implements ActionListener {
     // Status
     boolean isNewEffect;
     // Pattern Parameter Components
-    JLabel startTimeLabel = new JLabel("Start: ");
-    JLabel endTimeLabel = new JLabel("End: ");
-    JLabel startColorLabel = new JLabel("Start color: ");
-    JLabel endColorLabel = new JLabel("End color: ");
-    JLabel delayLabel = new JLabel("Delay (s): ");
-    JLabel durationLabel = new JLabel("Duration (s): ");
-    JLabel timeoutLabel = new JLabel("Timeout (s): ");
-    JLabel staticColorLabel = new JLabel("Static color: ");
-    JLabel waveColorLabel = new JLabel("Wave Color: ");
-    JLabel color1Label = new JLabel("Color 1: ");
-    JLabel color2Label = new JLabel("Color 2: ");
-    JLabel rateLabel = new JLabel("Rate (Hz): ");
-    JLabel speedLabel = new JLabel("Speed: ");
-    JLabel angleLabel = new JLabel("Start Angle (deg): ");
+    JLabel startTimeLabel = new JLabel("Start:");
+    JLabel endTimeLabel = new JLabel("End:");
+    JLabel startColorLabel = new JLabel("Start color:");
+    JLabel endColorLabel = new JLabel("End color:");
+    JLabel delayLabel = new JLabel("Delay (s):");
+    JLabel durationLabel = new JLabel("Duration (s):");
+    JLabel timeoutLabel = new JLabel("Timeout (s):");
+    JLabel staticColorLabel = new JLabel("Static color:");
+    JLabel waveColorLabel = new JLabel("Wave Color:");
+    JLabel color1Label = new JLabel("Color 1:");
+    JLabel color2Label = new JLabel("Color 2:");
+    JLabel rateLabel = new JLabel("Rate (Hz):");
+    JLabel speedLabel = new JLabel("Speed:");
+    JLabel angleLabel = new JLabel("Start Angle (deg):");
     JButton startColorBtn = new JButton();
     JButton endColorBtn = new JButton();
     JTextField delayField = new JTextField(10);
@@ -64,7 +64,7 @@ public class EffectGUI implements ActionListener {
     JTextField angleField = new JTextField(10);
     JButton applyBtn = new JButton("REPLACE THIS TEXT WITH UPDATE OR CREATE EFFECT TEXT");
     JButton deleteBtn = new JButton("Delete effect");
-    JLabel batteryEstLabel = new JLabel("Estimated Battery Usage: ");
+    JLabel batteryEstLabel = new JLabel("Estimated Battery Usage:");
     ArrayList<JButton> colorButtons = new ArrayList<>();
     String[] durationTypeOptions = {"Seconds", "Counts"};
     JComboBox<String> durationTypeSelect = new JComboBox<String>(durationTypeOptions);
@@ -184,7 +184,7 @@ public class EffectGUI implements ActionListener {
             case CHASE -> "Chase Effect";
             case GRID -> "Grid Effect";
             case NOISE -> "Noise Effect";
-            default -> throw new IllegalStateException("Unexpected effect type: " + effectType);
+            default -> throw new IllegalStateException("Unexpected effect type:" + effectType);
         };
         
         Border innerBorder = BorderFactory.createTitledBorder(effectTitle);
@@ -297,17 +297,17 @@ public class EffectGUI implements ActionListener {
         addComponentPair(startTimeLabel, endTimeLabel);
         
         // Add dropdown with label
-        addComponentPair(new JLabel("Duration Type: "), durationTypeSelect);
+        addComponentPair(new JLabel("Duration Type:"), durationTypeSelect);
         
         // Add color components
         addComponentPair(startColorLabel, startColorBtn);
         addComponentPair(durationLabel, durationField);
 
         // Add checkboxes with labels
-        addComponentPair(new JLabel("Vary Time: "), createCheckBoxPanel(varyTimeBox));
-        addComponentPair(new JLabel("Vary Brightness: "), createCheckBoxPanel(varyBrightnessBox));
-        addComponentPair(new JLabel("Vary Color: "), createCheckBoxPanel(varyColorBox));
-        addComponentPair(new JLabel("Fade: "), createCheckBoxPanel(fadeBox));
+        addComponentPair(new JLabel("Vary Time:"), createCheckBoxPanel(varyTimeBox));
+        addComponentPair(new JLabel("Vary Brightness:"), createCheckBoxPanel(varyBrightnessBox));
+        addComponentPair(new JLabel("Vary Color:"), createCheckBoxPanel(varyColorBox));
+        addComponentPair(new JLabel("Fade:"), createCheckBoxPanel(fadeBox));
 
         // Setup checkbox listeners
         varyTimeBox.setSelected(effectMod.isVaryTime());
@@ -339,21 +339,21 @@ public class EffectGUI implements ActionListener {
 
         // Add conditional components based on checkbox states
         if (effectMod.isVaryTime()) {
-            addComponentPair(new JLabel("Max Time (ms): "), maxTimeField);
-            addComponentPair(new JLabel("Min Time (ms): "), minTimeField);
+            addComponentPair(new JLabel("Max Time (ms):"), maxTimeField);
+            addComponentPair(new JLabel("Min Time (ms):"), minTimeField);
         } else {
-            addComponentPair(new JLabel("Time (ms): "), maxTimeField);
+            addComponentPair(new JLabel("Time (ms):"), maxTimeField);
         }
 
         if (effectMod.isVaryBrightness()) {
-            addComponentPair(new JLabel("Max Brightness: "), maxBrightnessField);
-            addComponentPair(new JLabel("Min Brightness: "), minBrightnessField);
+            addComponentPair(new JLabel("Max Brightness:"), maxBrightnessField);
+            addComponentPair(new JLabel("Min Brightness:"), minBrightnessField);
         } else {
-            addComponentPair(new JLabel("Brightness: "), maxBrightnessField);
+            addComponentPair(new JLabel("Brightness:"), maxBrightnessField);
         }
 
         if (effectMod.isVaryColor()) {
-            addComponentPair(new JLabel("Color Variance: "), colorVarianceField);
+            addComponentPair(new JLabel("Color Variance:"), colorVarianceField);
         }
 
         // Add action buttons
@@ -374,7 +374,7 @@ public class EffectGUI implements ActionListener {
         deleteBtn.addActionListener(this);
 
         addComponentPair(startTimeLabel, endTimeLabel);
-        addComponentPair(new JLabel("Set count by: "), durationTypeSelect);
+        addComponentPair(new JLabel("Set count by:"), durationTypeSelect);
         addComponentPair(durationLabel, durationField);
 
         if (effectMod.getShapes() == null) {
@@ -572,7 +572,7 @@ public class EffectGUI implements ActionListener {
         deleteBtn.addActionListener(this);
 
         addComponentPair(startTimeLabel, endTimeLabel);
-        addComponentPair(new JLabel("Set count by: "), durationTypeSelect);
+        addComponentPair(new JLabel("Set count by:"), durationTypeSelect);
         addComponentPair(new JLabel("Color 1"), colorButton1);
         addComponentPair(new JLabel("Color 2"), colorButton2);
 
@@ -584,7 +584,7 @@ public class EffectGUI implements ActionListener {
 
         addComponentPair(durationLabel, durationField);
         addComponentPair(speedLabel, speedField);
-        addComponentPair(new JLabel("Set rotation: "), rotationSelect);
+        addComponentPair(new JLabel("Set rotation:"), rotationSelect);
         addComponentPair(deleteBtn, applyBtn);
 
         setupGUI();
@@ -616,14 +616,14 @@ public class EffectGUI implements ActionListener {
         addComponentPair(startTimeLabel, endTimeLabel);
         
         // Add dropdown with label
-        addComponentPair(new JLabel("Duration Type: "), durationTypeSelect);
+        addComponentPair(new JLabel("Duration Type:"), durationTypeSelect);
         
         // Add color components
         addComponentPair(startColorLabel, startColorBtn);
         addComponentPair(waveColorLabel, endColorBtn);
         addComponentPair(durationLabel, durationField);
         addComponentPair(speedLabel, speedField);
-        addComponentPair(new JLabel("Wave Direction: "), directionSelect);
+        addComponentPair(new JLabel("Wave Direction:"), directionSelect);
 
         // Add action buttons
         addComponentPair(deleteBtn, applyBtn);
@@ -658,7 +658,7 @@ public class EffectGUI implements ActionListener {
         addComponentPair(startTimeLabel, endTimeLabel);
         
         // Add dropdown with label
-        addComponentPair(new JLabel("Duration Type: "), durationTypeSelect);
+        addComponentPair(new JLabel("Duration Type:"), durationTypeSelect);
         
         // Add color components
         addComponentPair(staticColorLabel, startColorBtn);
@@ -666,7 +666,7 @@ public class EffectGUI implements ActionListener {
         addComponentPair(durationLabel, durationField);
         addComponentPair(speedLabel, speedField);
         addComponentPair(angleLabel, angleField);
-        addComponentPair(new JLabel("Rotation Direction: "), rotationSelect);
+        addComponentPair(new JLabel("Rotation Direction:"), rotationSelect);
 
         // Add action buttons
         addComponentPair(deleteBtn, applyBtn);
@@ -700,14 +700,14 @@ public class EffectGUI implements ActionListener {
         addComponentPair(startTimeLabel, endTimeLabel);
         
         // Add dropdown with label
-        addComponentPair(new JLabel("Duration Type: "), durationTypeSelect);
+        addComponentPair(new JLabel("Duration Type:"), durationTypeSelect);
         
         // Add color components
         addComponentPair(staticColorLabel, startColorBtn);
         addComponentPair(endColorLabel, endColorBtn);
         addComponentPair(durationLabel, durationField);
         addComponentPair(speedLabel, speedField);
-        addComponentPair(new JLabel("Ripple Direction: "), directionSelect);
+        addComponentPair(new JLabel("Ripple Direction:"), directionSelect);
 
         // Add action buttons
         addComponentPair(deleteBtn, applyBtn);
@@ -734,7 +734,7 @@ public class EffectGUI implements ActionListener {
         deleteBtn.addActionListener(this);
 
         addComponentPair(startTimeLabel, endTimeLabel);
-        addComponentPair(new JLabel("Set count by: " , SwingConstants.RIGHT), durationTypeSelect);
+        addComponentPair(new JLabel("Set count by:" , SwingConstants.RIGHT), durationTypeSelect);
         addComponentPair(staticColorLabel, startColorBtn);
         addComponentPair(durationLabel, durationField);
         addComponentPair(deleteBtn, applyBtn);
@@ -764,7 +764,7 @@ public class EffectGUI implements ActionListener {
         deleteBtn.addActionListener(this);
 
         addComponentPair(startTimeLabel, endTimeLabel);
-        addComponentPair(new JLabel("Set count by: ", SwingConstants.RIGHT), durationTypeSelect);
+        addComponentPair(new JLabel("Set count by:", SwingConstants.RIGHT), durationTypeSelect);
         addComponentPair(staticColorLabel, startColorBtn);
         addComponentPair(endColorLabel, endColorBtn);
         addComponentPair(durationLabel, durationField);
@@ -795,7 +795,7 @@ public class EffectGUI implements ActionListener {
         deleteBtn.addActionListener(this);
 
         addComponentPair(startTimeLabel, endTimeLabel);
-        addComponentPair(new JLabel("Set count by: ", SwingConstants.RIGHT), durationTypeSelect);
+        addComponentPair(new JLabel("Set count by:", SwingConstants.RIGHT), durationTypeSelect);
         addComponentPair(color1Label, startColorBtn);
         addComponentPair(color2Label, endColorBtn);
         addComponentPair(durationLabel, durationField);
