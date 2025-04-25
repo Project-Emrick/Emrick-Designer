@@ -245,10 +245,8 @@ public class EffectGUI implements ActionListener {
         this.effectPanel.add(buttonPanel, BorderLayout.SOUTH);
     }
 
-    private void addComponent(JComponent component, int width, int height) {
+    private void setupComponent(JComponent component, int width, int height) {
         component.setPreferredSize(new Dimension(width, height));
-        component.setMaximumSize(new Dimension(width, height));
-        component.setMinimumSize(new Dimension(width, height));
         
         // Additional styling based on component type
         if (component instanceof JTextField) {
@@ -279,14 +277,14 @@ public class EffectGUI implements ActionListener {
         panelComponents.clear();
 
         // Set up components
-        addComponent(startColorBtn, 25, 25);
-        addComponent(durationField, 100, 25);
-        addComponent(durationTypeSelect, 100, 25);
-        addComponent(maxTimeField, 100, 25);
-        addComponent(minTimeField, 100, 25);
-        addComponent(maxBrightnessField, 100, 25);
-        addComponent(minBrightnessField, 100, 25);
-        addComponent(colorVarianceField, 100, 25);
+        setupComponent(startColorBtn, 25, 25);
+        setupComponent(durationField, 100, 25);
+        setupComponent(durationTypeSelect, 100, 25);
+        setupComponent(maxTimeField, 100, 25);
+        setupComponent(minTimeField, 100, 25);
+        setupComponent(maxBrightnessField, 100, 25);
+        setupComponent(minBrightnessField, 100, 25);
+        setupComponent(colorVarianceField, 100, 25);
 
         // Add listeners
         startColorBtn.addActionListener(this);
@@ -375,25 +373,9 @@ public class EffectGUI implements ActionListener {
         applyBtn.addActionListener(this);
         deleteBtn.addActionListener(this);
 
-        //////////////// 0th Row ////////////////
-
-        JComponent[] currentComponents = new JComponent[2];
-        currentComponents[0] = startTimeLabel;
-        currentComponents[1] = endTimeLabel;
-        panelComponents.add(currentComponents);
-
-        //////////////// 1st Row ////////////////
-        currentComponents = new JComponent[2];
-        currentComponents[0] = new JLabel("Set count by: ");
-        addComponent(durationTypeSelect, 100, 25);
-        currentComponents[1] = durationTypeSelect;
-        panelComponents.add(currentComponents);
-
-        currentComponents = new JComponent[2];
-        currentComponents[0] = durationLabel;
-        addComponent(durationField, 100, 25);
-        currentComponents[1] = durationField;
-        panelComponents.add(currentComponents);
+        addComponentPair(startTimeLabel, endTimeLabel);
+        addComponentPair(new JLabel("Set count by: "), durationTypeSelect);
+        addComponentPair(durationLabel, durationField);
 
         if (effectMod.getShapes() == null) {
             effectMod.setShapes(new GridShape[1]);
@@ -402,7 +384,6 @@ public class EffectGUI implements ActionListener {
 
         if (showGridIndex == -1) {
             for (int i = 0; i < effectMod.getShapes().length; i++) {
-                currentComponents = new JComponent[2];
                 JButton editShapeButton = new JButton("Edit Shape " + (i + 1));
                 int index = i;
                 editShapeButton.addActionListener(e -> {
@@ -430,12 +411,9 @@ public class EffectGUI implements ActionListener {
                     effectMod.setShapes(tmp);
                     effectListener.onUpdateEffectPanel(effectMod, this.isNewEffect, -1);
                 });
-                currentComponents[0] = editShapeButton;
-                currentComponents[1] = deleteShapeButton;
-                panelComponents.add(currentComponents);
+                addComponentPair(editShapeButton, deleteShapeButton);
             }
 
-            currentComponents = new JComponent[1];
             JButton addButton = new JButton("Add Shape");
             addButton.addActionListener(e -> {
                 GridShape[] prevShapes = effectMod.getShapes();
@@ -447,38 +425,26 @@ public class EffectGUI implements ActionListener {
                 effectMod.setShapes(newShapes);
                 effectListener.onUpdateEffectPanel(effectMod, this.isNewEffect, showGridIndex);
             });
-            currentComponents[0] = addButton;
-            panelComponents.add(currentComponents);
+            addComponentPair(new JLabel(""), addButton);
 
         } else {
-            currentComponents = new JComponent[2];
-            JLabel colorLabel = new JLabel("Set Shape Color");
-            currentComponents[0] = colorLabel;
             JButton colorButton = new JButton();
             colorButton.addActionListener(this);
-            addComponent(colorButton, 25, 25);
+            setupComponent(colorButton, 25, 25);
             colorButton.setBackground(effectMod.getShapes()[showGridIndex].getColor());
-            currentComponents[1] = colorButton;
-            panelComponents.add(currentComponents);
-            currentComponents = new JComponent[2];
-            JLabel hMoveLabel = new JLabel("Set horizontal movement");
-            currentComponents[0] = hMoveLabel;
-            addComponent(hMovementField, 100, 25);
+            addComponentPair(new JLabel("Set Shape Color:"), colorButton);
+
+            setupComponent(hMovementField, 100, 25);
             hMovementField.setText(Integer.toString(effectMod.getShapes()[showGridIndex].getMovement().x));
-            currentComponents[1] = hMovementField;
-            panelComponents.add(currentComponents);
-            currentComponents = new JComponent[2];
-            JLabel vMoveLabel = new JLabel("Set vertical movement");
-            currentComponents[0] = vMoveLabel;
-            addComponent(vMovementField, 100, 25);
+            addComponentPair(new JLabel("Set horizontal movement:"), hMovementField);
+
+            setupComponent(vMovementField, 100, 25);
             vMovementField.setText(Integer.toString(effectMod.getShapes()[showGridIndex].getMovement().y));
-            currentComponents[1] = vMovementField;
-            panelComponents.add(currentComponents);
-            currentComponents = new JComponent[1];
+            addComponentPair(new JLabel("Set vertical movement:"), vMovementField);
+
             wholePerformer.setSelected(effectMod.getShapes()[showGridIndex].getSpeed() == 2);
-            currentComponents[0] = wholePerformer;
-            panelComponents.add(currentComponents);
-            currentComponents = new JComponent[1];
+            addComponentPair(new JLabel("Whole Performer:"), wholePerformer);
+
             JButton doneButton = new JButton("Done");
             doneButton.addActionListener(e -> {
                 applyToEffectMod();
@@ -537,19 +503,16 @@ public class EffectGUI implements ActionListener {
                 effectListener.onChangeSelectionMode(false, effectMod.getShapes()[showGridIndex].getLedStrips());
                 effectListener.onUpdateEffectPanel(effectMod, this.isNewEffect, -1);
             });
-            currentComponents[0] = doneButton;
+            JComponent[] currentComponents = {doneButton};
             panelComponents.add(currentComponents);
         }
 
-        currentComponents = new JComponent[2];
-        currentComponents[0] = deleteBtn;
         if (showGridIndex != -1) {
             applyBtn.setEnabled(false);
         } else {
             applyBtn.setEnabled(true);
         }
-        currentComponents[1] = applyBtn;
-        panelComponents.add(currentComponents);
+        addComponentPair(deleteBtn, applyBtn);
 
         setupGUI();
 
@@ -560,11 +523,11 @@ public class EffectGUI implements ActionListener {
         this.effectPanel = new JPanel();
 
         JButton colorButton1 = new JButton();
-        addComponent(colorButton1, 25, 25);
+        setupComponent(colorButton1, 25, 25);
         colorButton1.setFocusable(false);
         colorButton1.addActionListener(this);
         JButton colorButton2 = new JButton();
-        addComponent(colorButton2, 25, 25);
+        setupComponent(colorButton2, 25, 25);
         colorButton2.setFocusable(false);
         colorButton2.addActionListener(this);
 
@@ -581,7 +544,7 @@ public class EffectGUI implements ActionListener {
 
         for (int i = 2; i < effectMod.getChaseSequence().size(); i++) {
             JButton colorButton = new JButton();
-            addComponent(colorButton, 25, 25);
+            setupComponent(colorButton, 25, 25);
             colorButton.setFocusable(false);
             colorButton.addActionListener(this);
             colorButton.setBackground(effectMod.getChaseSequence().get(i));
@@ -589,7 +552,7 @@ public class EffectGUI implements ActionListener {
         }
 
         JButton addColorButton = new JButton();
-        addComponent(addColorButton, 25, 25);
+        setupComponent(addColorButton, 25, 25);
         addColorButton.setFocusable(false);
         addColorButton.addActionListener(this);
         addColorButton.setBackground(Color.black);
@@ -608,69 +571,21 @@ public class EffectGUI implements ActionListener {
         applyBtn.addActionListener(this);
         deleteBtn.addActionListener(this);
 
-        //////////////// 0th Row ////////////////
-
-        JComponent[] currentComponents = new JComponent[2];
-        currentComponents[0] = startTimeLabel;
-        currentComponents[1] = endTimeLabel;
-        panelComponents.add(currentComponents);
-
-        //////////////// 1st Row ////////////////
-        currentComponents = new JComponent[2];
-        currentComponents[0] = new JLabel("Set count by: ");
-        addComponent(durationTypeSelect, 100, 25);
-        currentComponents[1] = durationTypeSelect;
-        panelComponents.add(currentComponents);
-
-        //////////////// 2nd Row ////////////////
-        currentComponents = new JComponent[2];
-        currentComponents[0] = new JLabel("Color 1");
-        currentComponents[1] = colorButton1;
-        panelComponents.add(currentComponents);
-
-        //////////////// 3rd Row ////////////////
-        currentComponents = new JComponent[2];
-        currentComponents[0] = new JLabel("Color 2");
-        currentComponents[1] = colorButton2;
-        panelComponents.add(currentComponents);
+        addComponentPair(startTimeLabel, endTimeLabel);
+        addComponentPair(new JLabel("Set count by: "), durationTypeSelect);
+        addComponentPair(new JLabel("Color 1"), colorButton1);
+        addComponentPair(new JLabel("Color 2"), colorButton2);
 
         int adj = 0;
-
         for (int i = 2; i < colorButtons.size(); i++) {
             adj++;
-            currentComponents = new JComponent[2];
-            currentComponents[0] = new JLabel("Color " + (2 + adj));
-            currentComponents[1] = colorButtons.get(i);
-            panelComponents.add(currentComponents);
+            addComponentPair(new JLabel("Color " + (2 + adj)), colorButtons.get(i));
         }
 
-        //////////////// 4th +n Row ////////////////
-
-        currentComponents = new JComponent[2];
-        currentComponents[0] = durationLabel;
-        addComponent(durationField, 100, 25);
-        currentComponents[1] = durationField;
-        panelComponents.add(currentComponents);
-
-        //////////////// 5th +n Row ////////////////
-
-        currentComponents = new JComponent[2];
-        currentComponents[0] = speedLabel;
-        addComponent(speedField, 100, 25);
-        currentComponents[1] = speedField;
-        panelComponents.add(currentComponents);
-
-        //////////////// 6th +n Row ////////////////
-        currentComponents = new JComponent[1];
-        addComponent(rotationSelect, 100, 25);
-        currentComponents[0] = rotationSelect;
-        panelComponents.add(currentComponents);
-
-        //////////////// Apply or Delete Buttons ////////////////
-        currentComponents = new JComponent[2];
-        currentComponents[0] = deleteBtn;
-        currentComponents[1] = applyBtn;
-        panelComponents.add(currentComponents);
+        addComponentPair(durationLabel, durationField);
+        addComponentPair(speedLabel, speedField);
+        addComponentPair(new JLabel("Set rotation: "), rotationSelect);
+        addComponentPair(deleteBtn, applyBtn);
 
         setupGUI();
 
@@ -682,12 +597,12 @@ public class EffectGUI implements ActionListener {
         panelComponents.clear();
 
         // Set up components
-        addComponent(startColorBtn, 25, 25);
-        addComponent(durationField, 100, 25);
-        addComponent(durationTypeSelect, 100, 25);
-        addComponent(directionSelect, 100, 25);
-        addComponent(speedField, 100, 25);
-        addComponent(endColorBtn, 25, 25);
+        setupComponent(startColorBtn, 25, 25);
+        setupComponent(durationField, 100, 25);
+        setupComponent(durationTypeSelect, 100, 25);
+        setupComponent(directionSelect, 100, 25);
+        setupComponent(speedField, 100, 25);
+        setupComponent(endColorBtn, 25, 25);
 
         // Add listeners
         startColorBtn.addActionListener(this);
@@ -723,13 +638,13 @@ public class EffectGUI implements ActionListener {
         panelComponents.clear();
 
         // Set up components
-        addComponent(startColorBtn, 25, 25);
-        addComponent(durationField, 100, 25);
-        addComponent(durationTypeSelect, 100, 25);
-        addComponent(rotationSelect, 100, 25);
-        addComponent(speedField, 100, 25);
-        addComponent(angleField, 100, 25);
-        addComponent(endColorBtn, 25, 25);
+        setupComponent(startColorBtn, 25, 25);
+        setupComponent(durationField, 100, 25);
+        setupComponent(durationTypeSelect, 100, 25);
+        setupComponent(rotationSelect, 100, 25);
+        setupComponent(speedField, 100, 25);
+        setupComponent(angleField, 100, 25);
+        setupComponent(endColorBtn, 25, 25);
 
         // Add listeners
         startColorBtn.addActionListener(this);
@@ -766,12 +681,12 @@ public class EffectGUI implements ActionListener {
         panelComponents.clear();
 
         // Set up components
-        addComponent(startColorBtn, 25, 25);
-        addComponent(durationField, 100, 25);
-        addComponent(durationTypeSelect, 100, 25);
-        addComponent(directionSelect, 100, 25);
-        addComponent(speedField, 100, 25);
-        addComponent(endColorBtn, 25, 25);
+        setupComponent(startColorBtn, 25, 25);
+        setupComponent(durationField, 100, 25);
+        setupComponent(durationTypeSelect, 100, 25);
+        setupComponent(directionSelect, 100, 25);
+        setupComponent(speedField, 100, 25);
+        setupComponent(endColorBtn, 25, 25);
 
         // Add listeners
         startColorBtn.addActionListener(this);
@@ -818,38 +733,11 @@ public class EffectGUI implements ActionListener {
         applyBtn.addActionListener(this);
         deleteBtn.addActionListener(this);
 
-        //////////////// 0th Row ////////////////
-        JComponent[] currentComponents = new JComponent[2];
-        currentComponents[0] = startTimeLabel;
-        currentComponents[1] = endTimeLabel;
-        panelComponents.add(currentComponents);
-
-        //////////////// 1st Row ////////////////
-        currentComponents = new JComponent[2];
-        currentComponents[0] = new JLabel("Set count by: ");
-        addComponent(durationTypeSelect, 100, 25);
-        currentComponents[1] = durationTypeSelect;
-        panelComponents.add(currentComponents);
-
-        //////////////// 2nd Row ////////////////
-        currentComponents = new JComponent[2];
-        currentComponents[0] = staticColorLabel;
-        addComponent(startColorBtn, 25, 25);
-        currentComponents[1] = startColorBtn;
-        panelComponents.add(currentComponents);
-
-        //////////////// 3rd Row ////////////////
-        currentComponents = new JComponent[2];
-        currentComponents[0] = durationLabel;
-        addComponent(durationField, 100, 25);
-        currentComponents[1] = durationField;
-        panelComponents.add(currentComponents);
-
-        //////////////// Apply or Delete Buttons ////////////////
-        currentComponents = new JComponent[2];
-        currentComponents[0] = deleteBtn;
-        currentComponents[1] = applyBtn;
-        panelComponents.add(currentComponents);
+        addComponentPair(startTimeLabel, endTimeLabel);
+        addComponentPair(new JLabel("Set count by: " , SwingConstants.RIGHT), durationTypeSelect);
+        addComponentPair(staticColorLabel, startColorBtn);
+        addComponentPair(durationLabel, durationField);
+        addComponentPair(deleteBtn, applyBtn);
 
         setupGUI();
 
@@ -875,45 +763,12 @@ public class EffectGUI implements ActionListener {
         applyBtn.addActionListener(this);
         deleteBtn.addActionListener(this);
 
-        //////////////// 0th Row ////////////////
-        JComponent[] currentComponents = new JComponent[2];
-        currentComponents[0] = startTimeLabel;
-        currentComponents[1] = endTimeLabel;
-        panelComponents.add(currentComponents);
-
-        //////////////// 1st Row ////////////////
-        currentComponents = new JComponent[2];
-        currentComponents[0] = new JLabel("Set count by: ");
-        addComponent(durationTypeSelect, 100, 25);
-        currentComponents[1] = durationTypeSelect;
-        panelComponents.add(currentComponents);
-
-        //////////////// 1st Row ////////////////
-        currentComponents = new JComponent[2];
-        currentComponents[0] = staticColorLabel;
-        addComponent(startColorBtn, 25, 25);
-        currentComponents[1] = startColorBtn;
-        panelComponents.add(currentComponents);
-
-        //////////////// 2nd Row ////////////////
-        currentComponents = new JComponent[2];
-        currentComponents[0] = endColorLabel;
-        addComponent(endColorBtn, 25, 25);
-        currentComponents[1] = endColorBtn;
-        panelComponents.add(currentComponents);
-
-        //////////////// 3rd Row ////////////////
-        currentComponents = new JComponent[2];
-        currentComponents[0] = durationLabel;
-        addComponent(durationField, 100, 25);
-        currentComponents[1] = durationField;
-        panelComponents.add(currentComponents);
-
-        //////////////// Apply or Delete Buttons ////////////////
-        currentComponents = new JComponent[2];
-        currentComponents[0] = deleteBtn;
-        currentComponents[1] = applyBtn;
-        panelComponents.add(currentComponents);
+        addComponentPair(startTimeLabel, endTimeLabel);
+        addComponentPair(new JLabel("Set count by: ", SwingConstants.RIGHT), durationTypeSelect);
+        addComponentPair(staticColorLabel, startColorBtn);
+        addComponentPair(endColorLabel, endColorBtn);
+        addComponentPair(durationLabel, durationField);
+        addComponentPair(deleteBtn, applyBtn);
 
         setupGUI();
 
@@ -939,52 +794,13 @@ public class EffectGUI implements ActionListener {
         applyBtn.addActionListener(this);
         deleteBtn.addActionListener(this);
 
-        //////////////// 0th Row ////////////////
-        JComponent[] currentComponents = new JComponent[2];
-        currentComponents[0] = startTimeLabel;
-        currentComponents[1] = endTimeLabel;
-        panelComponents.add(currentComponents);
-
-        //////////////// 1st Row ////////////////
-        currentComponents = new JComponent[2];
-        currentComponents[0] = new JLabel("Set count by: ");
-        addComponent(durationTypeSelect, 100, 25);
-        currentComponents[1] = durationTypeSelect;
-        panelComponents.add(currentComponents);
-
-        //////////////// 1st Row ////////////////
-        currentComponents = new JComponent[2];
-        currentComponents[0] = color1Label;
-        addComponent(startColorBtn, 25, 25);
-        currentComponents[1] = startColorBtn;
-        panelComponents.add(currentComponents);
-
-        //////////////// 2nd Row ////////////////
-        currentComponents = new JComponent[2];
-        currentComponents[0] = color2Label;
-        addComponent(endColorBtn, 25, 25);
-        currentComponents[1] = endColorBtn;
-        panelComponents.add(currentComponents);
-
-        //////////////// 3rd Row ////////////////
-        currentComponents = new JComponent[2];
-        currentComponents[0] = durationLabel;
-        addComponent(durationField, 100, 25);
-        currentComponents[1] = durationField;
-        panelComponents.add(currentComponents);
-
-        //////////////// 4th Row ////////////////
-        currentComponents = new JComponent[2];
-        currentComponents[0] = rateLabel;
-        addComponent(speedField, 100, 25);
-        currentComponents[1] = speedField;
-        panelComponents.add(currentComponents);
-
-        //////////////// Apply or Delete Buttons ////////////////
-        currentComponents = new JComponent[2];
-        currentComponents[0] = deleteBtn;
-        currentComponents[1] = applyBtn;
-        panelComponents.add(currentComponents);
+        addComponentPair(startTimeLabel, endTimeLabel);
+        addComponentPair(new JLabel("Set count by: ", SwingConstants.RIGHT), durationTypeSelect);
+        addComponentPair(color1Label, startColorBtn);
+        addComponentPair(color2Label, endColorBtn);
+        addComponentPair(durationLabel, durationField);
+        addComponentPair(rateLabel, speedField);
+        addComponentPair(deleteBtn, applyBtn);
 
         setupGUI();
 
