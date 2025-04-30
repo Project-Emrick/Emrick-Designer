@@ -160,12 +160,12 @@ public class LightingDisplay {
             long start = e.getStartTimeMSec();
             int i = 0;
             long checkPointStart = start;
-            while (checkPointStart + checkpoints.get(i).time() <= currMS) {
+            while (i < checkpoints.size() - 1 && checkPointStart + checkpoints.get(i).time() <= currMS) {
                 checkPointStart += checkpoints.get(i).time();
                 i++;
             }
             Checkpoint curr = checkpoints.get(i);
-            if (e.isFade()) {
+            if (e.isFade() && i < checkpoints.size() - 1) {
                 Checkpoint next = checkpoints.get(i + 1);
                 long startGradient = checkPointStart;
                 float shiftProgress = (float) (currMS - startGradient) / (float) curr.time();

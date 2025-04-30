@@ -56,10 +56,11 @@ public class RFTrigger implements TimelineEvent {
         Border outerBorder = BorderFactory.createLineBorder(Color.lightGray);
         Border innerBorder = BorderFactory.createEmptyBorder(2,2,2,2);
 
-        JPanel widgetPanel = new JPanel(new GridLayout(5,1));
+        JPanel widgetPanel = new JPanel(new GridLayout(4,1));
         widgetPanel.setBorder(BorderFactory.createCompoundBorder(outerBorder, innerBorder));
 
-        JLabel titleLabel = new JLabel("<html><b>" + title + "</b></html>");
+        JLabel titleLabel = new JLabel("<html><b>" + (((title != null) && !title.trim().isEmpty()) ? 
+            title : "<p text=\"gray\"> RF Trigger </p>") + "</b></html>");
         JLabel countLabel = new JLabel("Count: " + count);
         JLabel timeLabel = new JLabel("Time: " + TimeManager.getFormattedTime(timestampMillis));
 
