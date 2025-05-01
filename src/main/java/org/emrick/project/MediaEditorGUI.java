@@ -58,9 +58,6 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
     private JPanel effectViewPanel;
     private JPanel timelinePanel;
 
-    private JSplitPane hSplitPane;
-    private JSplitPane vSplitPane;
-
     // dots
     private final JLabel sysMsg = new JLabel("Welcome to Emrick Designer!", SwingConstants.RIGHT);
     private final Timer clearSysMsg = new Timer(5000, e -> {
@@ -341,8 +338,8 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
 
         if (archivePaths != null) {
             frame.remove(mainContentPanel);
-            frame.remove(hSplitPane);
-            frame.remove(vSplitPane);
+            frame.remove(effectViewPanel);
+            frame.remove(timelinePanel);
             frame.revalidate();
             frame.repaint();
         }
@@ -405,12 +402,12 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         effectViewPanel.setBorder(BorderFactory.createTitledBorder("Effect View"));
         effectViewPanel.add(effectGUI.getEffectPanel());
 
-        hSplitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, mainContentPanel, effectViewPanel);
+        JSplitPane hSplitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, mainContentPanel, effectViewPanel);
         hSplitPane.setOneTouchExpandable(true);
         hSplitPane.setDividerLocation(0.8);
         hSplitPane.setDividerSize(10);
         hSplitPane.setResizeWeight(0.8);
-        vSplitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT, hSplitPane, timelinePanel);
+        JSplitPane vSplitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT, hSplitPane, timelinePanel);
         vSplitPane.setOneTouchExpandable(true);
         vSplitPane.setDividerLocation(0.6);
         vSplitPane.setDividerSize(10);
@@ -1932,7 +1929,6 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                             case CIRCLE_CHASE -> genEffect = GeneratedEffectLoader.generateCircleChaseEffectFromEffect(geEffect);
                             case GENERATED_FADE -> genEffect = GeneratedEffectLoader.generateFadeEffectFromEffect(geEffect);
                             case ALTERNATING_COLOR -> genEffect = GeneratedEffectLoader.generateAlternatingColorEffectFromEffect(geEffect);
-                            case NOISE -> genEffect = GeneratedEffectLoader.generateRandomNoiseEffectFromEffect(geEffect);
                             default -> genEffect = GeneratedEffectLoader.generateStaticColorEffectFromEffect(geEffect);
                         }
                         genEffect.setStartTime(genEffect.getStartTime() + oldProjectLenMs);
@@ -2113,7 +2109,6 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                             case CIRCLE_CHASE -> genEffect = GeneratedEffectLoader.generateCircleChaseEffectFromEffect(geEffect);
                             case GENERATED_FADE -> genEffect = GeneratedEffectLoader.generateFadeEffectFromEffect(geEffect);
                             case ALTERNATING_COLOR -> genEffect = GeneratedEffectLoader.generateAlternatingColorEffectFromEffect(geEffect);
-                            case NOISE -> genEffect = GeneratedEffectLoader.generateRandomNoiseEffectFromEffect(geEffect);
                             default -> genEffect = GeneratedEffectLoader.generateStaticColorEffectFromEffect(geEffect);
                         }
                         genEffect.setStartTime(genEffect.getStartTime() + oldProjectLenMs);
@@ -2767,9 +2762,6 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
     public void onTimeChange(long time) {
         footballFieldPanel.currentMS = time;
         ledStripViewGUI.setCurrentMS(time);
-
-        // sync timeline with scrub bar
-        timelineGUI.scrubTimeline(scrubBarGUI.getTime() * 1000);
     }
 
     @Override
@@ -3074,6 +3066,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             count = timeManager.MSec2Count(ms);
         }
         scrubBarGUI.setScrub(count);
+        timelineGUI.scrubTimeline(ms);
     }
 
     /**

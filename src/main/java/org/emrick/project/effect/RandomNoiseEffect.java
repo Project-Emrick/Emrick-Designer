@@ -169,7 +169,7 @@ public class RandomNoiseEffect implements GeneratedEffect {
         Effect e = new Effect(startTime);
         e.setEndTimeMSec(endTime);
         e.setId(id);
-        e.setEffectType(EffectList.NOISE);
+        e.setEffectType(getEffectType());
         e.setDuration(duration);
         e.setVaryBrightness(varyBrightness);
         e.setVaryColor(varyColor);
@@ -330,7 +330,7 @@ public class RandomNoiseEffect implements GeneratedEffect {
             Effect e = new Effect(startTime);
             e.setEndTimeMSec(endTime);
             e.setId(id);
-            e.setEffectType(EffectList.NOISE);
+            e.setEffectType(getEffectType());
             e.setDuration(duration);
             e.setVaryBrightness(varyBrightness);
             e.setVaryColor(varyColor);
