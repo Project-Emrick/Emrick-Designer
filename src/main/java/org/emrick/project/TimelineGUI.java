@@ -6,6 +6,8 @@ import org.emrick.project.effect.TimelineEvent;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.MouseWheelEvent;
+import java.awt.event.MouseWheelListener;
 import java.time.Duration;
 import java.util.*;
 import java.util.List;
@@ -20,6 +22,7 @@ public class TimelineGUI {
     
     // Zoom controls
     private JPanel zoomPanel;
+    private JLabel zoomLabel;
     private static double zoomFactor = 1.0;
     private static final double MIN_ZOOM = 0.1;
     private static final double MAX_ZOOM = 5.0;
@@ -75,45 +78,88 @@ public class TimelineGUI {
         mainPanel = new JPanel(new BorderLayout());
         mainPanel.add(zoomPanel, BorderLayout.NORTH);
         mainPanel.add(timelineScrollPane, BorderLayout.CENTER);
+        
+        // Add mouse wheel listener for zooming with Ctrl+Scroll
+        addMouseWheelZoomSupport();
 
         scrubTimeline(curMSec);
         System.out.println("curMSec: " + curMSec);
     }
 
+    /**
+     * Creates the zoom control panel with buttons and label
+     */
     private void createZoomControls() {
         zoomPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
         
         JButton zoomInButton = new JButton("+");
         JButton zoomOutButton = new JButton("-");
         JButton resetZoomButton = new JButton("Reset Zoom");
-        JLabel zoomLabel = new JLabel(String.format("Zoom: %.1fx", zoomFactor));
+        zoomLabel = new JLabel(String.format("Zoom: %.1fx", zoomFactor));
         
-        zoomInButton.addActionListener(e -> {
-            if (zoomFactor + ZOOM_STEP < MAX_ZOOM) {
-                zoomFactor += ZOOM_STEP;
-                updateZoom(zoomLabel);
-            }
-        });
-        
-        zoomOutButton.addActionListener(e -> {
-            if (zoomFactor - ZOOM_STEP > MIN_ZOOM) {
-                zoomFactor -= ZOOM_STEP;
-                updateZoom(zoomLabel);
-            }
-        });
-        
-        resetZoomButton.addActionListener(e -> {
-            zoomFactor = 1.0;
-            updateZoom(zoomLabel);
-        });
+        zoomInButton.addActionListener(e -> zoomIn());
+        zoomOutButton.addActionListener(e -> zoomOut());
+        resetZoomButton.addActionListener(e -> resetZoom());
         
         zoomPanel.add(zoomOutButton);
         zoomPanel.add(zoomLabel);
         zoomPanel.add(zoomInButton);
         zoomPanel.add(resetZoomButton);
     }
-
-    private void updateZoom(JLabel zoomLabel) {
+    
+    /**
+     * Adds support for zooming with Ctrl+Mouse wheel
+     */
+    private void addMouseWheelZoomSupport() {
+        timelineScrollPane.addMouseWheelListener(new MouseWheelListener() {
+            @Override
+            public void mouseWheelMoved(MouseWheelEvent e) {
+                if (e.isControlDown()) {
+                    if (e.getWheelRotation() < 0) {
+                        // Scroll up - zoom in
+                        zoomIn();
+                    } else {
+                        // Scroll down - zoom out
+                        zoomOut();
+                    }
+                    e.consume(); // Prevent the scroll event from being processed further
+                }
+            }
+        });
+    }
+    
+    /**
+     * Increases the zoom level by one step
+     */
+    private void zoomIn() {
+        if (zoomFactor + ZOOM_STEP < MAX_ZOOM) {
+            zoomFactor += ZOOM_STEP;
+            updateZoom();
+        }
+    }
+    
+    /**
+     * Decreases the zoom level by one step
+     */
+    private void zoomOut() {
+        if (zoomFactor - ZOOM_STEP > MIN_ZOOM) {
+            zoomFactor -= ZOOM_STEP;
+            updateZoom();
+        }
+    }
+    
+    /**
+     * Resets the zoom level to the default (1.0)
+     */
+    private void resetZoom() {
+        zoomFactor = 1.0;
+        updateZoom();
+    }
+    
+    /**
+     * Updates the zoom display and timeline layout
+     */
+    private void updateZoom() {
         zoomLabel.setText(String.format("Zoom: %.1fx", zoomFactor));
         updateTimelineLayout();
         scrubTimeline(curMSec);
