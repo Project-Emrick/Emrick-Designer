@@ -10,10 +10,11 @@
 package org.emrick.project;
 
 /* Import Packages */
-import javax.swing.JOptionPane;
+import javax.swing.*;
 import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Consumer;
 
 public class PlatformIOFunction {
     /**
@@ -62,50 +63,72 @@ public class PlatformIOFunction {
      * @param dataDirectory path to dataDirectory for PlatformIO
      */
     public static void uploadFilesystem(File dataDirectory) {
-        try {
-            // Validate data directory
-            if (!dataDirectory.exists() || !dataDirectory.isDirectory()) {
-                JOptionPane.showMessageDialog(null,
-                        "Invalid data directory: " + dataDirectory.getAbsolutePath(),
-                        "Configuration Error",
-                        JOptionPane.ERROR_MESSAGE);
-                return;
+        OutputDialog dialog = new OutputDialog();
+        dialog.setVisible(true);
+
+        SwingWorker<Void, String> worker = new SwingWorker<>() {
+            @Override
+            protected Void doInBackground() {
+                try {
+                    if (!dataDirectory.exists() || !dataDirectory.isDirectory()) {
+                        SwingUtilities.invokeLater(() -> JOptionPane.showMessageDialog(null,
+                                "Invalid data directory: " + dataDirectory.getAbsolutePath(),
+                                "Configuration Error",
+                                JOptionPane.ERROR_MESSAGE));
+                        return null;
+                    }
+
+                    File projectDir = dataDirectory.getParentFile();
+                    if (projectDir == null || !projectDir.exists()) {
+                        SwingUtilities.invokeLater(() -> JOptionPane.showMessageDialog(null,
+                                "Invalid project directory for path: " + dataDirectory.getAbsolutePath(),
+                                "Configuration Error",
+                                JOptionPane.ERROR_MESSAGE));
+                        return null;
+                    }
+
+                    // Step 1: Build with output consumer
+                    if (!buildFilesystem(projectDir, this::publishLine)) {
+                        return null;
+                    }
+
+                    // Step 2: Detect COM port
+                    String comPort = detectSingleCOMPort();
+                    if (comPort == null) {
+                        return null;
+                    }
+
+                    // Step 3: Upload with output consumer
+                    uploadToPort(comPort, projectDir, this::publishLine);
+
+                } catch (Exception e) {
+                    publishLine("Error: " + e.getMessage());
+                    e.printStackTrace();
+                }
+                return null;
             }
 
-            // Set working directory to parent of data directory
-            File projectDir = dataDirectory.getParentFile();
-            if (projectDir == null || !projectDir.exists()) {
-                JOptionPane.showMessageDialog(null,
-                        "Invalid project directory for path: " + dataDirectory.getAbsolutePath(),
-                        "Configuration Error",
-                        JOptionPane.ERROR_MESSAGE);
-                return;
+            private void publishLine(String line) {
+                publish(line);
             }
 
-            // Step 1: Build the filesystem
-            if (!buildFilesystem(projectDir)) {
-                return; // Build failed, error already shown
+            @Override
+            protected void process(List<String> chunks) {
+                for (String line : chunks) {
+                    dialog.appendLine(line);
+                }
             }
 
-            // Step 2: Get single COM port
-            String comPort = detectSingleCOMPort();
-            if (comPort == null) {
-                return; // Error already shown to user
+            @Override
+            protected void done() {
+                dialog.enableCloseButton();
             }
+        };
 
-            // Step 3: Upload filesystem to detected port
-            uploadToPort(comPort, projectDir);
-
-        } catch (Exception e) {
-            JOptionPane.showMessageDialog(null,
-                    "An error occurred: " + e.getMessage(),
-                    "Error",
-                    JOptionPane.ERROR_MESSAGE);
-            e.printStackTrace();
-        }
+        worker.execute();
     }
 
-    private static boolean buildFilesystem(File projectDir) {
+    private static boolean buildFilesystem(File projectDir, Consumer<String> outputConsumer) {
         try {
             String activationPath = getActivationPath();
             String command = String.join(" && ",
@@ -118,27 +141,27 @@ public class PlatformIOFunction {
             builder.redirectErrorStream(true);
             Process process = builder.start();
 
-            readProcessOutput(process);
+            readProcessOutput(process, outputConsumer);
 
             int exitCode = process.waitFor();
             if (exitCode != 0) {
-                JOptionPane.showMessageDialog(null,
+                SwingUtilities.invokeLater(() -> JOptionPane.showMessageDialog(null,
                         "Error building filesystem. Exit code: " + exitCode,
                         "Build Error",
-                        JOptionPane.ERROR_MESSAGE);
+                        JOptionPane.ERROR_MESSAGE));
                 return false;
             }
             return true;
         } catch (IOException | InterruptedException e) {
-            JOptionPane.showMessageDialog(null,
+            SwingUtilities.invokeLater(() -> JOptionPane.showMessageDialog(null,
                     "Build error: " + e.getMessage(),
                     "Error",
-                    JOptionPane.ERROR_MESSAGE);
+                    JOptionPane.ERROR_MESSAGE));
             return false;
         }
     }
 
-    private static void uploadToPort(String port, File projectDir) {
+    private static void uploadToPort(String port, File projectDir, Consumer<String> outputConsumer) {
         try {
             String activationPath = getActivationPath();
             String command = String.join(" && ",
@@ -151,25 +174,27 @@ public class PlatformIOFunction {
             builder.redirectErrorStream(true);
             Process process = builder.start();
 
-            readProcessOutput(process);
+            readProcessOutput(process, outputConsumer);
 
             int exitCode = process.waitFor();
-            if (exitCode == 0) {
-                JOptionPane.showMessageDialog(null,
-                        "Upload successful to " + port,
-                        "Success",
-                        JOptionPane.INFORMATION_MESSAGE);
-            } else {
-                JOptionPane.showMessageDialog(null,
-                        "Upload failed to " + port + ". Exit code: " + exitCode,
-                        "Error",
-                        JOptionPane.ERROR_MESSAGE);
-            }
+            SwingUtilities.invokeLater(() -> {
+                if (exitCode == 0) {
+                    JOptionPane.showMessageDialog(null,
+                            "Upload successful to " + port,
+                            "Success",
+                            JOptionPane.INFORMATION_MESSAGE);
+                } else {
+                    JOptionPane.showMessageDialog(null,
+                            "Upload failed to " + port + ". Exit code: " + exitCode,
+                            "Error",
+                            JOptionPane.ERROR_MESSAGE);
+                }
+            });
         } catch (IOException | InterruptedException e) {
-            JOptionPane.showMessageDialog(null,
+            SwingUtilities.invokeLater(() -> JOptionPane.showMessageDialog(null,
                     "Upload error: " + e.getMessage(),
                     "Error",
-                    JOptionPane.ERROR_MESSAGE);
+                    JOptionPane.ERROR_MESSAGE));
         }
     }
 
@@ -219,11 +244,11 @@ public class PlatformIOFunction {
         return "C:\\Users\\" + username + "\\.platformio\\penv\\Scripts\\activate";
     }
 
-    private static void readProcessOutput(Process process) throws IOException {
+    private static void readProcessOutput(Process process, Consumer<String> outputConsumer) throws IOException {
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
             String line;
             while ((line = reader.readLine()) != null) {
-                System.out.println(line);
+                outputConsumer.accept(line);
             }
         }
     }

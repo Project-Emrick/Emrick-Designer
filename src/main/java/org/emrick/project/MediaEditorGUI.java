@@ -1190,7 +1190,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                 String token = (showTokenField.getText());
                 String color = (verificationColorField.getText());
                 String numLeds = (numberLEDsField.getText());
-                String label = (marcherLabelField.getText());
+                String label = (marcherLabelField.getText().toUpperCase());
 
                 /* Process Show Data, Update the Platform.io Data .txt Files */
                 SetupFileSystem.processShowData(dataDir, packetDir, csv, token, color, numLeds, label);
