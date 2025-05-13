@@ -1111,6 +1111,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             }
         });
 
+        // TODO: Finish this portion. Check Notepad++ for more details.
         // Wired Show Programming
         wiredProgramming.addActionListener(j -> {
             /* Check for Board Receiver Type */
@@ -1162,14 +1163,20 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
 
             /* Create New Text Pop-up For Parameter Entry */
             JTextField pathToDataFolderField = new JTextField();
+            JTextField pathToExtractedPacketsField = new JTextField();      // Maybe Not Needed, Post Project Save
+            JTextField pathToCSVFileField = new JTextField();               // Maybe Not Needed, Post Project Save
             JTextField showTokenField = new JTextField();
             JTextField verificationColorField = new JTextField();
+            JTextField numberLEDsField = new JTextField();                  // Maybe Not Needed, try to edit code later.
             JTextField marcherLabelField = new JTextField();
 
             Object[] inputs = {
                     new JLabel("Path to Data Directory: "), pathToDataFolderField,
+                    new JLabel("Path to Packets Directory: "), pathToExtractedPacketsField,
+                    new JLabel("Path to .csv File: "), pathToCSVFileField,
                     new JLabel("Show Token: "), showTokenField,
-                    new JLabel("RGB Verification Color ('R,G,B'): "), verificationColor,
+                    new JLabel("RGB Verification Color ('R,G,B'): "), verificationColorField,
+                    new JLabel("Number LEDs: "), numberLEDsField,
                     new JLabel("Marcher Label: "), marcherLabelField
             };
 
@@ -1177,14 +1184,19 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
 
             if (option == JOptionPane.OK_OPTION) {
                 /* Get Data Ready */
-                File dataDir = new File(pathToDataFolderField.toString());
-                //File packetDir = new File();
-                //File csv = new File();
-                String token = (showTokenField.toString());
-                String color = (verificationColorField.toString());
-                //String ledCount =
-                String label = (marcherLabelField.toString());
+                File dataDir = new File(pathToDataFolderField.getText());
+                File packetDir = new File(pathToExtractedPacketsField.getText());
+                File csv = new File(pathToCSVFileField.getText());
+                String token = (showTokenField.getText());
+                String color = (verificationColorField.getText());
+                String numLeds = (numberLEDsField.getText());
+                String label = (marcherLabelField.getText());
 
+                /* Process Show Data, Update the Platform.io Data .txt Files */
+                SetupFileSystem.processShowData(dataDir, packetDir, csv, token, color, numLeds, label);
+
+                /* Upload Filesystem via Platform.io */
+                PlatformIOFunction.uploadFilesystem(dataDir);
             }
         });
 
