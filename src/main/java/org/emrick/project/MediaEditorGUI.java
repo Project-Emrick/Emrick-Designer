@@ -24,6 +24,8 @@ import java.nio.file.*;
 import java.time.*;
 import java.util.*;
 
+import java.util.Properties;
+
 /**
  * Main class of Emrick Designer.
  * Contains all GUI elements and logic for light show design and Emrick board interaction
@@ -1140,7 +1142,6 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
 
             /* Check for Windows OS */
             String os = System.getProperty("os.name").toLowerCase();
-
             if (!os.contains("win")) {
                 JOptionPane.showMessageDialog(null,
                         "PlatformIO check is only supported on Windows at this time.",
@@ -1150,25 +1151,43 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             }
 
             /* Check for Platform.io Default Location */
-            boolean isPlatformIOInstalled = PlatformIOFunction.verifyInstallation();
-
-            if(isPlatformIOInstalled) {
-                System.out.println("PlatformIO is installed and accessible.");
-            } else {
+            if (!PlatformIOFunction.verifyInstallation()) {
                 JOptionPane.showMessageDialog(null,
                         "PlatformIO not found or an error occurred. Please install PlatformIO.",
                         "PlatformIO Error",
                         JOptionPane.ERROR_MESSAGE);
+                return;
             }
 
-            /* Create New Text Pop-up For Parameter Entry */
+            /* Create properties and config file */
+            Properties props = new Properties();
+            File configFile = new File(System.getProperty("user.home"), ".board_config.properties");
+
+            /* Create text fields with persistent data */
             JTextField pathToDataFolderField = new JTextField();
-            JTextField pathToExtractedPacketsField = new JTextField();      // Maybe Not Needed, Post Project Save
-            JTextField pathToCSVFileField = new JTextField();               // Maybe Not Needed, Post Project Save
+            JTextField pathToExtractedPacketsField = new JTextField();
+            JTextField pathToCSVFileField = new JTextField();
             JTextField showTokenField = new JTextField();
             JTextField verificationColorField = new JTextField();
-            JTextField numberLEDsField = new JTextField();                  // Maybe Not Needed, try to edit code later.
-            JTextField marcherLabelField = new JTextField();
+            JTextField marcherLabelField = new JTextField(); // Removed LED count field
+
+            /* Load saved properties */
+            if (configFile.exists()) {
+                try (FileInputStream in = new FileInputStream(configFile)) {
+                    props.load(in);
+                    pathToDataFolderField.setText(props.getProperty("data.dir", ""));
+                    pathToExtractedPacketsField.setText(props.getProperty("packets.dir", ""));
+                    pathToCSVFileField.setText(props.getProperty("csv.file", ""));
+                    showTokenField.setText(props.getProperty("show.token", ""));
+                    verificationColorField.setText(props.getProperty("verification.color", ""));
+                    marcherLabelField.setText(props.getProperty("marcher.label", ""));
+                } catch (IOException e) {
+                    JOptionPane.showMessageDialog(null,
+                            "Error loading settings: " + e.getMessage(),
+                            "Config Error",
+                            JOptionPane.ERROR_MESSAGE);
+                }
+            }
 
             Object[] inputs = {
                     new JLabel("Path to Data Directory: "), pathToDataFolderField,
@@ -1176,21 +1195,69 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                     new JLabel("Path to .csv File: "), pathToCSVFileField,
                     new JLabel("Show Token: "), showTokenField,
                     new JLabel("RGB Verification Color ('R,G,B'): "), verificationColorField,
-                    new JLabel("Number LEDs: "), numberLEDsField,
-                    new JLabel("Marcher Label: "), marcherLabelField
+                    new JLabel("Marcher Label: "), marcherLabelField  // Removed LED count field
             };
 
-            int option = JOptionPane.showConfirmDialog(null, inputs, "Enter board parameters:", JOptionPane.OK_CANCEL_OPTION);
+            /* Create custom dialog with save-on-close functionality */
+            JOptionPane pane = new JOptionPane(
+                    inputs,
+                    JOptionPane.PLAIN_MESSAGE,
+                    JOptionPane.OK_CANCEL_OPTION
+            );
+            JDialog dialog = pane.createDialog("Enter board parameters:");
 
-            if (option == JOptionPane.OK_OPTION) {
-                /* Get Data Ready */
+            dialog.addWindowListener(new WindowAdapter() {
+                @Override
+                public void windowClosing(WindowEvent e) {
+                    savePropertiesToFile(
+                            props,
+                            configFile,
+                            pathToDataFolderField.getText(),
+                            pathToExtractedPacketsField.getText(),
+                            pathToCSVFileField.getText(),
+                            showTokenField.getText(),
+                            verificationColorField.getText(),
+                            marcherLabelField.getText()
+                    );
+                }
+            });
+
+            dialog.setVisible(true);
+
+            /* Handle user selection */
+            Object selectedValue = pane.getValue();
+            if (selectedValue != null && (Integer)selectedValue == JOptionPane.OK_OPTION) {
+                // Save properties on OK
+                savePropertiesToFile(
+                        props,
+                        configFile,
+                        pathToDataFolderField.getText(),
+                        pathToExtractedPacketsField.getText(),
+                        pathToCSVFileField.getText(),
+                        showTokenField.getText(),
+                        verificationColorField.getText(),
+                        marcherLabelField.getText()
+                );
+
+                /* Process parameters */
                 File dataDir = new File(pathToDataFolderField.getText());
                 File packetDir = new File(pathToExtractedPacketsField.getText());
                 File csv = new File(pathToCSVFileField.getText());
-                String token = (showTokenField.getText());
-                String color = (verificationColorField.getText());
-                String numLeds = (numberLEDsField.getText());
-                String label = (marcherLabelField.getText().toUpperCase());
+                String token = showTokenField.getText();
+                String color = verificationColorField.getText();
+                String label = marcherLabelField.getText().toUpperCase();
+
+                /* Automatically get LED count from CSV */
+                String numLeds;
+                try {
+                    numLeds = CSVLEDCounter.getLedCount(label, String.valueOf(csv));
+                } catch (Error e) {
+                    JOptionPane.showMessageDialog(null,
+                            "Error reading LED count from CSV: " + e.getMessage(),
+                            "CSV Error",
+                            JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
 
                 /* Process Show Data, Update the Platform.io Data .txt Files */
                 SetupFileSystem.processShowData(dataDir, packetDir, csv, token, color, numLeds, label);
@@ -1241,6 +1308,32 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         } else {
             frame.revalidate();
             frame.repaint();
+        }
+    }
+
+    // Helper method to save properties
+    private void savePropertiesToFile(Properties props,
+                                      File configFile,
+                                      String dataDir,
+                                      String packetsDir,
+                                      String csvFile,
+                                      String showToken,
+                                      String verificationColor,
+                                      String marcherLabel) {
+        props.setProperty("data.dir", dataDir);
+        props.setProperty("packets.dir", packetsDir);
+        props.setProperty("csv.file", csvFile);
+        props.setProperty("show.token", showToken);
+        props.setProperty("verification.color", verificationColor);
+        props.setProperty("marcher.label", marcherLabel);
+
+        try (FileOutputStream out = new FileOutputStream(configFile)) {
+            props.store(out, "Board Configuration");
+        } catch (IOException e) {
+            JOptionPane.showMessageDialog(null,
+                    "Error saving settings: " + e.getMessage(),
+                    "Save Error",
+                    JOptionPane.ERROR_MESSAGE);
         }
     }
 
