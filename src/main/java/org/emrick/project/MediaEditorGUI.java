@@ -958,24 +958,75 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             st.writeToSerialPort("w");
         });
 
-        // Check Color
+        /* Check Color */
         checkColor.addActionListener(e -> {
+            /* Check for Board Receiver Type */
             SerialTransmitter st = comPortPrompt("Receiver");
-            if (!st.getType().equals("Receiver")) return;
-
-            JLabel idLabel = new JLabel("Enter LED strip label to test color at current time");
-            JTextField idField = new JTextField();
-
-            Object[] inputs = {idLabel, idField};
-            int option = JOptionPane.showConfirmDialog(frame, inputs, "Enter LED Strip label", JOptionPane.OK_CANCEL_OPTION);
-            if (option == JOptionPane.OK_OPTION) {
-                LEDStrip l = footballFieldPanel.drill.ledStrips.stream().filter(led -> led.getLabel().equalsIgnoreCase(idField.getText())).findFirst().orElse(null);
-                if (l != null) {
-                    Color c = footballFieldPanel.calculateColor(effectManager.getEffect(l, (long)(scrubBarGUI.getTime() * 1000)));
-                    System.out.println(c);
-                    st.writeColorCheck(c);
+            try {
+                if (!st.getType().equals("Receiver")) {
+                    throw new IllegalStateException("Not a receiver");
                 }
+            } catch (IllegalStateException ex) {
+                JOptionPane.showMessageDialog(
+                        null,
+                        "Transmitter Detected, Please plug in a receiver.",
+                        "Error",
+                        JOptionPane.ERROR_MESSAGE
+                );
+                return;
+            } catch (Exception ex) {
+                JOptionPane.showMessageDialog(
+                        null,
+                        "Please plug a board in before proceeding.",
+                        "Error",
+                        JOptionPane.ERROR_MESSAGE
+                );
+                return;
             }
+
+            /* Add the java color wheel */
+            JColorChooser colorChooser = new JColorChooser(Color.WHITE);
+
+            // Create custom dialog that stays open
+            JDialog dialog = new JDialog(frame, "Color Check - Select and Send Colors", false);
+            dialog.setLayout(new BorderLayout());
+
+            // Create button panel with Send and Close buttons
+            JButton sendButton = new JButton("Send to Lights");
+            JButton closeButton = new JButton("Close");
+            JPanel buttonPanel = new JPanel();
+            buttonPanel.add(sendButton);
+            buttonPanel.add(closeButton);
+
+            // Add components to dialog
+            dialog.add(colorChooser, BorderLayout.CENTER);
+            dialog.add(buttonPanel, BorderLayout.SOUTH);
+
+            // Configure dialog properties
+            dialog.setSize(650, 450);
+            dialog.setLocationRelativeTo(frame);
+            dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
+
+            // Add button actions
+            sendButton.addActionListener(ev -> {
+                Color selectedColor = colorChooser.getColor();
+                st.writeColorCheck(selectedColor);
+
+                // Visual feedback
+                sendButton.setText("Sent! Click to Send Again");
+                sendButton.setBackground(new Color(220, 255, 220));
+                Timer timer = new Timer(750, event -> {
+                    sendButton.setText("Send to Lights");
+                    sendButton.setBackground(null);
+                });
+                timer.setRepeats(false);
+                timer.start();
+            });
+
+            closeButton.addActionListener(ev -> dialog.dispose());
+
+            // Show the dialog
+            dialog.setVisible(true);
         });
 
         /* Hardware Menu */
@@ -1113,7 +1164,6 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             }
         });
 
-        // TODO: Finish this portion. Check Notepad++ for more details.
         // Wired Show Programming
         wiredProgramming.addActionListener(j -> {
             /* Check for Board Receiver Type */
