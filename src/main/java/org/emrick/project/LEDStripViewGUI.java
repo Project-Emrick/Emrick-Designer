@@ -1,15 +1,21 @@
 package org.emrick.project;
 
-import org.emrick.project.actions.LEDConfig;
+import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.Point;
+import java.util.ArrayList;
+
+import javax.swing.BorderFactory;
+import javax.swing.BoxLayout;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.border.Border;
+
 import org.emrick.project.effect.Effect;
-import org.emrick.project.effect.EffectList;
 import org.emrick.project.effect.EffectManager;
 import org.emrick.project.effect.LightingDisplay;
-
-import javax.swing.*;
-import javax.swing.border.Border;
-import java.awt.*;
-import java.util.ArrayList;
 
 public class LEDStripViewGUI extends JPanel {
     private ArrayList<LEDStrip> ledStrips;
@@ -145,9 +151,15 @@ public class LEDStripViewGUI extends JPanel {
             for (int i = 0; i < ledsPerSide; i++) {
                 locations.add(new Point(0, ledHeight * ((ledsPerSide - i))));
             }
+            Graphics2D g2d = (Graphics2D) g;
+            int arcSize = 10; // Controls the roundness of corners
+            
             for (int i = 0; i < ledStrip.getLedConfig().getLEDCount(); i++) {
-                g.setColor(colors.get(i));
-                g.fillRect(locations.get((i+(int)Math.ceil((double)ledStrip.getLedConfig().getLEDCount() / 8.0)) % (ledsPerSide * 4)).x, locations.get((i+(int)Math.ceil((double)ledStrip.getLedConfig().getLEDCount() / 8.0)) % (ledsPerSide * 4)).y, ledWidth-1, ledHeight-1);
+                g2d.setColor(colors.get(i));
+                int index = (i+(int)Math.ceil((double)ledStrip.getLedConfig().getLEDCount() / 8.0)) % (ledsPerSide * 4);
+                int xPos = locations.get(index).x;
+                int yPos = locations.get(index).y;
+                g2d.fillRoundRect(xPos, yPos, ledWidth-1, ledHeight-1, arcSize, arcSize);
             }
         }
 

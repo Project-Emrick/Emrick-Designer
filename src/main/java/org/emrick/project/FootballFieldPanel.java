@@ -1,17 +1,29 @@
 package org.emrick.project;
 
+import java.awt.Color;
+import java.awt.Font;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.Image;
+import java.awt.Point;
+import java.awt.Polygon;
+import java.awt.RenderingHints;
+import java.awt.event.MouseEvent;
+import java.awt.geom.Point2D;
+import java.awt.image.BufferedImage;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+
+import javax.swing.JPanel;
+import javax.swing.event.MouseInputListener;
+
 import org.emrick.project.effect.Effect;
 import org.emrick.project.effect.EffectManager;
 import org.emrick.project.effect.LightingDisplay;
 import org.emrick.project.effect.RFTrigger;
-
-import javax.swing.*;
-import javax.swing.event.MouseInputListener;
-import java.awt.*;
-import java.awt.event.MouseEvent;
-import java.awt.geom.Point2D;
-import java.awt.image.BufferedImage;
-import java.util.*;
 
 public class FootballFieldPanel extends JPanel implements RepaintListener {
     public enum SelectionMethod {
@@ -249,16 +261,30 @@ public class FootballFieldPanel extends JPanel implements RepaintListener {
                     } else {
                         g.setColor(new Color(0, 0, 0, effectTransparency));
                     }
-                    g.fillRect((int) x + l.getLedConfig().gethOffset(), (int) y + l.getLedConfig().getvOffset(), l.getLedConfig().getWidth(), l.getLedConfig().getHeight());
+
+                    // Use Graphics2D to draw rounded rectangles for LED strips
+                    Graphics2D g2d = (Graphics2D) g;
+                    
+                    // Enable antialiasing for smoother rendering
+                    g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                    g2d.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
+                    
+                    int arcSize = 4; // Controls the roundness of corners
+                    int xPos = (int) x + l.getLedConfig().gethOffset();
+                    int yPos = (int) y + l.getLedConfig().getvOffset();
+                    int width = l.getLedConfig().getWidth();
+                    int height = l.getLedConfig().getHeight();
+
+                    g2d.fillRoundRect(xPos, yPos, width, height, arcSize, arcSize);
 
                     if (innerSelectedLEDStrips.contains(l)) {
-                        g.setColor(Color.BLUE);
+                        g2d.setColor(Color.BLUE);
                     }else if (selectedLEDStrips.contains(l)) {
-                        g.setColor(Color.GREEN);
+                        g2d.setColor(Color.GREEN);
                     } else {
-                        g.setColor(Color.WHITE);
+                        g2d.setColor(Color.WHITE);
                     }
-                    g.drawRect((int) x + l.getLedConfig().gethOffset(), (int) y + l.getLedConfig().getvOffset(), l.getLedConfig().getWidth(), l.getLedConfig().getHeight());
+                    g2d.drawRoundRect(xPos, yPos, width, height, arcSize, arcSize);
                 }
 
                 if (showLabels) {

@@ -101,6 +101,8 @@ public class EffectGUI implements ActionListener {
     public EffectGUI(Effect effect, long startTime, EffectListener effectListener, EffectList effectType, boolean isNew, int index) {
         this.effect = effect;
         this.effectListener = effectListener;
+        // Set this effect as the currently viewed effect in the Effect class
+        Effect.currentlyViewedEffect = effect;
         effectListener.onChangeSelectionMode(index != -1, index != -1 ? effect.getShapes()[index].getLedStrips() : new HashSet<>());
         this.effectType = effectType;
         this.isNewEffect = true;
@@ -191,13 +193,6 @@ public class EffectGUI implements ActionListener {
         Border outerBorder = BorderFactory.createEmptyBorder(5, 5, 5, 5);
         this.effectPanel.setBorder(BorderFactory.createCompoundBorder(outerBorder, innerBorder));
 
-        // Remove the buttons from panelComponents and store them
-        JComponent[] buttonComponents = null;
-        if (!panelComponents.isEmpty() && 
-            panelComponents.get(panelComponents.size() - 1)[0] == deleteBtn) {
-            buttonComponents = panelComponents.remove(panelComponents.size() - 1);
-        }
-
         // Add remaining components to the grid
         int row = 0;
         for (JComponent[] components : panelComponents) {
@@ -231,14 +226,14 @@ public class EffectGUI implements ActionListener {
 
         // Create button panel with centered alignment
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 5));
-        if (buttonComponents != null) {
-            // Set preferred size for buttons to make them more visually balanced
-            deleteBtn.setPreferredSize(new Dimension(120, 25));
-            applyBtn.setPreferredSize(new Dimension(120, 25));
-            
-            buttonPanel.add(buttonComponents[0]); // Delete button
-            buttonPanel.add(buttonComponents[1]); // Apply button
-        }
+
+        // Set preferred size for buttons to make them more visually balanced
+        applyBtn.setPreferredSize(new Dimension(120, 25));
+        deleteBtn.setPreferredSize(new Dimension(120, 25));
+        deleteBtn.setBackground(UIManager.getColor("Component.error.borderColor"));
+        
+        buttonPanel.add(applyBtn);
+        buttonPanel.add(deleteBtn);
         
         // Add components to the main panel
         this.effectPanel.add(scrollPane, BorderLayout.CENTER);
@@ -355,9 +350,6 @@ public class EffectGUI implements ActionListener {
         if (effectMod.isVaryColor()) {
             addComponentPair(new JLabel("Color Variance:"), colorVarianceField);
         }
-
-        // Add action buttons
-        addComponentPair(deleteBtn, applyBtn);
 
         setupGUI();
         loadEffectToGUI(effectMod);
@@ -512,7 +504,6 @@ public class EffectGUI implements ActionListener {
         } else {
             applyBtn.setEnabled(true);
         }
-        addComponentPair(deleteBtn, applyBtn);
 
         setupGUI();
 
@@ -585,7 +576,6 @@ public class EffectGUI implements ActionListener {
         addComponentPair(durationLabel, durationField);
         addComponentPair(speedLabel, speedField);
         addComponentPair(new JLabel("Set rotation:"), rotationSelect);
-        addComponentPair(deleteBtn, applyBtn);
 
         setupGUI();
 
@@ -624,9 +614,6 @@ public class EffectGUI implements ActionListener {
         addComponentPair(durationLabel, durationField);
         addComponentPair(speedLabel, speedField);
         addComponentPair(new JLabel("Wave Direction:"), directionSelect);
-
-        // Add action buttons
-        addComponentPair(deleteBtn, applyBtn);
 
         setupGUI();
 
@@ -668,9 +655,6 @@ public class EffectGUI implements ActionListener {
         addComponentPair(angleLabel, angleField);
         addComponentPair(new JLabel("Rotation Direction:"), rotationSelect);
 
-        // Add action buttons
-        addComponentPair(deleteBtn, applyBtn);
-
         setupGUI();
 
         // If effect exists, load pattern on gui
@@ -709,9 +693,6 @@ public class EffectGUI implements ActionListener {
         addComponentPair(speedLabel, speedField);
         addComponentPair(new JLabel("Ripple Direction:"), directionSelect);
 
-        // Add action buttons
-        addComponentPair(deleteBtn, applyBtn);
-
         setupGUI();
 
         // If effect exists, load pattern on gui
@@ -737,7 +718,6 @@ public class EffectGUI implements ActionListener {
         addComponentPair(new JLabel("Set count by:" , SwingConstants.RIGHT), durationTypeSelect);
         addComponentPair(staticColorLabel, startColorBtn);
         addComponentPair(durationLabel, durationField);
-        addComponentPair(deleteBtn, applyBtn);
 
         setupGUI();
 
@@ -768,7 +748,6 @@ public class EffectGUI implements ActionListener {
         addComponentPair(staticColorLabel, startColorBtn);
         addComponentPair(endColorLabel, endColorBtn);
         addComponentPair(durationLabel, durationField);
-        addComponentPair(deleteBtn, applyBtn);
 
         setupGUI();
 
@@ -800,7 +779,6 @@ public class EffectGUI implements ActionListener {
         addComponentPair(color2Label, endColorBtn);
         addComponentPair(durationLabel, durationField);
         addComponentPair(rateLabel, speedField);
-        addComponentPair(deleteBtn, applyBtn);
 
         setupGUI();
 
@@ -977,6 +955,8 @@ public class EffectGUI implements ActionListener {
 
         GridBagConstraints gridBagConstraints;
 
+        Effect.currentlyViewedEffect = null;
+        
         effectPanel = new JPanel();
         placeholderLabel = new JLabel();
 

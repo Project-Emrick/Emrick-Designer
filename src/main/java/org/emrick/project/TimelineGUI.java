@@ -1,24 +1,45 @@
 package org.emrick.project;
 
+import java.awt.BasicStroke;
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.FlowLayout;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.time.Duration;
+import java.util.AbstractMap;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import javax.swing.BorderFactory;
+import javax.swing.ButtonGroup;
+import javax.swing.JButton;
+import javax.swing.JComponent;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JToggleButton;
+import javax.swing.SwingUtilities;
+
 import org.emrick.project.effect.Effect;
 import org.emrick.project.effect.RFTrigger;
 import org.emrick.project.effect.TimelineEvent;
 
-import javax.swing.*;
-import java.awt.*;
-import java.awt.event.MouseWheelEvent;
-import java.awt.event.MouseWheelListener;
-import java.time.Duration;
-import java.util.*;
-import java.util.List;
-
 public class TimelineGUI {
-    private JPanel mainPanel;
+    private final JPanel mainPanel;
     private ArrayList<Effect> effects;
     private final ArrayList<RFTrigger> triggers;
     private JScrollPane timelineScrollPane;
     private JPanel timelinePanel;
-    List<List<TimeRange>> rows;
+    
+    // Button Groups for selection
+    private ButtonGroup effectsButtonGroup;
+    private ButtonGroup triggersButtonGroup;
     
     // Zoom controls
     private JPanel zoomPanel;
@@ -32,20 +53,21 @@ public class TimelineGUI {
     private static final int ROW_HEIGHT = 70;
     private static final int TRIGGER_ROW_HEIGHT = 60;
     private static final int PIXELS_PER_SECOND = 20; // Base scale: 20 pixels per second at zoom 1.0
-    
-    // Track the total duration for scaling
-    private double totalDurationMSec;
+      // Track the total duration for scaling
+    private final double totalDurationMSec;
     private static double curMSec;
-
     public TimelineGUI(ArrayList<Effect> effects, HashMap<Integer, RFTrigger> count2RFTrigger) {
         this.effects = effects;
         if (this.effects == null) {
             this.effects = new ArrayList<>();
         }
         triggers = new ArrayList<>();
-        ArrayList<Map.Entry<Long, Map.Entry<TimelineEvent, JPanel>>> timelineEvents = new ArrayList<>();
+        // Initialize button groups
+        effectsButtonGroup = new ButtonGroup();
+        triggersButtonGroup = new ButtonGroup();
         
-        // Sort and store all timeline events
+        ArrayList<Map.Entry<Long, Map.Entry<TimelineEvent, JComponent>>> timelineEvents = new ArrayList<>();
+          // Sort and store all timeline events
         for (Map.Entry<Integer, RFTrigger> entry : count2RFTrigger.entrySet()) {
             RFTrigger trigger = entry.getValue();
             triggers.add(trigger);
@@ -73,17 +95,17 @@ public class TimelineGUI {
                            timelineEvents.get(timelineEvents.size() - 1).getKey() + 1000;
         
         createTimelinePane();
-        createZoomControls();
-
-        mainPanel = new JPanel(new BorderLayout());
+        createZoomControls();        mainPanel = new JPanel(new BorderLayout());
         mainPanel.add(zoomPanel, BorderLayout.NORTH);
         mainPanel.add(timelineScrollPane, BorderLayout.CENTER);
-        
-        // Add mouse wheel listener for zooming with Ctrl+Scroll
+          // Add mouse wheel listener for zooming with Ctrl+Scroll
         addMouseWheelZoomSupport();
 
-        scrubTimeline(curMSec);
-        System.out.println("curMSec: " + curMSec);
+        // Add a small delay before scrubbing to ensure all components are properly initialized
+        SwingUtilities.invokeLater(() -> {
+            scrubTimeline(curMSec);
+            System.out.println("curMSec: " + curMSec);
+        });
     }
 
     /**
@@ -106,24 +128,20 @@ public class TimelineGUI {
         zoomPanel.add(zoomInButton);
         zoomPanel.add(resetZoomButton);
     }
-    
-    /**
+      /**
      * Adds support for zooming with Ctrl+Mouse wheel
      */
     private void addMouseWheelZoomSupport() {
-        timelineScrollPane.addMouseWheelListener(new MouseWheelListener() {
-            @Override
-            public void mouseWheelMoved(MouseWheelEvent e) {
-                if (e.isControlDown()) {
-                    if (e.getWheelRotation() < 0) {
-                        // Scroll up - zoom in
-                        zoomIn();
-                    } else {
-                        // Scroll down - zoom out
-                        zoomOut();
-                    }
-                    e.consume(); // Prevent the scroll event from being processed further
+        timelineScrollPane.addMouseWheelListener(e -> {
+            if (e.isControlDown()) {
+                if (e.getWheelRotation() < 0) {
+                    // Scroll up - zoom in
+                    zoomIn();
+                } else {
+                    // Scroll down - zoom out
+                    zoomOut();
                 }
+                e.consume(); // Prevent the scroll event from being processed further
             }
         });
     }
@@ -172,9 +190,13 @@ public class TimelineGUI {
         timelinePanel.revalidate();
         timelinePanel.repaint();
     }
-
+    
     private void updateComponentPositions() {
         timelinePanel.removeAll();
+        
+        // Clear button groups before adding new buttons
+        effectsButtonGroup = new ButtonGroup();
+        triggersButtonGroup = new ButtonGroup();
         
         // Add RF Triggers (first row)
         ArrayList<RFTrigger> sortedTriggers = new ArrayList<>(triggers);
@@ -182,7 +204,11 @@ public class TimelineGUI {
         
         for (int i = 0; i < sortedTriggers.size(); i++) {
             RFTrigger trigger = sortedTriggers.get(i);
-            JPanel triggerWidget = trigger.getTimelineWidget();
+            JToggleButton triggerWidget = trigger.getTimelineWidget();
+            
+            // Add to button group
+            triggersButtonGroup.add(triggerWidget);
+            
             int xPosition = calculateXPosition(trigger.getTimestampMillis());
             
             // Calculate width to next trigger or end
@@ -193,17 +219,16 @@ public class TimelineGUI {
             } else {
                 width = calculateXPosition(totalDurationMSec) - xPosition;
             }
-            
-            // Ensure minimum width and prevent overlap
-            width = width - 2; // Subtract 2 pixels to prevent overlap
+              // Ensure minimum width and prevent overlap
+            width = Math.max(width - 2, 10); // Subtract 2 pixels to prevent overlap, ensure minimum width
             
             triggerWidget.setBounds(xPosition, 0, width, TRIGGER_ROW_HEIGHT);
             timelinePanel.add(triggerWidget);
         }
         
         // Add Effects (subsequent rows)
-        List<List<TimeRange>> rows = new ArrayList<>();
-        rows.add(new ArrayList<>()); // First effect row
+        java.util.List<java.util.List<TimeRange>> effectRows = new ArrayList<>();
+        effectRows.add(new ArrayList<>()); // First effect row
         
         ArrayList<Effect> sortedEffects = new ArrayList<>(effects);
         sortedEffects.sort(Comparator.comparingLong(Effect::getStartTimeMSec));
@@ -214,22 +239,28 @@ public class TimelineGUI {
                 effect.getStartTimeMSec() + effect.getDuration().toMillis()
             );
             
-            int rowIndex = findAvailableRow(rows, effectRange);
+            int rowIndex = findAvailableRow(effectRows, effectRange);
             
-            JPanel effectWidget = effect.getTimelineWidget();
-            int xPosition = calculateXPosition(effect.getStartTimeMSec());
+            JToggleButton effectWidget = effect.getTimelineWidget();
+            
+            // Add to button group
+            effectsButtonGroup.add(effectWidget);
+              int xPosition = calculateXPosition(effect.getStartTimeMSec());
             int width = calculateEffectWidth(effect);
             int yPosition = TRIGGER_ROW_HEIGHT + (rowIndex * ROW_HEIGHT);
+            
+            // Ensure minimum width
+            width = Math.max(width, 10);
             
             effectWidget.setBounds(xPosition, yPosition, width, ROW_HEIGHT - 2);
             timelinePanel.add(effectWidget);
             
-            while (rows.size() <= rowIndex) {
-                rows.add(new ArrayList<>());
+            while (effectRows.size() <= rowIndex) {
+                effectRows.add(new ArrayList<>());
             }
-            rows.get(rowIndex).add(effectRange);
+            effectRows.get(rowIndex).add(effectRange);
         }
-        timelinePanel.setPreferredSize(new Dimension(calculateTimelineWidth(), TRIGGER_ROW_HEIGHT + rows.size() * ROW_HEIGHT));
+        timelinePanel.setPreferredSize(new Dimension(calculateTimelineWidth(), TRIGGER_ROW_HEIGHT + effectRows.size() * ROW_HEIGHT));
     }
 
     private void createTimelinePane() {
@@ -273,7 +304,7 @@ public class TimelineGUI {
     private int calculateTimelineWidth() {
         return (int)((totalDurationMSec * PIXELS_PER_SECOND * zoomFactor) / 1000);
     }
-
+    
     private int findAvailableRow(List<List<TimeRange>> rows, TimeRange newRange) {
         for (int i = 0; i < rows.size(); i++) {
             if (isRowAvailable(rows.get(i), newRange)) {
@@ -329,7 +360,7 @@ public class TimelineGUI {
         TimelineGUI.curMSec = curMSec;
         System.out.println("TimelineGUI: setCurMSec = " + curMSec);
     }
-
+    
     public static void main(String[] args) {
         JFrame frame = new JFrame("Timeline Demo");
         frame.setPreferredSize(new Dimension(900, 400));
@@ -346,7 +377,7 @@ public class TimelineGUI {
             Effect e = new Effect(startTime, 
                                 Color.GREEN, Color.RED,
                                 delay, duration, timeout,
-                                true, true, true, true, 0);
+                                true, true, true, true, i); // Added unique id for each effect
             effects.add(e);
         }
 
@@ -354,7 +385,7 @@ public class TimelineGUI {
         effects.add(new Effect(Duration.ofSeconds(1).toMillis(),
                              Color.BLUE, Color.YELLOW,
                              Duration.ZERO, Duration.ofSeconds(4), Duration.ofSeconds(5),
-                             true, true, false, true, 0));
+                             true, true, false, true, 5)); // Added unique id
 
         HashMap<Integer, RFTrigger> triggers = new HashMap<>();
         for (int i = 0; i < 3; i++) {

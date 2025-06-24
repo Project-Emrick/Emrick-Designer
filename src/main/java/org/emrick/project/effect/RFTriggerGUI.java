@@ -1,8 +1,24 @@
 package org.emrick.project.effect;
 
-import javax.swing.*;
+import java.awt.BorderLayout;
+import java.awt.Dimension;
+import java.awt.FlowLayout;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.Insets;
+
+import javax.swing.BorderFactory;
+import javax.swing.JButton;
+import javax.swing.JComponent;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JTextArea;
+import javax.swing.JTextField;
+import javax.swing.SwingConstants;
+import javax.swing.UIManager;
 import javax.swing.border.Border;
-import java.awt.*;
 
 /**
  * This class really just sets up a button to create an RF trigger. If there's already an RF trigger on the current
@@ -28,25 +44,6 @@ public class RFTriggerGUI {
         this.rfTriggerListener = rfTriggerListener;
         //setupGUI();
         setupPanelGUI();
-    }
-
-    private void setupGUI() { //replaced by setupPanelGUI
-        if (rfTrigger == null) {
-            createDeleteBtn = new JButton("Create RF Trigger");
-
-            createDeleteBtn.addActionListener(e -> {
-                rfTrigger = new RFTrigger(count, timestampMillis, "mytitle", "mydesc", "mycue");
-                rfTriggerListener.onCreateRFTrigger(rfTrigger);
-            });
-        } else {
-            createDeleteBtn = new JButton("Delete RF Trigger");
-            createDeleteBtn.setBackground(new Color(32, 136, 203));
-            createDeleteBtn.setForeground(Color.WHITE);
-
-            createDeleteBtn.addActionListener(e -> {
-                rfTriggerListener.onDeleteRFTrigger(count);
-            });
-        }
     }
 
     private void setupPanelGUI() {
@@ -125,8 +122,7 @@ public class RFTriggerGUI {
             });
 
             createDeleteBtn = new JButton("Delete RF Trigger");
-            createDeleteBtn.setBackground(new Color(32, 136, 203));
-            createDeleteBtn.setForeground(Color.WHITE);
+            createDeleteBtn.setBackground(UIManager.getColor("Component.error.borderColor"));
             createDeleteBtn.addActionListener(e -> {
                 rfTriggerListener.onDeleteRFTrigger(count);
             });

@@ -1,13 +1,12 @@
 package org.emrick.project.effect;
 
-import org.emrick.project.MediaEditorGUI;
-import org.emrick.project.TimeManager;
+import java.awt.GridLayout;
+import java.awt.Insets;
 
-import javax.swing.*;
-import javax.swing.border.Border;
-import java.awt.*;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
+import javax.swing.JLabel;
+import javax.swing.JToggleButton;
+
+import org.emrick.project.TimeManager;
 
 public class RFTrigger implements TimelineEvent {
 
@@ -52,42 +51,28 @@ public class RFTrigger implements TimelineEvent {
     public void setCue(String cue ) {this.cue = cue; }
 
     @Override
-    public JPanel getTimelineWidget() {
-        Border outerBorder = BorderFactory.createLineBorder(Color.lightGray);
-        Border innerBorder = BorderFactory.createEmptyBorder(2,2,2,2);
+    public JToggleButton getTimelineWidget() {
+        JToggleButton widgetButton = new JToggleButton();
+        widgetButton.setLayout(new GridLayout(4,1));
+        widgetButton.setMargin(new Insets(1, 2, 1, 2)); // Remove the default button margin
+        //widgetButton.setBorderPainted(false); // Don't paint the button's default border
+        //widgetButton.setContentAreaFilled(false); // Don't fill the content area (transparent background)
+        widgetButton.setFocusPainted(false); // Don't paint the focus indicator
 
-        JPanel widgetPanel = new JPanel(new GridLayout(4,1));
-        widgetPanel.setBorder(BorderFactory.createCompoundBorder(outerBorder, innerBorder));
-
-        JLabel titleLabel = new JLabel("<html><b>" + (((title != null) && !title.trim().isEmpty()) ? 
-            title : "<p text=\"gray\"> RF Trigger </p>") + "</b></html>");
+        JLabel titleLabel = new JLabel("<html><nobr><b>" + (((title != null) && !title.trim().isEmpty()) ? 
+            title : "<p text=\"gray\"> RF Trigger </p>") + "</b></nobr></html>");
         JLabel countLabel = new JLabel("Count: " + count);
         JLabel timeLabel = new JLabel("Time: " + TimeManager.getFormattedTime(timestampMillis));
 
-        widgetPanel.add(titleLabel);
-        widgetPanel.add(countLabel);
-        widgetPanel.add(timeLabel);
+        widgetButton.add(titleLabel);
+        widgetButton.add(countLabel);
+        widgetButton.add(timeLabel);
 
-        widgetPanel.addMouseListener(new MouseAdapter() {
-
-            @Override
-            public void mouseEntered(MouseEvent e) {
-                widgetPanel.setBorder
-                    (BorderFactory.createCompoundBorder(outerBorder, BorderFactory.createLineBorder(Color.blue, 2, true)));
-            }
-
-            @Override
-            public void mouseExited(MouseEvent e) {
-                widgetPanel.setBorder(BorderFactory.createCompoundBorder(outerBorder, innerBorder));
-            }
-
-            @Override
-            public void mousePressed(MouseEvent e) {
-                // signals scrub to this rf trigger on press
-                rfTriggerListener.onPressRFTrigger(RFTrigger.this);
-            }
+        widgetButton.addActionListener(e -> {
+            // signals scrub to this rf trigger on press
+            rfTriggerListener.onPressRFTrigger(RFTrigger.this);
         });
 
-        return widgetPanel;
+        return widgetButton;
     }
 }

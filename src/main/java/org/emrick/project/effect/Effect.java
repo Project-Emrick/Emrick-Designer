@@ -1,20 +1,26 @@
 package org.emrick.project.effect;
 
-import org.emrick.project.TimeManager;
-
-import javax.swing.*;
-import javax.swing.border.Border;
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.GridLayout;
+import java.awt.Insets;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Objects;
 
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
+import javax.swing.BorderFactory;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JToggleButton;
+import javax.swing.UIManager;
+
+import org.emrick.project.TimeManager;
 
 public class  Effect implements Cloneable, TimelineEvent {
 
     public static EffectListener effectListener;
+    // Static reference to track which effect is currently being viewed in the effect panel
+    public static Effect currentlyViewedEffect;
 
     // Application
     public long startTimeMSec; // Based on position of scrub bar cursor when user first creates the effect
@@ -500,15 +506,14 @@ public class  Effect implements Cloneable, TimelineEvent {
     @Override
     public int hashCode() {
         return Objects.hash(id);
-    }
-
-    @Override
-    public JPanel getTimelineWidget() {
-        Border outerBorder = BorderFactory.createLineBorder(Color.lightGray);
-        Border innerBorder = BorderFactory.createEmptyBorder(2,2,2,2);
-
-        JPanel widgetPanel = new JPanel(new GridLayout(5,1));
-        widgetPanel.setBorder(BorderFactory.createCompoundBorder(outerBorder, innerBorder));
+    }    @Override
+    public JToggleButton getTimelineWidget() {
+        JToggleButton widgetButton = new JToggleButton();
+        widgetButton.setLayout(new GridLayout(5,1));
+        widgetButton.setMargin(new Insets(1, 2, 1, 2)); // Remove the default button margin
+        //widgetButton.setBorderPainted(false); // Don't paint the button's default border
+        //widgetButton.setContentAreaFilled(false); // Don't fill the content area (transparent background)
+        widgetButton.setFocusPainted(false); // Don't paint the focus indicator
 
         String timeLineLabel;
         switch(effectType) {
@@ -524,7 +529,7 @@ public class  Effect implements Cloneable, TimelineEvent {
             default : timeLineLabel = "Default Pattern"; break;
         }
 
-        JLabel titleLabel = new JLabel("<html><b>" + timeLineLabel + "</b></html>");
+        JLabel titleLabel = new JLabel("<html><nobr><b>" + timeLineLabel + "</b></nobr></html>");
         JLabel startTimeLabel = new JLabel("Start: " + TimeManager.getFormattedTime(startTimeMSec));
         JLabel endTimeLabel = new JLabel("End: " + TimeManager.getFormattedTime(endTimeMSec));
 
@@ -540,33 +545,27 @@ public class  Effect implements Cloneable, TimelineEvent {
             endColorPanel.setBackground(endColor);
         }
 
-        widgetPanel.add(titleLabel);
-        widgetPanel.add(startTimeLabel);
-        widgetPanel.add(endTimeLabel);
-        widgetPanel.add(startColorPanel);
-        widgetPanel.add(endColorPanel);
-
-        widgetPanel.addMouseListener(new MouseAdapter() {
-
-            @Override
-            public void mouseEntered(MouseEvent e) {
-                widgetPanel.setBorder
-                    (BorderFactory.createCompoundBorder(outerBorder, BorderFactory.createLineBorder(Color.blue, 2, true)));
-            }
-
-            @Override
-            public void mouseExited(MouseEvent e) {
-                widgetPanel.setBorder(BorderFactory.createCompoundBorder(outerBorder, innerBorder));
-            }
-
-            @Override
-            public void mousePressed(MouseEvent e) {
-                // signals scrub to this rf trigger on press
-                effectListener.onPressEffect(Effect.this);
-                widgetPanel.setBorder(BorderFactory.createLineBorder(Color.red, 2, true));
-            }
+        widgetButton.add(titleLabel);
+        widgetButton.add(startTimeLabel);
+        widgetButton.add(endTimeLabel);
+        widgetButton.add(startColorPanel);
+        widgetButton.add(endColorPanel);
+        
+        widgetButton.addActionListener(e -> {
+            // signals scrub to this rf trigger on press
+            effectListener.onPressEffect(Effect.this);
+            widgetButton.setBorder(BorderFactory.createLineBorder(UIManager.getColor("accentFocusColor"), 2, true));
         });
 
-        return widgetPanel;
+        return widgetButton;
+    }
+
+    private boolean isInEffectView() {
+        if (currentlyViewedEffect == null) {
+            return false;
+        }
+        //System.out.println("Checking if effect is currently viewed: " + this.id + " == " + currentlyViewedEffect.id + " ? " + (this.id == currentlyViewedEffect.id));
+
+        return this.id == currentlyViewedEffect.id;
     }
 }

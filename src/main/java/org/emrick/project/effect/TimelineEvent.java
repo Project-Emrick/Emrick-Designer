@@ -1,7 +1,7 @@
 package org.emrick.project.effect;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 
 public interface TimelineEvent {
-    JPanel getTimelineWidget();
+    JComponent getTimelineWidget();
 }

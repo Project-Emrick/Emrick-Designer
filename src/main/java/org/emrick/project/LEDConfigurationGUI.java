@@ -1,13 +1,30 @@
 package org.emrick.project;
 
-import org.emrick.project.actions.*;
-
-import javax.swing.*;
-import javax.swing.border.Border;
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.RenderingHints;
 import java.util.ArrayList;
-import java.util.InvalidPropertiesFormatException;
 import java.util.Stack;
+
+import javax.swing.BorderFactory;
+import javax.swing.BoxLayout;
+import javax.swing.JButton;
+import javax.swing.JCheckBox;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JTextField;
+import javax.swing.UIManager;
+import javax.swing.border.Border;
+
+import org.emrick.project.actions.LEDConfig;
+import org.emrick.project.actions.LEDConfigLEDStripMap;
+import org.emrick.project.actions.PerformerConfigMap;
+import org.emrick.project.actions.UndoableAction;
+import org.emrick.project.actions.UpdateConfigAction;
+import org.emrick.project.actions.UpdateConfigsAction;
 
 public class LEDConfigurationGUI extends JPanel {
     private Drill drill;
@@ -24,7 +41,6 @@ public class LEDConfigurationGUI extends JPanel {
         this.drill = drill;
         this.performerConfigPanels = new ArrayList<>();
         this.scrollablePanel = new JPanel();
-        scrollablePanel.setBackground(new Color(0, 0, 0, 0));
         this.bottomBar = new JPanel();
         this.setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
         this.ledConfigListener = ledConfigListener;
@@ -49,7 +65,6 @@ public class LEDConfigurationGUI extends JPanel {
         scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
         scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
         scrollPane.getVerticalScrollBar().setUnitIncrement(20);
-        scrollPane.setBackground(new Color(0, 0, 0, 0));
         scrollPane.setVisible(true);
         // this listener gets rid of some nasty visual bugs, however it also introduces some lag when using the scroll wheel
         scrollPane.getVerticalScrollBar().addAdjustmentListener(e -> {
@@ -374,8 +389,9 @@ public class LEDConfigurationGUI extends JPanel {
                 performerPanel.setBackground(Color.BLUE);
                 this.setBackground(Color.BLUE);
             } else {
-                this.setBackground(new Color(0xEEEEEE));
-                performerPanel.setBackground(new Color(0xEEEEEE));
+                // from UIManager
+                this.setBackground(UIManager.getColor("Panel.background"));
+                performerPanel.setBackground(UIManager.getColor("Panel.background"));
             }
 
             JLabel performerLabel = new JLabel(performer.getIdentifier());
@@ -668,17 +684,28 @@ public class LEDConfigurationGUI extends JPanel {
                 this.setMinimumSize(new Dimension(50,50));
                 this.setMaximumSize(new Dimension(50,50));
                 this.setOpaque(false);
-            }
-
-            @Override
+            }            @Override
             public void paintComponent(Graphics g) {
                 super.paintComponent(g);
+                Graphics2D g2d = (Graphics2D) g;
+                
+                // Enable antialiasing for smoother rendering
+                g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                g2d.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
+                
+                int arcSize = 10; // Controls the roundness of corners
+                
                 for (LEDStrip l : ledStrips) {
-                    g.setColor(Color.white);
-                    g.fillRect(25 + l.getLedConfig().gethOffset(), 25 + l.getLedConfig().getvOffset(), l.getLedConfig().getWidth(), l.getLedConfig().getHeight());
+                    g2d.setColor(Color.white);
+                    int xPos = 25 + l.getLedConfig().gethOffset();
+                    int yPos = 25 + l.getLedConfig().getvOffset();
+                    int width = l.getLedConfig().getWidth();
+                    int height = l.getLedConfig().getHeight();
+                    
+                    g2d.fillRoundRect(xPos, yPos, width, height, arcSize, arcSize);
 
-                    g.setColor(Color.BLACK);
-                    g.drawRect(25 + l.getLedConfig().gethOffset(), 25 + l.getLedConfig().getvOffset(), l.getLedConfig().getWidth(), l.getLedConfig().getHeight());
+                    g2d.setColor(Color.BLACK);
+                    g2d.drawRoundRect(xPos, yPos, width, height, arcSize, arcSize);
                 }
             }
         }

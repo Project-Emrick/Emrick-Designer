@@ -1,20 +1,38 @@
 package org.emrick.project;
 
-import org.emrick.project.audio.AudioPlayer;
-
-import javax.swing.*;
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.Dimension;
+import java.awt.FlowLayout;
+import java.awt.Font;
+import java.awt.GridLayout;
+import java.awt.Image;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.Hashtable;
+import java.util.Iterator;
 import java.util.List;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import java.util.Map;
+
+import javax.swing.ImageIcon;
+import javax.swing.JButton;
+import javax.swing.JCheckBox;
+import javax.swing.JComboBox;
+import javax.swing.JComponent;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JSlider;
+
+import org.emrick.project.audio.AudioPlayer;
 
 public class ScrubBarGUI extends JComponent implements ActionListener {
 
     // String definitions
-    private static final String PATH_SYNC_ICON = PathConverter.pathConverter("res/images/scrub/time_sync_flaticon.png", true);
+    public static final String PATH_SYNC_ICON = PathConverter.pathConverter("res/images/scrub/time_sync_flaticon.png", true);
     private static final String PATH_PREV_SET_ICON = PathConverter.pathConverter("res/images/scrub/prev_set_flaticon.png", true);
     private static final String PATH_NEXT_SET_ICON = PathConverter.pathConverter("res/images/scrub/next_set_flaticon.png", true);
     public static final String PATH_PLAY_ICON = PathConverter.pathConverter("res/images/scrub/play_flaticon.png", true);

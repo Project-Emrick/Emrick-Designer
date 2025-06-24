@@ -3,6 +3,7 @@ package org.emrick.project;
 import com.fazecast.jSerialComm.SerialPort;
 import com.formdev.flatlaf.*;
 import com.google.gson.*;
+import com.jthemedetecor.OsThemeDetector;
 import com.sun.net.httpserver.HttpServer;
 import org.emrick.project.actions.LEDConfig;
 import org.emrick.project.audio.*;
@@ -142,25 +143,22 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
     private File csvFile;
     private SerialTransmitter serialTransmitter;
     JFrame webServerFrame;
+    
+    
 
+    
     /**
      * Main method of Emrick Designer.
      *
      * @param args - Only used when opening the application via an associated file type rather than an executable
      */
     public static void main(String[] args) {
-        final String file;
-        if (args.length != 0) {
-            file = args[0];
-        } else {
-            file = "";
-        }
-        try {
-            UIManager.setLookAndFeel(new FlatLightLaf());
-        } catch (Exception ex) {
-            System.err.println("Failed to initialize LaF");
-        }
-
+        // Process file argument
+        final String file = args.length != 0 ? args[0] : "";
+        
+        // Set up theme detection and initial look and feel
+        setupLookAndFeel();
+        
         // Run this program on the Event Dispatch Thread (EDT)
         EventQueue.invokeLater(new Runnable() {
             @Override
@@ -330,6 +328,41 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         float setDuration = scrubBarGUI.getCurrSetDuration();
         return Math.round(setSyncDuration / setDuration * 1000 / playbackSpeed);
     }
+
+    /**
+     * Sets up the look and feel of the application based on the user's OS theme.
+     */
+    private static void setupLookAndFeel() {
+        FlatLaf.registerCustomDefaultsSource("org.emrick.project.ui");
+        FlatDarkLaf.setup();
+        FlatLightLaf.setup();
+        OsThemeDetector.getDetector().registerListener(isDark -> {
+            SwingUtilities.invokeLater(() -> {
+                try {
+                    if (isDark) {
+                        UIManager.setLookAndFeel(new FlatDarkLaf());
+                    } else {
+                        UIManager.setLookAndFeel(new FlatLightLaf());
+                    }
+                } catch (UnsupportedLookAndFeelException e) {
+                    e.printStackTrace();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            });
+        });
+
+        // Force a theme detection update - using proper method instead of notify()
+        SwingUtilities.invokeLater(() -> {
+            // This will trigger the theme listener we registered above
+            boolean isDarkMode = OsThemeDetector.getDetector().isDark();
+            try {
+                UIManager.setLookAndFeel(isDarkMode ? new FlatDarkLaf() : new FlatLightLaf());
+            } catch (UnsupportedLookAndFeelException ex) {
+                System.err.println("Failed to update look and feel: " + ex.getMessage());
+            }
+        });
+    }   
 
     /**
      * Builds all major GUI elements and adds them to the main frame.
@@ -730,6 +763,27 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         // View menu
         JMenu viewMenu = new JMenu("View");
         menuBar.add(viewMenu);
+
+        JCheckBoxMenuItem darkModeItem = new JCheckBoxMenuItem("Dark Mode");
+        darkModeItem.setState(OsThemeDetector.getDetector().isDark());
+        darkModeItem.addActionListener(e -> {
+            SwingUtilities.invokeLater(() -> {
+                try {
+                    if (darkModeItem.isSelected()) {
+                        UIManager.setLookAndFeel(new FlatDarkLaf());
+                    } else {
+                        UIManager.setLookAndFeel(new FlatLightLaf());
+                    }
+                    SwingUtilities.updateComponentTreeUI(frame);
+                } catch (UnsupportedLookAndFeelException ex) {
+                    System.err.println("Failed to update look and feel: " + ex.getMessage());
+                } catch (Exception ex) {
+                    ex.printStackTrace();
+                }
+            });
+        });
+        viewMenu.add(darkModeItem);
+
         JCheckBoxMenuItem toggleFloorCoverImage = new JCheckBoxMenuItem("Show Floor Cover Image");
         toggleFloorCoverImage.setState(true);
         toggleFloorCoverImage.addActionListener(e -> {
@@ -2045,7 +2099,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                         }
                     }
                 }
-
+                
                 ids = new ArrayList<>(effectManager.getIds());
 
                 for (Integer id : opf.ids) {
