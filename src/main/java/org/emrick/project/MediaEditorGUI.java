@@ -25,6 +25,8 @@ import java.nio.file.*;
 import java.time.*;
 import java.util.*;
 
+import java.util.Properties;
+
 /**
  * Main class of Emrick Designer.
  * Contains all GUI elements and logic for light show design and Emrick board interaction
@@ -1010,24 +1012,75 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             st.writeToSerialPort("w");
         });
 
-        // Check Color
+        /* Check Color */
         checkColor.addActionListener(e -> {
+            /* Check for Board Receiver Type */
             SerialTransmitter st = comPortPrompt("Receiver");
-            if (!st.getType().equals("Receiver")) return;
-
-            JLabel idLabel = new JLabel("Enter LED strip label to test color at current time");
-            JTextField idField = new JTextField();
-
-            Object[] inputs = {idLabel, idField};
-            int option = JOptionPane.showConfirmDialog(frame, inputs, "Enter LED Strip label", JOptionPane.OK_CANCEL_OPTION);
-            if (option == JOptionPane.OK_OPTION) {
-                LEDStrip l = footballFieldPanel.drill.ledStrips.stream().filter(led -> led.getLabel().equalsIgnoreCase(idField.getText())).findFirst().orElse(null);
-                if (l != null) {
-                    Color c = footballFieldPanel.calculateColor(effectManager.getEffect(l, (long)(scrubBarGUI.getTime() * 1000)));
-                    System.out.println(c);
-                    st.writeColorCheck(c);
+            try {
+                if (!st.getType().equals("Receiver")) {
+                    throw new IllegalStateException("Not a receiver");
                 }
+            } catch (IllegalStateException ex) {
+                JOptionPane.showMessageDialog(
+                        null,
+                        "Transmitter Detected, Please plug in a receiver.",
+                        "Error",
+                        JOptionPane.ERROR_MESSAGE
+                );
+                return;
+            } catch (Exception ex) {
+                JOptionPane.showMessageDialog(
+                        null,
+                        "Please plug a board in before proceeding.",
+                        "Error",
+                        JOptionPane.ERROR_MESSAGE
+                );
+                return;
             }
+
+            /* Add the java color wheel */
+            JColorChooser colorChooser = new JColorChooser(Color.WHITE);
+
+            // Create custom dialog that stays open
+            JDialog dialog = new JDialog(frame, "Color Check - Select and Send Colors", false);
+            dialog.setLayout(new BorderLayout());
+
+            // Create button panel with Send and Close buttons
+            JButton sendButton = new JButton("Send to Lights");
+            JButton closeButton = new JButton("Close");
+            JPanel buttonPanel = new JPanel();
+            buttonPanel.add(sendButton);
+            buttonPanel.add(closeButton);
+
+            // Add components to dialog
+            dialog.add(colorChooser, BorderLayout.CENTER);
+            dialog.add(buttonPanel, BorderLayout.SOUTH);
+
+            // Configure dialog properties
+            dialog.setSize(650, 450);
+            dialog.setLocationRelativeTo(frame);
+            dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
+
+            // Add button actions
+            sendButton.addActionListener(ev -> {
+                Color selectedColor = colorChooser.getColor();
+                st.writeColorCheck(selectedColor);
+
+                // Visual feedback
+                sendButton.setText("Sent! Click to Send Again");
+                sendButton.setBackground(new Color(220, 255, 220));
+                Timer timer = new Timer(750, event -> {
+                    sendButton.setText("Send to Lights");
+                    sendButton.setBackground(null);
+                });
+                timer.setRepeats(false);
+                timer.start();
+            });
+
+            closeButton.addActionListener(ev -> dialog.dispose());
+
+            // Show the dialog
+            dialog.setVisible(true);
         });
 
         /* Hardware Menu */
@@ -1037,6 +1090,8 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         hardwareMenu.add(batteryCheck);
         JMenuItem chargingCheck = new JMenuItem("Charging Check");
         hardwareMenu.add(chargingCheck);
+        JMenuItem wirelessCheck = new JMenuItem("Wireless Check");
+        hardwareMenu.add(wirelessCheck);
         hardwareMenu.addSeparator();
 
         JMenuItem storageMode = new JMenuItem("Storage Mode");
@@ -1047,10 +1102,10 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         hardwareMenu.add(massSleep);
         hardwareMenu.addSeparator();
 
-        JMenuItem wirelessCheck = new JMenuItem("Wireless Check");
-        hardwareMenu.add(wirelessCheck);
         JMenuItem modifyBoardItem = new JMenuItem("Modify Board");
         hardwareMenu.add(modifyBoardItem);
+        JMenuItem wiredProgramming = new JMenuItem("Wired Show Programming");
+        hardwareMenu.add(wiredProgramming);
 
         /* Action Listeners For Buttons */
         // Battery Check
@@ -1067,6 +1122,14 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             if (st == null) return;
 
             st.writeToSerialPort("j");
+        });
+
+        // Wireless Check
+        wirelessCheck.addActionListener(e -> {
+            SerialTransmitter st = comPortPrompt("Transmitter");
+            if (st == null) return;
+
+            st.writeToSerialPort("c");
         });
 
         // Storage Mode
@@ -1093,20 +1156,32 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             st.writeToSerialPort("e");
         });
 
-        // Wireless Check
-        wirelessCheck.addActionListener(e -> {
-            SerialTransmitter st = comPortPrompt("Transmitter");
-            if (st == null) return;
-
-            st.writeToSerialPort("c");
-        });
-
         // Modify Board
         modifyBoardItem.addActionListener(e -> {
-            SerialTransmitter st = comPortPrompt("Receiver");
-            if (!st.getType().equals("Receiver")) {
+            try {
+                SerialTransmitter st = comPortPrompt("Receiver");
+                if (!st.getType().equals("Receiver")) {
+                    throw new IllegalStateException("Not a receiver");
+                }
+            } catch (IllegalStateException er) {
+                JOptionPane.showMessageDialog(
+                        null,
+                        "Transmitter Detected, Please plug in a receiver.",
+                        "Error",
+                        JOptionPane.ERROR_MESSAGE
+                );
+                return;
+            } catch (Exception err) {
+                JOptionPane.showMessageDialog(
+                        null,
+                        "Please plug a board in before proceeding.",
+                        "Error",
+                        JOptionPane.ERROR_MESSAGE
+                );
                 return;
             }
+            /* Create st Object for Later Handling */
+            SerialTransmitter st = comPortPrompt("Receiver");
 
             JTextField boardIDField = new JTextField();
             JCheckBox boardIDEnable = new JCheckBox("Write new Board ID");
@@ -1140,6 +1215,159 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                 if (enableLedCount.isSelected()) {
                     st.writeLEDCount(ledCountField.getText());
                 }
+            }
+        });
+
+        // Wired Show Programming
+        wiredProgramming.addActionListener(j -> {
+            /* Check for Board Receiver Type */
+            try {
+                SerialTransmitter st = comPortPrompt("Receiver");
+                if (!st.getType().equals("Receiver")) {
+                    throw new IllegalStateException("Not a receiver");
+                }
+            } catch (IllegalStateException e) {
+                JOptionPane.showMessageDialog(
+                        null,
+                        "Transmitter Detected, Please plug in a receiver.",
+                        "Error",
+                        JOptionPane.ERROR_MESSAGE
+                );
+                return;
+            } catch (Exception e) {
+                JOptionPane.showMessageDialog(
+                        null,
+                        "Please plug a board in before proceeding.",
+                        "Error",
+                        JOptionPane.ERROR_MESSAGE
+                );
+                return;
+            }
+
+            /* Check for Windows OS */
+            String os = System.getProperty("os.name").toLowerCase();
+            if (!os.contains("win")) {
+                JOptionPane.showMessageDialog(null,
+                        "PlatformIO check is only supported on Windows at this time.",
+                        "Unsupported OS",
+                        JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+
+            /* Check for Platform.io Default Location */
+            if (!PlatformIOFunction.verifyInstallation()) {
+                JOptionPane.showMessageDialog(null,
+                        "PlatformIO not found or an error occurred. Please install PlatformIO.",
+                        "PlatformIO Error",
+                        JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+
+            /* Create properties and config file */
+            Properties props = new Properties();
+            File configFile = new File(System.getProperty("user.home"), ".board_config.properties");
+
+            /* Create text fields with persistent data */
+            JTextField pathToDataFolderField = new JTextField();
+            JTextField pathToExtractedPacketsField = new JTextField();
+            JTextField pathToCSVFileField = new JTextField();
+            JTextField showTokenField = new JTextField();
+            JTextField verificationColorField = new JTextField();
+            JTextField marcherLabelField = new JTextField(); // Removed LED count field
+
+            /* Load saved properties */
+            if (configFile.exists()) {
+                try (FileInputStream in = new FileInputStream(configFile)) {
+                    props.load(in);
+                    pathToDataFolderField.setText(props.getProperty("data.dir", ""));
+                    pathToExtractedPacketsField.setText(props.getProperty("packets.dir", ""));
+                    pathToCSVFileField.setText(props.getProperty("csv.file", ""));
+                    showTokenField.setText(props.getProperty("show.token", ""));
+                    verificationColorField.setText(props.getProperty("verification.color", ""));
+                    marcherLabelField.setText(props.getProperty("marcher.label", ""));
+                } catch (IOException e) {
+                    JOptionPane.showMessageDialog(null,
+                            "Error loading settings: " + e.getMessage(),
+                            "Config Error",
+                            JOptionPane.ERROR_MESSAGE);
+                }
+            }
+
+            Object[] inputs = {
+                    new JLabel("Path to Data Directory: "), pathToDataFolderField,
+                    new JLabel("Path to Packets Directory: "), pathToExtractedPacketsField,
+                    new JLabel("Path to .csv File: "), pathToCSVFileField,
+                    new JLabel("Show Token: "), showTokenField,
+                    new JLabel("RGB Verification Color ('R,G,B'): "), verificationColorField,
+                    new JLabel("Marcher Label: "), marcherLabelField  // Removed LED count field
+            };
+
+            /* Create custom dialog with save-on-close functionality */
+            JOptionPane pane = new JOptionPane(
+                    inputs,
+                    JOptionPane.PLAIN_MESSAGE,
+                    JOptionPane.OK_CANCEL_OPTION
+            );
+            JDialog dialog = pane.createDialog("Enter board parameters:");
+
+            dialog.addWindowListener(new WindowAdapter() {
+                @Override
+                public void windowClosing(WindowEvent e) {
+                    savePropertiesToFile(
+                            props,
+                            configFile,
+                            pathToDataFolderField.getText(),
+                            pathToExtractedPacketsField.getText(),
+                            pathToCSVFileField.getText(),
+                            showTokenField.getText(),
+                            verificationColorField.getText(),
+                            marcherLabelField.getText()
+                    );
+                }
+            });
+
+            dialog.setVisible(true);
+
+            /* Handle user selection */
+            Object selectedValue = pane.getValue();
+            if (selectedValue != null && (Integer)selectedValue == JOptionPane.OK_OPTION) {
+                // Save properties on OK
+                savePropertiesToFile(
+                        props,
+                        configFile,
+                        pathToDataFolderField.getText(),
+                        pathToExtractedPacketsField.getText(),
+                        pathToCSVFileField.getText(),
+                        showTokenField.getText(),
+                        verificationColorField.getText(),
+                        marcherLabelField.getText()
+                );
+
+                /* Process parameters */
+                File dataDir = new File(pathToDataFolderField.getText());
+                File packetDir = new File(pathToExtractedPacketsField.getText());
+                File csv = new File(pathToCSVFileField.getText());
+                String token = showTokenField.getText();
+                String color = verificationColorField.getText();
+                String label = marcherLabelField.getText().toUpperCase();
+
+                /* Automatically get LED count from CSV */
+                String numLeds;
+                try {
+                    numLeds = CSVLEDCounter.getLedCount(label, String.valueOf(csv));
+                } catch (Error e) {
+                    JOptionPane.showMessageDialog(null,
+                            "Error reading LED count from CSV: " + e.getMessage(),
+                            "CSV Error",
+                            JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
+
+                /* Process Show Data, Update the Platform.io Data .txt Files */
+                SetupFileSystem.processShowData(dataDir, packetDir, csv, token, color, numLeds, label);
+
+                /* Upload Filesystem via Platform.io */
+                PlatformIOFunction.uploadFilesystem(dataDir);
             }
         });
 
@@ -1184,6 +1412,32 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         } else {
             frame.revalidate();
             frame.repaint();
+        }
+    }
+
+    // Helper method to save properties
+    private void savePropertiesToFile(Properties props,
+                                      File configFile,
+                                      String dataDir,
+                                      String packetsDir,
+                                      String csvFile,
+                                      String showToken,
+                                      String verificationColor,
+                                      String marcherLabel) {
+        props.setProperty("data.dir", dataDir);
+        props.setProperty("packets.dir", packetsDir);
+        props.setProperty("csv.file", csvFile);
+        props.setProperty("show.token", showToken);
+        props.setProperty("verification.color", verificationColor);
+        props.setProperty("marcher.label", marcherLabel);
+
+        try (FileOutputStream out = new FileOutputStream(configFile)) {
+            props.store(out, "Board Configuration");
+        } catch (IOException e) {
+            JOptionPane.showMessageDialog(null,
+                    "Error saving settings: " + e.getMessage(),
+                    "Save Error",
+                    JOptionPane.ERROR_MESSAGE);
         }
     }
 

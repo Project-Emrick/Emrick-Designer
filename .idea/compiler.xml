@@ -3,4 +3,12 @@
   <component name="CompilerConfiguration">
     <bytecodeTargetLevel target="17" />
   </component>
+  <component name="JavacSettings">
+    <option name="ADDITIONAL_OPTIONS_STRING" value="-Xmx2048m" />
+    <option name="ADDITIONAL_OPTIONS_OVERRIDE">
+      <module name="Emrick-Designer" options="" />
+      <module name="org.emrick.project.Emrick-Designer.main" options="" />
+      <module name="org.emrick.project.Emrick-Designer.test" options="" />
+    </option>
+  </component>
 </project>
