@@ -73,10 +73,42 @@ public class TimeManager {
 
     public int MSec2Count(long ms) {
         for (Map.Entry<Integer, Long> entry : count2MSec.entrySet()) {
-            if (entry.getValue() >= ms) return entry.getKey();
+            if (entry.getValue() > ms) return entry.getKey() - 1;
         }
+        System.out.println("count found: " + count2MSec.size() + " for ms: " + ms);
         return count2MSec.size();
-    } // not entirely sure if this returns count or count + 1
+    }
+
+    // This method is more precise, returning count including subsets of it for smoother timeline playback
+    // It gets the exact count then adds the percent to the next count
+    public double MSec2CountPrecise(long ms) {
+        long count = 0;
+        double percentToNext = 0;
+        System.out.println("MSec2CountPrecise called with ms: " + ms);
+
+        for (Map.Entry<Integer, Long> entry : count2MSec.entrySet()) {
+            System.out.println("Checking count: " + entry.getKey() + ", time: " + entry.getValue());
+            if (entry.getValue() > ms) {
+                count = entry.getKey() - 1;
+                System.out.println("Found count: " + count + " for ms: " + ms);
+                if (count != count2MSec.size() - 1) { // Get the percent to the next count if there is a next count
+                    long curMS = count2MSec.get((int) count);
+                    int nextCountKey = (int) count + 1;
+                    Long nextCountMSec = count2MSec.get(nextCountKey);
+                    System.out.println("curMS: " + curMS + ", nextCountMSec: " + nextCountMSec);
+                    if (nextCountMSec != null && nextCountMSec > curMS) {
+                        percentToNext = (double) (ms - curMS) / (nextCountMSec - curMS);
+                        System.out.println("percentToNext: " + percentToNext);
+                    } else {
+                        System.out.println("No valid next count or nextCountMSec <= curMS");
+                    }
+                }
+                break;
+            }
+        }
+        System.out.println("Returning: " + (count + percentToNext));
+        return count + percentToNext;
+    }
 
     private void buildSet2MSec(ArrayList<Map.Entry<String, Integer>> set2CountSorted, HashMap<Integer, Long> count2MSec) {
         set2MSec = new ArrayList<>();
