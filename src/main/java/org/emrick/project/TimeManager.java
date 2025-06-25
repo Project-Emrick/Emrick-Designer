@@ -84,29 +84,21 @@ public class TimeManager {
     public double MSec2CountPrecise(long ms) {
         long count = 0;
         double percentToNext = 0;
-        System.out.println("MSec2CountPrecise called with ms: " + ms);
 
         for (Map.Entry<Integer, Long> entry : count2MSec.entrySet()) {
-            System.out.println("Checking count: " + entry.getKey() + ", time: " + entry.getValue());
             if (entry.getValue() > ms) {
                 count = entry.getKey() - 1;
-                System.out.println("Found count: " + count + " for ms: " + ms);
                 if (count != count2MSec.size() - 1) { // Get the percent to the next count if there is a next count
                     long curMS = count2MSec.get((int) count);
                     int nextCountKey = (int) count + 1;
                     Long nextCountMSec = count2MSec.get(nextCountKey);
-                    System.out.println("curMS: " + curMS + ", nextCountMSec: " + nextCountMSec);
                     if (nextCountMSec != null && nextCountMSec > curMS) {
                         percentToNext = (double) (ms - curMS) / (nextCountMSec - curMS);
-                        System.out.println("percentToNext: " + percentToNext);
-                    } else {
-                        System.out.println("No valid next count or nextCountMSec <= curMS");
                     }
                 }
                 break;
             }
         }
-        System.out.println("Returning: " + (count + percentToNext));
         return count + percentToNext;
     }
 
