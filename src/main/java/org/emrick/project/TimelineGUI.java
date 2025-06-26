@@ -57,8 +57,8 @@ public class TimelineGUI {
     private static final int PIXELS_PER_COUNT = 10; // Base scale: 10 pixels per count at zoom 1.0
     // Track the count position instead of time
     private final double totalDurationMSec; // Keeping for compatibility
-    private static double curMSec;          // Keeping for compatibility
-    private static double currentCount = 0;  // Current count position with fractional part
+    private static double curMS = 0;          // Keeping for compatibility
+    private static double curCount = 0;  // Current count position with fractional part
     private int maxCount;                   // Maximum count in the timeline
     
     // Scrub bar component
@@ -141,8 +141,8 @@ public class TimelineGUI {
 
         // Add a small delay before scrubbing to ensure all components are properly initialized
         SwingUtilities.invokeLater(() -> {
-            scrubTimeline(curMSec);
-            System.out.println("curMSec: " + curMSec + ", currentCount: " + currentCount);
+            scrubToMS(curMS);
+            System.out.println("curMSec: " + curMS + ", currentCount: " + curCount);
         });
     }
 
@@ -231,7 +231,7 @@ public class TimelineGUI {
     private void updateZoom() {
         zoomLabel.setText(String.format("Zoom: %.1fx", zoomFactor));
         updateTimelineLayout();
-        scrubTimeline(curMSec);
+        scrubToMS(curMS);
     }
 
     private void updateTimelineLayout() {
@@ -345,7 +345,7 @@ public class TimelineGUI {
                 g2d.setStroke(new BasicStroke(2.0f));
                 
                 // Draw based on current count instead of time
-                int xPosition = (int)(currentCount * PIXELS_PER_COUNT * zoomFactor);
+                int xPosition = (int)(curCount * PIXELS_PER_COUNT * zoomFactor);
                 g2d.drawLine(xPosition, 0, xPosition, getHeight());
             }
         };
@@ -438,7 +438,7 @@ public class TimelineGUI {
                 @Override
                 public void mousePressed(java.awt.event.MouseEvent e) {
                     isDragging = true;
-                    updateTimeFromMouse(e.getX());
+                    updateTimeFromMouse(e.getX(), e.isControlDown());
                 }
                 
                 @Override
@@ -448,7 +448,7 @@ public class TimelineGUI {
                 
                 @Override
                 public void mouseClicked(java.awt.event.MouseEvent e) {
-                    updateTimeFromMouse(e.getX());
+                    updateTimeFromMouse(e.getX(), e.isControlDown());
                 }
             });
             
@@ -456,31 +456,39 @@ public class TimelineGUI {
                 @Override
                 public void mouseDragged(java.awt.event.MouseEvent e) {
                     if (isDragging) {
-                        updateTimeFromMouse(e.getX());
+                        updateTimeFromMouse(e.getX(), e.isControlDown());
                     }
                 }
             });
         }
         
-        private void updateTimeFromMouse(int x) {
+        private void updateTimeFromMouse(int x, boolean ctrlPressed) {
             // Adjust x for scroll position
             int scrollX = timelineScrollPane.getHorizontalScrollBar().getValue();
             int adjustedX = x + scrollX;
             int viewportWidth = timelineScrollPane.getViewport().getWidth();
             
             // Convert x position directly to a count
-            int clickedCount = (int)(adjustedX / (PIXELS_PER_COUNT * zoomFactor));
+            double clickedCount = (adjustedX / (PIXELS_PER_COUNT * zoomFactor));
             System.out.println("Clicked count: " + clickedCount + 
                               ", Mouse X: " + x + 
                               ", Scroll X: " + scrollX + 
                               ", Viewport Width: " + viewportWidth);
             
+            // if ctrl is held down dont snap
+            if (ctrlPressed) {
+                // Directly scrub to the clicked count without snapping
+                scrubToCount(clickedCount);
+                return;
+            }
+            clickedCount = Math.round(clickedCount); // Round to nearest count
+            
             // Find the nearest trigger within a threshold (for snapping)
                 RFTrigger nearestTrigger = null;
-                int minDistance = Integer.MAX_VALUE;
+                double minDistance = Double.MAX_VALUE;
                 
             for (RFTrigger trigger : triggers) {
-                int distance = Math.abs(trigger.getCount() - clickedCount);
+                double distance = Math.abs(trigger.getCount() - clickedCount);
                 if (distance < minDistance && distance <= 1) { // Threshold of 1 count for snapping
                     minDistance = distance;
                     nearestTrigger = trigger;
@@ -563,7 +571,7 @@ public class TimelineGUI {
             g2d.setStroke(new BasicStroke(2.0f));
             
             // Draw based on current count
-            int xPosition = (int)(currentCount * PIXELS_PER_COUNT * zoomFactor) - scrollX;
+            int xPosition = (int)(curCount * PIXELS_PER_COUNT * zoomFactor) - scrollX;
             
             // Only draw if in visible range
             if (xPosition >= 0 && xPosition <= visibleWidth) {
@@ -578,14 +586,14 @@ public class TimelineGUI {
         }
     }
 
-    public void scrubTimeline(double ms) {
+    public void scrubToMS(double ms) {
         if (scrubBar.isDragging) { return; } // Don't scrub if dragging the scrub bar
         // Calculate the x position for the given time
         int xPosition = calculateXPosition(ms);
         // Set current position
-        curMSec = ms;
+        curMS = ms;
         // Update current count based on the timestamp
-        currentCount = timeManager.MSec2CountPrecise((long)ms);
+        curCount = timeManager.MSec2CountPrecise((long)ms);
         
         // Calculate scroll position to ensure current position is visible
         // Aim to position the current count with some padding to the left based on frame width
@@ -602,26 +610,9 @@ public class TimelineGUI {
     /**
      * Scrub to a specific count
      */
-    public void scrubToCount(int count) {
-        // Find a trigger at this count if possible
-        RFTrigger triggerAtCount = null;
-        for (RFTrigger trigger : triggers) {
-            if (trigger.getCount() == count) {
-                triggerAtCount = trigger;
-                break;
-            }
-        }
-        
-        // If we found a trigger, use its time
-        if (triggerAtCount != null) {
-            curMSec = triggerAtCount.getTimestampMillis();
-            // Use the precise method to get the exact count
-            currentCount = triggerAtCount.getCount();
-        } else {
-            // Otherwise estimate time based on count (1 second per count)
-            curMSec = count * 1000;
-            currentCount = count; // Exact count as a double
-        }
+    public void scrubToCount(double count) {
+        curMS = timeManager.getCount2MSec().get((int)Math.round(count));
+        curCount = count;
         
         // Notify listener of the timeline scrub action to keep other components in sync
         if (timelineListener != null) {
@@ -629,7 +620,7 @@ public class TimelineGUI {
         }
         
         // Calculate x position
-        int xPosition = (int)(currentCount * PIXELS_PER_COUNT * zoomFactor);
+        int xPosition = (int)(curCount * PIXELS_PER_COUNT * zoomFactor);
         
         // Get current scroll position and viewport width
         JScrollPane scrollPane = timelineScrollPane;

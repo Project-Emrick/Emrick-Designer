@@ -8,5 +8,5 @@ public interface TimelineListener {
      * Called when the timeline is scrubbed to a specific count
      * @param count The count position that was scrubbed to
      */
-    void onTimelineScrub(int count);
+    void onTimelineScrub(double count);
 }

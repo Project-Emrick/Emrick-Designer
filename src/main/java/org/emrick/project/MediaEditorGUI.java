@@ -2978,7 +2978,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         ledStripViewGUI.setCurrentMS(time);
 
         // sync timeline with scrub bar
-        timelineGUI.scrubTimeline(scrubBarGUI.getTime() * 1000);
+        timelineGUI.scrubToMS(scrubBarGUI.getTime() * 1000);
     }
 
     @Override
@@ -3209,8 +3209,8 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
     //////////////////////////// Timeline Listeners //////////////////////////
     
     @Override
-    public void onTimelineScrub(int count) {
-        scrubBarGUI.setScrub(count);
+    public void onTimelineScrub(double count) {
+        scrubBarGUI.setScrub((int)count);
     }
 
     ////////////////////////// RF Trigger Listeners //////////////////////////
