@@ -474,6 +474,8 @@ public class TimelineGUI {
                               ", Mouse X: " + x + 
                               ", Scroll X: " + scrollX + 
                               ", Viewport Width: " + viewportWidth);
+            // Ensure clickedCount is within bounds
+            clickedCount = Math.max(0, Math.min(clickedCount, maxCount));
             
             // if ctrl is held down dont snap
             if (ctrlPressed) {
