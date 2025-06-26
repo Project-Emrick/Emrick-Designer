@@ -7,6 +7,7 @@ import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
+import java.awt.event.MouseAdapter;
 import java.time.Duration;
 import java.util.AbstractMap;
 import java.util.ArrayList;
@@ -138,6 +139,9 @@ public class TimelineGUI {
         
         // Add mouse wheel listener for zooming with Ctrl+Scroll
         addMouseWheelZoomSupport();
+        
+        // Add middle mouse button panning support
+        addScrollClickPanning();
 
         // Add a small delay before scrubbing to ensure all components are properly initialized
         SwingUtilities.invokeLater(() -> {
@@ -283,6 +287,9 @@ public class TimelineGUI {
             
             triggerWidget.setBounds(xPosition, 0, width, TRIGGER_ROW_HEIGHT);
             timelinePanel.add(triggerWidget);
+            
+            // Make the trigger widget transparent to middle mouse events (pass through to timeline panel)
+            panAdapters.add(PanningMouseAdapter.passMiddleMouseEvents(triggerWidget, timelinePanel));
         }
         
         // Add Effects (subsequent rows)
@@ -319,6 +326,9 @@ public class TimelineGUI {
             
             effectWidget.setBounds(xPosition, yPosition, width, ROW_HEIGHT - 2);
             timelinePanel.add(effectWidget);
+            
+            // Make the effect widget transparent to middle mouse events (pass through to timeline panel)
+            panAdapters.add(PanningMouseAdapter.passMiddleMouseEvents(effectWidget, timelinePanel));
             
             while (effectRows.size() <= rowIndex) {
                 effectRows.add(new ArrayList<>());
@@ -657,6 +667,31 @@ public class TimelineGUI {
             timelinePanel.repaint();
             scrubBar.repaint();
         });
+    }
+    
+    // List to store references to mouse adapters to prevent garbage collection
+    private final List<MouseAdapter> panAdapters = new ArrayList<>();
+    
+    /**
+     * Adds support for panning the timeline using the middle mouse button (scroll wheel)
+     * This implementation uses a specialized adapter that ensures smooth, precise panning
+     * with the content following exactly under the mouse cursor as you drag.
+     */
+    private void addScrollClickPanning() {
+        // Add panning support to timeline panel with a callback to repaint the scrub bar
+        PanningMouseAdapter timelinePanAdapter = new PanningMouseAdapter(
+            timelinePanel, 
+            timelineScrollPane,
+            () -> scrubBar.repaint() // Update scrub bar whenever timeline is panned
+        );
+        panAdapters.add(timelinePanAdapter);
+        
+        // Add panning support to scrub bar
+        PanningMouseAdapter scrubPanAdapter = new PanningMouseAdapter(
+            scrubBar, 
+            timelineScrollPane
+        );
+        panAdapters.add(scrubPanAdapter);
     }
     
     public static void main(String[] args) {
