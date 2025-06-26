@@ -116,13 +116,13 @@ public class TimelineGUI {
         maxCount += 5;
         
         createTimelinePane();
-        createZoomControls();
+        //createZoomControls();
         
         // Initialize scrub bar
         scrubBar = new TimelineScrubBar();
         
         mainPanel = new JPanel(new BorderLayout());
-        mainPanel.add(zoomPanel, BorderLayout.NORTH);
+        //mainPanel.add(zoomPanel, BorderLayout.NORTH);
         
         // Create a panel to hold the scrub bar and timeline
         JPanel timelineContainer = new JPanel(new BorderLayout());
@@ -233,9 +233,11 @@ public class TimelineGUI {
      * Updates the zoom display and timeline layout
      */
     private void updateZoom() {
-        zoomLabel.setText(String.format("Zoom: %.1fx", zoomFactor));
         updateTimelineLayout();
         scrubToMS(curMS);
+        if (zoomLabel != null) {
+            zoomLabel.setText(String.format("Zoom: %.1fx", zoomFactor));
+        }
     }
 
     private void updateTimelineLayout() {
