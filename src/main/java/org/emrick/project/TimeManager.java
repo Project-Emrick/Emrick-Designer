@@ -71,12 +71,57 @@ public class TimeManager {
         buildSet2MSec(set2CountSorted, count2MSec);
     }
 
+    // Optimized: Use binary search for efficient lookup since counts are sequential integers
     public int MSec2Count(long ms) {
-        for (Map.Entry<Integer, Long> entry : count2MSec.entrySet()) {
-            if (entry.getValue() >= ms) return entry.getKey();
+        int low = 0;
+        int high = count2MSec.size() - 1;
+        int result = -1;
+        while (low <= high) {
+            int mid = (low + high) >>> 1;
+            Long value = count2MSec.get(mid);
+            if (value == null) break;
+            if (value > ms) {
+                result = mid - 1;
+                high = mid - 1;
+            } else {
+                low = mid + 1;
+            }
         }
-        return count2MSec.size();
-    } // not entirely sure if this returns count or count + 1
+        if (result == -1) {
+            // ms is before the first count
+            return 0;
+        }
+        if (result >= count2MSec.size()) {
+            // ms is beyond the last count
+            return count2MSec.size() - 1;
+        }
+        return result;
+    }
+
+    // This method is more precise, returning count including subsets of it for smoother timeline playback
+    // It gets the exact count then adds the percent to the next count
+    public double MSec2CountPrecise(long ms) {
+        int low = 0;
+        int high = count2MSec.size() - 1;
+        int prevKey = -1;
+        while (low <= high) {
+            int mid = (low + high) >>> 1;
+            Long value = count2MSec.get(mid);
+            if (value == null) break;
+            if (value > ms) {
+                prevKey = mid - 1;
+                high = mid - 1;
+            } else {
+                low = mid + 1;
+            }
+        }
+        if (prevKey < 0) return 0.0;
+        if (prevKey >= count2MSec.size() - 1) return count2MSec.size() - 1;
+        long curMS = count2MSec.get(prevKey);
+        long nextMS = count2MSec.get(prevKey + 1);
+        double percentToNext = (nextMS > curMS) ? (double) (ms - curMS) / (nextMS - curMS) : 0.0;
+        return prevKey + percentToNext;
+    }
 
     private void buildSet2MSec(ArrayList<Map.Entry<String, Integer>> set2CountSorted, HashMap<Integer, Long> count2MSec) {
         set2MSec = new ArrayList<>();
