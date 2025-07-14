@@ -1727,7 +1727,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                     stopWebServer.setEnabled(false);
                     runWebServer.setEnabled(true);
                     runLightBoardWebServer.setEnabled(true);
-                    //deleteDirectory(f);
+                    deleteDirectory(f);
 
                     JOptionPane.showMessageDialog(
                             null,
@@ -1749,7 +1749,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                 stopWebServer.setEnabled(false);
                 runWebServer.setEnabled(true);
                 runLightBoardWebServer.setEnabled(true);
-                //deleteDirectory(f);
+                deleteDirectory(f);
                 return;
             }
 
