@@ -3839,7 +3839,8 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         }
         if (!allReceived) {
             if (lastRun + 2000 < System.currentTimeMillis()) {
-                serialTransmitter.enterProgMode(ssid, password, port, currentID, token, verificationColor, lightBoardMode);
+                SerialTransmitter serialTransmitter1 = new SerialTransmitter();
+                serialTransmitter1.enterProgMode(ssid, password, port, currentID, token, verificationColor, lightBoardMode);
                 lastRun = System.currentTimeMillis();
             }
             noRequestTimer.setDelay(10000);
@@ -4367,52 +4368,116 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
     private class ProgrammingTracker extends JPanel {
         private ArrayList<LEDStrip> allStrips;
         private HashSet<Integer> completedStrips;
+        private HashSet<Integer> alreadyProgrammedStrips = new HashSet<>();
         private ArrayList<ProgrammableItem> items;
         private boolean painting = false;
+        private File completedStripsFile;
 
         public ProgrammingTracker(ArrayList<LEDStrip> allStrips, HashSet<Integer> completedStrips) {
             this.allStrips = allStrips;
             this.completedStrips = completedStrips;
-            items = new ArrayList<ProgrammableItem>();
-            this.setLayout(new GridLayout(20, allStrips.size() / 20+1));
+            this.items = new ArrayList<>();
+            this.completedStripsFile = new File(PathConverter.pathConverter("programmedBoards.txt", false));
+
+            loadCompletedStrips();
+
+            this.setLayout(new GridLayout(20, allStrips.size() / 20 + 1));
+
             for (LEDStrip l : allStrips) {
                 ProgrammableItem item = new ProgrammableItem(l);
+                if (alreadyProgrammedStrips.contains(l.getId())) {
+                    item.setAlreadyProgrammed(true);
+                }
                 items.add(item);
                 this.add(item);
             }
+
             for (Integer l : completedStrips) {
                 setItemCompleted(l);
             }
         }
 
-        public ArrayList<LEDStrip> getAllStrips() {
-            return allStrips;
+        private void loadCompletedStrips() {
+            if (!completedStripsFile.exists()) {
+                // Create new file with token
+                try (BufferedWriter writer = new BufferedWriter(new FileWriter(completedStripsFile))) {
+                    writer.write("Token: " + token);
+                    writer.newLine();
+                } catch (IOException e) {
+                    System.out.println("Error creating programmedBoards.txt.");
+                    e.printStackTrace();
+                }
+                return;
+            }
+
+            try (BufferedReader reader = new BufferedReader(new FileReader(completedStripsFile))) {
+                String firstLine = reader.readLine();
+
+                if (firstLine == null || !firstLine.startsWith("Token:")) {
+                    // Corrupt or missing token line → rewrite file
+                    rewriteFileWithTokenOnly();
+                    return;
+                }
+
+                int storedToken = Integer.parseInt(firstLine.substring("Token:".length()).trim());
+                if (token != storedToken) {
+                    System.out.println("Token mismatch. Rewriting file with current token.");
+                    rewriteFileWithTokenOnly();
+                    return;
+                }
+
+                // Parse the remaining lines as completed IDs
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    try {
+                        alreadyProgrammedStrips.add(Integer.parseInt(line.trim()));
+                    } catch (NumberFormatException ignored) {
+                    }
+                }
+            } catch (IOException e) {
+                System.out.println("Error reading programmedBoards.txt");
+                e.printStackTrace();
+            }
         }
 
-        public void setAllStrips(ArrayList<LEDStrip> allStrips) {
-            this.allStrips = allStrips;
+        private void rewriteFileWithTokenOnly() {
+            try (BufferedWriter writer = new BufferedWriter(new FileWriter(completedStripsFile))) {
+                writer.write("Token: " + token);
+                writer.newLine();
+            } catch (IOException e) {
+                System.out.println("Error rewriting file with new token.");
+                e.printStackTrace();
+            }
         }
 
-        public HashSet<Integer> getCompletedStrips() {
-            return completedStrips;
-        }
+        public void addCompletedStrip(Integer ledStripId) {
+            if (alreadyProgrammedStrips.contains(ledStripId)) {
+                return;
+            }
 
-        public void setCompletedStrips(HashSet<Integer> completedStrips) {
-            this.completedStrips = completedStrips;
-        }
+            setItemCompleted(ledStripId);
+            alreadyProgrammedStrips.add(ledStripId);
 
-        public void addCompletedStrip(Integer ledStrip) {
-            setItemCompleted(ledStrip);
+            // Append ID to file
+            try (BufferedWriter writer = new BufferedWriter(new FileWriter(completedStripsFile, true))) {
+                writer.write(String.valueOf(ledStripId));
+                writer.newLine();
+            } catch (IOException e) {
+                System.out.println("Error writing to programmedBoards.txt");
+                e.printStackTrace();
+            }
+
             if (!painting) {
                 painting = true;
                 repaint();
             }
         }
 
-        private void setItemCompleted(Integer ledStrip) {
+        private void setItemCompleted(Integer ledStripId) {
             for (ProgrammableItem item : items) {
-                if (item.getLedStrip().getId() == ledStrip) {
+                if (item.getLedStrip().getId() == ledStripId) {
                     item.setProgrammed(true);
+                    item.setAlreadyProgrammed(false); // Override green with blue
                 }
             }
         }
@@ -4426,10 +4491,12 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         private class ProgrammableItem extends JPanel {
             private LEDStrip ledStrip;
             private boolean programmed;
+            private boolean alreadyProgrammed;
 
             public ProgrammableItem(LEDStrip ledStrip) {
                 this.ledStrip = ledStrip;
                 this.programmed = false;
+                this.alreadyProgrammed = false;
                 this.setMaximumSize(new Dimension(50, 50));
                 this.setPreferredSize(new Dimension(50, 50));
                 this.setMinimumSize(new Dimension(50, 50));
@@ -4438,12 +4505,16 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             @Override
             public void paintComponent(Graphics g) {
                 super.paintComponent(g);
+
                 if (programmed) {
-                    g.setColor(new Color(0,150,255));
+                    g.setColor(new Color(0, 150, 255)); // Blue text
+                } else if (alreadyProgrammed) {
+                    g.setColor(new Color(0, 200, 0)); // Green text
                 } else {
-                    g.setColor(Color.RED);
+                    g.setColor(Color.RED); // Red text
                 }
-                g.drawString(ledStrip.getLabel(), 15, 15);
+
+                g.drawString(ledStrip.getLabel(), 10, 20);
             }
 
             public LEDStrip getLedStrip() {
@@ -4461,8 +4532,14 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             public void setProgrammed(boolean programmed) {
                 this.programmed = programmed;
             }
+
+            public void setAlreadyProgrammed(boolean alreadyProgrammed) {
+                this.alreadyProgrammed = alreadyProgrammed;
+            }
         }
     }
+
+
 
     /**
      * Runnable object used to split the load of packet export.
