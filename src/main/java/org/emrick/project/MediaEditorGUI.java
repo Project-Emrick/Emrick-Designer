@@ -129,6 +129,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
     private ProgrammingTracker programmingTracker;
     private JProgressBar programmingProgressBar;
     private boolean lightBoardMode;
+    JLabel programmingProgressLabel = new JLabel();
 
     // Flow viewer
     private JMenuItem runShowItem;
@@ -1829,9 +1830,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
 
                     if (tokenLine != null && colorLine != null && tokenLine.startsWith("Token:") && colorLine.startsWith("Verification Color:")) {
                         String storedToken = tokenLine.substring("Token:".length()).trim();
-                        if (token == (Integer.parseInt(storedToken))) {
-                            System.out.println(("Token Matched: " + token + "& " + Integer.parseInt(storedToken)));
-
+                        if (token == (Integer.parseInt(storedToken))) {     // Token Matches
                             // Parse Verification Color R,G,B
                             String[] rgbParts = colorLine.substring("Verification Color:".length()).trim().split(",");
                             if (rgbParts.length == 3) {
@@ -1840,10 +1839,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                                 int b = Integer.parseInt(rgbParts[2]);
                                 verificationColor = new Color(r, g, b);
                             }
-                            System.out.println("Verification Color Grabbed: " + verificationColor);
                         } else { // Token Didn't Match
-                            System.out.println(("Token Not Matched: " + Integer.parseInt(storedToken)));
-
                             // Get a New Verification Color Since Token is Different:
                             verificationColor = JColorChooser.showDialog(this, "Select verification color", Color.WHITE);
                             if (verificationColor == null) {
@@ -1893,25 +1889,29 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
 
             /* Create a new Private Class Instance of Programming Tracker */
             programmingTracker = new ProgrammingTracker(footballFieldPanel.drill.ledStrips, requestIDs);
+
+            /* Create the Pane of All Board Labels */
             JScrollPane scrollPane = new JScrollPane(programmingTracker);
             JPanel fullPanel = new JPanel();
             fullPanel.setLayout(new BoxLayout(fullPanel, BoxLayout.Y_AXIS));
             fullPanel.add(scrollPane);
 
+            /* Create a Progess Bar */
             programmingProgressBar = new JProgressBar(0, footballFieldPanel.drill.ledStrips.size());
-            programmingProgressBar.setValue(0);
-            programmingProgressBar.setPreferredSize(new Dimension(300, 40));
-            programmingProgressBar.setMaximumSize(new Dimension(300, 40));
-            programmingProgressBar.setMinimumSize(new Dimension(300, 40));
-            programmingProgressBar.setString(programmingProgressBar.getValue() + "/" + programmingProgressBar.getMaximum());
-            programmingProgressBar.setStringPainted(true);
-            fullPanel.add(programmingProgressBar);
+            programmingProgressBar.setValue(requestIDs.size());
+            programmingProgressBar.setStringPainted(false); // We'll show summary separately
+            programmingProgressBar.setPreferredSize(new Dimension(300, 20));
+            //fullPanel.add(programmingProgressBar);
+
+            /* Add a Descriptive Label */
+            updateProgressLabel(programmingProgressLabel, requestIDs, programmingTracker.getAlreadyProgrammedStrips(), footballFieldPanel.drill.ledStrips.size());
+
+            fullPanel.add(programmingProgressLabel);
             webServerFrame.add(fullPanel);
             webServerFrame.addWindowListener(new WindowAdapter() {
                 @Override
                 public void windowClosing(WindowEvent e) {
                     stopServer();
-
                     super.windowClosing(e);
                 }
             });
@@ -1919,8 +1919,6 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             lightBoardMode = lightBoard;
 
             SerialTransmitter serialTransmitter1 = new SerialTransmitter(); // idk why but serialTransmitter was always null...so I just made a new one.
-            System.out.println("Got to the SerialTransmitter Prog Mode Start");
-            System.out.println("SSID: " + ssid + "\npassword: " + password + "\nport: " + port + "\ncurrentID: " + currentID + "\ntoken: " + token + "\nvColor: " + verificationColor + "\nlightboard mode: " + lightBoardMode);
             serialTransmitter1.enterProgMode(ssid, password, port, currentID, token, verificationColor, lightBoardMode);
 
             noRequestTimer.start();
@@ -1929,6 +1927,22 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         }
     }
     //
+
+    private void updateProgressLabel(JLabel label, java.util.Set<Integer> newlyProgrammed, java.util.Set<Integer> previouslyProgrammed, int totalBoards) {
+        int totalCompleted = newlyProgrammed.size() + previouslyProgrammed.size();
+        StringBuilder sb = new StringBuilder("<html>");
+        sb.append("<b>Previously Programmed:</b> ").append(previouslyProgrammed.size()).append("<br>");
+        sb.append("<b>Newly Programmed:</b> ").append(newlyProgrammed.size()).append("<br>");
+        sb.append("<b>Total Boards:</b> ").append(totalCompleted).append(" / ").append(totalBoards);
+        sb.append("</html>");
+        label.setText(sb.toString());
+
+        /* Handle Font Color For Light / Dark Mode */
+        Color foreground = UIManager.getLookAndFeel() instanceof FlatDarkLaf
+                ? Color.WHITE
+                : Color.BLACK;
+        label.setForeground(foreground);
+    }
 
     /**
      * Loads a new .emrick file to the viewport to be edited.
@@ -3819,9 +3833,12 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             programmingProgressBar.setValue(requestIDs.size());
             programmingProgressBar.setString(programmingProgressBar.getValue() + "/" + programmingProgressBar.getMaximum());
             programmingProgressBar.setStringPainted(true);
+
             programmingTracker.addCompletedStrip(id);
             programmingTracker.revalidate();
             programmingTracker.repaint();
+
+            updateProgressLabel(programmingProgressLabel, requestIDs, programmingTracker.getAlreadyProgrammedStrips(), footballFieldPanel.drill.ledStrips.size());
         }
 
         int highestID = footballFieldPanel.drill.ledStrips.size() - 1;
@@ -4414,7 +4431,6 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                 String firstLine = reader.readLine();
 
                 if (firstLine == null || !firstLine.startsWith("Token:")) {
-                    // Corrupt or missing token line → rewrite file
                     rewriteFileWithTokenOnly();
                     return;
                 }
@@ -4426,7 +4442,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                     return;
                 }
 
-                // Parse the remaining lines as completed IDs
+                // Load remaining lines as board IDs
                 String line;
                 while ((line = reader.readLine()) != null) {
                     try {
@@ -4454,11 +4470,8 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             if (alreadyProgrammedStrips.contains(ledStripId)) {
                 return;
             }
-
             setItemCompleted(ledStripId);
-            alreadyProgrammedStrips.add(ledStripId);
 
-            // Append ID to file
             try (BufferedWriter writer = new BufferedWriter(new FileWriter(completedStripsFile, true))) {
                 writer.write(String.valueOf(ledStripId));
                 writer.newLine();
@@ -4477,9 +4490,13 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             for (ProgrammableItem item : items) {
                 if (item.getLedStrip().getId() == ledStripId) {
                     item.setProgrammed(true);
-                    item.setAlreadyProgrammed(false); // Override green with blue
+                    item.setAlreadyProgrammed(false); // override green with blue
                 }
             }
+        }
+
+        public java.util.Set<Integer> getAlreadyProgrammedStrips() {
+            return new HashSet<>(alreadyProgrammedStrips);
         }
 
         @Override
@@ -4538,8 +4555,6 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             }
         }
     }
-
-
 
     /**
      * Runnable object used to split the load of packet export.
