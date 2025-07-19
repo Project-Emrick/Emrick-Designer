@@ -129,6 +129,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
     private ProgrammingTracker programmingTracker;
     private JProgressBar programmingProgressBar;
     private boolean lightBoardMode;
+    JLabel programmingProgressLabel = new JLabel();
 
     // Flow viewer
     private JMenuItem runShowItem;
@@ -1015,8 +1016,8 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         /* Check Color */
         checkColor.addActionListener(e -> {
             /* Check for Board Receiver Type */
-            SerialTransmitter st = comPortPrompt("Receiver");
             try {
+                SerialTransmitter st = comPortPrompt("Receiver");
                 if (!st.getType().equals("Receiver")) {
                     throw new IllegalStateException("Not a receiver");
                 }
@@ -1064,6 +1065,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             // Add button actions
             sendButton.addActionListener(ev -> {
                 Color selectedColor = colorChooser.getColor();
+                SerialTransmitter st = comPortPrompt("Receiver");
                 st.writeColorCheck(selectedColor);
 
                 // Visual feedback
@@ -1630,6 +1632,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
      */
     private void runServer(String path, boolean lightBoard) {
         try {
+            /* File PKT Selection */
             File f;
             // If a project is loaded, generate the packets from the project and write them to a temp file in project directory.
             // delete file after server is stopped.
@@ -1658,6 +1661,8 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                     f = new File(path);
                 }
             }
+
+            /* WiFi Credentials Input */
             JTextField ssidField = new JTextField();
             JPasswordField passwordField = new JPasswordField();
             JTextField portField = new JTextField("8080");
@@ -1708,15 +1713,39 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                 bfw.flush();
                 bfw.close();
             }
-            currentID = Math.min(MAX_CONNECTIONS, footballFieldPanel.drill.ledStrips.size());
 
             ssid = ssidField.getText();
             char[] passwordChar = passwordField.getPassword();
             password = new String(passwordChar);
             port = Integer.parseInt(portField.getText());
 
-            serialTransmitter = comPortPrompt("Transmitter");
-            if (!serialTransmitter.getType().equals("Transmitter")) {
+            /* Check For Transmitter */
+            try {
+                SerialTransmitter st1 = comPortPrompt("Transmitter");
+                if (!st1.getType().equals("Transmitter")) {
+                    /* Reset Menu Options */
+                    stopWebServer.setEnabled(false);
+                    runWebServer.setEnabled(true);
+                    runLightBoardWebServer.setEnabled(true);
+                    deleteDirectory(f);
+
+                    JOptionPane.showMessageDialog(
+                            null,
+                            "Receiver Detected, Please plug in a transmitter.",
+                            "Error",
+                            JOptionPane.ERROR_MESSAGE
+                    );
+                    return;
+                }
+            } catch (Exception ex) {
+                JOptionPane.showMessageDialog(
+                        null,
+                        "Please plug a transmitter board in before proceeding.",
+                        "Error",
+                        JOptionPane.ERROR_MESSAGE
+                );
+
+                /* Reset Menu Options */
                 stopWebServer.setEnabled(false);
                 runWebServer.setEnabled(true);
                 runLightBoardWebServer.setEnabled(true);
@@ -1724,27 +1753,21 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                 return;
             }
 
+            /* Unzip .pkt File */
             Unzip.unzip(f.getAbsolutePath(), PathConverter.pathConverter("tmp/", false));
-            verificationColor = JColorChooser.showDialog(this, "Select verification color", Color.WHITE);
-            if (verificationColor == null) {
-                stopWebServer.setEnabled(false);
-                runWebServer.setEnabled(true);
-                runLightBoardWebServer.setEnabled(true);
-                return;
-            }
 
+            /* Entering / Generating a New Token */
             String input = JOptionPane.showInputDialog(null, "Enter verification token (leave blank for new token)\n\nDon't use this feature to program more than 200 units");
 
-            if (input != null) {
-                if (input.isEmpty()) {
+            if (input != null) {    // User input something
+                if (input.isEmpty()) {  // New Token Generation
                     Random r = new Random();
                     token = r.nextInt(0, Integer.MAX_VALUE);
                     JOptionPane.showMessageDialog(null, new JTextArea("The token for this show is: " + token + "\n Save this token in case some boards are not programmed"));
                 } else {
                     token = Integer.parseInt(input);
-                    currentID = footballFieldPanel.drill.ledStrips.size();
                 }
-            } else {
+            } else {    // User didn't input anything + closed box
                 stopWebServer.setEnabled(false);
                 runWebServer.setEnabled(true);
                 runLightBoardWebServer.setEnabled(true);
@@ -1752,6 +1775,105 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                 return;
             }
 
+            // Set Current ID To All Boards Available. Max WiFi router can handle is 200 connections, otherwise it thinks a DDOS attack.
+            // Changed from Old Version to follow show programming flow better. Case by case worked better than all at once.
+            //Old Version -> currentID = Math.min(MAX_CONNECTIONS, footballFieldPanel.drill.ledStrips.size()); // Set Current ID to Smaller Option Between Max Connections + Boards Available
+            currentID = footballFieldPanel.drill.ledStrips.size();
+
+            /*  Verification Color */
+            // Check to see if vColor.txt file exists. If so, check to ensure token matches and then extract verification color. Else create file + store color.
+            File vColor = new File(PathConverter.pathConverter("vColor.txt", false));
+            if (!vColor.exists()) { // No Verification Color. Create file and save user input.
+                // Create vColor.txt File
+                try {
+                    if (vColor.createNewFile()) {
+                        System.out.println("File created: " + vColor.getAbsolutePath());
+                    } else {
+                        System.out.println("vColor.txt already exists.");
+                    }
+                } catch (IOException e) {
+                    System.out.println("An error occurred while creating vColor.txt file.");
+                    e.printStackTrace();
+                }
+
+                // Get User Entered Verification Color
+                verificationColor = JColorChooser.showDialog(this, "Select verification color", Color.WHITE);
+                if (verificationColor == null) {
+                    stopWebServer.setEnabled(false);
+                    runWebServer.setEnabled(true);
+                    runLightBoardWebServer.setEnabled(true);
+                    return;
+                }
+
+                // Write to vColor.txt
+                try (BufferedWriter writer = new BufferedWriter(new FileWriter(vColor))) {
+                    // Save Token:
+                    writer.write("Token: " + token);
+                    writer.newLine();
+
+                    // Format color as "R,G,B"
+                    String rgbString = verificationColor.getRed() + "," +
+                            verificationColor.getGreen() + "," +
+                            verificationColor.getBlue();
+
+                    writer.write("Verification Color: " + rgbString);
+                } catch (IOException e) {
+                    System.out.println("An error occurred while writing to vColor.txt.");
+                    e.printStackTrace();
+                }
+            } else {    // vColor.txt file exists already. Check to see if token matches. If so pull color otherwise write a new one.
+                // Read File
+                try (BufferedReader reader = new BufferedReader(new FileReader(vColor))) {
+                    // Find Token & Verification Color
+                    String tokenLine = reader.readLine();
+                    String colorLine = reader.readLine();
+
+                    if (tokenLine != null && colorLine != null && tokenLine.startsWith("Token:") && colorLine.startsWith("Verification Color:")) {
+                        String storedToken = tokenLine.substring("Token:".length()).trim();
+                        if (token == (Integer.parseInt(storedToken))) {     // Token Matches
+                            // Parse Verification Color R,G,B
+                            String[] rgbParts = colorLine.substring("Verification Color:".length()).trim().split(",");
+                            if (rgbParts.length == 3) {
+                                int r = Integer.parseInt(rgbParts[0]);
+                                int g = Integer.parseInt(rgbParts[1]);
+                                int b = Integer.parseInt(rgbParts[2]);
+                                verificationColor = new Color(r, g, b);
+                            }
+                        } else { // Token Didn't Match
+                            // Get a New Verification Color Since Token is Different:
+                            verificationColor = JColorChooser.showDialog(this, "Select verification color", Color.WHITE);
+                            if (verificationColor == null) {
+                                stopWebServer.setEnabled(false);
+                                runWebServer.setEnabled(true);
+                                runLightBoardWebServer.setEnabled(true);
+                                return;
+                            }
+
+                            // Write new token + verification color to vColor.txt
+                            try (BufferedWriter writer = new BufferedWriter(new FileWriter(vColor))) {
+                                // Save Token:
+                                writer.write("Token: " + token);
+                                writer.newLine();
+
+                                // Format color as "R,G,B"
+                                String rgbString = verificationColor.getRed() + "," +
+                                        verificationColor.getGreen() + "," +
+                                        verificationColor.getBlue();
+
+                                writer.write("Verification Color: " + rgbString);
+                            } catch (IOException e) {
+                                System.out.println("An error occurred while writing to vColor.txt.");
+                                e.printStackTrace();
+                            }
+                        }
+                    }
+                } catch (IOException e) {
+                    System.out.println("Error reading vColor.txt");
+                    e.printStackTrace();
+                }
+            }
+
+            /* Create Webserver */
             server = HttpServer.create(new InetSocketAddress(port), 250);
             writeSysMsg("server started at " + port);
             requestIDs = new HashSet<>();
@@ -1764,41 +1886,63 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             webServerFrame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
             webServerFrame.setSize(800, 600);
             webServerFrame.setIconImage(Toolkit.getDefaultToolkit().getImage(PathConverter.pathConverter("res/images/icon.png", true)));
+
+            /* Create a new Private Class Instance of Programming Tracker */
             programmingTracker = new ProgrammingTracker(footballFieldPanel.drill.ledStrips, requestIDs);
+
+            /* Create the Pane of All Board Labels */
             JScrollPane scrollPane = new JScrollPane(programmingTracker);
             JPanel fullPanel = new JPanel();
             fullPanel.setLayout(new BoxLayout(fullPanel, BoxLayout.Y_AXIS));
             fullPanel.add(scrollPane);
 
+            /* Create a Progess Bar */
             programmingProgressBar = new JProgressBar(0, footballFieldPanel.drill.ledStrips.size());
-            programmingProgressBar.setValue(0);
-            programmingProgressBar.setPreferredSize(new Dimension(300, 40));
-            programmingProgressBar.setMaximumSize(new Dimension(300, 40));
-            programmingProgressBar.setMinimumSize(new Dimension(300, 40));
-            programmingProgressBar.setString(programmingProgressBar.getValue() + "/" + programmingProgressBar.getMaximum());
-            programmingProgressBar.setStringPainted(true);
-            fullPanel.add(programmingProgressBar);
+            programmingProgressBar.setValue(requestIDs.size());
+            programmingProgressBar.setStringPainted(false); // We'll show summary separately
+            programmingProgressBar.setPreferredSize(new Dimension(300, 20));
+            //fullPanel.add(programmingProgressBar);
+
+            /* Add a Descriptive Label */
+            updateProgressLabel(programmingProgressLabel, requestIDs, programmingTracker.getAlreadyProgrammedStrips(), footballFieldPanel.drill.ledStrips.size());
+
+            fullPanel.add(programmingProgressLabel);
             webServerFrame.add(fullPanel);
             webServerFrame.addWindowListener(new WindowAdapter() {
                 @Override
                 public void windowClosing(WindowEvent e) {
                     stopServer();
-
                     super.windowClosing(e);
                 }
             });
             webServerFrame.setVisible(true);
             lightBoardMode = lightBoard;
 
-            if (serialTransmitter != null) {
-                serialTransmitter.enterProgMode(ssid, password, port, currentID, token, verificationColor, lightBoardMode);
-            }
+            SerialTransmitter serialTransmitter1 = new SerialTransmitter(); // idk why but serialTransmitter was always null...so I just made a new one.
+            serialTransmitter1.enterProgMode(ssid, password, port, currentID, token, verificationColor, lightBoardMode);
+
             noRequestTimer.start();
         } catch (IOException ioe) {
             throw new RuntimeException(ioe);
         }
     }
     //
+
+    private void updateProgressLabel(JLabel label, java.util.Set<Integer> newlyProgrammed, java.util.Set<Integer> previouslyProgrammed, int totalBoards) {
+        int totalCompleted = newlyProgrammed.size() + previouslyProgrammed.size();
+        StringBuilder sb = new StringBuilder("<html>");
+        sb.append("<b>Previously Programmed:</b> ").append(previouslyProgrammed.size()).append("<br>");
+        sb.append("<b>Newly Programmed:</b> ").append(newlyProgrammed.size()).append("<br>");
+        sb.append("<b>Total Boards:</b> ").append(totalCompleted).append(" / ").append(totalBoards);
+        sb.append("</html>");
+        label.setText(sb.toString());
+
+        /* Handle Font Color For Light / Dark Mode */
+        Color foreground = UIManager.getLookAndFeel() instanceof FlatDarkLaf
+                ? Color.WHITE
+                : Color.BLACK;
+        label.setForeground(foreground);
+    }
 
     /**
      * Loads a new .emrick file to the viewport to be edited.
@@ -3689,9 +3833,12 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             programmingProgressBar.setValue(requestIDs.size());
             programmingProgressBar.setString(programmingProgressBar.getValue() + "/" + programmingProgressBar.getMaximum());
             programmingProgressBar.setStringPainted(true);
+
             programmingTracker.addCompletedStrip(id);
             programmingTracker.revalidate();
             programmingTracker.repaint();
+
+            updateProgressLabel(programmingProgressLabel, requestIDs, programmingTracker.getAlreadyProgrammedStrips(), footballFieldPanel.drill.ledStrips.size());
         }
 
         int highestID = footballFieldPanel.drill.ledStrips.size() - 1;
@@ -3709,7 +3856,8 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         }
         if (!allReceived) {
             if (lastRun + 2000 < System.currentTimeMillis()) {
-                serialTransmitter.enterProgMode(ssid, password, port, currentID, token, verificationColor, lightBoardMode);
+                SerialTransmitter serialTransmitter1 = new SerialTransmitter();
+                serialTransmitter1.enterProgMode(ssid, password, port, currentID, token, verificationColor, lightBoardMode);
                 lastRun = System.currentTimeMillis();
             }
             noRequestTimer.setDelay(10000);
@@ -4237,54 +4385,118 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
     private class ProgrammingTracker extends JPanel {
         private ArrayList<LEDStrip> allStrips;
         private HashSet<Integer> completedStrips;
+        private HashSet<Integer> alreadyProgrammedStrips = new HashSet<>();
         private ArrayList<ProgrammableItem> items;
         private boolean painting = false;
+        private File completedStripsFile;
 
         public ProgrammingTracker(ArrayList<LEDStrip> allStrips, HashSet<Integer> completedStrips) {
             this.allStrips = allStrips;
             this.completedStrips = completedStrips;
-            items = new ArrayList<ProgrammableItem>();
-            this.setLayout(new GridLayout(20, allStrips.size() / 20+1));
+            this.items = new ArrayList<>();
+            this.completedStripsFile = new File(PathConverter.pathConverter("programmedBoards.txt", false));
+
+            loadCompletedStrips();
+
+            this.setLayout(new GridLayout(20, allStrips.size() / 20 + 1));
+
             for (LEDStrip l : allStrips) {
                 ProgrammableItem item = new ProgrammableItem(l);
+                if (alreadyProgrammedStrips.contains(l.getId())) {
+                    item.setAlreadyProgrammed(true);
+                }
                 items.add(item);
                 this.add(item);
             }
+
             for (Integer l : completedStrips) {
                 setItemCompleted(l);
             }
         }
 
-        public ArrayList<LEDStrip> getAllStrips() {
-            return allStrips;
+        private void loadCompletedStrips() {
+            if (!completedStripsFile.exists()) {
+                // Create new file with token
+                try (BufferedWriter writer = new BufferedWriter(new FileWriter(completedStripsFile))) {
+                    writer.write("Token: " + token);
+                    writer.newLine();
+                } catch (IOException e) {
+                    System.out.println("Error creating programmedBoards.txt.");
+                    e.printStackTrace();
+                }
+                return;
+            }
+
+            try (BufferedReader reader = new BufferedReader(new FileReader(completedStripsFile))) {
+                String firstLine = reader.readLine();
+
+                if (firstLine == null || !firstLine.startsWith("Token:")) {
+                    rewriteFileWithTokenOnly();
+                    return;
+                }
+
+                int storedToken = Integer.parseInt(firstLine.substring("Token:".length()).trim());
+                if (token != storedToken) {
+                    System.out.println("Token mismatch. Rewriting file with current token.");
+                    rewriteFileWithTokenOnly();
+                    return;
+                }
+
+                // Load remaining lines as board IDs
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    try {
+                        alreadyProgrammedStrips.add(Integer.parseInt(line.trim()));
+                    } catch (NumberFormatException ignored) {
+                    }
+                }
+            } catch (IOException e) {
+                System.out.println("Error reading programmedBoards.txt");
+                e.printStackTrace();
+            }
         }
 
-        public void setAllStrips(ArrayList<LEDStrip> allStrips) {
-            this.allStrips = allStrips;
+        private void rewriteFileWithTokenOnly() {
+            try (BufferedWriter writer = new BufferedWriter(new FileWriter(completedStripsFile))) {
+                writer.write("Token: " + token);
+                writer.newLine();
+            } catch (IOException e) {
+                System.out.println("Error rewriting file with new token.");
+                e.printStackTrace();
+            }
         }
 
-        public HashSet<Integer> getCompletedStrips() {
-            return completedStrips;
-        }
+        public void addCompletedStrip(Integer ledStripId) {
+            if (alreadyProgrammedStrips.contains(ledStripId)) {
+                return;
+            }
+            setItemCompleted(ledStripId);
 
-        public void setCompletedStrips(HashSet<Integer> completedStrips) {
-            this.completedStrips = completedStrips;
-        }
+            try (BufferedWriter writer = new BufferedWriter(new FileWriter(completedStripsFile, true))) {
+                writer.write(String.valueOf(ledStripId));
+                writer.newLine();
+            } catch (IOException e) {
+                System.out.println("Error writing to programmedBoards.txt");
+                e.printStackTrace();
+            }
 
-        public void addCompletedStrip(Integer ledStrip) {
-            setItemCompleted(ledStrip);
             if (!painting) {
                 painting = true;
                 repaint();
             }
         }
 
-        private void setItemCompleted(Integer ledStrip) {
+        private void setItemCompleted(Integer ledStripId) {
             for (ProgrammableItem item : items) {
-                if (item.getLedStrip().getId() == ledStrip) {
+                if (item.getLedStrip().getId() == ledStripId) {
                     item.setProgrammed(true);
+                    item.setAlreadyProgrammed(false); // override green with blue
                 }
             }
+        }
+
+        public java.util.Set<Integer> getAlreadyProgrammedStrips() {
+            return new HashSet<>(alreadyProgrammedStrips);
         }
 
         @Override
@@ -4296,10 +4508,12 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         private class ProgrammableItem extends JPanel {
             private LEDStrip ledStrip;
             private boolean programmed;
+            private boolean alreadyProgrammed;
 
             public ProgrammableItem(LEDStrip ledStrip) {
                 this.ledStrip = ledStrip;
                 this.programmed = false;
+                this.alreadyProgrammed = false;
                 this.setMaximumSize(new Dimension(50, 50));
                 this.setPreferredSize(new Dimension(50, 50));
                 this.setMinimumSize(new Dimension(50, 50));
@@ -4308,12 +4522,16 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             @Override
             public void paintComponent(Graphics g) {
                 super.paintComponent(g);
+
                 if (programmed) {
-                    g.setColor(Color.BLUE);
+                    g.setColor(new Color(0, 150, 255)); // Blue text
+                } else if (alreadyProgrammed) {
+                    g.setColor(new Color(0, 200, 0)); // Green text
                 } else {
-                    g.setColor(Color.RED);
+                    g.setColor(Color.RED); // Red text
                 }
-                g.drawString(ledStrip.getLabel(), 15, 15);
+
+                g.drawString(ledStrip.getLabel(), 10, 20);
             }
 
             public LEDStrip getLedStrip() {
@@ -4330,6 +4548,10 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
 
             public void setProgrammed(boolean programmed) {
                 this.programmed = programmed;
+            }
+
+            public void setAlreadyProgrammed(boolean alreadyProgrammed) {
+                this.alreadyProgrammed = alreadyProgrammed;
             }
         }
     }
