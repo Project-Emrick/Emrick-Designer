@@ -1185,37 +1185,122 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             /* Create st Object for Later Handling */
             SerialTransmitter st = comPortPrompt("Receiver");
 
-            JTextField boardIDField = new JTextField();
-            JCheckBox boardIDEnable = new JCheckBox("Write new Board ID");
-            boardIDEnable.setSelected(false);
-            JTextField ledCountField = new JTextField();
-            JCheckBox enableLedCount = new JCheckBox("Write new LED Count");
-            enableLedCount.setSelected(false);
+            // Marker
+            if (archivePaths == null) { // No Project Open
+                JTextField boardIDField = new JTextField();
+                JCheckBox boardIDEnable = new JCheckBox("Write new Board ID");
+                boardIDEnable.setSelected(true);
+                JTextField ledCountField = new JTextField();
+                JCheckBox enableLedCount = new JCheckBox("Write new LED Count");
+                enableLedCount.setSelected(true);
 
-            Object[] inputs = {
-                    new JLabel("Board ID: "), boardIDField, boardIDEnable,
-                    new JLabel("LED Count: "), ledCountField, enableLedCount
-            };
+                Object[] inputs = {
+                        new JLabel("Board ID: "), boardIDField, boardIDEnable,
+                        new JLabel("LED Count: "), ledCountField, enableLedCount
+                };
 
-            int option = JOptionPane.showConfirmDialog(null, inputs, "Enter board parameters:", JOptionPane.OK_CANCEL_OPTION);
-            if (option == JOptionPane.OK_OPTION) {
-                if (boardIDEnable.isSelected()) {
-                    int id = Integer.parseInt(boardIDField.getText());
-                    String position = "";
-                    if (!footballFieldPanel.drill.ledStrips.isEmpty()) {
-                        LEDStrip ledStrip = footballFieldPanel.drill.ledStrips.get(id);
-                        position = ledStrip.getLedConfig().getLabel();
+                int option = JOptionPane.showConfirmDialog(null, inputs, "Enter board parameters:", JOptionPane.OK_CANCEL_OPTION);
+                if (option == JOptionPane.OK_OPTION) {
+                    if (boardIDEnable.isSelected()) {
+                        int id = Integer.parseInt(boardIDField.getText());
+                        String position = "";
+                        if (!footballFieldPanel.drill.ledStrips.isEmpty()) {
+                            LEDStrip ledStrip = footballFieldPanel.drill.ledStrips.get(id);
+                            position = ledStrip.getLedConfig().getLabel();
+                        }
+
+                        st.writeBoardID(boardIDField.getText(), position);
+                        try {
+                            Thread.sleep(5000);
+                        } catch (InterruptedException ex) {
+                            throw new RuntimeException(ex);
+                        }
                     }
-
-                    st.writeBoardID(boardIDField.getText(), position);
-                    try {
-                        Thread.sleep(5000);
-                    } catch (InterruptedException ex) {
-                        throw new RuntimeException(ex);
+                    if (enableLedCount.isSelected()) {
+                        st.writeLEDCount(ledCountField.getText());
                     }
                 }
-                if (enableLedCount.isSelected()) {
-                    st.writeLEDCount(ledCountField.getText());
+            } else { // Project Open
+                // Set csv File path
+                File showDatapath = new File(PathConverter.pathConverter("show_data", false));
+
+                // Search + Set csvFile
+                File[] csvFiles = showDatapath.listFiles((dir, name) -> name.toLowerCase().endsWith(".csv"));
+                assert csvFiles != null;
+                csvFile = csvFiles[0];
+
+                if (csvFile != null) { // Ensure there is a csvFile in the correct location
+                    // Have the user input the physical box label
+                    JTextField boardLabelField = new JTextField();
+                    Object[] inputs = {
+                            new JLabel("Board Label: "), boardLabelField
+                    };
+
+                    int option = JOptionPane.showConfirmDialog(null, inputs, "Enter board parameters:", JOptionPane.OK_CANCEL_OPTION);
+                    if (option == JOptionPane.OK_OPTION) {
+                        // Parse input in
+                        String boardLabel = boardLabelField.getText().toUpperCase();
+
+                        // Ensure there is an input
+                        if (boardLabel == null || boardLabel.trim().isEmpty()) {
+                            JOptionPane.showMessageDialog(null, "No label entered.", "Input Error", JOptionPane.ERROR_MESSAGE);
+                        }
+
+                        // Search csv file
+                        try (BufferedReader br = new BufferedReader(new FileReader(csvFile))) {
+                            String line;
+                            boolean found = false;
+
+                            String boardID = "";
+                            String ledCount = "";
+
+                            while ((line = br.readLine()) != null) {
+                                String[] tokens = line.split(",");
+
+                                for (int i = 0; i < tokens.length; i++) {
+                                    if (tokens[i].equalsIgnoreCase(boardLabel)) {
+                                        boardID = (i > 0) ? tokens[i - 1].trim() : null;
+                                        ledCount = (i < tokens.length - 1) ? tokens[i + 1].trim() : null;
+
+                                        if (boardID == null || ledCount == null) {
+                                            JOptionPane.showMessageDialog(null, "CSV format is invalid around label: " + boardLabel,
+                                                    "Parsing Error", JOptionPane.ERROR_MESSAGE);
+                                            return;
+                                        }
+
+                                        // Found variables
+                                        found = true;
+                                        break;
+                                    }
+                                }
+                                if (found) break;
+                            }
+
+                            // Write BoardID and ledCount
+                            // Board ID
+                            String position = "";
+                            if (!footballFieldPanel.drill.ledStrips.isEmpty()) {
+                                LEDStrip ledStrip = footballFieldPanel.drill.ledStrips.get(Integer.parseInt(boardID));
+                                position = ledStrip.getLedConfig().getLabel();
+                            }
+
+                            st.writeBoardID(boardID, position);
+                            try {
+                                Thread.sleep(5000);
+                            } catch (InterruptedException ex) {
+                                throw new RuntimeException(ex);
+                            }
+
+                            // ledCount
+                            st.writeLEDCount(ledCount);
+
+                        } catch (Exception ex) {
+                            JOptionPane.showMessageDialog(null, "Error reading CSV: " + ex.getMessage(),
+                                    "File Error", JOptionPane.ERROR_MESSAGE);
+                        }
+                    }
+                } else {
+                    System.out.println("CSV File is Null");
                 }
             }
         });
