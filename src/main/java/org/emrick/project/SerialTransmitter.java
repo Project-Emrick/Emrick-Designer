@@ -258,5 +258,29 @@ public class SerialTransmitter {
         }
     }
 
+    public synchronized void enterRSSILoggerMode(String ssid, String password, int port, int allowedConnections) {
+        sp.clearRTS();
+        sp.clearDTR();
+        try {
+            Thread.sleep(250);
+        } catch(InterruptedException e) {
+            e.printStackTrace();
+        }
+        if (!sp.openPort()) {
+            System.out.println("Port is busy");
+        }
+        String str;
+
+        try {
+            str = "t" + InetAddress.getLocalHost().getHostAddress() + "\n" + ssid + "\n" + password + "\n" + port + "\n" + allowedConnections + "\n";
+        } catch (UnknownHostException uhe) {
+            throw new RuntimeException(uhe);
+        }
+
+        byte[] out = str.getBytes();
+        sp.writeBytes(out, str.length());
+        sp.flushIOBuffers();
+        sp.closePort();
+    }
 }
 
