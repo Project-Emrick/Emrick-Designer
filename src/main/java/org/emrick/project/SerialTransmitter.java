@@ -282,5 +282,30 @@ public class SerialTransmitter {
         sp.flushIOBuffers();
         sp.closePort();
     }
+
+    public void clearRSSIData() {
+        String query = "x\n";
+
+        sp.setDTR();
+        sp.setRTS();
+        if (!sp.openPort()) {
+            System.out.println("Port is busy");
+            return;
+        }
+        sp.closePort();
+        sp.clearDTR();
+        sp.clearRTS();
+        sp.openPort();
+        sp.flushIOBuffers();
+        try {
+            Thread.sleep(1000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        byte[] out = query.getBytes();
+        sp.writeBytes(out, query.length());
+        sp.flushIOBuffers();
+        sp.closePort();
+    }
 }
 

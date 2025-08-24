@@ -1141,6 +1141,8 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         hardwareMenu.add(modifyBoardItem);
         JMenuItem wiredProgramming = new JMenuItem("Wired Show Programming");
         hardwareMenu.add(wiredProgramming);
+        JMenuItem resetRSSIItem = new JMenuItem("Reset RSSI Log");
+        hardwareMenu.add(resetRSSIItem);
 
         /* Action Listeners For Buttons */
         // Battery Check
@@ -1488,6 +1490,75 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
 
                 /* Upload Filesystem via Platform.io */
                 PlatformIOFunction.uploadFilesystem(dataDir);
+            }
+        });
+
+        /* Resetting RSSI Log On Board */
+        resetRSSIItem.addActionListener(j -> {
+            /* Check for Board Receiver Type */
+            try {
+                SerialTransmitter st = comPortPrompt("Receiver");
+                if (!st.getType().equals("Receiver")) {
+                    throw new IllegalStateException("Not a receiver");
+                }
+            } catch (IllegalStateException e) {
+                JOptionPane.showMessageDialog(
+                        null,
+                        "Transmitter Detected, Please plug in a receiver.",
+                        "Error",
+                        JOptionPane.ERROR_MESSAGE
+                );
+                return;
+            } catch (Exception e) {
+                JOptionPane.showMessageDialog(
+                        null,
+                        "Please plug a board in before proceeding.",
+                        "Error",
+                        JOptionPane.ERROR_MESSAGE
+                );
+                return;
+            }
+
+            /* Check for Windows OS */
+            String os = System.getProperty("os.name").toLowerCase();
+            if (!os.contains("win")) {
+                JOptionPane.showMessageDialog(null,
+                        "PlatformIO check is only supported on Windows at this time.",
+                        "Unsupported OS",
+                        JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+
+            /* Send the Clear Message Over Serial */
+            try {
+                SerialTransmitter st = comPortPrompt("Receiver");
+                if (!st.getType().equals("Receiver")) {
+                    throw new IllegalStateException("Not a receiver");
+                }
+
+                // Clear RSSI Data
+                st.clearRSSIData();
+
+                JOptionPane.showMessageDialog(
+                        null,
+                        "RSSI Data Cleared Successfully",
+                        "Success",
+                        JOptionPane.INFORMATION_MESSAGE
+                );
+            } catch (IllegalStateException e) {
+                JOptionPane.showMessageDialog(
+                        null,
+                        "Transmitter Detected, Please Plug In A Receiver.",
+                        "Error",
+                        JOptionPane.ERROR_MESSAGE
+                );
+            } catch (Exception e) {
+                JOptionPane.showMessageDialog(
+                        null,
+                        "Please Plug In A Board Before Proceeding",
+                        "Error",
+                        JOptionPane.ERROR_MESSAGE
+                );
             }
         });
 
