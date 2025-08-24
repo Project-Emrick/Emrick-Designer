@@ -36,7 +36,7 @@ import java.util.*;
  */
 public class MediaEditorGUI extends Component implements ImportListener, ScrubBarListener, SyncListener,
         FootballFieldListener, EffectListener, SelectListener, UserAuthListener, RFTriggerListener, RFSignalListener, RequestCompleteListener,
-        LEDConfigListener, ReplaceFilesListener {
+        LEDConfigListener, ReplaceFilesListener, TimelineListener {
 
     // String definitions
     public static final String FILE_MENU_CONCATENATE = "Concatenate";
@@ -3434,7 +3434,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         ledStripViewGUI.setCurrentMS(time);
 
         // sync timeline with scrub bar
-        timelineGUI.scrubTimeline(scrubBarGUI.getTime() * 1000);
+        timelineGUI.scrubToMS(scrubBarGUI.getTime() * 1000);
     }
 
     @Override
@@ -3662,6 +3662,13 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         updateTimelinePanel();
     }
 
+    //////////////////////////// Timeline Listeners //////////////////////////
+    
+    @Override
+    public void onTimelineScrub(double count) {
+        scrubBarGUI.setScrub((int)count);
+    }
+
     ////////////////////////// RF Trigger Listeners //////////////////////////
 
     @Override
@@ -3697,6 +3704,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
     @Override
     public void onPressRFTrigger(RFTrigger rfTrigger) {
         // scrub to this rf trigger
+        System.out.println("MediaEditorGUI: onPressRFTrigger() called with count: " + rfTrigger.getCount() + " and ms: " + rfTrigger.getTimestampMillis());
         scrubBarGUI.setScrub(rfTrigger.getCount());
     }
 
@@ -3868,7 +3876,8 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             }
         }
         ArrayList<Effect> effectsList = new ArrayList<>(effectsSet);
-        timelineGUI = new TimelineGUI(effectsList, count2RFTrigger);
+        timelineGUI = new TimelineGUI(effectsList, count2RFTrigger, timeManager);
+        timelineGUI.setTimelineListener(this);
 
         timelinePanel.add(timelineGUI.getTimelineScrollPane());
         timelinePanel.revalidate();
