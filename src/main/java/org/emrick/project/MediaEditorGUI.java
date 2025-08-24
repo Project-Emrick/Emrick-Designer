@@ -1,31 +1,34 @@
 package org.emrick.project;
 
 import com.fazecast.jSerialComm.SerialPort;
-import com.formdev.flatlaf.*;
-import com.google.gson.*;
+import com.formdev.flatlaf.FlatDarkLaf;
+import com.formdev.flatlaf.FlatLaf;
+import com.formdev.flatlaf.FlatLightLaf;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonIOException;
+import com.google.gson.JsonSyntaxException;
 import com.jthemedetecor.OsThemeDetector;
 import com.sun.net.httpserver.HttpServer;
 import org.emrick.project.actions.LEDConfig;
-import org.emrick.project.audio.*;
+import org.emrick.project.audio.AudioPlayer;
 import org.emrick.project.effect.*;
 import org.emrick.project.serde.*;
 
 import javax.imageio.ImageIO;
-import javax.swing.Timer;
 import javax.swing.*;
-import javax.swing.filechooser.*;
-
+import javax.swing.Timer;
+import javax.swing.filechooser.FileNameExtensionFilter;
 import java.awt.*;
 import java.awt.event.*;
-import java.awt.geom.*;
+import java.awt.geom.Point2D;
 import java.awt.image.BufferedImage;
 import java.io.*;
-import java.net.*;
-import java.nio.file.*;
-import java.time.*;
+import java.net.InetSocketAddress;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.time.Duration;
 import java.util.*;
-
-import java.util.Properties;
 
 /**
  * Main class of Emrick Designer.
@@ -113,6 +116,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
 
     // Web Server
     private HttpServer server;
+    private HttpServer rssiServer;
     private String ssid;
     private String password;
     private int port;
@@ -126,6 +130,8 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
     private JMenuItem runWebServer;
     private JMenuItem runLightBoardWebServer;
     private JMenuItem stopWebServer;
+    private JMenuItem runRSSILogger;
+    private JMenuItem stopRSSILogger;
     private ProgrammingTracker programmingTracker;
     private JProgressBar programmingProgressBar;
     private boolean lightBoardMode;
@@ -864,6 +870,13 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         runMenu.add(runWebServer);
         runMenu.add(runLightBoardWebServer);
         runMenu.add(stopWebServer);
+        runMenu.addSeparator();
+        runRSSILogger = new JMenuItem("Run RSSI Logger");
+        stopRSSILogger = new JMenuItem(("Stop RSSI Logger"));
+        runMenu.add(runRSSILogger);
+        runMenu.add(stopRSSILogger);
+
+        // Update Visual Status Of Server Menu Items
         if (server == null) {
             stopWebServer.setEnabled(false);
         } else {
@@ -871,6 +884,13 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             runLightBoardWebServer.setEnabled(false);
         }
 
+        if (rssiServer == null) {
+            stopRSSILogger.setEnabled(false);
+        } else {
+            runRSSILogger.setEnabled(false);
+        }
+
+        // Option Action Listeners
         runWebServer.addActionListener(e -> {
             runWebServer.setEnabled(false);
             runLightBoardWebServer.setEnabled(false);
@@ -982,6 +1002,19 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             flowViewerItem.setEnabled(false);
             lightBoardFlowViewerItem.setEnabled(false);
             stopShowItem.setEnabled(true);
+        });
+
+        // Marker
+        runRSSILogger.addActionListener(e -> {
+            runRSSILogger.setEnabled(false);
+            stopRSSILogger.setEnabled(true);
+            runRSSIServer();
+        });
+
+        // Marker
+        stopRSSILogger.addActionListener(e -> {
+            runRSSILogger.setEnabled(true);
+            stopRSSILogger.setEnabled(false);
         });
 
         /* Verify Menu */
@@ -1108,6 +1141,8 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         hardwareMenu.add(modifyBoardItem);
         JMenuItem wiredProgramming = new JMenuItem("Wired Show Programming");
         hardwareMenu.add(wiredProgramming);
+        JMenuItem resetRSSIItem = new JMenuItem("Reset RSSI Log");
+        hardwareMenu.add(resetRSSIItem);
 
         /* Action Listeners For Buttons */
         // Battery Check
@@ -1185,37 +1220,122 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             /* Create st Object for Later Handling */
             SerialTransmitter st = comPortPrompt("Receiver");
 
-            JTextField boardIDField = new JTextField();
-            JCheckBox boardIDEnable = new JCheckBox("Write new Board ID");
-            boardIDEnable.setSelected(false);
-            JTextField ledCountField = new JTextField();
-            JCheckBox enableLedCount = new JCheckBox("Write new LED Count");
-            enableLedCount.setSelected(false);
+            // Marker
+            if (archivePaths == null) { // No Project Open
+                JTextField boardIDField = new JTextField();
+                JCheckBox boardIDEnable = new JCheckBox("Write new Board ID");
+                boardIDEnable.setSelected(true);
+                JTextField ledCountField = new JTextField();
+                JCheckBox enableLedCount = new JCheckBox("Write new LED Count");
+                enableLedCount.setSelected(true);
 
-            Object[] inputs = {
-                    new JLabel("Board ID: "), boardIDField, boardIDEnable,
-                    new JLabel("LED Count: "), ledCountField, enableLedCount
-            };
+                Object[] inputs = {
+                        new JLabel("Board ID: "), boardIDField, boardIDEnable,
+                        new JLabel("LED Count: "), ledCountField, enableLedCount
+                };
 
-            int option = JOptionPane.showConfirmDialog(null, inputs, "Enter board parameters:", JOptionPane.OK_CANCEL_OPTION);
-            if (option == JOptionPane.OK_OPTION) {
-                if (boardIDEnable.isSelected()) {
-                    int id = Integer.parseInt(boardIDField.getText());
-                    String position = "";
-                    if (!footballFieldPanel.drill.ledStrips.isEmpty()) {
-                        LEDStrip ledStrip = footballFieldPanel.drill.ledStrips.get(id);
-                        position = ledStrip.getLedConfig().getLabel();
+                int option = JOptionPane.showConfirmDialog(null, inputs, "Enter board parameters:", JOptionPane.OK_CANCEL_OPTION);
+                if (option == JOptionPane.OK_OPTION) {
+                    if (boardIDEnable.isSelected()) {
+                        int id = Integer.parseInt(boardIDField.getText());
+                        String position = "";
+                        if (!footballFieldPanel.drill.ledStrips.isEmpty()) {
+                            LEDStrip ledStrip = footballFieldPanel.drill.ledStrips.get(id);
+                            position = ledStrip.getLedConfig().getLabel();
+                        }
+
+                        st.writeBoardID(boardIDField.getText(), position);
+                        try {
+                            Thread.sleep(5000);
+                        } catch (InterruptedException ex) {
+                            throw new RuntimeException(ex);
+                        }
                     }
-
-                    st.writeBoardID(boardIDField.getText(), position);
-                    try {
-                        Thread.sleep(5000);
-                    } catch (InterruptedException ex) {
-                        throw new RuntimeException(ex);
+                    if (enableLedCount.isSelected()) {
+                        st.writeLEDCount(ledCountField.getText());
                     }
                 }
-                if (enableLedCount.isSelected()) {
-                    st.writeLEDCount(ledCountField.getText());
+            } else { // Project Open
+                // Set csv File path
+                File showDatapath = new File(PathConverter.pathConverter("show_data", false));
+
+                // Search + Set csvFile
+                File[] csvFiles = showDatapath.listFiles((dir, name) -> name.toLowerCase().endsWith(".csv"));
+                assert csvFiles != null;
+                csvFile = csvFiles[0];
+
+                if (csvFile != null) { // Ensure there is a csvFile in the correct location
+                    // Have the user input the physical box label
+                    JTextField boardLabelField = new JTextField();
+                    Object[] inputs = {
+                            new JLabel("Board Label: "), boardLabelField
+                    };
+
+                    int option = JOptionPane.showConfirmDialog(null, inputs, "Enter board parameters:", JOptionPane.OK_CANCEL_OPTION);
+                    if (option == JOptionPane.OK_OPTION) {
+                        // Parse input in
+                        String boardLabel = boardLabelField.getText().toUpperCase();
+
+                        // Ensure there is an input
+                        if (boardLabel == null || boardLabel.trim().isEmpty()) {
+                            JOptionPane.showMessageDialog(null, "No label entered.", "Input Error", JOptionPane.ERROR_MESSAGE);
+                        }
+
+                        // Search csv file
+                        try (BufferedReader br = new BufferedReader(new FileReader(csvFile))) {
+                            String line;
+                            boolean found = false;
+
+                            String boardID = "";
+                            String ledCount = "";
+
+                            while ((line = br.readLine()) != null) {
+                                String[] tokens = line.split(",");
+
+                                for (int i = 0; i < tokens.length; i++) {
+                                    if (tokens[i].equalsIgnoreCase(boardLabel)) {
+                                        boardID = (i > 0) ? tokens[i - 1].trim() : null;
+                                        ledCount = (i < tokens.length - 1) ? tokens[i + 1].trim() : null;
+
+                                        if (boardID == null || ledCount == null) {
+                                            JOptionPane.showMessageDialog(null, "CSV format is invalid around label: " + boardLabel,
+                                                    "Parsing Error", JOptionPane.ERROR_MESSAGE);
+                                            return;
+                                        }
+
+                                        // Found variables
+                                        found = true;
+                                        break;
+                                    }
+                                }
+                                if (found) break;
+                            }
+
+                            // Write BoardID and ledCount
+                            // Board ID
+                            String position = "";
+                            if (!footballFieldPanel.drill.ledStrips.isEmpty()) {
+                                LEDStrip ledStrip = footballFieldPanel.drill.ledStrips.get(Integer.parseInt(boardID));
+                                position = ledStrip.getLedConfig().getLabel();
+                            }
+
+                            st.writeBoardID(boardID, position);
+                            try {
+                                Thread.sleep(5000);
+                            } catch (InterruptedException ex) {
+                                throw new RuntimeException(ex);
+                            }
+
+                            // ledCount
+                            st.writeLEDCount(ledCount);
+
+                        } catch (Exception ex) {
+                            JOptionPane.showMessageDialog(null, "Error reading CSV: " + ex.getMessage(),
+                                    "File Error", JOptionPane.ERROR_MESSAGE);
+                        }
+                    }
+                } else {
+                    System.out.println("CSV File is Null");
                 }
             }
         });
@@ -1370,6 +1490,75 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
 
                 /* Upload Filesystem via Platform.io */
                 PlatformIOFunction.uploadFilesystem(dataDir);
+            }
+        });
+
+        /* Resetting RSSI Log On Board */
+        resetRSSIItem.addActionListener(j -> {
+            /* Check for Board Receiver Type */
+            try {
+                SerialTransmitter st = comPortPrompt("Receiver");
+                if (!st.getType().equals("Receiver")) {
+                    throw new IllegalStateException("Not a receiver");
+                }
+            } catch (IllegalStateException e) {
+                JOptionPane.showMessageDialog(
+                        null,
+                        "Transmitter Detected, Please plug in a receiver.",
+                        "Error",
+                        JOptionPane.ERROR_MESSAGE
+                );
+                return;
+            } catch (Exception e) {
+                JOptionPane.showMessageDialog(
+                        null,
+                        "Please plug a board in before proceeding.",
+                        "Error",
+                        JOptionPane.ERROR_MESSAGE
+                );
+                return;
+            }
+
+            /* Check for Windows OS */
+            String os = System.getProperty("os.name").toLowerCase();
+            if (!os.contains("win")) {
+                JOptionPane.showMessageDialog(null,
+                        "PlatformIO check is only supported on Windows at this time.",
+                        "Unsupported OS",
+                        JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+
+            /* Send the Clear Message Over Serial */
+            try {
+                SerialTransmitter st = comPortPrompt("Receiver");
+                if (!st.getType().equals("Receiver")) {
+                    throw new IllegalStateException("Not a receiver");
+                }
+
+                // Clear RSSI Data
+                st.clearRSSIData();
+
+                JOptionPane.showMessageDialog(
+                        null,
+                        "RSSI Data Cleared Successfully",
+                        "Success",
+                        JOptionPane.INFORMATION_MESSAGE
+                );
+            } catch (IllegalStateException e) {
+                JOptionPane.showMessageDialog(
+                        null,
+                        "Transmitter Detected, Please Plug In A Receiver.",
+                        "Error",
+                        JOptionPane.ERROR_MESSAGE
+                );
+            } catch (Exception e) {
+                JOptionPane.showMessageDialog(
+                        null,
+                        "Please Plug In A Board Before Proceeding",
+                        "Error",
+                        JOptionPane.ERROR_MESSAGE
+                );
             }
         });
 
@@ -1943,6 +2132,129 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                 : Color.BLACK;
         label.setForeground(foreground);
     }
+
+    // Marker3
+    /**
+     * Prompts the user for information and then starts a web server using this information for RSSI Logging
+     */
+    private void runRSSIServer() {
+        try {
+            /* Select Results Save Path */
+            String rssiResultsSavePath = "";
+
+            JFileChooser fileChooser = new JFileChooser();
+            fileChooser.setDialogTitle("Select RSSI Results Save Location");
+            fileChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+
+            if (fileChooser.showSaveDialog(null) == JFileChooser.APPROVE_OPTION) {
+                rssiResultsSavePath = fileChooser.getSelectedFile().getAbsolutePath();
+            }
+
+            /* WiFi Credentials Input */
+            JTextField ssidField = new JTextField();
+            JPasswordField passwordField = new JPasswordField();
+            JTextField portField = new JTextField("8080");
+            JCheckBox useSavedCred = new JCheckBox("Use Saved Credentials");
+            useSavedCred.setSelected(true);
+            JCheckBox rememberCredentials = new JCheckBox("Remember Credentials");
+
+            Object[] inputs = {
+                    new JLabel("WiFi SSID:"), ssidField,
+                    new JLabel("WiFi Password:"), passwordField,
+                    new JLabel("Server Port:"), portField,
+                    useSavedCred, rememberCredentials
+            };
+
+            int option = 0;
+
+
+            option = JOptionPane.showConfirmDialog(null, inputs, "Enter WiFi Credentials", JOptionPane.OK_CANCEL_OPTION);
+            if (option != JOptionPane.OK_OPTION) {
+                stopRSSILogger.setEnabled(false);
+                runRSSILogger.setEnabled(true);
+                return;
+            }
+
+            if (useSavedCred.isSelected()) {
+                File cred = new File (PathConverter.pathConverter("wifiConfig.txt", false));
+                if (cred.exists()) {
+                    // TODO: add encryption
+                    BufferedReader bfr = new BufferedReader(new FileReader(cred));
+                    ssidField.setText(bfr.readLine());
+                    StringBuilder pass = new StringBuilder(bfr.readLine());
+                    String[] tmp = pass.toString().split(", ");
+                    pass = new StringBuilder();
+                    for (String s : tmp) {
+                        pass.append(s);
+                    }
+                    passwordField.setText(pass.substring(1, pass.length() - 1));
+                    portField.setText(bfr.readLine());
+                }
+            }
+            if (rememberCredentials.isSelected()) {
+                File cred = new File (PathConverter.pathConverter("wifiConfig.txt", false));
+                BufferedWriter bfw = new BufferedWriter(new FileWriter(cred));
+                String out = ssidField.getText() + "\n" + Arrays.toString(passwordField.getPassword()) + "\n" + portField.getText() + "\n";
+                bfw.write(out);
+                bfw.flush();
+                bfw.close();
+            }
+
+            ssid = ssidField.getText();
+            char[] passwordChar = passwordField.getPassword();
+            password = new String(passwordChar);
+            port = Integer.parseInt(portField.getText());
+
+            /* Check For Transmitter */
+            try {
+                SerialTransmitter st1 = comPortPrompt("Transmitter");
+                if (!st1.getType().equals("Transmitter")) {
+                    /* Reset Menu Options */
+                    stopRSSILogger.setEnabled(false);
+                    runRSSILogger.setEnabled(true);
+
+                    JOptionPane.showMessageDialog(
+                            null,
+                            "Receiver Detected, Please plug in a transmitter.",
+                            "Error",
+                            JOptionPane.ERROR_MESSAGE
+                    );
+                    return;
+                }
+            } catch (Exception ex) {
+                JOptionPane.showMessageDialog(
+                        null,
+                        "Please plug a transmitter board in before proceeding.",
+                        "Error",
+                        JOptionPane.ERROR_MESSAGE
+                );
+
+                /* Reset Menu Options */
+                stopRSSILogger.setEnabled(false);
+                runRSSILogger.setEnabled(true);
+                return;
+            }
+
+            /* NEW */
+            /* Define The Amount of Allowed Connections to Webserver */
+            int allowedConnections = footballFieldPanel.drill.ledStrips.size();
+
+            /* Create Webserver */
+            rssiServer = HttpServer.create(new InetSocketAddress(port), 250);
+            writeSysMsg("server started at " + port);
+            System.out.println("Server Started at " + port);
+            requestIDs = new HashSet<>();
+
+            rssiServer.createContext("/upload", new RSSIFileUploaderHandler(rssiResultsSavePath));
+            rssiServer.setExecutor(null);
+            rssiServer.start();
+
+
+        } catch (IOException ioe) {
+            throw new RuntimeException(ioe);
+        }
+    }
+
 
     /**
      * Loads a new .emrick file to the viewport to be edited.
