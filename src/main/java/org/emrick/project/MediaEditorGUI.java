@@ -3059,38 +3059,52 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
      */
     private void parseCsvFileForPerformerDeviceIDs(File inputFile) {
         try {
-            // TODO: rewrite so that effects are not lost during this process
             BufferedReader reader = new BufferedReader(new FileReader(inputFile));
             String line = reader.readLine();
             int size = 0;
             if (line != null) {
                 String[] split = line.split(",");
                 size = Integer.parseInt(split[10]);
+                System.out.println("[DEBUG] Expected number of LED strips: " + size);
                 line = reader.readLine();
             }
+
             Performer currPerformer = null;
             ArrayList<Performer> newPerformerList = new ArrayList<>();
             ArrayList<LEDStrip> newLedStripList = new ArrayList<>();
             int currStripID = 0;
             int currPerformerID = 0;
 
-            // Very strange buffered reader bug occurs for large csv files
-            // The current code works so don't touch it unless major changes need to happen
             while (line != null && currStripID < size) {
                 if (!line.startsWith(",")) {
                     String[] tmp = line.replaceAll("\\.", "").split(",");
                     try {
                         if (footballFieldPanel.drill.performers.isEmpty()) {
+                            System.out.println("[DEBUG] Performer list is empty! Stopping parse.");
                             break;
                         }
-                        currPerformer = footballFieldPanel.drill.performers.stream().filter(p -> p.getIdentifier().equals(tmp[0])).findFirst().get();
-                        footballFieldPanel.drill.performers.remove(currPerformer);
-                        currPerformer.setLedStrips(new ArrayList<>());
-                        currPerformer.setPerformerID(currPerformerID);
-                        currPerformerID++;
-                        newPerformerList.add(currPerformer);
-                    } catch (NoSuchElementException e) {
-                        // TODO: show error message and prompt for a new csv file
+
+                        String performerId = tmp[0];
+                        System.out.println("[DEBUG] Looking for performer with ID: " + performerId);
+
+                        currPerformer = footballFieldPanel.drill.performers.stream()
+                                .filter(p -> p.getIdentifier().equals(performerId))
+                                .findFirst()
+                                .orElse(null);
+
+                        if (currPerformer == null) {
+                            System.err.println("[ERROR] Performer not found for ID: " + performerId);
+                        } else {
+                            footballFieldPanel.drill.performers.remove(currPerformer);
+                            currPerformer.setLedStrips(new ArrayList<>());
+                            currPerformer.setPerformerID(currPerformerID);
+                            currPerformerID++;
+                            newPerformerList.add(currPerformer);
+                            System.out.println("[DEBUG] Matched performer " + performerId + " → assigned ID " + currPerformerID);
+                        }
+                    } catch (Exception e) {
+                        System.err.println("[ERROR] Exception while matching performer: " + Arrays.toString(tmp));
+                        e.printStackTrace();
                         throw new RuntimeException(e);
                     }
                 } else {
@@ -3101,19 +3115,32 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                     int width = Integer.parseInt(tmp[5]);
                     int hOffset = Integer.parseInt(tmp[6]);
                     int vOffset = Integer.parseInt(tmp[7]);
-                    LEDStrip ledStrip = new LEDStrip(currStripID, currPerformer, new LEDConfig(ledCount, height, width, hOffset, vOffset, label));
-                    currStripID++;
+
+                    LEDStrip ledStrip = new LEDStrip(currStripID, currPerformer,
+                            new LEDConfig(ledCount, height, width, hOffset, vOffset, label));
                     newLedStripList.add(ledStrip);
                     currPerformer.getLedStrips().add(ledStrip.getId());
+
+                    System.out.println("[DEBUG] Added LEDStrip " + currStripID +
+                            " for performer " + (currPerformer != null ? currPerformer.getIdentifier() : "null"));
+
+                    currStripID++;
                 }
                 line = reader.readLine();
             }
+
             footballFieldPanel.drill.performers = newPerformerList;
             footballFieldPanel.drill.ledStrips = newLedStripList;
+
+            System.out.println("[DEBUG] Finished parsing CSV. Total performers: " + newPerformerList.size() +
+                    ", Total LED strips: " + newLedStripList.size());
+
         } catch (IOException ioe) {
+            System.err.println("[ERROR] IO Exception while reading CSV: " + inputFile.getAbsolutePath());
             throw new RuntimeException(ioe);
         }
     }
+
 
     ////////////////////////// Sync Listeners //////////////////////////
 
