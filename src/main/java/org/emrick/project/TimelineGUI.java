@@ -272,7 +272,8 @@ public class TimelineGUI {
                 int nextCount = sortedTriggers.get(i + 1).getCount();
                 width = (int)((nextCount - count) * PIXELS_PER_COUNT * zoomFactor);
             } else {
-                width = (int)(PIXELS_PER_COUNT * zoomFactor * 2); // Default width for last trigger
+                // Last trigger: span to end of timeline
+                width = (int)((maxCount - count) * PIXELS_PER_COUNT * zoomFactor);
             }
             
             // Ensure minimum width and prevent overlap
