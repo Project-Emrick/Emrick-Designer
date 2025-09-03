@@ -68,7 +68,7 @@ public class TimelineGUI {
     private TimeManager timeManager;
     private TimelineListener timelineListener;
 
-    public TimelineGUI(ArrayList<Effect> effects, HashMap<Integer, RFTrigger> count2RFTrigger, TimeManager timeManager) {
+    public TimelineGUI(ArrayList<Effect> effects, HashMap<Integer, RFTrigger> count2RFTrigger, TimeManager timeManager, int maxCount) {
         this.timeManager = timeManager;
         this.effects = effects;
         if (this.effects == null) {
@@ -78,9 +78,9 @@ public class TimelineGUI {
         // Initialize button groups
         effectsButtonGroup = new ButtonGroup();
         triggersButtonGroup = new ButtonGroup();
-        
+
         ArrayList<Map.Entry<Long, Map.Entry<TimelineEvent, JComponent>>> timelineEvents = new ArrayList<>();
-          // Sort and store all timeline events
+        // Sort and store all timeline events
         for (Map.Entry<Integer, RFTrigger> entry : count2RFTrigger.entrySet()) {
             RFTrigger trigger = entry.getValue();
             triggers.add(trigger);
@@ -89,57 +89,52 @@ public class TimelineGUI {
                 new AbstractMap.SimpleEntry<>(trigger, trigger.getTimelineWidget())
             ));
         }
-        
+
         // Sort triggers by timestamp
         triggers.sort(Comparator.comparingLong(RFTrigger::getTimestampMillis));
-        
+
         for (Effect effect : effects) {
             timelineEvents.add(new AbstractMap.SimpleEntry<>(
                 effect.getStartTimeMSec() + effect.getDuration().toMillis(),
                 new AbstractMap.SimpleEntry<>(effect, effect.getTimelineWidget())
             ));
         }
-        
+
         // Sort timeline events by timestamp
         timelineEvents.sort(Comparator.comparing(Map.Entry::getKey));
-        
+
         // Set total duration from the last event
         totalDurationMSec = timelineEvents.isEmpty() ? 1000 : 
                            timelineEvents.get(timelineEvents.size() - 1).getKey() + 1000;
-        
-        // Calculate the maximum count based on triggers
-        maxCount = 0;
-        for (RFTrigger trigger : triggers) {
-            maxCount = Math.max(maxCount, trigger.getCount());
-        }
-        // Add some padding to the end
-        maxCount += 5;
-        
+
+        // Use the passed maxCount
+        this.maxCount = maxCount;
+
         createTimelinePane();
         //createZoomControls();
-        
+
         // Initialize scrub bar
         scrubBar = new TimelineScrubBar();
-        
+
         mainPanel = new JPanel(new BorderLayout());
         //mainPanel.add(zoomPanel, BorderLayout.NORTH);
-        
+
         // Create a panel to hold the scrub bar and timeline
         JPanel timelineContainer = new JPanel(new BorderLayout());
-        
+
         // Wrap the scrub bar in a panel to ensure it doesn't get clipped
         JPanel scrubBarContainer = new JPanel(new BorderLayout());
         scrubBarContainer.add(scrubBar, BorderLayout.CENTER);
         scrubBarContainer.setPreferredSize(new Dimension(calculateTimelineWidth(), scrubBar.getPreferredSize().height));
-        
+
         timelineContainer.add(scrubBarContainer, BorderLayout.NORTH);
         timelineContainer.add(timelineScrollPane, BorderLayout.CENTER);
-        
+
         mainPanel.add(timelineContainer, BorderLayout.CENTER);
-        
+
         // Add mouse wheel listener for zooming with Ctrl+Scroll
         addMouseWheelZoomSupport();
-        
+
         // Add middle mouse button panning support
         addScrollClickPanning();
 
@@ -150,10 +145,6 @@ public class TimelineGUI {
         });
     }
 
-    public TimelineGUI(ArrayList<Effect> effects, HashMap<Integer, RFTrigger> count2RFTrigger, TimeManager timeManager, TimelineListener listener) {
-        this(effects, count2RFTrigger, timeManager);
-        this.timelineListener = listener;
-    }
     
     /**
      * Sets the timeline listener for this timeline
@@ -625,7 +616,18 @@ public class TimelineGUI {
      * Scrub to a specific count
      */
     public void scrubToCount(double count) {
-        curMS = timeManager.getCount2MSec().get((int)Math.round(count));
+        Long msValue = timeManager.getCount2MSec().get((int)Math.round(count));
+        if (msValue == null) {
+            // Fallback: use last available value or 0
+            if (!timeManager.getCount2MSec().isEmpty()) {
+                msValue = timeManager.getCount2MSec().get(
+                    timeManager.getCount2MSec().keySet().stream().max(Integer::compareTo).orElse(0)
+                );
+            } else {
+                msValue = 0L;
+            }
+        }
+        curMS = msValue;
         curCount = count;
         
         // Notify listener of the timeline scrub action to keep other components in sync
@@ -753,7 +755,7 @@ public class TimelineGUI {
         float dummyFloat = 120.0f;
         TimeManager timeManager = new TimeManager(dummyMap, dummyList, dummyFloat);
 
-        TimelineGUI timelineGUI = new TimelineGUI(effects, triggers, timeManager);
+        TimelineGUI timelineGUI = new TimelineGUI(effects, triggers, timeManager, 80);
         frame.add(timelineGUI.getTimelineScrollPane());
 
         frame.pack();

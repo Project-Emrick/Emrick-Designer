@@ -781,4 +781,8 @@ public class ScrubBarGUI extends JComponent implements ActionListener {
         return syncButton;
     }
 
+        public int getLastCount() {
+        return lastCount;
+    }
+
 }

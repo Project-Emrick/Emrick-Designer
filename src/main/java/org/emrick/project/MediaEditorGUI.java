@@ -3876,7 +3876,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             }
         }
         ArrayList<Effect> effectsList = new ArrayList<>(effectsSet);
-        timelineGUI = new TimelineGUI(effectsList, count2RFTrigger, timeManager);
+        timelineGUI = new TimelineGUI(effectsList, count2RFTrigger, timeManager, scrubBarGUI.getLastCount());
         timelineGUI.setTimelineListener(this);
 
         timelinePanel.add(timelineGUI.getTimelineScrollPane());
