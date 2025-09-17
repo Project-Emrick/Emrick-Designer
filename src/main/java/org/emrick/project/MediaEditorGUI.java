@@ -1131,6 +1131,8 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
 
         JMenuItem storageMode = new JMenuItem("Storage Mode");
         hardwareMenu.add(storageMode);
+        JMenuItem setMassIdleItem = new JMenuItem("Mass Set Idle");
+        hardwareMenu.add(setMassIdleItem);
         JMenuItem massReset = new JMenuItem("Mass Reset");
         hardwareMenu.add(massReset);
         JMenuItem massSleep = new JMenuItem("Mass Sleep");
@@ -1139,8 +1141,10 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
 
         JMenuItem modifyBoardItem = new JMenuItem("Modify Board");
         hardwareMenu.add(modifyBoardItem);
-        JMenuItem wiredProgramming = new JMenuItem("Wired Show Programming");
+        JMenuItem wiredProgramming = new JMenuItem("Platform IO Flash Show Programming (Deprecated)");
         hardwareMenu.add(wiredProgramming);
+        JMenuItem realWiredProgramming = new JMenuItem("Wired Show Programming");
+        hardwareMenu.add(realWiredProgramming);
         JMenuItem resetRSSIItem = new JMenuItem("Reset RSSI Log");
         hardwareMenu.add(resetRSSIItem);
 
@@ -1176,6 +1180,17 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
 
             st.writeToSerialPort("d");
         });
+
+        // Mass Idle
+        setMassIdleItem.addActionListener(e -> {
+                // Same signal as stopShowItem
+                if (serialTransmitter == null || !"Transmitter".equals(serialTransmitter.getType())) {
+                    serialTransmitter = comPortPrompt("Transmitter");
+                }
+                if (serialTransmitter != null) {
+                    serialTransmitter.writeToSerialPort("h");
+                }
+            });
 
         // Mass Reset
         massReset.addActionListener(e -> {
@@ -1490,6 +1505,120 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
 
                 /* Upload Filesystem via Platform.io */
                 PlatformIOFunction.uploadFilesystem(dataDir);
+            }
+        });
+
+        realWiredProgramming.addActionListener(e -> { // i only tested all the correct paths here
+            //first check if a show is open
+            // idk check if csv is here or not and if so ask for label
+            // we also need to ask for a token and verification color
+            // then get that led strip and run the packet exporter on it and write it to serial transmitter
+            if (archivePaths == null) {
+                JOptionPane.showMessageDialog(null, "There is no project currently open. Please open a project file to program a board.",
+                        "Error", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+            String label = JOptionPane.showInputDialog(null, "Enter the board label to program (case insensitive):",
+                    "Board Label Input", JOptionPane.QUESTION_MESSAGE);
+            if (label == null || label.trim().isEmpty()) {
+                JOptionPane.showMessageDialog(null, "No label entered.", "Input Error", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+            LEDStrip targetStrip = null;
+            for (LEDStrip ledStrip : footballFieldPanel.drill.ledStrips) {
+                if (ledStrip.getLabel().equalsIgnoreCase(label.trim())) {
+                    targetStrip = ledStrip;
+                    break;
+                }
+            }
+            if (targetStrip == null) {
+                JOptionPane.showMessageDialog(null, "No LED strip found with label: " + label,
+                        "Lookup Error", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+
+            // ask for token and verification color
+            String token = JOptionPane.showInputDialog(null, "Enter the show token:",
+                    "Show Token Input", JOptionPane.QUESTION_MESSAGE);
+            String color = JOptionPane.showInputDialog(null, "Enter the verification color:",
+                    "Verification Color Input", JOptionPane.QUESTION_MESSAGE);
+            if (token == null || token.trim().isEmpty() || color == null || color.trim().isEmpty()) {
+                JOptionPane.showMessageDialog(null, "No token or color entered.", "Input Error", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+
+            SerialTransmitter st = comPortPrompt("Receiver");
+            if (st == null) {
+                JOptionPane.showMessageDialog(null, "No Receiver found.", "Error", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+            if (!st.getType().equals("Receiver")) {
+                return;
+            }
+
+            int s = count2RFTrigger.size();
+            RFTrigger[] rfTriggerArray = new RFTrigger[s];
+            Iterator<RFTrigger> rfIterator = count2RFTrigger.values().iterator();
+            int i = 0;
+            while (rfIterator.hasNext()) {
+                rfTriggerArray[i] = rfIterator.next();
+                i++;
+            }
+            ArrayList<Long> timeMS = new ArrayList<>();
+            timeMS.add(rfTriggerArray[0].getTimestampMillis());
+            for (i = 1; i < rfTriggerArray.length; i++) {
+                for (int j = 0; j < timeMS.size(); j++) {
+                    if (rfTriggerArray[i].getTimestampMillis() < timeMS.get(j)) {
+                        timeMS.add(j, rfTriggerArray[i].getTimestampMillis());
+                        break;
+                    } else {
+                        if (j == timeMS.size()-1) {
+                            timeMS.add(rfTriggerArray[i].getTimestampMillis());
+                            break;
+                        }
+                    }
+                }
+            }
+            Long[] timesMS = new Long[timeMS.size()];
+            timesMS = timeMS.toArray(timesMS);
+
+            ArrayList<LEDStrip> targetStripAL = new ArrayList<>();
+            targetStripAL.add(targetStrip);
+            PacketExport pe = new PacketExport(targetStripAL, timesMS);
+
+            // now make a string to send to the board
+            // first it will start "p, <token>, <verification color>\n"
+            // then append all data in File(PathConverter.pathConverter("tmp/" + l.getId()
+            // createNewFile
+            try {
+                File dir = new File(PathConverter.pathConverter("tmp/", false));
+                dir.mkdirs();
+                File newFile = new File(PathConverter.pathConverter("tmp/" + targetStrip.getId(), false));
+                newFile.createNewFile();
+                pe.run(); // fills the tmp file
+
+                StringBuilder sb = new StringBuilder();
+                sb.append("p");//.append(token.trim()).append(",").append(color.trim()).append("\n");
+                try (BufferedReader br = new BufferedReader(new FileReader(newFile))) {
+                    String line;
+                    while ((line = br.readLine()) != null) {
+                        sb.append(line).append("\n");
+                    }
+                } catch (IOException ex) {
+                    JOptionPane.showMessageDialog(null,
+                            "Error reading packet file: " + ex.getMessage(),
+                            "File Error",
+                            JOptionPane.ERROR_MESSAGE);
+                    ex.printStackTrace();
+                    return;
+                }
+                st.writeShow(token.trim(), color.trim(), sb.toString());
+            } catch (IOException ex) {
+                JOptionPane.showMessageDialog(null,
+                        "Error creating temporary packet file: " + ex.getMessage(),
+                        "File Error",
+                        JOptionPane.ERROR_MESSAGE);
+                ex.printStackTrace();
             }
         });
 
@@ -2108,6 +2237,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             lightBoardMode = lightBoard;
 
             SerialTransmitter serialTransmitter1 = new SerialTransmitter(); // idk why but serialTransmitter was always null...so I just made a new one.
+            System.out.println("Starting Programming Mode");
             serialTransmitter1.enterProgMode(ssid, password, port, currentID, token, verificationColor, lightBoardMode);
 
             noRequestTimer.start();
