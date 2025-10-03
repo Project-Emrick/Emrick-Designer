@@ -151,6 +151,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
     private File emrickPath = null;
     private File csvFile;
     private SerialTransmitter serialTransmitter;
+    private HardwareStatusIndicator hardwareStatusIndicator;
     JFrame webServerFrame;
     
     
@@ -229,6 +230,12 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                         audioPlayers.get(currentMovement - 1).pauseAudio();
                     }
                 }
+                
+                // Stop hardware scanning
+                if (hardwareStatusIndicator != null) {
+                    hardwareStatusIndicator.stopScanning();
+                }
+                
                 if (archivePaths != null) {
                     if (effectManager != null && !effectManager.getUndoStack().isEmpty()) {
                         int resp = JOptionPane.showConfirmDialog(frame,
@@ -936,7 +943,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             isLightBoardMode = false;
             serialTransmitter = comPortPrompt("Transmitter");
 
-            if (!serialTransmitter.getType().equals("Transmitter")) {
+            if (serialTransmitter == null || !serialTransmitter.getType().equals("Transmitter")) {
                 return;
             }
 
@@ -969,7 +976,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
 
             isLightBoardMode = true;
             serialTransmitter = comPortPrompt("Transmitter");
-            if (!serialTransmitter.getType().equals("Transmitter")) {
+            if (serialTransmitter == null || !serialTransmitter.getType().equals("Transmitter")) {
                 return;
             }
             runShowItem.setEnabled(false);
@@ -993,7 +1000,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         runShowItem.addActionListener(e -> {
             serialTransmitter = comPortPrompt("Transmitter");
 
-            if (!serialTransmitter.getType().equals("Transmitter")) {
+            if (serialTransmitter == null || !serialTransmitter.getType().equals("Transmitter")) {
                 return;
             }
 
@@ -1598,7 +1605,6 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                 pe.run(); // fills the tmp file
 
                 StringBuilder sb = new StringBuilder();
-                sb.append("p");//.append(token.trim()).append(",").append(color.trim()).append("\n");
                 try (BufferedReader br = new BufferedReader(new FileReader(newFile))) {
                     String line;
                     while ((line = br.readLine()) != null) {
@@ -1716,6 +1722,14 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         // System message
         menuBar.add(Box.createHorizontalGlue());
         menuBar.add(sysMsg);
+        
+        // Add small spacer between system message and hardware indicator
+        menuBar.add(Box.createRigidArea(new Dimension(10, 0)));
+        
+        // Add hardware status indicator
+        hardwareStatusIndicator = new HardwareStatusIndicator(this);
+        menuBar.add(hardwareStatusIndicator);
+        
 
         //Light menu. and adjust its menu location
         JButton effectOptions = getEffectOptionsButton();
@@ -1863,14 +1877,51 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
 
     /**
      * Used to get a Serial Transmitter object.
-     * If only 1 Emrick board of the desired type is connected, it will be found automatically.
-     * Otherwise, the user will be prompted with a menu to select the intended COM port
+     * Now uses the hardware status indicator instead of prompting the user each time.
      *
-     * @param type The type of hardware that should be detected.
-     * @return A SerialTransmitter object loaded with the specified COM port.
-     * If no COM ports are found, this method returns null.
+     * @param type The type of hardware that should be detected ("Transmitter" or "Receiver").
+     * @return A SerialTransmitter object for the specified type.
+     * If no hardware of the requested type is available, this method returns null.
      */
     public SerialTransmitter comPortPrompt(String type) {
+        if (hardwareStatusIndicator == null) {
+            // Fallback to old behavior if indicator not initialized
+            return oldComPortPrompt(type);
+        }
+        
+        SerialTransmitter result = null;
+        
+        if ("Transmitter".equals(type)) {
+            result = hardwareStatusIndicator.getTransmitter();
+            if (result == null) {
+                writeSysMsg("No transmitter available - check hardware status indicator");
+                JOptionPane.showMessageDialog(frame,
+                        "No transmitter detected. Please connect an Emrick transmitter and wait for it to appear in the hardware status indicator.",
+                        "No Transmitter Available",
+                        JOptionPane.WARNING_MESSAGE);
+            } else {
+                writeSysMsg("Using transmitter from hardware status indicator");
+            }
+        } else if ("Receiver".equals(type)) {
+            result = hardwareStatusIndicator.getReceiver();
+            if (result == null) {
+                writeSysMsg("No receiver available - check hardware status indicator");
+                JOptionPane.showMessageDialog(frame,
+                        "No receiver detected. Please connect an Emrick receiver and wait for it to appear in the hardware status indicator.",
+                        "No Receiver Available",
+                        JOptionPane.WARNING_MESSAGE);
+            } else {
+                writeSysMsg("Using receiver from hardware status indicator");
+            }
+        }
+        
+        return result;
+    }
+    
+    /**
+     * Legacy method for hardware detection - kept as fallback
+     */
+    private SerialTransmitter oldComPortPrompt(String type) {
         SerialTransmitter st = new SerialTransmitter();
         SerialPort[] allPorts = SerialTransmitter.getPortNames();
         if (allPorts.length == 0) {
