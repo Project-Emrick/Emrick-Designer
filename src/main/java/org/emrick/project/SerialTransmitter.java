@@ -134,8 +134,9 @@ public class SerialTransmitter {
         sp.closePort();
     }
 
-    public void writeShow(String token, String vColorString, String show) {
-        String query = "p" + token + "," + vColorString + "," + show + "\n";
+    public void writeShow(String token, String show) {
+        String query = "p" + token + "," + show + "\n";
+        System.out.println("data written to serial: \n" + query);
         sp.setDTR();
         sp.setRTS();
         if (!sp.openPort()) {
