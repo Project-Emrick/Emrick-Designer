@@ -150,7 +150,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
     private ArrayList<File> archivePaths = null;
     private File emrickPath = null;
     private File csvFile;
-    private SerialTransmitter serialTransmitter;
+    
     private HardwareStatusIndicator hardwareStatusIndicator;
     JFrame webServerFrame;
     
@@ -922,12 +922,11 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                 mainContentPanel.repaint();
             }
             /* Adding a Signal to Turn Status LED back on */
-            if (!serialTransmitter.getType().equals("Transmitter")) {
-                serialTransmitter = comPortPrompt("Transmitter");
-            };
-            serialTransmitter.writeToSerialPort("h");
 
-            serialTransmitter = null;
+            SerialTransmitter st = comPortPrompt("Transmitter");
+            st.writeToSerialPort("h");
+
+            st = null;
             stopShowItem.setEnabled(false);
             runShowItem.setEnabled(true);
             flowViewerItem.setEnabled(true);
@@ -941,11 +940,8 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             }
 
             isLightBoardMode = false;
-            serialTransmitter = comPortPrompt("Transmitter");
-
-            if (serialTransmitter == null || !serialTransmitter.getType().equals("Transmitter")) {
-                return;
-            }
+            SerialTransmitter st = comPortPrompt("Transmitter");
+            if (st == null) {return;}
 
             runShowItem.setEnabled(false);
             flowViewerItem.setEnabled(false);
@@ -975,10 +971,10 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             }
 
             isLightBoardMode = true;
-            serialTransmitter = comPortPrompt("Transmitter");
-            if (serialTransmitter == null || !serialTransmitter.getType().equals("Transmitter")) {
-                return;
-            }
+
+            SerialTransmitter st = comPortPrompt("Transmitter");
+            if (st == null) return;
+
             runShowItem.setEnabled(false);
             flowViewerItem.setEnabled(false);
             lightBoardFlowViewerItem.setEnabled(false);
@@ -998,11 +994,8 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         });
 
         runShowItem.addActionListener(e -> {
-            serialTransmitter = comPortPrompt("Transmitter");
-
-            if (serialTransmitter == null || !serialTransmitter.getType().equals("Transmitter")) {
-                return;
-            }
+            SerialTransmitter st = comPortPrompt("Transmitter");
+            if (st == null) return;
 
             footballFieldPanel.addSetToField(footballFieldPanel.drill.sets.get(0));
             runShowItem.setEnabled(false);
@@ -1041,8 +1034,11 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         verifyShowItem.addActionListener(e -> {
             SerialTransmitter st = comPortPrompt("Transmitter");
             if (st == null) return;
+            // ask for token and verification color
+            String token = JOptionPane.showInputDialog(null, "Enter the show token:",
+                    "Show Token Input", JOptionPane.QUESTION_MESSAGE);
 
-            st.writeToSerialPort("v");
+            st.writeToSerialPort("v" + token);
         });
 
         // Verify Light Board
@@ -1056,28 +1052,8 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         /* Check Color */
         checkColor.addActionListener(e -> {
             /* Check for Board Receiver Type */
-            try {
-                SerialTransmitter st = comPortPrompt("Receiver");
-                if (!st.getType().equals("Receiver")) {
-                    throw new IllegalStateException("Not a receiver");
-                }
-            } catch (IllegalStateException ex) {
-                JOptionPane.showMessageDialog(
-                        null,
-                        "Transmitter Detected, Please plug in a receiver.",
-                        "Error",
-                        JOptionPane.ERROR_MESSAGE
-                );
-                return;
-            } catch (Exception ex) {
-                JOptionPane.showMessageDialog(
-                        null,
-                        "Please plug a board in before proceeding.",
-                        "Error",
-                        JOptionPane.ERROR_MESSAGE
-                );
-                return;
-            }
+            SerialTransmitter st = comPortPrompt("Receiver");
+            if (st == null) return;
 
             /* Add the java color wheel */
             JColorChooser colorChooser = new JColorChooser(Color.WHITE);
@@ -1105,7 +1081,8 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             // Add button actions
             sendButton.addActionListener(ev -> {
                 Color selectedColor = colorChooser.getColor();
-                SerialTransmitter st = comPortPrompt("Receiver");
+                if (st == null) return;
+
                 st.writeColorCheck(selectedColor);
 
                 // Visual feedback
@@ -1190,14 +1167,12 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
 
         // Mass Idle
         setMassIdleItem.addActionListener(e -> {
-                // Same signal as stopShowItem
-                if (serialTransmitter == null || !"Transmitter".equals(serialTransmitter.getType())) {
-                    serialTransmitter = comPortPrompt("Transmitter");
-                }
-                if (serialTransmitter != null) {
-                    serialTransmitter.writeToSerialPort("h");
-                }
-            });
+            // Same signal as stopShowItem
+            SerialTransmitter st = comPortPrompt("Transmitter");
+            if (st == null) return;
+
+            st.writeToSerialPort("h");
+        });
 
         // Mass Reset
         massReset.addActionListener(e -> {
@@ -1547,10 +1522,8 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             // ask for token and verification color
             String token = JOptionPane.showInputDialog(null, "Enter the show token:",
                     "Show Token Input", JOptionPane.QUESTION_MESSAGE);
-            String color = JOptionPane.showInputDialog(null, "Enter the verification color:",
-                    "Verification Color Input", JOptionPane.QUESTION_MESSAGE);
-            if (token == null || token.trim().isEmpty() || color == null || color.trim().isEmpty()) {
-                JOptionPane.showMessageDialog(null, "No token or color entered.", "Input Error", JOptionPane.ERROR_MESSAGE);
+            if (token == null || token.trim().isEmpty()) {
+                JOptionPane.showMessageDialog(null, "No token entered.", "Input Error", JOptionPane.ERROR_MESSAGE);
                 return;
             }
 
@@ -1618,7 +1591,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                     ex.printStackTrace();
                     return;
                 }
-                st.writeShow(token.trim(), color.trim(), sb.toString());
+                st.writeShow(token.trim(), sb.toString());
             } catch (IOException ex) {
                 JOptionPane.showMessageDialog(null,
                         "Error creating temporary packet file: " + ex.getMessage(),
@@ -1896,7 +1869,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             if (result == null) {
                 writeSysMsg("No transmitter available - check hardware status indicator");
                 JOptionPane.showMessageDialog(frame,
-                        "No transmitter detected. Please connect an Emrick transmitter and wait for it to appear in the hardware status indicator.",
+                        "No transmitter detected. Please connect an Emrick transmitter and make sure it is not busy to appear in the hardware scanner.",
                         "No Transmitter Available",
                         JOptionPane.WARNING_MESSAGE);
             } else {
@@ -1907,7 +1880,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             if (result == null) {
                 writeSysMsg("No receiver available - check hardware status indicator");
                 JOptionPane.showMessageDialog(frame,
-                        "No receiver detected. Please connect an Emrick receiver and wait for it to appear in the hardware status indicator.",
+                        "No receiver detected. Please connect an Emrick receiver and make sure it is not busy to appear in the hardware scanner.",
                         "No Receiver Available",
                         JOptionPane.WARNING_MESSAGE);
             } else {
@@ -4321,10 +4294,10 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
 
     @Override
     public void onRFSignal(int i) {
+        SerialTransmitter st = comPortPrompt("Transmitter");
 
-        if (serialTransmitter != null) {
-
-            serialTransmitter.writeSet(i, isLightBoardMode);
+        if (st != null) {
+            st.writeSet(i, isLightBoardMode);
         }
     }
 
