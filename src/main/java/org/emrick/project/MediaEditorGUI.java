@@ -1125,7 +1125,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
 
         JMenuItem modifyBoardItem = new JMenuItem("Modify Board");
         hardwareMenu.add(modifyBoardItem);
-        JMenuItem wiredProgramming = new JMenuItem("Platform IO Flash Show Programming (Deprecated)");
+        JMenuItem wiredProgramming = new JMenuItem("PIO Wired Show Programming (Old)");
         hardwareMenu.add(wiredProgramming);
         JMenuItem realWiredProgramming = new JMenuItem("Wired Show Programming");
         hardwareMenu.add(realWiredProgramming);
@@ -1187,8 +1187,25 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             SerialTransmitter st = comPortPrompt("Transmitter");
             if (st == null) return;
 
-            st.writeToSerialPort("e");
+            int response = JOptionPane.showConfirmDialog(
+                    null,
+                    "Are you sure you want to put all devices to sleep?",
+                    "Confirm Mass Sleep",
+                    JOptionPane.YES_NO_OPTION,
+                    JOptionPane.WARNING_MESSAGE
+            );
+
+            if (response == JOptionPane.YES_OPTION) {
+                st.writeToSerialPort("e");
+                JOptionPane.showMessageDialog(
+                        null,
+                        "Sleep command sent successfully.",
+                        "Success",
+                        JOptionPane.INFORMATION_MESSAGE
+                );
+            }
         });
+
 
         // Modify Board
         modifyBoardItem.addActionListener(e -> {
