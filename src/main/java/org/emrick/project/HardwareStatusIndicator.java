@@ -17,7 +17,6 @@ public class HardwareStatusIndicator extends JPanel {
     // Hardware detection data
     private Map<String, SerialTransmitter> availableTransmitters = new HashMap<>();
     private Map<String, SerialTransmitter> availableReceivers = new HashMap<>();
-    private Map<String, String> portTypeCache = new HashMap<>(); // Cache to avoid repeated hardware queries
     private SerialTransmitter selectedTransmitter = null;
     private SerialTransmitter selectedReceiver = null;
 
@@ -35,10 +34,10 @@ public class HardwareStatusIndicator extends JPanel {
     private int spinnerIndex = 0;
 
     // Status colors
-    private static final Color CONNECTED_COLOR = new Color(34, 139, 34); // Forest Green
+    private static final Color CONNECTED_COLOR = new Color(34, 139, 34); // Green
     private static final Color DISCONNECTED_COLOR = new Color(220, 20, 60); // Crimson
     private static final Color MULTIPLE_COLOR = new Color(255, 140, 0); // Dark Orange
-    private static final Color SCANNING_COLOR = new Color(255, 200, 0); // Soft yellow for scanning
+    private static final Color SCANNING_COLOR = new Color(255, 200, 0); // yellow for scanning
 
     public HardwareStatusIndicator(MediaEditorGUI parent) {
         this.parent = parent;
@@ -131,10 +130,7 @@ public class HardwareStatusIndicator extends JPanel {
         refreshButton.setPreferredSize(new Dimension(20, 20));
         refreshButton.setMargin(new Insets(0, 0, 0, 0));
         refreshButton.setFocusable(false); // Prevent focus stealing
-        refreshButton.addActionListener(e -> {
-            portTypeCache.clear(); // Clear cache to force fresh detection
-            scanForHardware();
-        });
+        refreshButton.addActionListener(e -> scanForHardware());
         add(refreshButton);
     }
 
@@ -201,82 +197,18 @@ public class HardwareStatusIndicator extends JPanel {
     }
 
     private void scanForHardware() {
-        // Run the hardware detection in a background thread to avoid freezing UI
+        // Run the hardware detection asynchronously to avoid freezing the UI
         new Thread(() -> {
             try {
-                // Indicate scanning in UI
                 SwingUtilities.invokeLater(this::doStartScanAnimation);
 
-                Map<String, SerialTransmitter> newTransmitters = new HashMap<>();
-                Map<String, SerialTransmitter> newReceivers = new HashMap<>();
-
-                SerialPort[] allPorts = SerialTransmitter.getPortNames();
-                System.out.println("Hardware scan found " + allPorts.length + " total ports");
-
-                // Show ALL ports for debugging
-                for (SerialPort port : allPorts) {
-                    String portName = port.getDescriptivePortName();
-                    System.out.println("Found port: " + portName + " (System: " + port.getSystemPortName() + ")");
-                }
-
-                for (SerialPort port : allPorts) {
-                    String portName = port.getDescriptivePortName();
-
-                    try {
-                        String deviceType;
-
-                        // Check cache first to avoid repeated hardware queries
-                        if (portTypeCache.containsKey(portName)) {
-                            deviceType = portTypeCache.get(portName);
-                        } else {
-                            // Use the original SerialTransmitter.getBoardType() method directly
-                            SerialTransmitter testST = new SerialTransmitter();
-                            deviceType = testST.getBoardType(portName);
-
-                            if (deviceType != null && !deviceType.isEmpty()) {
-                                portTypeCache.put(portName, deviceType);
-                                System.out.println("Detected " + deviceType + " on " + portName);
-                            }
-                        }
-
-                        if ("Transmitter".equals(deviceType)) {
-                            SerialTransmitter st = new SerialTransmitter();
-                            if (st.setSerialPort(portName)) {
-                                newTransmitters.put(portName, st);
-                            }
-                        } else if ("Receiver".equals(deviceType)) {
-                            SerialTransmitter st = new SerialTransmitter();
-                            if (st.setSerialPort(portName)) {
-                                newReceivers.put(portName, st);
-                            }
-                        }
-                    } catch (Exception ex) {
-                        // Skip this port if there's an error and remove from cache
-                        portTypeCache.remove(portName);
-                        System.err.println("Error scanning port " + portName + ": " + ex.getMessage());
-                    }
-                }
-
-                // Clean up cache for ports that no longer exist
-                portTypeCache.entrySet().removeIf(entry -> {
-                    String cachedPortName = entry.getKey();
-                    boolean portExists = false;
-                    for (SerialPort port : allPorts) {
-                        if (port.getDescriptivePortName().equals(cachedPortName)) {
-                            portExists = true;
-                            break;
-                        }
-                    }
-                    return !portExists;
-                });
+                ScanResult result = performPortScan();
 
                 // Update UI on EDT
                 SwingUtilities.invokeLater(() -> {
-                    // Update our collections
-                    availableTransmitters = newTransmitters;
-                    availableReceivers = newReceivers;
+                    availableTransmitters = result.transmitters;
+                    availableReceivers = result.receivers;
 
-                    // Update selected devices if they're no longer available
                     if (selectedTransmitter != null && !availableTransmitters.containsValue(selectedTransmitter)) {
                         selectedTransmitter = null;
                     }
@@ -284,7 +216,6 @@ public class HardwareStatusIndicator extends JPanel {
                         selectedReceiver = null;
                     }
 
-                    // Auto-select if only one device of each type
                     if (availableTransmitters.size() == 1 && selectedTransmitter == null) {
                         selectedTransmitter = availableTransmitters.values().iterator().next();
                     }
@@ -304,16 +235,80 @@ public class HardwareStatusIndicator extends JPanel {
         }, "Hardware Scanner").start();
     }
 
+    // Helper container for scan results
+    private static class ScanResult {
+        Map<String, SerialTransmitter> transmitters;
+        Map<String, SerialTransmitter> receivers;
+
+        ScanResult(Map<String, SerialTransmitter> t, Map<String, SerialTransmitter> r) {
+            this.transmitters = t;
+            this.receivers = r;
+        }
+    }
+
+    // Perform a synchronous port probe and return discovered transmitters/receivers. Does not touch UI.
+    private ScanResult performPortScan() {
+        Map<String, SerialTransmitter> newTransmitters = new HashMap<>();
+        Map<String, SerialTransmitter> newReceivers = new HashMap<>();
+
+        SerialPort[] allPorts = SerialTransmitter.getPortNames();
+        System.out.println("Hardware scan found " + allPorts.length + " total ports");
+
+        // Show ALL ports for debugging
+        for (SerialPort port : allPorts) {
+            String portName = port.getDescriptivePortName();
+            System.out.println("Found port: " + portName + " (System: " + port.getSystemPortName() + ")");
+        }
+
+        for (SerialPort port : allPorts) {
+            String portName = port.getDescriptivePortName();
+            if (!portName.toLowerCase().contains("cp210x")) {
+                System.out.println("Skipping port " + portName + " (non-Emrick device)");
+                continue;
+            }
+
+            try {
+                String deviceType = "";
+
+                // Always probe the device to avoid stale cache entries when hardware at a port changes
+                SerialTransmitter testST = new SerialTransmitter();
+                String probed = testST.getBoardType(portName);
+                if (probed != null && !probed.isEmpty()) {
+                    deviceType = probed;
+                    System.out.println("Detected " + deviceType + " on " + portName);
+                }
+
+                if ("Transmitter".equals(deviceType)) {
+                    SerialTransmitter st = new SerialTransmitter();
+                    if (st.setSerialPort(portName)) {
+                        newTransmitters.put(portName, st);
+                    }
+                } else if ("Receiver".equals(deviceType)) {
+                    SerialTransmitter st = new SerialTransmitter();
+                    if (st.setSerialPort(portName)) {
+                        newReceivers.put(portName, st);
+                    }
+                }
+            } catch (Exception ex) {
+                // Skip this port if there's an error
+                System.err.println("Error scanning port " + portName + ": " + ex.getMessage());
+            }
+        }
+
+
+        return new ScanResult(newTransmitters, newReceivers);
+    }
+
     /**
      * Blocking version of scanForHardware that runs on the calling thread.
      * Use this for short synchronous rescans from event handlers when caller wants an immediate result.
      * This method will still update the UI (animation start/stop) on EDT.
      */
     public void scanForHardwareBlocking() {
-        // If we are on the EDT, show a modal dialog and run the blocking scan on a worker thread
+        // Simplify: reuse the non-blocking scanForHardware logic, but provide a modal overlay when called from EDT
         if (SwingUtilities.isEventDispatchThread()) {
             final Window owner = SwingUtilities.getWindowAncestor(this);
-            final JDialog dialog = new JDialog(owner, "Scanning for hardware...", Dialog.ModalityType.APPLICATION_MODAL);
+            final JDialog dialog = new JDialog(owner, "Hardware Scan", Dialog.ModalityType.APPLICATION_MODAL);
             JPanel p = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 8));
             JLabel label = new JLabel("Scanning for hardware...");
             p.add(label);
@@ -322,178 +317,33 @@ public class HardwareStatusIndicator extends JPanel {
             dialog.setResizable(false);
             dialog.setLocationRelativeTo(owner);
 
-            // Start spinner animation on EDT
+            // Start animation and run the existing async scan; close dialog when done
             doStartScanAnimation();
-
-            // Worker thread performs the scan and updates the UI when done, then disposes the dialog
+            // Run the same scan logic but on a worker thread; when complete, dispose dialog
             new Thread(() -> {
-                Map<String, SerialTransmitter> newTransmitters = new HashMap<>();
-                Map<String, SerialTransmitter> newReceivers = new HashMap<>();
-
-                SerialPort[] allPorts = SerialTransmitter.getPortNames();
-                System.out.println("Blocking (EDT) hardware scan found " + allPorts.length + " total ports");
-
-                for (SerialPort port : allPorts) {
-                    String portName = port.getDescriptivePortName();
+                scanForHardware();
+                // scanForHardware starts its own thread and will stop animation when finished. Wait a short time
+                // for the worker to complete; this keeps modal dialog visible while scan runs. We poll the scanning flag.
+                while (scanning) {
                     try {
-                        String deviceType;
-                        if (portTypeCache.containsKey(portName)) {
-                            deviceType = portTypeCache.get(portName);
-                        } else {
-                            SerialTransmitter testST = new SerialTransmitter();
-                            deviceType = testST.getBoardType(portName);
-                            if (deviceType != null && !deviceType.isEmpty()) {
-                                portTypeCache.put(portName, deviceType);
-                                System.out.println("Detected (blocking EDT) " + deviceType + " on " + portName);
-                            }
-                        }
-
-                        if ("Transmitter".equals(deviceType)) {
-                            SerialTransmitter st = new SerialTransmitter();
-                            if (st.setSerialPort(portName)) {
-                                newTransmitters.put(portName, st);
-                            }
-                        } else if ("Receiver".equals(deviceType)) {
-                            SerialTransmitter st = new SerialTransmitter();
-                            if (st.setSerialPort(portName)) {
-                                newReceivers.put(portName, st);
-                            }
-                        }
-                    } catch (Exception ex) {
-                        portTypeCache.remove(portName);
-                        System.err.println("Error scanning port (blocking EDT) " + portName + ": " + ex.getMessage());
+                        Thread.sleep(50);
+                    } catch (InterruptedException ignored) {
                     }
                 }
+                SwingUtilities.invokeLater(dialog::dispose);
+            }, "Hardware Scanner (blocking EDT wrapper)").start();
 
-                // Clean up cache for ports that no longer exist
-                portTypeCache.entrySet().removeIf(entry -> {
-                    String cachedPortName = entry.getKey();
-                    boolean portExists = false;
-                    for (SerialPort port : allPorts) {
-                        if (port.getDescriptivePortName().equals(cachedPortName)) {
-                            portExists = true;
-                            break;
-                        }
-                    }
-                    return !portExists;
-                });
-
-                // Update UI on EDT and then close the dialog
-                SwingUtilities.invokeLater(() -> {
-                    availableTransmitters = newTransmitters;
-                    availableReceivers = newReceivers;
-
-                    if (selectedTransmitter != null && !availableTransmitters.containsValue(selectedTransmitter)) {
-                        selectedTransmitter = null;
-                    }
-                    if (selectedReceiver != null && !availableReceivers.containsValue(selectedReceiver)) {
-                        selectedReceiver = null;
-                    }
-
-                    if (availableTransmitters.size() == 1 && selectedTransmitter == null) {
-                        selectedTransmitter = availableTransmitters.values().iterator().next();
-                    }
-                    if (availableReceivers.size() == 1 && selectedReceiver == null) {
-                        selectedReceiver = availableReceivers.values().iterator().next();
-                    }
-
-                    updateStatusDisplay();
-                    doStopScanAnimation();
-                    dialog.dispose();
-                });
-            }, "Hardware Scanner (blocking EDT)").start();
-
-            // Show modal dialog and return only after worker disposes it
             dialog.setVisible(true);
             return;
         }
 
-        // Non-EDT callers: run scan synchronously on this thread and update UI via invokeAndWait
-        // Indicate scanning in UI
-        try {
-            SwingUtilities.invokeAndWait(this::doStartScanAnimation);
-
-            Map<String, SerialTransmitter> newTransmitters = new HashMap<>();
-            Map<String, SerialTransmitter> newReceivers = new HashMap<>();
-
-            SerialPort[] allPorts = SerialTransmitter.getPortNames();
-            System.out.println("Blocking hardware scan found " + allPorts.length + " total ports");
-
-            for (SerialPort port : allPorts) {
-                String portName = port.getDescriptivePortName();
-
-                try {
-                    String deviceType;
-
-                    if (portTypeCache.containsKey(portName)) {
-                        deviceType = portTypeCache.get(portName);
-                    } else {
-                        SerialTransmitter testST = new SerialTransmitter();
-                        deviceType = testST.getBoardType(portName);
-
-                        if (deviceType != null && !deviceType.isEmpty()) {
-                            portTypeCache.put(portName, deviceType);
-                            System.out.println("Detected (blocking) " + deviceType + " on " + portName);
-                        }
-                    }
-
-                    if ("Transmitter".equals(deviceType)) {
-                        SerialTransmitter st = new SerialTransmitter();
-                        if (st.setSerialPort(portName)) {
-                            newTransmitters.put(portName, st);
-                        }
-                    } else if ("Receiver".equals(deviceType)) {
-                        SerialTransmitter st = new SerialTransmitter();
-                        if (st.setSerialPort(portName)) {
-                            newReceivers.put(portName, st);
-                        }
-                    }
-                } catch (Exception ex) {
-                    portTypeCache.remove(portName);
-                    System.err.println("Error scanning port (blocking) " + portName + ": " + ex.getMessage());
-                }
-            }
-
-            // Clean up cache for ports that no longer exist
-            portTypeCache.entrySet().removeIf(entry -> {
-                String cachedPortName = entry.getKey();
-                boolean portExists = false;
-                for (SerialPort port : allPorts) {
-                    if (port.getDescriptivePortName().equals(cachedPortName)) {
-                        portExists = true;
-                        break;
-                    }
-                }
-                return !portExists;
-            });
-
-            // Update UI synchronously
-            SwingUtilities.invokeAndWait(() -> {
-                availableTransmitters = newTransmitters;
-                availableReceivers = newReceivers;
-
-                if (selectedTransmitter != null && !availableTransmitters.containsValue(selectedTransmitter)) {
-                    selectedTransmitter = null;
-                }
-                if (selectedReceiver != null && !availableReceivers.containsValue(selectedReceiver)) {
-                    selectedReceiver = null;
-                }
-
-                if (availableTransmitters.size() == 1 && selectedTransmitter == null) {
-                    selectedTransmitter = availableTransmitters.values().iterator().next();
-                }
-                if (availableReceivers.size() == 1 && selectedReceiver == null) {
-                    selectedReceiver = availableReceivers.values().iterator().next();
-                }
-
-                updateStatusDisplay();
-            });
-        } catch (Exception ex) {
-            System.err.println("Blocking scan error: " + ex.getMessage());
-        } finally {
+    // Non-EDT callers: simply call scanForHardware() and block until scanning completes
+    scanForHardware();
+        // Wait for background scan to finish (polling) - avoid busy loop
+        while (scanning) {
             try {
-                SwingUtilities.invokeAndWait(this::doStopScanAnimation);
-            } catch (Exception ignored) {
+                Thread.sleep(50);
+            } catch (InterruptedException ignored) {
             }
         }
     }
@@ -630,16 +480,24 @@ public class HardwareStatusIndicator extends JPanel {
         // Trigger a fresh scan if no transmitters found
         if (availableTransmitters.isEmpty()) {
             scanForHardwareBlocking();
-            // small non-blocking request; prefer explicit blocking scan from caller when needed
         }
 
         if (selectedTransmitter != null) {
-            return selectedTransmitter;
+            if (isValidTransmitter(selectedTransmitter)) return selectedTransmitter;
+            // selected transmitter failed sanity check, clear it and continue
+            availableTransmitters.values().removeIf(st -> st == selectedTransmitter);
+            selectedTransmitter = null;
+            return getTransmitter();
         }
 
         if (availableTransmitters.size() == 1) {
-            selectedTransmitter = availableTransmitters.values().iterator().next();
-            return selectedTransmitter;
+            SerialTransmitter st = availableTransmitters.values().iterator().next();
+            if (isValidTransmitter(st)) {
+                selectedTransmitter = st;
+                return selectedTransmitter;
+            }
+            // invalid transmitter found
+            return null;
         }
 
         if (availableTransmitters.size() > 1) {
@@ -662,12 +520,21 @@ public class HardwareStatusIndicator extends JPanel {
         }
 
         if (selectedReceiver != null) {
-            return selectedReceiver;
+            if (isValidReceiver(selectedReceiver)) return selectedReceiver;
+            // selected receiver failed sanity check, clear it and continue
+            availableReceivers.values().removeIf(st -> st == selectedReceiver);
+            selectedReceiver = null;
+            return getReceiver();
         }
 
         if (availableReceivers.size() == 1) {
-            selectedReceiver = availableReceivers.values().iterator().next();
-            return selectedReceiver;
+            SerialTransmitter st = availableReceivers.values().iterator().next();
+            if (isValidReceiver(st)) {
+                selectedReceiver = st;
+                return selectedReceiver;
+            }
+            // invalid receiver found
+            return null;
         }
 
         if (availableReceivers.size() > 1) {
@@ -677,6 +544,52 @@ public class HardwareStatusIndicator extends JPanel {
         }
 
         return null; // None available
+    }
+
+    // Sanity checks: ensure the SerialTransmitter has a backing SerialPort and a plausible type
+    private boolean isValidTransmitter(SerialTransmitter st) {
+        if (st == null) return false;
+        try {
+            if (st.getSerialPort() == null) return false;
+            // Try to find the port name associated with this transmitter
+            String portName = getPortNameForTransmitter(st);
+            if (portName == null) return false;
+
+            // Actively query the device to confirm type. getBoardType will attempt to open the port.
+            String deviceType = st.getBoardType(portName);
+            if (deviceType != null && deviceType.equalsIgnoreCase("Transmitter")) {
+                return true;
+            }
+
+            // If deviceType is empty, port may be busy/disconnected; remove it from available maps and cache
+            if (deviceType == null || deviceType.isEmpty()) {
+                availableTransmitters.remove(portName);
+            }
+            return false;
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    private boolean isValidReceiver(SerialTransmitter st) {
+        if (st == null) return false;
+        try {
+            if (st.getSerialPort() == null) return false;
+            String portName = getPortNameForReceiver(st);
+            if (portName == null) return false;
+
+            String deviceType = st.getBoardType(portName);
+            if (deviceType != null && deviceType.equalsIgnoreCase("Receiver")) {
+                return true;
+            }
+
+            if (deviceType == null || deviceType.isEmpty()) {
+                availableReceivers.remove(portName);
+            }
+            return false;
+        } catch (Exception e) {
+            return false;
+        }
     }
 
     /**

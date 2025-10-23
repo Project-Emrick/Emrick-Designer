@@ -266,6 +266,21 @@ public class SerialTransmitter {
         sp.flushIOBuffers();
         sp.closePort();
         System.out.println("INFO: " + sp.getDescriptivePortName() + " " + num + " " + str);
+        if (num == -1) {
+            // show error popup
+            System.err.println("ERROR: failed to write to serial port: " + sp.getDescriptivePortName());
+            // show a Swing dialog on the EDT to notify the user
+            javax.swing.SwingUtilities.invokeLater(new Runnable() {
+                public void run() {
+                    javax.swing.JOptionPane.showMessageDialog(
+                            null,
+                            "Failed to write to serial port: " + sp.getDescriptivePortName(),
+                            "Serial Port Error",
+                            javax.swing.JOptionPane.ERROR_MESSAGE
+                    );
+                }
+            });
+        }
     }
     public class BlockingThread implements Runnable {
         byte[] out;

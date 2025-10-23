@@ -1034,10 +1034,10 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         verifyShowItem.addActionListener(e -> {
             SerialTransmitter st = comPortPrompt("Transmitter");
             if (st == null) return;
-            // ask for token and verification color
+            // ask for token
             String token = JOptionPane.showInputDialog(null, "Enter the show token:",
                     "Show Token Input", JOptionPane.QUESTION_MESSAGE);
-
+            if (token == null) return;
             st.writeToSerialPort("v" + token);
         });
 
