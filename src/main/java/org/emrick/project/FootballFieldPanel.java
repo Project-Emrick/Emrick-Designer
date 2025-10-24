@@ -229,7 +229,7 @@ public class FootballFieldPanel extends JPanel implements RepaintListener {
                 long start = trigger.getTimestampMillis();
                 long nextFrameMS = start + (long) (1.0 / footballFieldListener.getFrameRate() * 1000);
                 if (currMS >= start && currMS < nextFrameMS && footballFieldListener.isPlaying()) {
-                    footballFieldListener.onRFSignal(i);
+                    //footballFieldListener.onRFSignal(i);
                     break;
                 }
             }
