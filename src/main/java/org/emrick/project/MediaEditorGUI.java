@@ -3230,7 +3230,6 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
      */
     private void parseCsvFileForPerformerDeviceIDs(File inputFile) {
         try {
-            // TODO: rewrite so that effects are not lost during this process
             BufferedReader reader = new BufferedReader(new FileReader(inputFile));
             String line = reader.readLine();
             int size = 0;
@@ -3244,6 +3243,19 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             ArrayList<LEDStrip> newLedStripList = new ArrayList<>();
             int currStripID = 0;
             int currPerformerID = 0;
+
+            // Capture old strips so we can preserve effects by matching labels
+            java.util.Map<String, LEDStrip> oldStripByKey = new java.util.HashMap<>();
+            if (footballFieldPanel.drill.ledStrips != null) {
+                for (LEDStrip old : footballFieldPanel.drill.ledStrips) {
+                    Performer p = old.getPerformer();
+                    String key = "";
+                    if (p != null && p.getIdentifier() != null && old.getLedConfig() != null && old.getLedConfig().getLabel() != null) {
+                        key = p.getIdentifier() + old.getLedConfig().getLabel();
+                        oldStripByKey.put(key, old);
+                    }
+                }
+            }
 
             // Very strange buffered reader bug occurs for large csv files
             // The current code works so don't touch it unless major changes need to happen
@@ -3273,6 +3285,20 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                     int hOffset = Integer.parseInt(tmp[6]);
                     int vOffset = Integer.parseInt(tmp[7]);
                     LEDStrip ledStrip = new LEDStrip(currStripID, currPerformer, new LEDConfig(ledCount, height, width, hOffset, vOffset, label));
+                    // If there was an equivalent old strip (matching performer identifier + label), copy its effects
+                    String compositeKey = currPerformer.getIdentifier() + label;
+                    LEDStrip oldEquivalent = oldStripByKey.get(compositeKey);
+                    if (oldEquivalent != null) {
+                        // Deep-copy effects to avoid shared references and set them via setEffects
+                        ArrayList<Effect> copied = new ArrayList<>();
+                        for (Effect e : oldEquivalent.getEffects()) {
+                            if (e != null) {
+                                Effect copy = e.makeDeepCopy();
+                                copied.add(copy);
+                            }
+                        }
+                        ledStrip.setEffects(copied);
+                    }
                     currStripID++;
                     newLedStripList.add(ledStrip);
                     currPerformer.getLedStrips().add(ledStrip.getId());
