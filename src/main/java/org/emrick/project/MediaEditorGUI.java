@@ -16,6 +16,7 @@ import org.emrick.project.effect.*;
 import org.emrick.project.serde.*;
 
 import javax.imageio.ImageIO;
+import java.awt.font.TextAttribute;
 import javax.swing.*;
 import javax.swing.Timer;
 import javax.swing.filechooser.FileNameExtensionFilter;
@@ -1740,6 +1741,12 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         // Display the window
         if (archivePaths == null) {
             frame.setJMenuBar(menuBar);
+
+            // Show welcome screen on first run (no project loaded)
+            JPanel welcome = buildWelcomePanel();
+            // keep scrub/play controls visible under the welcome screen
+            replaceMainView(welcome, scrubBarPanel);
+
             frame.pack();
             frame.setLocationRelativeTo(null);
             frame.setVisible(true);
@@ -2647,6 +2654,16 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             }
             currentMovement = 1;
             scrubBarGUI.setCurrAudioPlayer(this.currentAudioPlayer);
+            // Record recent project and switch main view to the football field
+            try {
+                    if (emrickPath != null) addToRecentProjects(emrickPath);
+            } catch (Exception ex) {
+                ex.printStackTrace();
+            }
+                if (mainContentPanel != null) {
+                    // keep scrub/play controls visible
+                    replaceMainView(footballField, scrubBarPanel);
+                }
 
         } catch (JsonIOException | JsonSyntaxException | IOException e) {
             writeSysMsg("Failed to open to `" + path + "`.");
@@ -4073,6 +4090,189 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         }
         effectViewPanel.revalidate();
         effectViewPanel.repaint();
+    }
+
+    /**
+     * Atomically replace the main content center and south components so only the desired
+     * panels are visible. Pass null for either argument to omit that region.
+     */
+    private void replaceMainView(JComponent center, JComponent south) {
+        if (mainContentPanel == null) return;
+        LayoutManager lm = mainContentPanel.getLayout();
+        if (lm instanceof BorderLayout) {
+            BorderLayout bl = (BorderLayout) lm;
+            Component oldCenter = bl.getLayoutComponent(mainContentPanel, BorderLayout.CENTER);
+            Component oldSouth = bl.getLayoutComponent(mainContentPanel, BorderLayout.SOUTH);
+            if (oldCenter != null) mainContentPanel.remove(oldCenter);
+            if (oldSouth != null) mainContentPanel.remove(oldSouth);
+
+            if (center != null) {
+                mainContentPanel.add(center, BorderLayout.CENTER);
+            }
+            if (south != null) {
+                mainContentPanel.add(south, BorderLayout.SOUTH);
+            }
+        } else {
+            // Fallback: replace all if layout isn't BorderLayout
+            mainContentPanel.removeAll();
+            if (center != null) mainContentPanel.add(center, BorderLayout.CENTER);
+            if (south != null) mainContentPanel.add(south, BorderLayout.SOUTH);
+        }
+        mainContentPanel.revalidate();
+        mainContentPanel.repaint();
+    }
+
+    /**
+     * Build the welcome panel displayed when no project is loaded.
+     * Contains a clickable/open control and a list of recently opened projects.
+     */
+    private JPanel buildWelcomePanel() {
+        JPanel pnl = new JPanel(new BorderLayout(10,10));
+        pnl.setBorder(BorderFactory.createEmptyBorder(16,16,16,16));
+
+        Color accent = UIManager.getColor("Component.focusColor");
+        if (accent == null) accent = UIManager.getColor("TextPane.selectionBackground");
+        if (accent == null) accent = Color.BLUE;
+
+        // Top area: big open project link — use plain JLabel with bold+underline via font attrs to avoid HTML wrapping
+        JLabel openLabel = new JLabel("\uD83D\uDCC4  Open a Project");
+        openLabel.setForeground(accent);
+        Font of = openLabel.getFont().deriveFont(Font.BOLD, 16f);
+        @SuppressWarnings("unchecked") java.util.Map<TextAttribute,Object> oattrs = new java.util.HashMap<>(of.getAttributes()); oattrs.put(TextAttribute.UNDERLINE, TextAttribute.UNDERLINE_ON);
+        openLabel.setFont(of.deriveFont(oattrs));
+        openLabel.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        openLabel.addMouseListener(new MouseAdapter(){ public void mouseClicked(MouseEvent e){ openProjectDialog(); }});
+
+        JPanel top = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        top.add(openLabel);
+
+        pnl.add(top, BorderLayout.NORTH);
+
+        // Center: recently opened list
+        JPanel recentPnl = new JPanel();
+        recentPnl.setLayout(new BoxLayout(recentPnl, BoxLayout.Y_AXIS));
+        recentPnl.setBorder(BorderFactory.createTitledBorder("Recently Opened"));
+
+        java.util.List<File> recent = loadRecentProjects();
+        JLabel status = new JLabel("Found " + recent.size() + " recent entries (" + userHome.toString() + "\\recent_projects.txt)");
+        status.setFont(status.getFont().deriveFont(Font.PLAIN, 10f));
+        recentPnl.add(status);
+
+        if (recent.isEmpty()) {
+            JLabel none = new JLabel("No recent projects");
+            //none.setFont(none.getFont().deriveFont(Font.PLAIN, 12f));
+            recentPnl.add(Box.createVerticalStrut(6));
+            recentPnl.add(none);
+        } else {
+            recentPnl.add(Box.createVerticalStrut(6));
+            for (File f : recent) {
+                String name = f.getName();
+                String path = f.getAbsolutePath();
+
+                JPanel row = new JPanel(new BorderLayout());
+                row.setOpaque(false);
+
+                // Plain label (compact): bold+underline via TextAttribute to avoid HTML wrapping
+                JLabel nameLbl = new JLabel("\uD83D\uDCCE  " + name);
+                nameLbl.setForeground(accent);
+                Font nf = nameLbl.getFont().deriveFont(Font.BOLD);
+                @SuppressWarnings("unchecked") java.util.Map<TextAttribute,Object> nattrs = new java.util.HashMap<>(nf.getAttributes()); nattrs.put(TextAttribute.UNDERLINE, TextAttribute.UNDERLINE_ON);
+                nameLbl.setFont(nf.deriveFont(nattrs));
+                nameLbl.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+                nameLbl.addMouseListener(new MouseAdapter(){ public void mouseClicked(MouseEvent e){ if (f.exists()){ loadProject(f); replaceMainView(footballField, scrubBarPanel);} else { JOptionPane.showMessageDialog(frame, "File not found: " + f.getAbsolutePath(), "Open Project", JOptionPane.ERROR_MESSAGE);} }});
+
+                JLabel pathLbl = new JLabel(path);
+                pathLbl.setForeground(new Color(80,80,80));
+
+                JPanel text = new JPanel();
+                text.setLayout(new BoxLayout(text, BoxLayout.Y_AXIS));
+                text.setOpaque(false);
+                text.add(nameLbl);
+                text.add(pathLbl);
+
+                // Force left alignment and limit the maximum height so BoxLayout doesn't stretch rows too much.
+                row.add(text, BorderLayout.WEST);
+                row.setAlignmentX(Component.LEFT_ALIGNMENT);
+                text.setAlignmentX(Component.LEFT_ALIGNMENT);
+                Dimension pref = new Dimension(Integer.MAX_VALUE,
+                        nameLbl.getPreferredSize().height + pathLbl.getPreferredSize().height + 8);
+                row.setMaximumSize(pref);
+
+                recentPnl.add(row);
+                recentPnl.add(Box.createVerticalStrut(4));
+            }
+        }
+
+        JScrollPane scroll = new JScrollPane(recentPnl);
+        scroll.setBorder(null);
+        pnl.add(scroll, BorderLayout.CENTER);
+
+        return pnl;
+    }
+
+    private static String toHex(Color c) {
+        if (c == null) return "#0000FF";
+        return String.format("#%02x%02x%02x", c.getRed(), c.getGreen(), c.getBlue());
+    }
+
+    /**
+     * Load recent projects from user folder. Only returns existing files.
+     */
+    private java.util.List<File> loadRecentProjects() {
+        java.util.List<File> list = new ArrayList<>();
+        try {
+            File dir = userHome.toFile();
+            if (!dir.exists()) dir.mkdirs();
+            File recentFile = new File(dir, "recent_projects.txt");
+            if (!recentFile.exists()) return list;
+            try (BufferedReader br = new BufferedReader(new FileReader(recentFile))) {
+                String line;
+                while ((line = br.readLine()) != null) {
+                    if (line.trim().isEmpty()) continue;
+                    File f = new File(line.trim());
+                    if (f.exists()) list.add(f);
+                }
+            }
+        } catch (Exception ex) {
+            // ignore, return empty
+            ex.printStackTrace();
+        }
+        return list;
+    }
+
+    private void saveRecentProjects(java.util.List<File> list) {
+        try {
+            File dir = userHome.toFile();
+            if (!dir.exists()) dir.mkdirs();
+            File recentFile = new File(dir, "recent_projects.txt");
+            try (BufferedWriter bw = new BufferedWriter(new FileWriter(recentFile, false))) {
+                int count = 0;
+                for (File f : list) {
+                    if (f != null && f.exists()) {
+                        bw.write(f.getAbsolutePath());
+                        bw.newLine();
+                        count++;
+                        if (count >= 5) break;
+                    }
+                }
+            }
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+    }
+
+    private void addToRecentProjects(File f) {
+        if (f == null) return;
+        try {
+            java.util.List<File> list = loadRecentProjects();
+            // remove same path if exists
+            list.removeIf(x -> x.getAbsolutePath().equals(f.getAbsolutePath()));
+            list.add(0, f);
+            // trim to 5 handled in save
+            saveRecentProjects(list);
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
     }
 
     /**
