@@ -509,7 +509,7 @@ public class  Effect implements Cloneable, TimelineEvent {
     }    @Override
     public JToggleButton getTimelineWidget() {
         JToggleButton widgetButton = new JToggleButton();
-        widgetButton.setLayout(new GridLayout(5,1));
+        widgetButton.setLayout(new GridLayout(4,1));
         widgetButton.setMargin(new Insets(1, 2, 1, 2)); // Remove the default button margin
         //widgetButton.setBorderPainted(false); // Don't paint the button's default border
         //widgetButton.setContentAreaFilled(false); // Don't fill the content area (transparent background)
@@ -533,31 +533,76 @@ public class  Effect implements Cloneable, TimelineEvent {
         JLabel startTimeLabel = new JLabel("Start: " + TimeManager.getFormattedTime(startTimeMSec));
         JLabel endTimeLabel = new JLabel("End: " + TimeManager.getFormattedTime(endTimeMSec));
 
-        JPanel startColorPanel = new JPanel();
-        startColorPanel.setPreferredSize(new Dimension(10, 10));
-        startColorPanel.setBackground(startColor);
-
-        JPanel endColorPanel = new JPanel();
-        endColorPanel.setPreferredSize(new Dimension(10, 10));
+        JPanel colorPanel;
+        
         if (effectType == EffectList.STATIC_COLOR) {
-            endColorPanel.setBackground(null);
+            // Just start color
+            colorPanel = new JPanel();
+            colorPanel.setBackground(startColor);
+            colorPanel.setPreferredSize(new Dimension(10, 8));
+        } else if (effectType == EffectList.ALTERNATING_COLOR || effectType == EffectList.GRID) {
+            // Two solid colors side by side
+            colorPanel = new JPanel(new GridLayout(1, 2, 0, 0));
+            JPanel leftPanel = new JPanel();
+            leftPanel.setBackground(startColor);
+            JPanel rightPanel = new JPanel();
+            rightPanel.setBackground(endColor);
+            colorPanel.add(leftPanel);
+            colorPanel.add(rightPanel);
+            colorPanel.setPreferredSize(new Dimension(10, 8));
+        } else if (effectType == EffectList.CHASE && !chaseSequence.isEmpty()) {
+            // Repeating chase sequence
+            colorPanel = new JPanel(new GridLayout(1, chaseSequence.size(), 0, 0));
+            for (Color color : chaseSequence) {
+            JPanel panel = new JPanel();
+            panel.setBackground(color);
+            colorPanel.add(panel);
+            }
+            colorPanel.setPreferredSize(new Dimension(10, 8));
         } else {
-            endColorPanel.setBackground(endColor);
+            // Gradient for fade, ripple, wave, circle chase
+            colorPanel = new JPanel() {
+            @Override
+            protected void paintComponent(java.awt.Graphics g) {
+                super.paintComponent(g);
+                java.awt.Graphics2D g2d = (java.awt.Graphics2D) g;
+                java.awt.GradientPaint gradient = new java.awt.GradientPaint(
+                0, 0, startColor,
+                getWidth(), 0, endColor
+                );
+                g2d.setPaint(gradient);
+                g2d.fillRect(0, 0, getWidth(), getHeight());
+            }
+            };
+            colorPanel.setPreferredSize(new Dimension(10, 10));
         }
 
         widgetButton.add(titleLabel);
         widgetButton.add(startTimeLabel);
         widgetButton.add(endTimeLabel);
-        widgetButton.add(startColorPanel);
-        widgetButton.add(endColorPanel);
-        
+        widgetButton.add(colorPanel);
         widgetButton.addActionListener(e -> {
             // signals scrub to this rf trigger on press
             effectListener.onPressEffect(Effect.this);
             widgetButton.setBorder(BorderFactory.createLineBorder(UIManager.getColor("accentFocusColor"), 2, true));
         });
+        widgetButton.setBackground(tintColor(widgetButton.getBackground(), startColor, 0.1f));
 
         return widgetButton;
+    }
+
+    public static Color tintColor(Color originalColor, Color tintColor, float tintFactor) {
+        int r = (int) (originalColor.getRed() + (tintColor.getRed() - originalColor.getRed()) * tintFactor);
+        int g = (int) (originalColor.getGreen() + (tintColor.getGreen() - originalColor.getGreen()) * tintFactor);
+        int b = (int) (originalColor.getBlue() + (tintColor.getBlue() - originalColor.getBlue()) * tintFactor);
+        int a = originalColor.getAlpha(); // Keep original alpha
+
+        // Ensure values are within 0-255 range
+        r = Math.min(255, Math.max(0, r));
+        g = Math.min(255, Math.max(0, g));
+        b = Math.min(255, Math.max(0, b));
+
+        return new Color(r, g, b, a);
     }
 
     private boolean isInEffectView() {
