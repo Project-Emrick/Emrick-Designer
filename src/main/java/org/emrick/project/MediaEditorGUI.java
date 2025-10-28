@@ -3589,7 +3589,6 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         this.footballFieldPanel.setEffectManager(this.effectManager);
 
         updateEffectViewPanel(selectedEffectType);
-        updateRFTriggerButton();
     }
 
     ////////////////////////// Scrub Bar Listeners //////////////////////////
@@ -3616,11 +3615,6 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         playbackTimer = new java.util.Timer();
         playbackTimer.scheduleAtFixedRate(new PlaybackTask(), 0, period);
 
-        effectViewPanel.remove(rfTriggerGUI.getCreateDeletePnl());
-
-        effectViewPanel.revalidate();
-        effectViewPanel.repaint();
-
         return true;
     }
 
@@ -3637,8 +3631,6 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         playbackTimer.cancel();
         playbackTimer.purge();
         playbackTimer = null;
-        updateRFTriggerButton();
-        updateEffectViewPanel(selectedEffectType);
         return true;
     }
 
@@ -3646,12 +3638,9 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
     public long onScrub() {
         // If time cursor is at start of first set, arm the start-delay
         useStartDelay = scrubBarGUI.isAtFirstSet() && scrubBarGUI.isAtStartOfSet();
-        if (this.footballFieldPanel.getNumSelectedPerformers() > 0) {
-            updateEffectViewPanel(selectedEffectType);
-        }
         // If triggers are ready to be used, refresh on scroll
         if (count2RFTrigger != null) {
-            updateRFTriggerButton();
+            //updateRFTriggerButton(); this one might need to be re-added later
         }
         if (scrubBarGUI.isPlaying() && canSeekAudio) {
             System.out.println("Called onScrub() -> Seeking audio...");
@@ -3697,31 +3686,6 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
 
     }
 
-    /**
-     * Create a create/delete button depending on whether there is RF trigger at current count.
-     */
-    private void updateRFTriggerButton() {
-        //don't update if playing
-        if (isPlaying()) {
-            return;
-        }
-
-        if (rfTriggerGUI != null) {
-            effectViewPanel.remove(rfTriggerGUI.getCreateDeletePnl());
-            effectViewPanel.revalidate();
-            effectViewPanel.repaint();
-        }
-        int currentCount = footballFieldPanel.getCurrentCount();
-        RFTrigger currentRFTrigger = count2RFTrigger.get(currentCount);
-        if (timeManager.getCount2MSec().get(currentCount) != null) {
-            rfTriggerGUI = new RFTriggerGUI(
-                    currentCount, timeManager.getCount2MSec().get(currentCount), currentRFTrigger, this);
-            effectViewPanel.add(rfTriggerGUI.getCreateDeletePnl(), BorderLayout.SOUTH);
-        }
-
-        effectViewPanel.revalidate();
-        effectViewPanel.repaint();
-    }
 
     /**
      * Begin playing audio in sync with the drill playback
@@ -3814,7 +3778,6 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         } else {
             this.footballFieldPanel.repaint();
         }
-        updateEffectViewPanel(selectedEffectType);
         updateTimelinePanel();
     }
 
@@ -3826,8 +3789,9 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         } else {
             this.footballFieldPanel.repaint();
         }
-        updateEffectViewPanel(selectedEffectType);
         updateTimelinePanel();
+        effectGUI = new EffectGUI(EffectGUI.selectEffectMsg);
+        replaceEffectView(effectGUI.getEffectPanel(), null);
     }
 
     @Override
@@ -3886,14 +3850,12 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                     }
                 }
             }
-            updateEffectViewPanel(selectedEffectType);
             updateTimelinePanel();
         }
     }
 
     @Override
     public void onPerformerDeselect() {
-        updateEffectViewPanel(selectedEffectType);
         updateTimelinePanel();
     }
 
@@ -3913,7 +3875,6 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         }
         count2RFTrigger.put(footballFieldPanel.getCurrentCount(), rfTrigger);
         footballFieldPanel.setCount2RFTrigger(count2RFTrigger);
-        updateRFTriggerButton();
         updateTimelinePanel();
     }
 
@@ -3924,7 +3885,6 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         count2RFTrigger.remove(count);
         count2RFTrigger.put(count, rfTrigger);
         footballFieldPanel.setCount2RFTrigger(count2RFTrigger);
-        updateRFTriggerButton();
         updateTimelinePanel();
     }
 
@@ -3932,8 +3892,9 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
     public void onDeleteRFTrigger(int count) {
         count2RFTrigger.remove(count);
         footballFieldPanel.setCount2RFTrigger(count2RFTrigger);
-        updateRFTriggerButton();
         updateTimelinePanel();
+        effectGUI = new EffectGUI(EffectGUI.selectEffectMsg);
+        replaceEffectView(effectGUI.getEffectPanel(), null);
     }
 
     @Override
@@ -3941,6 +3902,13 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         // scrub to this rf trigger
         System.out.println("MediaEditorGUI: onPressRFTrigger() called with count: " + rfTrigger.getCount() + " and ms: " + rfTrigger.getTimestampMillis());
         scrubBarGUI.setScrub(rfTrigger.getCount());
+        // When an RF trigger is pressed, ensure the RF trigger create/delete panel is visible
+        // and hide effect/group panels so only one view is shown at a time.
+        int currentCount = footballFieldPanel.getCurrentCount();
+        RFTrigger currentRFTrigger = count2RFTrigger.get(currentCount);
+        rfTriggerGUI = new RFTriggerGUI(currentCount, timeManager.getCount2MSec().get(currentCount), currentRFTrigger, this);
+        // Show only RF trigger panel
+        replaceEffectView(rfTriggerGUI.getCreateDeletePnl(), null);
     }
 
     ////////////////////////// Effect Listeners //////////////////////////
@@ -3982,6 +3950,9 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             count = timeManager.MSec2Count(ms);
         }
         scrubBarGUI.setScrub(count);
+        
+        replaceEffectView(effectGUI.getEffectPanel(), null);
+        updateEffectViewPanel(effect.getEffectType());
     }
 
     /**
@@ -3993,23 +3964,16 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         // No point in updating effect view if can't use effects
         if (effectManager == null) return;
 
-        // Remove existing effect data
-        if (groupsGUI.getSelectionPanel() != null) {
-            effectViewPanel.remove(groupsGUI.getSelectionPanel());
-            groupsGUI.setSelectionPanel(null);
-        } else {
-            effectViewPanel.remove(effectGUI.getEffectPanel());
-        }
-        effectViewPanel.revalidate();
-        effectViewPanel.repaint();
+        // Use atomic replace to ensure only one view is shown at a time
+        // We'll construct the new center component below, then call replaceEffectView(center, south)
+        // where south is used for RFTrigger create/delete panel (usually null for effect/group views)
 
         // Effects
         if (selectedEffectType != EffectList.SHOW_GROUPS) {
             if (footballFieldPanel.selectedLEDStrips.isEmpty()) {
                 currentEffect = null;
-                effectGUI = new EffectGUI(EffectGUI.noPerformerMsg);
-                effectViewPanel.add(effectGUI.getEffectPanel(), BorderLayout.CENTER);
-
+                effectGUI = new EffectGUI(EffectGUI.selectEffectMsg);
+                replaceEffectView(effectGUI.getEffectPanel(), null);
                 return;
             }
 
@@ -4026,8 +3990,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             }
             if (currentEffect == null) {
                 effectGUI = new EffectGUI(EffectGUI.noCommonEffectMsg);
-                effectViewPanel.add(effectGUI.getEffectPanel(), BorderLayout.CENTER);
-
+                replaceEffectView(effectGUI.getEffectPanel(), null);
                 return;
             } else if (currentEffect.getEffectType() != EffectList.HIDE_GROUPS) {
                 selectedEffectType = currentEffect.getEffectType();
@@ -4072,17 +4035,44 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                 }
             }
             effectGUI = new EffectGUI(currentEffect, currentMSec, this, selectedEffectType, false, -1);
-            // Add updated data for effect view
-            effectViewPanel.add(effectGUI.getEffectPanel(), BorderLayout.CENTER);
-            effectViewPanel.revalidate();
-            effectViewPanel.repaint();
+            // Atomically replace center (and clear south)
+            replaceEffectView(effectGUI.getEffectPanel(), null);
         } else {
             groupsGUI.initializeSelectionPanel();
             JPanel panel = groupsGUI.getSelectionPanel();
-            effectViewPanel.add(panel);
-            effectViewPanel.revalidate();
-            effectViewPanel.repaint();
+            replaceEffectView(panel, null);
         }
+    }
+
+    /**
+     * Atomically replace the effect view center and south components so only the desired
+     * panels are visible. Pass null for either argument to omit that region.
+     */
+    private void replaceEffectView(JComponent center, JComponent south) {
+        // Preserve the NORTH component (effect options button panel) and only
+        // replace the CENTER and SOUTH regions so the options stay at the top.
+        LayoutManager lm = effectViewPanel.getLayout();
+        if (lm instanceof BorderLayout) {
+            BorderLayout bl = (BorderLayout) lm;
+            Component oldCenter = bl.getLayoutComponent(effectViewPanel, BorderLayout.CENTER);
+            Component oldSouth = bl.getLayoutComponent(effectViewPanel, BorderLayout.SOUTH);
+            if (oldCenter != null) effectViewPanel.remove(oldCenter);
+            if (oldSouth != null) effectViewPanel.remove(oldSouth);
+
+            if (center != null) {
+                effectViewPanel.add(center, BorderLayout.CENTER);
+            }
+            if (south != null) {
+                effectViewPanel.add(south, BorderLayout.SOUTH);
+            }
+        } else {
+            // Fallback: replace all if layout isn't BorderLayout
+            effectViewPanel.removeAll();
+            if (center != null) effectViewPanel.add(center, BorderLayout.CENTER);
+            if (south != null) effectViewPanel.add(south, BorderLayout.SOUTH);
+        }
+        effectViewPanel.revalidate();
+        effectViewPanel.repaint();
     }
 
     /**
