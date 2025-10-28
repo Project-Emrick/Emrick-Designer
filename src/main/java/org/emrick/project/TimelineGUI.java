@@ -39,6 +39,7 @@ public class TimelineGUI {
     private final ArrayList<RFTrigger> triggers;
     private JScrollPane timelineScrollPane;
     private JPanel timelinePanel;
+    private boolean showAllEffects = true;
     
     // Button Groups for selection
     private ButtonGroup effectsButtonGroup;
@@ -319,6 +320,8 @@ public class TimelineGUI {
             width = Math.max(width, 10);
             
             effectWidget.setBounds(xPosition, yPosition, width, ROW_HEIGHT - 2);
+            // Add drag/move support to effect widgets
+            addDragSupportToEffectWidget(effectWidget, effect);
             timelinePanel.add(effectWidget);
             
             // Make the effect widget transparent to middle mouse events (pass through to timeline panel)
@@ -330,6 +333,142 @@ public class TimelineGUI {
             effectRows.get(rowIndex).add(effectRange);
         }
         timelinePanel.setPreferredSize(new Dimension(calculateTimelineWidth(), TRIGGER_ROW_HEIGHT + effectRows.size() * ROW_HEIGHT));
+    }
+
+    /**
+     * Update the timeline data in-place without recreating the entire GUI.
+     * Keeps the same scrollpane and other components so callers can reuse the TimelineGUI instance.
+     */
+    public void updateData(ArrayList<Effect> newEffects, HashMap<Integer, RFTrigger> count2RFTrigger, int newMaxCount) {
+        this.effects = newEffects == null ? new ArrayList<>() : newEffects;
+        this.triggers.clear();
+        if (count2RFTrigger != null) {
+            for (Map.Entry<Integer, RFTrigger> entry : count2RFTrigger.entrySet()) {
+                RFTrigger t = entry.getValue();
+                this.triggers.add(t);
+            }
+            this.triggers.sort(Comparator.comparingInt(RFTrigger::getCount));
+        }
+        this.maxCount = newMaxCount;
+        updateTimelineLayout();
+    }
+
+    private void addDragSupportToEffectWidget(JToggleButton effectWidget, Effect effect) {
+        final int EDGE_THRESHOLD = 6; // pixels
+
+        MouseAdapter ma = new MouseAdapter() {
+            private boolean dragging = false;
+            private boolean resizingLeft = false;
+            private boolean resizingRight = false;
+            private int dragStartX;
+            private int origX, origWidth;
+            private Effect originalCopy;
+
+            @Override
+            public void mouseMoved(java.awt.event.MouseEvent e) {
+                if (e.getX() <= EDGE_THRESHOLD || e.getX() >= effectWidget.getWidth() - EDGE_THRESHOLD) {
+                    effectWidget.setCursor(java.awt.Cursor.getPredefinedCursor(java.awt.Cursor.E_RESIZE_CURSOR));
+                } else {
+                    effectWidget.setCursor(java.awt.Cursor.getPredefinedCursor(java.awt.Cursor.HAND_CURSOR));
+                }
+            }
+
+            @Override
+            public void mousePressed(java.awt.event.MouseEvent e) {
+                // Only respond to left button drags
+                if (e.getButton() != java.awt.event.MouseEvent.BUTTON1) return;
+                dragging = true;
+                dragStartX = e.getXOnScreen();
+                origX = effectWidget.getX();
+                origWidth = effectWidget.getWidth();
+                originalCopy = effect.makeDeepCopy();
+
+                int localX = e.getX();
+                if (localX <= EDGE_THRESHOLD) {
+                    resizingLeft = true;
+                    resizingRight = false;
+                } else if (localX >= effectWidget.getWidth() - EDGE_THRESHOLD) {
+                    resizingRight = true;
+                    resizingLeft = false;
+                } else {
+                    resizingLeft = false;
+                    resizingRight = false;
+                }
+            }
+
+            @Override
+            public void mouseDragged(java.awt.event.MouseEvent e) {
+                if (!dragging) return;
+                int deltaScreen = e.getXOnScreen() - dragStartX;
+                // Convert screen delta into panel delta by converting to timelinePanel coords
+                int delta = deltaScreen; // approximate; should be fine since components share same display scaling
+                if (resizingLeft) {
+                    int newX = origX + delta;
+                    int newWidth = origWidth - delta;
+                    if (newWidth < 10) {
+                        newWidth = 10;
+                        newX = origX + (origWidth - newWidth);
+                    }
+                    effectWidget.setBounds(newX, effectWidget.getY(), newWidth, effectWidget.getHeight());
+                } else if (resizingRight) {
+                    int newWidth = Math.max(10, origWidth + delta);
+                    effectWidget.setBounds(origX, effectWidget.getY(), newWidth, effectWidget.getHeight());
+                } else {
+                    int newX = origX + delta;
+                    effectWidget.setBounds(newX, effectWidget.getY(), effectWidget.getWidth(), effectWidget.getHeight());
+                }
+                timelinePanel.repaint();
+            }
+
+            @Override
+            public void mouseReleased(java.awt.event.MouseEvent e) {
+                if (!dragging) return;
+                dragging = false;
+                int finalX = effectWidget.getX();
+                int finalW = effectWidget.getWidth();
+
+                // Convert final positions back to counts
+                double newStartCount = finalX / (PIXELS_PER_COUNT * zoomFactor);
+                double newEndCount = (finalX + finalW) / (PIXELS_PER_COUNT * zoomFactor);
+
+                // Create a deep copy to represent the updated effect
+                Effect updated = originalCopy.makeDeepCopy();
+                long newStartMS = timeManager.getCount2MSec().get(Math.max(0, (int)Math.round(newStartCount)));
+                long newEndMS = timeManager.getCount2MSec().get(Math.max(0, (int)Math.round(newEndCount)));
+
+                // Guard: if counts are out of bounds, clamp
+                if (newStartMS < 0) newStartMS = 0;
+                if (newEndMS < newStartMS) newEndMS = newStartMS;
+
+                // Update based on whether resize or move
+                if (resizingLeft) {
+                    updated.setStartTimeMSec(newStartMS);
+                    long duration = updated.getEndTimeMSec() - newStartMS;
+                    updated.setDuration(java.time.Duration.ofMillis(duration));
+                } else if (resizingRight) {
+                    // keep start, update end/duration
+                    long duration = Math.max(0, newEndMS - updated.getStartTimeMSec());
+                    updated.setDuration(java.time.Duration.ofMillis(duration));
+                } else {
+                    // Move: keep duration, set new start
+                    long duration = updated.getEndTimeMSec() - updated.getStartTimeMSec();
+                    updated.setStartTimeMSec(newStartMS);
+                    updated.setEndTimeMSec(newStartMS + duration);
+                }
+
+                // Notify global effect listener (MediaEditorGUI) to persist the change
+                if (Effect.effectListener != null) {
+                    Effect.effectListener.onUpdateEffect(effect, updated);
+                }
+
+                // Reset flags
+                resizingLeft = false;
+                resizingRight = false;
+            }
+        };
+
+        effectWidget.addMouseListener(ma);
+        effectWidget.addMouseMotionListener(ma);
     }
 
     private void createTimelinePane() {
@@ -673,6 +812,12 @@ public class TimelineGUI {
             scrubBar.repaint();
         });
     }
+
+    public void setShowAllEffects(boolean showAll) {
+        this.showAllEffects = showAll;
+        // trigger a layout update
+        updateTimelineLayout();
+    }
     
     // List to store references to mouse adapters to prevent garbage collection
     private final List<MouseAdapter> panAdapters = new ArrayList<>();
@@ -698,7 +843,7 @@ public class TimelineGUI {
         );
         panAdapters.add(scrubPanAdapter);
     }
-    
+
     public static void main(String[] args) {
         JFrame frame = new JFrame("Timeline Demo");
         frame.setPreferredSize(new Dimension(900, 400));

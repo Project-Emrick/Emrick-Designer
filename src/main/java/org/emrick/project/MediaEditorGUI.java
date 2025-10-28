@@ -62,6 +62,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
     private ScrubBarGUI scrubBarGUI; // Refers to ScrubBarGUI instance, with functionality
     private JPanel scrubBarPanel; // Refers directly to panel of ScrubBarGUI. Reduces UI refreshing issues.
     private JPanel effectViewPanel;
+    private boolean showAllEffects = true; // when true, timeline shows all effects; checkbox toggles behavior
     private JPanel timelinePanel;
 
     private JSplitPane hSplitPane;
@@ -791,6 +792,16 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                         UIManager.setLookAndFeel(new FlatLightLaf());
                     }
                     SwingUtilities.updateComponentTreeUI(frame);
+                    // Rebuild timeline widgets so any hard-coded backgrounds are recreated under the new LAF
+                    if (timelineGUI != null) {
+                        updateTimelinePanel();
+                    }
+                    // Ensure effect panel widgets and popups update
+                    if (effectViewPanel != null) {
+                        effectViewPanel.revalidate();
+                        effectViewPanel.repaint();
+                    }
+                    if (footballFieldPanel != null) footballFieldPanel.repaint();
                 } catch (UnsupportedLookAndFeelException ex) {
                     System.err.println("Failed to update look and feel: " + ex.getMessage());
                 } catch (Exception ex) {
@@ -1722,7 +1733,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         
 
         //Light menu. and adjust its menu location
-        JButton effectOptions = getEffectOptionsButton();
+        JComponent effectOptions = getEffectOptionsButton();
         effectViewPanel.add(effectOptions, BorderLayout.NORTH);
 
 
@@ -1786,7 +1797,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
      *
      * @return JButton button that displays a popup menu with all the effect options when pressed
      */
-    private JButton getEffectOptionsButton() {
+    private JComponent getEffectOptionsButton() {
         JPopupMenu lightMenuPopup = new JPopupMenu();
 
         JMenuItem fadePattern = new JMenuItem("Create Fade Effect");
@@ -1854,7 +1865,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
 
 
         // Button that triggers the popup menu
-        JButton lightButton = new JButton("Effect Options");
+        JButton lightButton = new JButton("Create Effect");
         lightButton.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
                 int x = 0;
@@ -1862,7 +1873,36 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                 lightMenuPopup.show(lightButton, x, y);
             }
         });
-        return lightButton;
+
+        // Create RF Trigger button placed next to the effect options
+        JButton createRFBtn = new JButton("Create RF Trigger");
+        createRFBtn.addActionListener(e -> {
+            if (timeManager == null || footballFieldPanel == null || effectManager == null) return;
+            int currentCount = footballFieldPanel.getCurrentCount();
+            Long ts = timeManager.getCount2MSec().get(currentCount);
+            long timestamp = ts == null ? 0L : ts;
+            RFTrigger rf = new RFTrigger(currentCount, timestamp, "", "", "");
+            // delegate to the existing handler which will validate and add trigger
+            onCreateRFTrigger(rf);
+        });
+
+        // Checkbox to toggle showing all effects vs current (old behavior)
+        JCheckBox showAllChk = new JCheckBox("Show All Effects", showAllEffects);
+        showAllChk.addActionListener(e -> {
+            showAllEffects = showAllChk.isSelected();
+            // If a timeline exists, update it (we recreate timeline in updateTimelinePanel)
+            if (timelineGUI != null) {
+                timelineGUI.setShowAllEffects(showAllEffects);
+                updateTimelinePanel();
+            }
+        });
+
+        // Pack into a small panel
+        JPanel pnl = new JPanel(new FlowLayout(FlowLayout.LEFT, 4, 0));
+        pnl.add(lightButton);
+        pnl.add(createRFBtn);
+        pnl.add(showAllChk);
+        return pnl;
     }
 
     /**
@@ -3102,7 +3142,6 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         footballFieldPanel.selectedLEDStrips.clear();
         footballFieldPanel.selectedLEDStrips.addAll(Arrays.asList(ledStrips));
         footballFieldPanel.repaint();
-        updateTimelinePanel();
     }
 
     @Override
@@ -3122,7 +3161,6 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             footballFieldPanel.selectedLEDStrips.addAll(Arrays.asList(ledStrips));
         }
         footballFieldPanel.repaint();
-        updateTimelinePanel();
     }
 
     @Override
@@ -4065,18 +4103,41 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         }
 
 
-        // Get effects of selected performers, if applicable, else will be null
+        // Get effects to display in the timeline. If showAllEffects is set, show every effect in project,
+        // otherwise show only effects for the currently selected performers.
         HashSet<Effect> effectsSet = new HashSet<>();
-        for (LEDStrip l : footballFieldPanel.selectedLEDStrips) {
-            for (Effect e : l.getEffects()) {
-                effectsSet.add(e.getGeneratedEffect().generateEffectObj());
+        if (showAllEffects) {
+            for (LEDStrip l : footballFieldPanel.drill.ledStrips) {
+                for (Effect e : l.getEffects()) {
+                    if (e.getGeneratedEffect() != null) {
+                        effectsSet.add(e.getGeneratedEffect().generateEffectObj());
+                    } else {
+                        effectsSet.add(e);
+                    }
+                }
+            }
+        } else {
+            for (LEDStrip l : footballFieldPanel.selectedLEDStrips) {
+                for (Effect e : l.getEffects()) {
+                    effectsSet.add(e.getGeneratedEffect().generateEffectObj());
+                }
             }
         }
         ArrayList<Effect> effectsList = new ArrayList<>(effectsSet);
-        timelineGUI = new TimelineGUI(effectsList, count2RFTrigger, timeManager, scrubBarGUI.getLastCount());
-        timelineGUI.setTimelineListener(this);
-
-        timelinePanel.add(timelineGUI.getTimelineScrollPane());
+        if (timelineGUI == null) {
+            timelineGUI = new TimelineGUI(effectsList, count2RFTrigger, timeManager, scrubBarGUI.getLastCount());
+            timelineGUI.setTimelineListener(this);
+            timelineGUI.setShowAllEffects(showAllEffects);
+            timelinePanel.add(timelineGUI.getTimelineScrollPane());
+        } else {
+            // Reuse existing timeline GUI so we don't rebuild UI state on every performer selection change
+            timelineGUI.setShowAllEffects(showAllEffects);
+            timelineGUI.updateData(effectsList, count2RFTrigger, scrubBarGUI.getLastCount());
+            // If the scrollpane isn't already in the panel (first run), add it
+            if (Arrays.stream(timelinePanel.getComponents()).noneMatch(c -> c == timelineGUI.getTimelineScrollPane())) {
+                timelinePanel.add(timelineGUI.getTimelineScrollPane());
+            }
+        }
         timelinePanel.revalidate();
         timelinePanel.repaint();
     }
