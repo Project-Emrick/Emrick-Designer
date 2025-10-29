@@ -4179,7 +4179,13 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                 @SuppressWarnings("unchecked") java.util.Map<TextAttribute,Object> nattrs = new java.util.HashMap<>(nf.getAttributes()); nattrs.put(TextAttribute.UNDERLINE, TextAttribute.UNDERLINE_ON);
                 nameLbl.setFont(nf.deriveFont(nattrs));
                 nameLbl.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-                nameLbl.addMouseListener(new MouseAdapter(){ public void mouseClicked(MouseEvent e){ if (f.exists()){ loadProject(f); replaceMainView(footballField, scrubBarPanel);} else { JOptionPane.showMessageDialog(frame, "File not found: " + f.getAbsolutePath(), "Open Project", JOptionPane.ERROR_MESSAGE);} }});
+                nameLbl.addMouseListener(new MouseAdapter(){ public void mouseClicked(MouseEvent e){
+                    if (f.exists()){ 
+                        loadProject(f); replaceMainView(footballField, scrubBarPanel);
+                    } else {
+                        JOptionPane.showMessageDialog(frame, "File not found: " + f.getAbsolutePath(), "Open Project", JOptionPane.ERROR_MESSAGE);
+                    } 
+                }});
 
                 JLabel pathLbl = new JLabel(path);
                 pathLbl.setForeground(new Color(80,80,80));
