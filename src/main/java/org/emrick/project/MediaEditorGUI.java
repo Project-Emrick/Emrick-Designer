@@ -1743,7 +1743,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             frame.setJMenuBar(menuBar);
 
             // Show welcome screen on first run (no project loaded)
-            JPanel welcome = buildWelcomePanel();
+            JPanel welcome = buildWelcomePanel(this);
             // keep scrub/play controls visible under the welcome screen
             replaceMainView(welcome, scrubBarPanel);
 
@@ -3537,8 +3537,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
 
         ledConfigurationGUI = new LEDConfigurationGUI(footballFieldPanel.drill, this);
 
-        mainContentPanel.remove(footballField);
-        mainContentPanel.add(ledConfigurationGUI);
+        replaceMainView(ledConfigurationGUI, scrubBarPanel);
         mainContentPanel.revalidate();
         mainContentPanel.repaint();
     }
@@ -4126,7 +4125,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
      * Build the welcome panel displayed when no project is loaded.
      * Contains a clickable/open control and a list of recently opened projects.
      */
-    private JPanel buildWelcomePanel() {
+    private JPanel buildWelcomePanel(MediaEditorGUI mediaEditorGUI) {
         JPanel pnl = new JPanel(new BorderLayout(10,10));
         pnl.setBorder(BorderFactory.createEmptyBorder(16,16,16,16));
 
@@ -4143,9 +4142,21 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         openLabel.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         openLabel.addMouseListener(new MouseAdapter(){ public void mouseClicked(MouseEvent e){ openProjectDialog(); }});
 
-        JPanel top = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        top.add(openLabel);
+        JLabel newLabel = new JLabel("\uD83D\uDCC4  Create New Project");
+        newLabel.setForeground(accent);
+        Font nf = newLabel.getFont().deriveFont(Font.BOLD, 16f);
+        @SuppressWarnings("unchecked") java.util.Map<TextAttribute,Object> nattrs = new java.util.HashMap<>(nf.getAttributes()); nattrs.put(TextAttribute.UNDERLINE, TextAttribute.UNDERLINE_ON);
+        newLabel.setFont(nf.deriveFont(nattrs));
+        newLabel.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        newLabel.addMouseListener(new MouseAdapter(){ public void mouseClicked(MouseEvent e){ new SelectFileGUI(frame, mediaEditorGUI); }});
 
+        // top making a list down
+        JPanel top = new JPanel();
+        top.setLayout(new BoxLayout(top, BoxLayout.Y_AXIS));
+        top.add(newLabel);
+        top.add(Box.createVerticalStrut(8));
+        top.add(openLabel);
+        
         pnl.add(top, BorderLayout.NORTH);
 
         // Center: recently opened list
@@ -4175,9 +4186,9 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                 // Plain label (compact): bold+underline via TextAttribute to avoid HTML wrapping
                 JLabel nameLbl = new JLabel("\uD83D\uDCCE  " + name);
                 nameLbl.setForeground(accent);
-                Font nf = nameLbl.getFont().deriveFont(Font.BOLD);
-                @SuppressWarnings("unchecked") java.util.Map<TextAttribute,Object> nattrs = new java.util.HashMap<>(nf.getAttributes()); nattrs.put(TextAttribute.UNDERLINE, TextAttribute.UNDERLINE_ON);
-                nameLbl.setFont(nf.deriveFont(nattrs));
+                Font ff = nameLbl.getFont().deriveFont(Font.BOLD);
+                @SuppressWarnings("unchecked") java.util.Map<TextAttribute,Object> fattrs = new java.util.HashMap<>(ff.getAttributes()); fattrs.put(TextAttribute.UNDERLINE, TextAttribute.UNDERLINE_ON);
+                nameLbl.setFont(ff.deriveFont(fattrs));
                 nameLbl.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
                 nameLbl.addMouseListener(new MouseAdapter(){ public void mouseClicked(MouseEvent e){
                     if (f.exists()){ 
@@ -4650,8 +4661,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
 
     @Override
     public void onExitConfig() {
-        mainContentPanel.remove(ledConfigurationGUI);
-        mainContentPanel.add(footballField);
+        replaceMainView(footballField, scrubBarPanel);
         mainContentPanel.revalidate();
         mainContentPanel.repaint();
     }
