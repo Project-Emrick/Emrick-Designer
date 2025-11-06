@@ -812,4 +812,46 @@ public class GeneratedEffectAdapter extends TypeAdapter<GeneratedEffect> {
         }
         return false;
     }
+
+    public static GeneratedEffect createDefaultEffect(EffectList effectType, long currentMS, long endMS, int id) {
+        switch (effectType) {
+            case GENERATED_FADE:
+                return new FadeEffect(currentMS, endMS, Color.WHITE, Color.BLACK, Duration.ofSeconds(1), id);
+            case STATIC_COLOR:
+                return new StaticColorEffect(currentMS, endMS, Color.WHITE, Duration.ofSeconds(1), id);
+            case WAVE:
+                return new WaveEffect(currentMS, endMS, Color.WHITE, Color.BLUE, Duration.ofSeconds(1), 1.0, true, true, id);
+            case ALTERNATING_COLOR:
+                return new AlternatingColorEffect(currentMS, endMS, Color.RED, Color.BLUE, Duration.ofSeconds(1), 1.0, id);
+            case RIPPLE:
+                return new RippleEffect(currentMS, endMS, Color.WHITE, Color.BLUE, Duration.ofSeconds(1), 1.0, true, true, id);
+            case CIRCLE_CHASE:
+                return new CircleChaseEffect(currentMS, endMS, Color.RED, Color.BLUE, Duration.ofSeconds(1), true, 0.0, 1.0, id);
+            case CHASE:
+                ArrayList<Color> defaultChaseColors = new ArrayList<>();
+                defaultChaseColors.add(Color.RED);
+                defaultChaseColors.add(Color.GREEN);
+                defaultChaseColors.add(Color.BLUE);
+                return new ChaseEffect(currentMS, endMS, defaultChaseColors, Duration.ofSeconds(1), true, 1.0, id);
+            case GRID:
+                GridShape defaultShape = new GridShape();
+                defaultShape.setColor(Color.WHITE);
+                defaultShape.setStartPos(new Point(0,0));
+                defaultShape.setMovement(new Point(1,0));
+                boolean[][] shapeArray = {
+                        {true, true, true},
+                        {true, false, true},
+                        {true, true, true}
+                };
+                defaultShape.setShape(shapeArray);
+                GridShape[] shapes = {defaultShape};
+                return new GridEffect(currentMS, endMS, 5, 5, shapes, Duration.ofSeconds(1), id);
+            case NOISE:
+                return new RandomNoiseEffect(currentMS, endMS, Duration.ofSeconds(1), true,
+                                            true, true, false, 0.1f, 0.5f, 1.0f, 2000L, 500L,
+                                            Color.WHITE, id);
+            default:
+                return null;
+        }
+    }
 }

@@ -24,6 +24,20 @@ public class EffectManager {
         ids = new ArrayList<>();
     }
 
+    public int nextId() {
+        int id = 0;
+        if (ids.size() > 0) {
+            int prev = ids.get(0);
+            for (int i : ids) {
+                if (i > prev) {
+                    prev = i;
+                }
+            }
+            id = prev + 1;
+        }
+        return id;
+    }
+
     /**
      * Checks if an effect can be validly created. The effect should not overlap with another effect on the given
      * performer, and its start and end times should be in different sets.
@@ -32,15 +46,25 @@ public class EffectManager {
      * @return True if valid, false if invalid.
      */
     public boolean isValid(Effect effect, LEDStrip ledStrip) {
+        return isValid(effect, ledStrip, null);
+    }
+    public boolean isValid(Effect effect, LEDStrip ledStrip, Effect oldEffect) {
         if (effect == null) return false;
 
         // The effect should not overlap with another effect on the given performer
         long startMSec = effect.getStartTimeMSec();
         long endMSec = effect.getEndTimeMSec();
         for (Effect exist : ledStrip.getEffects()) {
+            if (oldEffect != null && exist.id == oldEffect.id) {
+                continue;
+            }
             if (exist.getEndTimeMSec() < startMSec || endMSec < exist.getStartTimeMSec()) {
                 continue;
             }
+            System.out.println("Effect overlap detected on LED strip " + ledStrip.getLabel());
+            System.out.println("Either startMSec " + startMSec + " < exist end " + exist.getEndTimeMSec() +
+                    " or endMSec " + endMSec + " > exist start " + exist.getStartTimeMSec());
+            System.out.println("Existing effect ID: " + exist.getId() + ", New effect ID: " + effect.getId());
             return false;
         }
 
@@ -48,6 +72,7 @@ public class EffectManager {
         for (Map.Entry<Integer, RFTrigger> entry : count2RFTrigger.entrySet()) {
             long tsMSec = timeManager.getCount2MSec().get(entry.getKey());
             if (effect.getStartTimeMSec() < tsMSec && tsMSec < effect.getEndTimeMSec()) {
+                System.out.println("Effect overrun detected with RF trigger at count " + entry.getKey() + " on LED strip " + ledStrip.getLabel());
                 return false;
             }
         }
@@ -131,15 +156,15 @@ public class EffectManager {
         return true;
     }
 
-    private void showAddRFTriggerErrorDialog(LEDStrip ledStrip) {
+    public void showAddRFTriggerErrorDialog(LEDStrip ledStrip) {
         JOptionPane.showMessageDialog(null,
-                "RF trigger could not be added. Please check for collision with effect(s) on LED strip " + ledStrip.getLedConfig().getLabel() + ".",
+                "RF trigger could not be added. Please check for collision with effect(s) on LED strip " + ledStrip.getLabel() + ".",
                 "Create RF Trigger: Error", JOptionPane.ERROR_MESSAGE);
     }
 
-    private void showAddEffectErrorDialog(LEDStrip ledStrip) {
+    public void showAddEffectErrorDialog(LEDStrip ledStrip) {
         JOptionPane.showMessageDialog(null,
-                "Effect could not be applied to performer " + ledStrip.getLedConfig().getLabel() +
+                "Effect could not be applied to performer " + ledStrip.getLabel() +
                         ". Please check for possible collision with an RF trigger or the performer's other effects.",
                 "Apply Effect: Error", JOptionPane.ERROR_MESSAGE);
     }

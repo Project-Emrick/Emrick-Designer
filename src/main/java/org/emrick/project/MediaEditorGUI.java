@@ -629,7 +629,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                 effectManager.undo();
                 footballFieldPanel.repaint();
                 updateTimelinePanel();
-                updateEffectViewPanel(selectedEffectType);
+                updateEffectViewPanel(selectedEffectType, null);
             }
         });
         editMenu.add(undoColorsItem);
@@ -644,7 +644,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                 effectManager.redo();
                 footballFieldPanel.repaint();
                 updateTimelinePanel();
-                updateEffectViewPanel(selectedEffectType);
+                updateEffectViewPanel(selectedEffectType, null);
             }
         });
         editMenu.add(redoColorsItem);
@@ -659,7 +659,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
 
             footballFieldPanel.repaint();
             updateTimelinePanel();
-            updateEffectViewPanel(selectedEffectType);
+            updateEffectViewPanel(selectedEffectType, null);
         });
 
         // Remove effects for selected
@@ -673,7 +673,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             this.effectManager.removeAllEffectsFromSelectedLEDStrips();
             this.footballFieldPanel.repaint();
             updateTimelinePanel();
-            updateEffectViewPanel(selectedEffectType);
+            updateEffectViewPanel(selectedEffectType, null);
         });
 
         editMenu.addSeparator();
@@ -704,7 +704,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         pasteCopiedEffect.addActionListener(e -> {
             if (this.effectManager == null) return;
             boolean success = this.effectManager.addEffectToSelectedLEDStrips(this.copiedEffect);
-            if (success) updateEffectViewPanel(selectedEffectType);
+            if (success) updateEffectViewPanel(this.copiedEffect.getEffectType(), this.copiedEffect);
             this.footballFieldPanel.repaint();
         });
         editMenu.add(pasteCopiedEffect);
@@ -757,14 +757,14 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                 Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx()));
         groups.addActionListener(e -> {
             selectedEffectType = EffectList.SHOW_GROUPS;
-            updateEffectViewPanel(selectedEffectType);
+            updateEffectViewPanel(selectedEffectType, null);
             hideGroups.setEnabled(true);
             groups.setEnabled(false);
         });
         selectMenu.add(groups);
         hideGroups.addActionListener(e -> {
             selectedEffectType = EffectList.HIDE_GROUPS;
-            updateEffectViewPanel(selectedEffectType);
+            updateEffectViewPanel(selectedEffectType, null);
             groups.setEnabled(true);
             hideGroups.setEnabled(false);
         });
@@ -1810,66 +1810,65 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         JMenuItem fadePattern = new JMenuItem("Create Fade Effect");
         fadePattern.addActionListener(e -> {
             selectedEffectType = EffectList.GENERATED_FADE;
-            updateEffectViewPanel(selectedEffectType);
+            createEffectAtCurrentTime(selectedEffectType);
         });
         lightMenuPopup.add(fadePattern);
 
         JMenuItem staticColorPattern = new JMenuItem("Create Static Color Effect");
         staticColorPattern.addActionListener(e -> {
             selectedEffectType = EffectList.STATIC_COLOR;
-            updateEffectViewPanel(selectedEffectType);
+            createEffectAtCurrentTime(selectedEffectType);
         });
         lightMenuPopup.add(staticColorPattern);
 
         JMenuItem wavePattern = new JMenuItem("Create Wave Effect");
         wavePattern.addActionListener(e -> {
             selectedEffectType = EffectList.WAVE;
-            updateEffectViewPanel(selectedEffectType);
+            createEffectAtCurrentTime(selectedEffectType);
         });
         lightMenuPopup.add(wavePattern);
 
         JMenuItem alternatingColorPattern = new JMenuItem("Create Alternating Color Effect");
         alternatingColorPattern.addActionListener(e -> {
             selectedEffectType = EffectList.ALTERNATING_COLOR;
-            updateEffectViewPanel(selectedEffectType);
+            createEffectAtCurrentTime(selectedEffectType);
         });
         lightMenuPopup.add(alternatingColorPattern);
 
         JMenuItem ripplePattern = new JMenuItem("Create Ripple Effect");
         ripplePattern.addActionListener(e -> {
             selectedEffectType = EffectList.RIPPLE;
-            updateEffectViewPanel(selectedEffectType);
+            createEffectAtCurrentTime(selectedEffectType);
         });
         lightMenuPopup.add(ripplePattern);
 
         JMenuItem circleChasePattern = new JMenuItem("Create Circle Chase Effect");
         circleChasePattern.addActionListener(e -> {
             selectedEffectType = EffectList.CIRCLE_CHASE;
-            updateEffectViewPanel(selectedEffectType);
+            createEffectAtCurrentTime(selectedEffectType);
         });
         lightMenuPopup.add(circleChasePattern);
 
         JMenuItem chasePattern = new JMenuItem("Create Chase Effect");
         chasePattern.addActionListener(e -> {
             selectedEffectType = EffectList.CHASE;
-            updateEffectViewPanel(selectedEffectType);
+            createEffectAtCurrentTime(selectedEffectType);
         });
         lightMenuPopup.add(chasePattern);
 
         JMenuItem gridPattern = new JMenuItem("Create Grid Effect");
         gridPattern.addActionListener(e -> {
             selectedEffectType = EffectList.GRID;
-            updateEffectViewPanel(selectedEffectType);
+            createEffectAtCurrentTime(selectedEffectType);
         });
         lightMenuPopup.add(gridPattern);
 
         JMenuItem randomNoisePattern = new JMenuItem("Create Random Noise Effect");
         randomNoisePattern.addActionListener(e -> {
            selectedEffectType = EffectList.NOISE;
-           updateEffectViewPanel(selectedEffectType);
+           createEffectAtCurrentTime(selectedEffectType);
         });
         lightMenuPopup.add(randomNoisePattern);
-
 
         // Button that triggers the popup menu
         JButton lightButton = new JButton("Create Effect");
@@ -1910,6 +1909,32 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         pnl.add(createRFBtn);
         pnl.add(showAllChk);
         return pnl;
+    }
+
+    /**
+     * Helper method to create a 1-second effect of the given type at the current timeline position
+     */
+    private void createEffectAtCurrentTime(EffectList effectType) {
+        if (footballFieldPanel == null || timeManager == null || effectManager == null) {
+            return;
+        }
+        
+        long currentMS = footballFieldPanel.currentMS;
+        long endMS = currentMS + 1000; // 1 second duration
+        
+        // Create a basic effect with default colors
+        GeneratedEffect newEffect = GeneratedEffectAdapter.createDefaultEffect(
+                effectType,
+                currentMS,
+                endMS,
+                effectManager.nextId()
+        );
+        
+        // Convert GeneratedEffect to Effect before passing to onCreateEffect
+        Effect effectToCreate = newEffect.generateEffectObj();
+        
+        // Add the effect through the normal effect creation flow
+        onCreateEffect(effectToCreate);
     }
 
     /**
@@ -2578,7 +2603,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                     setupEffectView(pf.ids);
                     rebuildPageTabCounts();
                     updateTimelinePanel();
-                    updateEffectViewPanel(selectedEffectType);
+                    updateEffectViewPanel(selectedEffectType, null);
                 }
             }
             else if (opf != null){
@@ -2645,7 +2670,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                     setupEffectView(opf.ids);
                     rebuildPageTabCounts();
                     updateTimelinePanel();
-                    updateEffectViewPanel(selectedEffectType);
+                    updateEffectViewPanel(selectedEffectType, null);
                 }
             }
             else {
@@ -3090,7 +3115,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             setupEffectView(ids);
             rebuildPageTabCounts();
             updateTimelinePanel();
-            updateEffectViewPanel(selectedEffectType);
+            updateEffectViewPanel(selectedEffectType, null);
             currentMovement = 1;
 
         } catch (JsonIOException | JsonSyntaxException | IOException e) {
@@ -3192,7 +3217,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
 
     @Override
     public void onUpdateGroup() {
-        updateEffectViewPanel(selectedEffectType);
+        updateEffectViewPanel(selectedEffectType, null);
     }
 
     /**
@@ -3530,7 +3555,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         footballFieldPanel.setCount2RFTrigger(count2RFTrigger);
         footballFieldBackground.justResized = true;
         footballFieldBackground.repaint();
-        updateEffectViewPanel(selectedEffectType);
+        updateEffectViewPanel(selectedEffectType, null);
         updateTimelinePanel();
         rebuildPageTabCounts();
 
@@ -3604,7 +3629,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         }
         this.footballFieldPanel.setEffectManager(this.effectManager);
 
-        updateEffectViewPanel(selectedEffectType);
+        updateEffectViewPanel(selectedEffectType, null);
     }
 
     ////////////////////////// Scrub Bar Listeners //////////////////////////
@@ -3781,13 +3806,22 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             this.footballFieldPanel.repaint();
         }
         if (successful) {
-            updateEffectViewPanel(selectedEffectType);
+            updateEffectViewPanel(effect.getEffectType(), effect);
             updateTimelinePanel();
         }
     }
 
     @Override
     public void onUpdateEffect(Effect oldEffect, Effect newEffect) {
+        // if valid for all selected strips, update
+        for (LEDStrip l : effectManager.getLEDStripsWithEffect(oldEffect)) {
+            if (!effectManager.isValid(newEffect, l, oldEffect)) {
+                effectManager.showAddEffectErrorDialog(l);
+                updateTimelinePanel();
+                return;
+            }
+        }
+        
         this.effectManager.replaceEffectForSelectedLEDStrips(oldEffect, newEffect);
         if (ledStripViewGUI.isShowing()) {
             ledStripViewGUI.repaint();
@@ -3968,14 +4002,14 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         scrubBarGUI.setScrub(count);
         
         replaceEffectView(effectGUI.getEffectPanel(), null);
-        updateEffectViewPanel(effect.getEffectType());
+        updateEffectViewPanel(effect.getEffectType(), effect);
     }
 
     /**
      * Update the effect panel to display the currently selected effect
      * @param effectType - The type of effect that is currently selected.
      */
-    private void updateEffectViewPanel(EffectList effectType) {
+    private void updateEffectViewPanel(EffectList effectType, Effect effect) {
 
         // No point in updating effect view if can't use effects
         if (effectManager == null) return;
