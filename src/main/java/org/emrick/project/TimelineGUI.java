@@ -402,6 +402,8 @@ public class TimelineGUI {
                 int deltaScreen = e.getXOnScreen() - dragStartX;
                 // Convert screen delta into panel delta by converting to timelinePanel coords
                 int delta = deltaScreen; // approximate; should be fine since components share same display scaling
+                // return if not dragged far enough
+                if (Math.abs(delta) < EDGE_THRESHOLD) return;
                 if (resizingLeft) {
                     int newX = origX + delta;
                     int newWidth = origWidth - delta;
@@ -458,6 +460,8 @@ public class TimelineGUI {
 
                 // Notify global effect listener (MediaEditorGUI) to persist the change
                 if (Effect.effectListener != null) {
+                    // click the effect to select it and its associated strips
+                    effectWidget.doClick();
                     Effect.effectListener.onUpdateEffect(effect, updated);
                 }
 
