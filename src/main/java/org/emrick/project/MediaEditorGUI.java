@@ -2349,9 +2349,9 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             webServerFrame.setVisible(true);
             lightBoardMode = lightBoard;
 
-            SerialTransmitter serialTransmitter1 = new SerialTransmitter(); // idk why but serialTransmitter was always null...so I just made a new one.
+            SerialTransmitter serialTransmitter = comPortPrompt("Transmitter");
             System.out.println("Starting Programming Mode");
-            serialTransmitter1.enterProgMode(ssid, password, port, currentID, token, verificationColor, lightBoardMode);
+            serialTransmitter.enterProgMode(ssid, password, port, currentID, token, verificationColor, lightBoardMode);
 
             noRequestTimer.start();
         } catch (IOException ioe) {
@@ -4675,9 +4675,9 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             }
         }
         if (!allReceived) {
-            if (lastRun + 2000 < System.currentTimeMillis()) {
-                SerialTransmitter serialTransmitter1 = new SerialTransmitter();
-                serialTransmitter1.enterProgMode(ssid, password, port, currentID, token, verificationColor, lightBoardMode);
+            if (lastRun + 20000 < System.currentTimeMillis()) {
+                SerialTransmitter serialTransmitter = comPortPrompt("Transmitter");
+                serialTransmitter.enterProgMode(ssid, password, port, currentID, token, verificationColor, lightBoardMode);
                 lastRun = System.currentTimeMillis();
             }
             noRequestTimer.setDelay(10000);
@@ -5399,7 +5399,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
 
                     l.sortEffects();
                     if (l.getEffects().size() > 0) {
-                        out += "Pkt_count: " + l.getEffects().size() + ", ";
+                        out += "Pkt_count: " + l.getEffects().size() + "\n";
                         for (int i = 0; i < l.getEffects().size(); i++) {
                             Effect e = l.getEffects().get(i);
                             int flags = 0;
