@@ -1979,6 +1979,15 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         
         return result;
     }
+
+    public SerialTransmitter comPortPromptFlow() {
+        // just return current transmitter from hardware status indicator manually to bypass type check
+        if (hardwareStatusIndicator == null) {
+            // Fallback to old behavior if indicator not initialized
+            return oldComPortPrompt("Transmitter");
+        }
+        return hardwareStatusIndicator.getTransmitterBypass();
+    }
     
     /**
      * Legacy method for hardware detection - kept as fallback
@@ -4639,7 +4648,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
 
     @Override
     public void onRFSignal(int i) {
-        SerialTransmitter st = comPortPrompt("Transmitter");
+        SerialTransmitter st = comPortPromptFlow();
 
         if (st != null) {
             st.writeSet(i, isLightBoardMode);
