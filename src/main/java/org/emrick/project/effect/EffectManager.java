@@ -140,6 +140,12 @@ public class EffectManager {
         effect.setId(id);
         ArrayList<LEDStrip> ledStrips = getSelectedLEDStrips();
 
+        // Check if any LED strips are selected
+        if (ledStrips.isEmpty()) {
+            showNoPerformersSelectedErrorDialog();
+            return false;
+        }
+
         // Verify ability to add the effect to all selected performers, to avoid adding for some then error-ing out.
         for (LEDStrip ledStrip : ledStrips) {
             if (!isValid(effect, ledStrip)) {
@@ -167,6 +173,12 @@ public class EffectManager {
                 "Effect could not be applied to performer " + ledStrip.getLabel() +
                         ". Please check for possible collision with an RF trigger or the performer's other effects.",
                 "Apply Effect: Error", JOptionPane.ERROR_MESSAGE);
+    }
+
+    public void showNoPerformersSelectedErrorDialog() {
+        JOptionPane.showMessageDialog(null,
+                "No performers are selected. Please select one or more performers on the field before creating an effect.",
+                "Create Effect: Error", JOptionPane.ERROR_MESSAGE);
     }
 
     public void removeEffectFromSelectedLEDStrips(Effect effect) {

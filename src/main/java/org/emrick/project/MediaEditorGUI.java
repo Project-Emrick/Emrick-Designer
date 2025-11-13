@@ -3610,10 +3610,14 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         this.startDelay = startDelay;
 
         scrubBarGUI.setTimeSync(timeSync);
-        count2RFTrigger = new HashMap<>();
-        footballFieldPanel.setCount2RFTrigger(count2RFTrigger);
+            count2RFTrigger = new HashMap<>();
+            footballFieldPanel.setCount2RFTrigger(count2RFTrigger);
 
         setupEffectView(null);
+        rebuildPageTabCounts();
+        updateTimelinePanel();
+        effectGUI = new EffectGUI(EffectGUI.selectEffectMsg);
+        
         ledStripViewGUI = new LEDStripViewGUI(new ArrayList<>(), effectManager);
     }
 
