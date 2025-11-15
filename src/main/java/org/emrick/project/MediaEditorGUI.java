@@ -16,6 +16,7 @@ import org.emrick.project.effect.*;
 import org.emrick.project.serde.*;
 
 import javax.imageio.ImageIO;
+import java.awt.font.TextAttribute;
 import javax.swing.*;
 import javax.swing.Timer;
 import javax.swing.filechooser.FileNameExtensionFilter;
@@ -62,6 +63,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
     private ScrubBarGUI scrubBarGUI; // Refers to ScrubBarGUI instance, with functionality
     private JPanel scrubBarPanel; // Refers directly to panel of ScrubBarGUI. Reduces UI refreshing issues.
     private JPanel effectViewPanel;
+    private boolean showAllEffects = true; // when true, timeline shows all effects; checkbox toggles behavior
     private JPanel timelinePanel;
 
     private JSplitPane hSplitPane;
@@ -627,7 +629,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                 effectManager.undo();
                 footballFieldPanel.repaint();
                 updateTimelinePanel();
-                updateEffectViewPanel(selectedEffectType);
+                updateEffectViewPanel(selectedEffectType, null);
             }
         });
         editMenu.add(undoColorsItem);
@@ -642,7 +644,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                 effectManager.redo();
                 footballFieldPanel.repaint();
                 updateTimelinePanel();
-                updateEffectViewPanel(selectedEffectType);
+                updateEffectViewPanel(selectedEffectType, null);
             }
         });
         editMenu.add(redoColorsItem);
@@ -657,7 +659,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
 
             footballFieldPanel.repaint();
             updateTimelinePanel();
-            updateEffectViewPanel(selectedEffectType);
+            updateEffectViewPanel(selectedEffectType, null);
         });
 
         // Remove effects for selected
@@ -671,7 +673,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             this.effectManager.removeAllEffectsFromSelectedLEDStrips();
             this.footballFieldPanel.repaint();
             updateTimelinePanel();
-            updateEffectViewPanel(selectedEffectType);
+            updateEffectViewPanel(selectedEffectType, null);
         });
 
         editMenu.addSeparator();
@@ -702,7 +704,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         pasteCopiedEffect.addActionListener(e -> {
             if (this.effectManager == null) return;
             boolean success = this.effectManager.addEffectToSelectedLEDStrips(this.copiedEffect);
-            if (success) updateEffectViewPanel(selectedEffectType);
+            if (success) updateEffectViewPanel(this.copiedEffect.getEffectType(), this.copiedEffect);
             this.footballFieldPanel.repaint();
         });
         editMenu.add(pasteCopiedEffect);
@@ -755,14 +757,14 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                 Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx()));
         groups.addActionListener(e -> {
             selectedEffectType = EffectList.SHOW_GROUPS;
-            updateEffectViewPanel(selectedEffectType);
+            updateEffectViewPanel(selectedEffectType, null);
             hideGroups.setEnabled(true);
             groups.setEnabled(false);
         });
         selectMenu.add(groups);
         hideGroups.addActionListener(e -> {
             selectedEffectType = EffectList.HIDE_GROUPS;
-            updateEffectViewPanel(selectedEffectType);
+            updateEffectViewPanel(selectedEffectType, null);
             groups.setEnabled(true);
             hideGroups.setEnabled(false);
         });
@@ -791,6 +793,16 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                         UIManager.setLookAndFeel(new FlatLightLaf());
                     }
                     SwingUtilities.updateComponentTreeUI(frame);
+                    // Rebuild timeline widgets so any hard-coded backgrounds are recreated under the new LAF
+                    if (timelineGUI != null) {
+                        updateTimelinePanel();
+                    }
+                    // Ensure effect panel widgets and popups update
+                    if (effectViewPanel != null) {
+                        effectViewPanel.revalidate();
+                        effectViewPanel.repaint();
+                    }
+                    if (footballFieldPanel != null) footballFieldPanel.repaint();
                 } catch (UnsupportedLookAndFeelException ex) {
                     System.err.println("Failed to update look and feel: " + ex.getMessage());
                 } catch (Exception ex) {
@@ -1251,18 +1263,24 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                 int option = JOptionPane.showConfirmDialog(null, inputs, "Enter board parameters:", JOptionPane.OK_CANCEL_OPTION);
                 if (option == JOptionPane.OK_OPTION) {
                     if (boardIDEnable.isSelected()) {
-                        int id = Integer.parseInt(boardIDField.getText());
-                        String position = "";
-                        if (!footballFieldPanel.drill.ledStrips.isEmpty()) {
-                            LEDStrip ledStrip = footballFieldPanel.drill.ledStrips.get(id);
-                            position = ledStrip.getLedConfig().getLabel();
-                        }
-
-                        st.writeBoardID(boardIDField.getText(), position);
                         try {
-                            Thread.sleep(5000);
-                        } catch (InterruptedException ex) {
-                            throw new RuntimeException(ex);
+                            int id = Integer.parseInt(boardIDField.getText());
+                            String position = "";
+                            if (!footballFieldPanel.drill.ledStrips.isEmpty()) {
+                                LEDStrip ledStrip = footballFieldPanel.drill.ledStrips.get(id);
+                                position = ledStrip.getLedConfig().getLabel();
+                            }
+
+
+                            st.writeBoardID(boardIDField.getText(), position);
+                            try {
+                                Thread.sleep(5000);
+                            } catch (InterruptedException ex) {
+                                throw new RuntimeException(ex);
+                            }
+                        } catch (Exception ex) {
+                            JOptionPane.showMessageDialog(null, "Board ID Error. Please try again. " + ex.getMessage(),
+                                    "Input Error", JOptionPane.ERROR_MESSAGE);
                         }
                     }
                     if (enableLedCount.isSelected()) {
@@ -1722,13 +1740,19 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         
 
         //Light menu. and adjust its menu location
-        JButton effectOptions = getEffectOptionsButton();
+        JComponent effectOptions = getEffectOptionsButton();
         effectViewPanel.add(effectOptions, BorderLayout.NORTH);
 
 
         // Display the window
         if (archivePaths == null) {
             frame.setJMenuBar(menuBar);
+
+            // Show welcome screen on first run (no project loaded)
+            JPanel welcome = buildWelcomePanel(this);
+            // keep scrub/play controls visible under the welcome screen
+            replaceMainView(welcome, scrubBarPanel);
+
             frame.pack();
             frame.setLocationRelativeTo(null);
             frame.setVisible(true);
@@ -1786,75 +1810,74 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
      *
      * @return JButton button that displays a popup menu with all the effect options when pressed
      */
-    private JButton getEffectOptionsButton() {
+    private JComponent getEffectOptionsButton() {
         JPopupMenu lightMenuPopup = new JPopupMenu();
 
         JMenuItem fadePattern = new JMenuItem("Create Fade Effect");
         fadePattern.addActionListener(e -> {
             selectedEffectType = EffectList.GENERATED_FADE;
-            updateEffectViewPanel(selectedEffectType);
+            createEffectAtCurrentTime(selectedEffectType);
         });
         lightMenuPopup.add(fadePattern);
 
         JMenuItem staticColorPattern = new JMenuItem("Create Static Color Effect");
         staticColorPattern.addActionListener(e -> {
             selectedEffectType = EffectList.STATIC_COLOR;
-            updateEffectViewPanel(selectedEffectType);
+            createEffectAtCurrentTime(selectedEffectType);
         });
         lightMenuPopup.add(staticColorPattern);
 
         JMenuItem wavePattern = new JMenuItem("Create Wave Effect");
         wavePattern.addActionListener(e -> {
             selectedEffectType = EffectList.WAVE;
-            updateEffectViewPanel(selectedEffectType);
+            createEffectAtCurrentTime(selectedEffectType);
         });
         lightMenuPopup.add(wavePattern);
 
         JMenuItem alternatingColorPattern = new JMenuItem("Create Alternating Color Effect");
         alternatingColorPattern.addActionListener(e -> {
             selectedEffectType = EffectList.ALTERNATING_COLOR;
-            updateEffectViewPanel(selectedEffectType);
+            createEffectAtCurrentTime(selectedEffectType);
         });
         lightMenuPopup.add(alternatingColorPattern);
 
         JMenuItem ripplePattern = new JMenuItem("Create Ripple Effect");
         ripplePattern.addActionListener(e -> {
             selectedEffectType = EffectList.RIPPLE;
-            updateEffectViewPanel(selectedEffectType);
+            createEffectAtCurrentTime(selectedEffectType);
         });
         lightMenuPopup.add(ripplePattern);
 
         JMenuItem circleChasePattern = new JMenuItem("Create Circle Chase Effect");
         circleChasePattern.addActionListener(e -> {
             selectedEffectType = EffectList.CIRCLE_CHASE;
-            updateEffectViewPanel(selectedEffectType);
+            createEffectAtCurrentTime(selectedEffectType);
         });
         lightMenuPopup.add(circleChasePattern);
 
         JMenuItem chasePattern = new JMenuItem("Create Chase Effect");
         chasePattern.addActionListener(e -> {
             selectedEffectType = EffectList.CHASE;
-            updateEffectViewPanel(selectedEffectType);
+            createEffectAtCurrentTime(selectedEffectType);
         });
         lightMenuPopup.add(chasePattern);
 
         JMenuItem gridPattern = new JMenuItem("Create Grid Effect");
         gridPattern.addActionListener(e -> {
             selectedEffectType = EffectList.GRID;
-            updateEffectViewPanel(selectedEffectType);
+            createEffectAtCurrentTime(selectedEffectType);
         });
         lightMenuPopup.add(gridPattern);
 
         JMenuItem randomNoisePattern = new JMenuItem("Create Random Noise Effect");
         randomNoisePattern.addActionListener(e -> {
            selectedEffectType = EffectList.NOISE;
-           updateEffectViewPanel(selectedEffectType);
+           createEffectAtCurrentTime(selectedEffectType);
         });
         lightMenuPopup.add(randomNoisePattern);
 
-
         // Button that triggers the popup menu
-        JButton lightButton = new JButton("Effect Options");
+        JButton lightButton = new JButton("Create Effect");
         lightButton.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
                 int x = 0;
@@ -1862,7 +1885,62 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                 lightMenuPopup.show(lightButton, x, y);
             }
         });
-        return lightButton;
+
+        // Create RF Trigger button placed next to the effect options
+        JButton createRFBtn = new JButton("Create RF Trigger");
+        createRFBtn.addActionListener(e -> {
+            if (timeManager == null || footballFieldPanel == null || effectManager == null) return;
+            int currentCount = footballFieldPanel.getCurrentCount();
+            Long ts = timeManager.getCount2MSec().get(currentCount);
+            long timestamp = ts == null ? 0L : ts;
+            RFTrigger rf = new RFTrigger(currentCount, timestamp, "", "", "");
+            // delegate to the existing handler which will validate and add trigger
+            onCreateRFTrigger(rf);
+        });
+
+        // Checkbox to toggle showing all effects vs current (old behavior)
+        JCheckBox showAllChk = new JCheckBox("Show All Effects", showAllEffects);
+        showAllChk.addActionListener(e -> {
+            showAllEffects = showAllChk.isSelected();
+            // If a timeline exists, update it (we recreate timeline in updateTimelinePanel)
+            if (timelineGUI != null) {
+                timelineGUI.setShowAllEffects(showAllEffects);
+                updateTimelinePanel();
+            }
+        });
+
+        // Pack into a small panel
+        JPanel pnl = new JPanel(new FlowLayout(FlowLayout.LEFT, 4, 0));
+        pnl.add(lightButton);
+        pnl.add(createRFBtn);
+        pnl.add(showAllChk);
+        return pnl;
+    }
+
+    /**
+     * Helper method to create a 1-second effect of the given type at the current timeline position
+     */
+    private void createEffectAtCurrentTime(EffectList effectType) {
+        if (footballFieldPanel == null || timeManager == null || effectManager == null) {
+            return;
+        }
+        
+        long currentMS = footballFieldPanel.currentMS;
+        long endMS = currentMS + 1000; // 1 second duration
+        
+        // Create a basic effect with default colors
+        GeneratedEffect newEffect = GeneratedEffectAdapter.createDefaultEffect(
+                effectType,
+                currentMS,
+                endMS,
+                effectManager.nextId()
+        );
+        
+        // Convert GeneratedEffect to Effect before passing to onCreateEffect
+        Effect effectToCreate = newEffect.generateEffectObj();
+        
+        // Add the effect through the normal effect creation flow
+        onCreateEffect(effectToCreate);
     }
 
     /**
@@ -1906,6 +1984,15 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         }
         
         return result;
+    }
+
+    public SerialTransmitter comPortPromptFlow() {
+        // just return current transmitter from hardware status indicator manually to bypass type check
+        if (hardwareStatusIndicator == null) {
+            // Fallback to old behavior if indicator not initialized
+            return oldComPortPrompt("Transmitter");
+        }
+        return hardwareStatusIndicator.getTransmitterBypass();
     }
     
     /**
@@ -2277,9 +2364,9 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             webServerFrame.setVisible(true);
             lightBoardMode = lightBoard;
 
-            SerialTransmitter serialTransmitter1 = new SerialTransmitter(); // idk why but serialTransmitter was always null...so I just made a new one.
+            SerialTransmitter serialTransmitter = comPortPrompt("Transmitter");
             System.out.println("Starting Programming Mode");
-            serialTransmitter1.enterProgMode(ssid, password, port, currentID, token, verificationColor, lightBoardMode);
+            serialTransmitter.enterProgMode(ssid, password, port, currentID, token, verificationColor, lightBoardMode);
 
             noRequestTimer.start();
         } catch (IOException ioe) {
@@ -2531,7 +2618,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                     setupEffectView(pf.ids);
                     rebuildPageTabCounts();
                     updateTimelinePanel();
-                    updateEffectViewPanel(selectedEffectType);
+                    updateEffectViewPanel(selectedEffectType, null);
                 }
             }
             else if (opf != null){
@@ -2598,7 +2685,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                     setupEffectView(opf.ids);
                     rebuildPageTabCounts();
                     updateTimelinePanel();
-                    updateEffectViewPanel(selectedEffectType);
+                    updateEffectViewPanel(selectedEffectType, null);
                 }
             }
             else {
@@ -2607,6 +2694,16 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             }
             currentMovement = 1;
             scrubBarGUI.setCurrAudioPlayer(this.currentAudioPlayer);
+            // Record recent project and switch main view to the football field
+            try {
+                    if (emrickPath != null) addToRecentProjects(emrickPath);
+            } catch (Exception ex) {
+                ex.printStackTrace();
+            }
+                if (mainContentPanel != null) {
+                    // keep scrub/play controls visible
+                    replaceMainView(footballField, scrubBarPanel);
+                }
 
         } catch (JsonIOException | JsonSyntaxException | IOException e) {
             writeSysMsg("Failed to open to `" + path + "`.");
@@ -3033,7 +3130,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             setupEffectView(ids);
             rebuildPageTabCounts();
             updateTimelinePanel();
-            updateEffectViewPanel(selectedEffectType);
+            updateEffectViewPanel(selectedEffectType, null);
             currentMovement = 1;
 
         } catch (JsonIOException | JsonSyntaxException | IOException e) {
@@ -3102,7 +3199,6 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         footballFieldPanel.selectedLEDStrips.clear();
         footballFieldPanel.selectedLEDStrips.addAll(Arrays.asList(ledStrips));
         footballFieldPanel.repaint();
-        updateTimelinePanel();
     }
 
     @Override
@@ -3122,7 +3218,6 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             footballFieldPanel.selectedLEDStrips.addAll(Arrays.asList(ledStrips));
         }
         footballFieldPanel.repaint();
-        updateTimelinePanel();
     }
 
     @Override
@@ -3137,7 +3232,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
 
     @Override
     public void onUpdateGroup() {
-        updateEffectViewPanel(selectedEffectType);
+        updateEffectViewPanel(selectedEffectType, null);
     }
 
     /**
@@ -3475,15 +3570,14 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         footballFieldPanel.setCount2RFTrigger(count2RFTrigger);
         footballFieldBackground.justResized = true;
         footballFieldBackground.repaint();
-        updateEffectViewPanel(selectedEffectType);
+        updateEffectViewPanel(selectedEffectType, null);
         updateTimelinePanel();
         rebuildPageTabCounts();
 
 
         ledConfigurationGUI = new LEDConfigurationGUI(footballFieldPanel.drill, this);
 
-        mainContentPanel.remove(footballField);
-        mainContentPanel.add(ledConfigurationGUI);
+        replaceMainView(ledConfigurationGUI, scrubBarPanel);
         mainContentPanel.revalidate();
         mainContentPanel.repaint();
     }
@@ -3522,10 +3616,14 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         this.startDelay = startDelay;
 
         scrubBarGUI.setTimeSync(timeSync);
-        count2RFTrigger = new HashMap<>();
-        footballFieldPanel.setCount2RFTrigger(count2RFTrigger);
+            count2RFTrigger = new HashMap<>();
+            footballFieldPanel.setCount2RFTrigger(count2RFTrigger);
 
         setupEffectView(null);
+        rebuildPageTabCounts();
+        updateTimelinePanel();
+        effectGUI = new EffectGUI(EffectGUI.selectEffectMsg);
+        
         ledStripViewGUI = new LEDStripViewGUI(new ArrayList<>(), effectManager);
     }
 
@@ -3550,8 +3648,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         }
         this.footballFieldPanel.setEffectManager(this.effectManager);
 
-        updateEffectViewPanel(selectedEffectType);
-        updateRFTriggerButton();
+        updateEffectViewPanel(selectedEffectType, null);
     }
 
     ////////////////////////// Scrub Bar Listeners //////////////////////////
@@ -3578,11 +3675,6 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         playbackTimer = new java.util.Timer();
         playbackTimer.scheduleAtFixedRate(new PlaybackTask(), 0, period);
 
-        effectViewPanel.remove(rfTriggerGUI.getCreateDeletePnl());
-
-        effectViewPanel.revalidate();
-        effectViewPanel.repaint();
-
         return true;
     }
 
@@ -3599,8 +3691,6 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         playbackTimer.cancel();
         playbackTimer.purge();
         playbackTimer = null;
-        updateRFTriggerButton();
-        updateEffectViewPanel(selectedEffectType);
         return true;
     }
 
@@ -3608,12 +3698,9 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
     public long onScrub() {
         // If time cursor is at start of first set, arm the start-delay
         useStartDelay = scrubBarGUI.isAtFirstSet() && scrubBarGUI.isAtStartOfSet();
-        if (this.footballFieldPanel.getNumSelectedPerformers() > 0) {
-            updateEffectViewPanel(selectedEffectType);
-        }
         // If triggers are ready to be used, refresh on scroll
         if (count2RFTrigger != null) {
-            updateRFTriggerButton();
+            //updateRFTriggerButton(); this one might need to be re-added later
         }
         if (scrubBarGUI.isPlaying() && canSeekAudio) {
             System.out.println("Called onScrub() -> Seeking audio...");
@@ -3659,31 +3746,6 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
 
     }
 
-    /**
-     * Create a create/delete button depending on whether there is RF trigger at current count.
-     */
-    private void updateRFTriggerButton() {
-        //don't update if playing
-        if (isPlaying()) {
-            return;
-        }
-
-        if (rfTriggerGUI != null) {
-            effectViewPanel.remove(rfTriggerGUI.getCreateDeletePnl());
-            effectViewPanel.revalidate();
-            effectViewPanel.repaint();
-        }
-        int currentCount = footballFieldPanel.getCurrentCount();
-        RFTrigger currentRFTrigger = count2RFTrigger.get(currentCount);
-        if (timeManager.getCount2MSec().get(currentCount) != null) {
-            rfTriggerGUI = new RFTriggerGUI(
-                    currentCount, timeManager.getCount2MSec().get(currentCount), currentRFTrigger, this);
-            effectViewPanel.add(rfTriggerGUI.getCreateDeletePnl(), BorderLayout.SOUTH);
-        }
-
-        effectViewPanel.revalidate();
-        effectViewPanel.repaint();
-    }
 
     /**
      * Begin playing audio in sync with the drill playback
@@ -3763,20 +3825,28 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             this.footballFieldPanel.repaint();
         }
         if (successful) {
-            updateEffectViewPanel(selectedEffectType);
+            updateEffectViewPanel(effect.getEffectType(), effect);
             updateTimelinePanel();
         }
     }
 
     @Override
     public void onUpdateEffect(Effect oldEffect, Effect newEffect) {
+        // if valid for all selected strips, update
+        for (LEDStrip l : effectManager.getLEDStripsWithEffect(oldEffect)) {
+            if (!effectManager.isValid(newEffect, l, oldEffect)) {
+                effectManager.showAddEffectErrorDialog(l);
+                updateTimelinePanel();
+                return;
+            }
+        }
+        
         this.effectManager.replaceEffectForSelectedLEDStrips(oldEffect, newEffect);
         if (ledStripViewGUI.isShowing()) {
             ledStripViewGUI.repaint();
         } else {
             this.footballFieldPanel.repaint();
         }
-        updateEffectViewPanel(selectedEffectType);
         updateTimelinePanel();
     }
 
@@ -3788,8 +3858,9 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         } else {
             this.footballFieldPanel.repaint();
         }
-        updateEffectViewPanel(selectedEffectType);
         updateTimelinePanel();
+        effectGUI = new EffectGUI(EffectGUI.selectEffectMsg);
+        replaceEffectView(effectGUI.getEffectPanel(), null);
     }
 
     @Override
@@ -3848,14 +3919,12 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                     }
                 }
             }
-            updateEffectViewPanel(selectedEffectType);
             updateTimelinePanel();
         }
     }
 
     @Override
     public void onPerformerDeselect() {
-        updateEffectViewPanel(selectedEffectType);
         updateTimelinePanel();
     }
 
@@ -3875,7 +3944,6 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         }
         count2RFTrigger.put(footballFieldPanel.getCurrentCount(), rfTrigger);
         footballFieldPanel.setCount2RFTrigger(count2RFTrigger);
-        updateRFTriggerButton();
         updateTimelinePanel();
     }
 
@@ -3886,7 +3954,6 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         count2RFTrigger.remove(count);
         count2RFTrigger.put(count, rfTrigger);
         footballFieldPanel.setCount2RFTrigger(count2RFTrigger);
-        updateRFTriggerButton();
         updateTimelinePanel();
     }
 
@@ -3894,8 +3961,9 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
     public void onDeleteRFTrigger(int count) {
         count2RFTrigger.remove(count);
         footballFieldPanel.setCount2RFTrigger(count2RFTrigger);
-        updateRFTriggerButton();
         updateTimelinePanel();
+        effectGUI = new EffectGUI(EffectGUI.selectEffectMsg);
+        replaceEffectView(effectGUI.getEffectPanel(), null);
     }
 
     @Override
@@ -3903,6 +3971,13 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         // scrub to this rf trigger
         System.out.println("MediaEditorGUI: onPressRFTrigger() called with count: " + rfTrigger.getCount() + " and ms: " + rfTrigger.getTimestampMillis());
         scrubBarGUI.setScrub(rfTrigger.getCount());
+        // When an RF trigger is pressed, ensure the RF trigger create/delete panel is visible
+        // and hide effect/group panels so only one view is shown at a time.
+        int currentCount = footballFieldPanel.getCurrentCount();
+        RFTrigger currentRFTrigger = count2RFTrigger.get(currentCount);
+        rfTriggerGUI = new RFTriggerGUI(currentCount, timeManager.getCount2MSec().get(currentCount), currentRFTrigger, this);
+        // Show only RF trigger panel
+        replaceEffectView(rfTriggerGUI.getCreateDeletePnl(), null);
     }
 
     ////////////////////////// Effect Listeners //////////////////////////
@@ -3944,34 +4019,30 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             count = timeManager.MSec2Count(ms);
         }
         scrubBarGUI.setScrub(count);
+        
+        replaceEffectView(effectGUI.getEffectPanel(), null);
+        updateEffectViewPanel(effect.getEffectType(), effect);
     }
 
     /**
      * Update the effect panel to display the currently selected effect
      * @param effectType - The type of effect that is currently selected.
      */
-    private void updateEffectViewPanel(EffectList effectType) {
+    private void updateEffectViewPanel(EffectList effectType, Effect effect) {
 
         // No point in updating effect view if can't use effects
         if (effectManager == null) return;
 
-        // Remove existing effect data
-        if (groupsGUI.getSelectionPanel() != null) {
-            effectViewPanel.remove(groupsGUI.getSelectionPanel());
-            groupsGUI.setSelectionPanel(null);
-        } else {
-            effectViewPanel.remove(effectGUI.getEffectPanel());
-        }
-        effectViewPanel.revalidate();
-        effectViewPanel.repaint();
+        // Use atomic replace to ensure only one view is shown at a time
+        // We'll construct the new center component below, then call replaceEffectView(center, south)
+        // where south is used for RFTrigger create/delete panel (usually null for effect/group views)
 
         // Effects
         if (selectedEffectType != EffectList.SHOW_GROUPS) {
             if (footballFieldPanel.selectedLEDStrips.isEmpty()) {
                 currentEffect = null;
-                effectGUI = new EffectGUI(EffectGUI.noPerformerMsg);
-                effectViewPanel.add(effectGUI.getEffectPanel(), BorderLayout.CENTER);
-
+                effectGUI = new EffectGUI(EffectGUI.selectEffectMsg);
+                replaceEffectView(effectGUI.getEffectPanel(), null);
                 return;
             }
 
@@ -3988,8 +4059,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             }
             if (currentEffect == null) {
                 effectGUI = new EffectGUI(EffectGUI.noCommonEffectMsg);
-                effectViewPanel.add(effectGUI.getEffectPanel(), BorderLayout.CENTER);
-
+                replaceEffectView(effectGUI.getEffectPanel(), null);
                 return;
             } else if (currentEffect.getEffectType() != EffectList.HIDE_GROUPS) {
                 selectedEffectType = currentEffect.getEffectType();
@@ -4034,16 +4104,244 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                 }
             }
             effectGUI = new EffectGUI(currentEffect, currentMSec, this, selectedEffectType, false, -1);
-            // Add updated data for effect view
-            effectViewPanel.add(effectGUI.getEffectPanel(), BorderLayout.CENTER);
-            effectViewPanel.revalidate();
-            effectViewPanel.repaint();
+            // Atomically replace center (and clear south)
+            replaceEffectView(effectGUI.getEffectPanel(), null);
         } else {
             groupsGUI.initializeSelectionPanel();
             JPanel panel = groupsGUI.getSelectionPanel();
-            effectViewPanel.add(panel);
-            effectViewPanel.revalidate();
-            effectViewPanel.repaint();
+            replaceEffectView(panel, null);
+        }
+    }
+
+    /**
+     * Atomically replace the effect view center and south components so only the desired
+     * panels are visible. Pass null for either argument to omit that region.
+     */
+    private void replaceEffectView(JComponent center, JComponent south) {
+        // Preserve the NORTH component (effect options button panel) and only
+        // replace the CENTER and SOUTH regions so the options stay at the top.
+        LayoutManager lm = effectViewPanel.getLayout();
+        if (lm instanceof BorderLayout) {
+            BorderLayout bl = (BorderLayout) lm;
+            Component oldCenter = bl.getLayoutComponent(effectViewPanel, BorderLayout.CENTER);
+            Component oldSouth = bl.getLayoutComponent(effectViewPanel, BorderLayout.SOUTH);
+            if (oldCenter != null) effectViewPanel.remove(oldCenter);
+            if (oldSouth != null) effectViewPanel.remove(oldSouth);
+
+            if (center != null) {
+                effectViewPanel.add(center, BorderLayout.CENTER);
+            }
+            if (south != null) {
+                effectViewPanel.add(south, BorderLayout.SOUTH);
+            }
+        } else {
+            // Fallback: replace all if layout isn't BorderLayout
+            effectViewPanel.removeAll();
+            if (center != null) effectViewPanel.add(center, BorderLayout.CENTER);
+            if (south != null) effectViewPanel.add(south, BorderLayout.SOUTH);
+        }
+        effectViewPanel.revalidate();
+        effectViewPanel.repaint();
+    }
+
+    /**
+     * Atomically replace the main content center and south components so only the desired
+     * panels are visible. Pass null for either argument to omit that region.
+     */
+    private void replaceMainView(JComponent center, JComponent south) {
+        if (mainContentPanel == null) return;
+        LayoutManager lm = mainContentPanel.getLayout();
+        if (lm instanceof BorderLayout) {
+            BorderLayout bl = (BorderLayout) lm;
+            Component oldCenter = bl.getLayoutComponent(mainContentPanel, BorderLayout.CENTER);
+            Component oldSouth = bl.getLayoutComponent(mainContentPanel, BorderLayout.SOUTH);
+            if (oldCenter != null) mainContentPanel.remove(oldCenter);
+            if (oldSouth != null) mainContentPanel.remove(oldSouth);
+
+            if (center != null) {
+                mainContentPanel.add(center, BorderLayout.CENTER);
+            }
+            if (south != null) {
+                mainContentPanel.add(south, BorderLayout.SOUTH);
+            }
+        } else {
+            // Fallback: replace all if layout isn't BorderLayout
+            mainContentPanel.removeAll();
+            if (center != null) mainContentPanel.add(center, BorderLayout.CENTER);
+            if (south != null) mainContentPanel.add(south, BorderLayout.SOUTH);
+        }
+        mainContentPanel.revalidate();
+        mainContentPanel.repaint();
+    }
+
+    /**
+     * Build the welcome panel displayed when no project is loaded.
+     * Contains a clickable/open control and a list of recently opened projects.
+     */
+    private JPanel buildWelcomePanel(MediaEditorGUI mediaEditorGUI) {
+        JPanel pnl = new JPanel(new BorderLayout(10,10));
+        pnl.setBorder(BorderFactory.createEmptyBorder(16,16,16,16));
+
+        Color accent = UIManager.getColor("Component.focusColor");
+        if (accent == null) accent = UIManager.getColor("TextPane.selectionBackground");
+        if (accent == null) accent = Color.BLUE;
+
+        // Top area: big open project link — use plain JLabel with bold+underline via font attrs to avoid HTML wrapping
+        JLabel openLabel = new JLabel("\uD83D\uDCC4  Open a Project");
+        openLabel.setForeground(accent);
+        Font of = openLabel.getFont().deriveFont(Font.BOLD, 16f);
+        @SuppressWarnings("unchecked") java.util.Map<TextAttribute,Object> oattrs = new java.util.HashMap<>(of.getAttributes()); oattrs.put(TextAttribute.UNDERLINE, TextAttribute.UNDERLINE_ON);
+        openLabel.setFont(of.deriveFont(oattrs));
+        openLabel.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        openLabel.addMouseListener(new MouseAdapter(){ public void mouseClicked(MouseEvent e){ openProjectDialog(); }});
+
+        JLabel newLabel = new JLabel("\uD83D\uDCC4  Create New Project");
+        newLabel.setForeground(accent);
+        Font nf = newLabel.getFont().deriveFont(Font.BOLD, 16f);
+        @SuppressWarnings("unchecked") java.util.Map<TextAttribute,Object> nattrs = new java.util.HashMap<>(nf.getAttributes()); nattrs.put(TextAttribute.UNDERLINE, TextAttribute.UNDERLINE_ON);
+        newLabel.setFont(nf.deriveFont(nattrs));
+        newLabel.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        newLabel.addMouseListener(new MouseAdapter(){ public void mouseClicked(MouseEvent e){ new SelectFileGUI(frame, mediaEditorGUI); }});
+
+        // top making a list down
+        JPanel top = new JPanel();
+        top.setLayout(new BoxLayout(top, BoxLayout.Y_AXIS));
+        top.add(newLabel);
+        top.add(Box.createVerticalStrut(8));
+        top.add(openLabel);
+        
+        pnl.add(top, BorderLayout.NORTH);
+
+        // Center: recently opened list
+        JPanel recentPnl = new JPanel();
+        recentPnl.setLayout(new BoxLayout(recentPnl, BoxLayout.Y_AXIS));
+        recentPnl.setBorder(BorderFactory.createTitledBorder("Recently Opened"));
+
+        java.util.List<File> recent = loadRecentProjects();
+        JLabel status = new JLabel("Found " + recent.size() + " recent entries (" + userHome.toString() + "\\recent_projects.txt)");
+        status.setFont(status.getFont().deriveFont(Font.PLAIN, 10f));
+        recentPnl.add(status);
+
+        if (recent.isEmpty()) {
+            JLabel none = new JLabel("No recent projects");
+            //none.setFont(none.getFont().deriveFont(Font.PLAIN, 12f));
+            recentPnl.add(Box.createVerticalStrut(6));
+            recentPnl.add(none);
+        } else {
+            recentPnl.add(Box.createVerticalStrut(6));
+            for (File f : recent) {
+                String name = f.getName();
+                String path = f.getAbsolutePath();
+
+                JPanel row = new JPanel(new BorderLayout());
+                row.setOpaque(false);
+
+                // Plain label (compact): bold+underline via TextAttribute to avoid HTML wrapping
+                JLabel nameLbl = new JLabel("\uD83D\uDCCE  " + name);
+                nameLbl.setForeground(accent);
+                Font ff = nameLbl.getFont().deriveFont(Font.BOLD);
+                @SuppressWarnings("unchecked") java.util.Map<TextAttribute,Object> fattrs = new java.util.HashMap<>(ff.getAttributes()); fattrs.put(TextAttribute.UNDERLINE, TextAttribute.UNDERLINE_ON);
+                nameLbl.setFont(ff.deriveFont(fattrs));
+                nameLbl.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+                nameLbl.addMouseListener(new MouseAdapter(){ public void mouseClicked(MouseEvent e){
+                    if (f.exists()){ 
+                        loadProject(f); replaceMainView(footballField, scrubBarPanel);
+                    } else {
+                        JOptionPane.showMessageDialog(frame, "File not found: " + f.getAbsolutePath(), "Open Project", JOptionPane.ERROR_MESSAGE);
+                    } 
+                }});
+
+                JLabel pathLbl = new JLabel(path);
+                pathLbl.setForeground(new Color(80,80,80));
+
+                JPanel text = new JPanel();
+                text.setLayout(new BoxLayout(text, BoxLayout.Y_AXIS));
+                text.setOpaque(false);
+                text.add(nameLbl);
+                text.add(pathLbl);
+
+                // Force left alignment and limit the maximum height so BoxLayout doesn't stretch rows too much.
+                row.add(text, BorderLayout.WEST);
+                row.setAlignmentX(Component.LEFT_ALIGNMENT);
+                text.setAlignmentX(Component.LEFT_ALIGNMENT);
+                Dimension pref = new Dimension(Integer.MAX_VALUE,
+                        nameLbl.getPreferredSize().height + pathLbl.getPreferredSize().height + 8);
+                row.setMaximumSize(pref);
+
+                recentPnl.add(row);
+                recentPnl.add(Box.createVerticalStrut(4));
+            }
+        }
+
+        JScrollPane scroll = new JScrollPane(recentPnl);
+        scroll.setBorder(null);
+        pnl.add(scroll, BorderLayout.CENTER);
+
+        return pnl;
+    }
+
+    private static String toHex(Color c) {
+        if (c == null) return "#0000FF";
+        return String.format("#%02x%02x%02x", c.getRed(), c.getGreen(), c.getBlue());
+    }
+
+    /**
+     * Load recent projects from user folder. Only returns existing files.
+     */
+    private java.util.List<File> loadRecentProjects() {
+        java.util.List<File> list = new ArrayList<>();
+        try {
+            File dir = userHome.toFile();
+            if (!dir.exists()) dir.mkdirs();
+            File recentFile = new File(dir, "recent_projects.txt");
+            if (!recentFile.exists()) return list;
+            try (BufferedReader br = new BufferedReader(new FileReader(recentFile))) {
+                String line;
+                while ((line = br.readLine()) != null) {
+                    if (line.trim().isEmpty()) continue;
+                    File f = new File(line.trim());
+                    if (f.exists()) list.add(f);
+                }
+            }
+        } catch (Exception ex) {
+            // ignore, return empty
+            ex.printStackTrace();
+        }
+        return list;
+    }
+
+    private void saveRecentProjects(java.util.List<File> list) {
+        try {
+            File dir = userHome.toFile();
+            if (!dir.exists()) dir.mkdirs();
+            File recentFile = new File(dir, "recent_projects.txt");
+            try (BufferedWriter bw = new BufferedWriter(new FileWriter(recentFile, false))) {
+                int count = 0;
+                for (File f : list) {
+                    if (f != null && f.exists()) {
+                        bw.write(f.getAbsolutePath());
+                        bw.newLine();
+                        count++;
+                        if (count >= 5) break;
+                    }
+                }
+            }
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+    }
+
+    private void addToRecentProjects(File f) {
+        if (f == null) return;
+        try {
+            java.util.List<File> list = loadRecentProjects();
+            // remove same path if exists
+            list.removeIf(x -> x.getAbsolutePath().equals(f.getAbsolutePath()));
+            list.add(0, f);
+            // trim to 5 handled in save
+            saveRecentProjects(list);
+        } catch (Exception ex) {
+            ex.printStackTrace();
         }
     }
 
@@ -4065,18 +4363,41 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         }
 
 
-        // Get effects of selected performers, if applicable, else will be null
+        // Get effects to display in the timeline. If showAllEffects is set, show every effect in project,
+        // otherwise show only effects for the currently selected performers.
         HashSet<Effect> effectsSet = new HashSet<>();
-        for (LEDStrip l : footballFieldPanel.selectedLEDStrips) {
-            for (Effect e : l.getEffects()) {
-                effectsSet.add(e.getGeneratedEffect().generateEffectObj());
+        if (showAllEffects) {
+            for (LEDStrip l : footballFieldPanel.drill.ledStrips) {
+                for (Effect e : l.getEffects()) {
+                    if (e.getGeneratedEffect() != null) {
+                        effectsSet.add(e.getGeneratedEffect().generateEffectObj());
+                    } else {
+                        effectsSet.add(e);
+                    }
+                }
+            }
+        } else {
+            for (LEDStrip l : footballFieldPanel.selectedLEDStrips) {
+                for (Effect e : l.getEffects()) {
+                    effectsSet.add(e.getGeneratedEffect().generateEffectObj());
+                }
             }
         }
         ArrayList<Effect> effectsList = new ArrayList<>(effectsSet);
-        timelineGUI = new TimelineGUI(effectsList, count2RFTrigger, timeManager, scrubBarGUI.getLastCount());
-        timelineGUI.setTimelineListener(this);
-
-        timelinePanel.add(timelineGUI.getTimelineScrollPane());
+        if (timelineGUI == null) {
+            timelineGUI = new TimelineGUI(effectsList, count2RFTrigger, timeManager, scrubBarGUI.getLastCount());
+            timelineGUI.setTimelineListener(this);
+            timelineGUI.setShowAllEffects(showAllEffects);
+            timelinePanel.add(timelineGUI.getTimelineScrollPane());
+        } else {
+            // Reuse existing timeline GUI so we don't rebuild UI state on every performer selection change
+            timelineGUI.setShowAllEffects(showAllEffects);
+            timelineGUI.updateData(effectsList, count2RFTrigger, scrubBarGUI.getLastCount());
+            // If the scrollpane isn't already in the panel (first run), add it
+            if (Arrays.stream(timelinePanel.getComponents()).noneMatch(c -> c == timelineGUI.getTimelineScrollPane())) {
+                timelinePanel.add(timelineGUI.getTimelineScrollPane());
+            }
+        }
         timelinePanel.revalidate();
         timelinePanel.repaint();
     }
@@ -4337,7 +4658,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
 
     @Override
     public void onRFSignal(int i) {
-        SerialTransmitter st = comPortPrompt("Transmitter");
+        SerialTransmitter st = comPortPromptFlow();
 
         if (st != null) {
             st.writeSet(i, isLightBoardMode);
@@ -4373,9 +4694,9 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             }
         }
         if (!allReceived) {
-            if (lastRun + 2000 < System.currentTimeMillis()) {
-                SerialTransmitter serialTransmitter1 = new SerialTransmitter();
-                serialTransmitter1.enterProgMode(ssid, password, port, currentID, token, verificationColor, lightBoardMode);
+            if (lastRun + 20000 < System.currentTimeMillis()) {
+                SerialTransmitter serialTransmitter = comPortPrompt("Transmitter");
+                serialTransmitter.enterProgMode(ssid, password, port, currentID, token, verificationColor, lightBoardMode);
                 lastRun = System.currentTimeMillis();
             }
             noRequestTimer.setDelay(10000);
@@ -4393,8 +4714,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
 
     @Override
     public void onExitConfig() {
-        mainContentPanel.remove(ledConfigurationGUI);
-        mainContentPanel.add(footballField);
+        replaceMainView(footballField, scrubBarPanel);
         mainContentPanel.revalidate();
         mainContentPanel.repaint();
     }
@@ -5098,7 +5418,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
 
                     l.sortEffects();
                     if (l.getEffects().size() > 0) {
-                        out += "Pkt_count: " + l.getEffects().size() + ", ";
+                        out += "Pkt_count: " + l.getEffects().size() + "\n";
                         for (int i = 0; i < l.getEffects().size(); i++) {
                             Effect e = l.getEffects().get(i);
                             int flags = 0;

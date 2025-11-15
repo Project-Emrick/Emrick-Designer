@@ -592,6 +592,24 @@ public class HardwareStatusIndicator extends JPanel {
         }
     }
 
+    public SerialTransmitter getTransmitterBypass() {
+        if (selectedTransmitter != null) {
+            return selectedTransmitter;
+        }
+        if (!availableTransmitters.isEmpty()) {
+            return availableTransmitters.values().iterator().next();
+        }
+        scanForHardwareBlocking();
+        if (!availableTransmitters.isEmpty()) {
+            return availableTransmitters.values().iterator().next();
+        }
+        JOptionPane.showMessageDialog(this,
+            "No transmitters detected. Please connect an Emrick transmitter.",
+            "No Transmitters",
+            JOptionPane.WARNING_MESSAGE);
+        return null;
+    }
+
     /**
      * Check if a transmitter is available
      * @return true if at least one transmitter is connected
