@@ -95,33 +95,98 @@ public class DrillParser {
      * @return          newly created Performer object
      */
     public static Performer parseDrill(String text, Drill drill, int id) {
-        String symbol = text.split("Symbol: ")[1].split(" ")[0];
-        int label;
-        try {
-            label = Integer.parseInt(text.split("Label: ")[1].split(" ")[0]);
-        } catch (NumberFormatException nfe) {
-            String tmpstr = text.split("Label: ")[1].split(" ")[0].substring(1).replace(".", "");
-            label = Integer.parseInt(tmpstr);
+        System.out.println("\n====================");
+        System.out.println("DEBUG: Starting parseDrill for performer #" + id);
+        System.out.println("Raw text block:\n" + text);
+        System.out.println("====================\n");
+
+        // ----- SYMBOL EXTRACTION -----
+        System.out.println("[D1] Extracting symbol...");
+        String[] symbolSplit = text.split("Symbol: ");
+        if (symbolSplit.length < 2) {
+            System.out.println("[ERROR] Could not find 'Symbol: ' in text!");
+            return null;
         }
+        String symbolSection = symbolSplit[1];
+        System.out.println("[D2] symbolSection = " + symbolSection);
+
+        String symbol = symbolSection.split(" ")[0];
+        System.out.println("[D3] Parsed symbol = " + symbol);
+
+        // ----- LABEL EXTRACTION -----
+        System.out.println("[D4] Extracting label...");
+        int label;
+        String labelRaw = "";
+        try {
+            labelRaw = text.split("Label: ")[1].split(" ")[0];
+            System.out.println("[D5] Raw label token = '" + labelRaw + "'");
+            label = Integer.parseInt(labelRaw);
+            System.out.println("[D6] Label parsed normally = " + label);
+        } catch (NumberFormatException nfe) {
+            System.out.println("[WARN] Initial label parse failed — attempting fallback parsing");
+            try {
+                labelRaw = labelRaw.replace(".", "");
+                System.out.println("[D7] Cleaned fallback label token = '" + labelRaw + "'");
+
+                // Only substring if there’s more than 1 char
+                if (labelRaw.length() > 1 && !Character.isDigit(labelRaw.charAt(0))) {
+                    labelRaw = labelRaw.substring(1);
+                    System.out.println("[D8] Removed leading non-digit, now: '" + labelRaw + "'");
+                }
+
+                label = Integer.parseInt(labelRaw);
+                System.out.println("[D9] Final parsed fallback label value = " + label);
+            } catch (Exception ex) {
+                System.out.println("[ERROR] Unable to extract label — aborting performer.");
+                ex.printStackTrace();
+                return null;
+            }
+        }
+
         Performer performer = new Performer(symbol, label, id);
+        System.out.println("[D10] Created performer object: " + performer);
+
+        // ----- PARSE LINES -----
+        System.out.println("[D11] Splitting text into lines");
         String[] lines = text.split("\n");
-        for (int i = 1; i < lines.length-2; i++) {
+        System.out.println("[D12] Total lines found = " + lines.length);
+
+        for (int i = 1; i < lines.length - 2; i++) {
+            System.out.println("\n[D13] Processing line index " + i + ": " + lines[i]);
+
+            if (lines[i].trim().isEmpty()) {
+                System.out.println("[D14] Skipped empty line.");
+                continue;
+            }
+
             String set = "1-" + lines[i].split(" ")[0];
-            int duration;
+            System.out.println("[D15] Parsed set = " + set);
+
+            // Extract duration value
             String[] splitLine = lines[i].split(" ");
             int j = 1;
-            while (j < splitLine.length && splitLine[j].isEmpty()) {
-                j++;
-            }
-            duration = Integer.parseInt(splitLine[j]);
+            while (j < splitLine.length && splitLine[j].isEmpty()) j++;
+
+            System.out.println("[D16] Duration token = '" + splitLine[j] + "'");
+            int duration = Integer.parseInt(splitLine[j]);
+
+            // Get coordinates
+            System.out.println("[D17] Extracting X/Y coordinates...");
             double x = getX(lines[i]);
             double y = getY(lines[i]);
+            System.out.println("[D18] Coordinates = (" + x + ", " + y + ")");
+
             Coordinate c = new Coordinate(x, y, set, duration, symbol + label);
+            System.out.println("[D19] Created coordinate object: " + c);
+
             drill.addSet(c);
             performer.addSet(c);
         }
+
+        System.out.println("[D20] Finished parseDrill for performer " + symbol + label);
         return performer;
     }
+
 
     /**
      * Takes in a line of drill data and returns the specified
