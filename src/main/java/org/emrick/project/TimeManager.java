@@ -134,15 +134,19 @@ public class TimeManager {
         return count2MSec;
     }
 
-    /* */
-    public int getCount2MSecPrecise(double count) {
+    /**
+     * Converts a precise count (with fractional part) to milliseconds using interpolation
+     */
+    public long getCount2MSecPrecise(double count) {
         int baseCount = (int) Math.floor(count);
         if (baseCount < 0) return 0;
-        if (baseCount >= count2MSec.size() - 1) return count2MSec.size() - 1;
+        if (baseCount >= count2MSec.size() - 1) {
+            return count2MSec.get(count2MSec.size() - 1);
+        }
         long curMS = count2MSec.get(baseCount);
         long nextMS = count2MSec.get(baseCount + 1);
         double percentToNext = count - baseCount;
-        return (int) (curMS + percentToNext * (nextMS - curMS));
+        return (long) (curMS + percentToNext * (nextMS - curMS));
     }
 
     public Map<String, Integer> getSet2Count() {
