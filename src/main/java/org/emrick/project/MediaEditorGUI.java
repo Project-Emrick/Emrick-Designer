@@ -3688,9 +3688,11 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         if (audioPlayers != null) {
             audioPlayers.get(currentMovement - 1).pauseAudio();
         }
-        playbackTimer.cancel();
-        playbackTimer.purge();
-        playbackTimer = null;
+        if (playbackTimer != null) {
+            playbackTimer.cancel();
+            playbackTimer.purge();
+            playbackTimer = null;
+        }
         return true;
     }
 
@@ -3712,13 +3714,16 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         return 0;
     }
 
+    /////////////////////// SCRUBBAR LISTENERS //////////////////////////
     @Override
     public void onTimeChange(long time) {
         footballFieldPanel.currentMS = time;
         ledStripViewGUI.setCurrentMS(time);
-
-        // sync timeline with scrub bar
-        timelineGUI.scrubToMS(scrubBarGUI.getTime() * 1000);
+        if (playbackTimer != null) { // this if for timeline when playing, ever so slightly off
+            timelineGUI.scrubToMS(scrubBarGUI.getTime() * 1000);
+        } else { // accurate
+            timelineGUI.scrubToCount(footballFieldPanel.getCurrentCount());
+        }
     }
 
     @Override
@@ -5545,7 +5550,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                     scrubBarGUI.setIsPlayingPlay();
                     canSeekAudio = true;
                     return;
-                }
+                }  
             }
             canSeekAudio = true;
         }
