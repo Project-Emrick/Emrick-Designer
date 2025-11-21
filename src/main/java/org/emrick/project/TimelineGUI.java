@@ -39,6 +39,7 @@ public class TimelineGUI {
     private final ArrayList<RFTrigger> triggers;
     private JScrollPane timelineScrollPane;
     private JPanel timelinePanel;
+    private boolean showAllEffects = true;
     
     // Button Groups for selection
     private ButtonGroup effectsButtonGroup;
@@ -56,6 +57,7 @@ public class TimelineGUI {
     private static final int ROW_HEIGHT = 70;
     private static final int TRIGGER_ROW_HEIGHT = 60;
     private static final int PIXELS_PER_COUNT = 10; // Base scale: 10 pixels per count at zoom 1.0
+    private static final int MIN_WIDTH_PIXELS = 5; // Minimum effect width in pixels
     // Track the count position instead of time
     private final double totalDurationMSec; // Keeping for compatibility
     private static double curMS = 0;          // Keeping for compatibility
@@ -294,9 +296,9 @@ public class TimelineGUI {
         sortedEffects.sort(Comparator.comparingLong(Effect::getStartTimeMSec));
         
         for (Effect effect : sortedEffects) {
-            // Convert effect start time to count
-            double effectStartCount = timeManager.MSec2CountPrecise((long)effect.getStartTimeMSec());
-            double effectEndCount = timeManager.MSec2CountPrecise((long)(effect.getStartTimeMSec() + effect.getDuration().toMillis()));
+            // Convert effect start time to count using precise conversion
+            double effectStartCount = timeManager.MSec2CountPrecise(effect.getStartTimeMSec());
+            double effectEndCount = timeManager.MSec2CountPrecise(effect.getStartTimeMSec() + effect.getDuration().toMillis());
 
             TimeRange effectRange = new TimeRange(
                 effectStartCount,
@@ -310,15 +312,14 @@ public class TimelineGUI {
             // Add to button group
             effectsButtonGroup.add(effectWidget);
             
-            // Position based on counts
-            int xPosition = (int)(effectStartCount * PIXELS_PER_COUNT * zoomFactor);
-            int width = (int)((effectEndCount - effectStartCount) * PIXELS_PER_COUNT * zoomFactor);
+            // Position based on precise count values
+            int xPosition = calculateXPositionFromCount(effectStartCount);
+            int width = Math.max(MIN_WIDTH_PIXELS, (int)((effectEndCount - effectStartCount) * PIXELS_PER_COUNT * zoomFactor));
             int yPosition = TRIGGER_ROW_HEIGHT + (rowIndex * ROW_HEIGHT);
             
-            // Ensure minimum width
-            width = Math.max(width, 10);
-            
             effectWidget.setBounds(xPosition, yPosition, width, ROW_HEIGHT - 2);
+            // Add drag/move support to effect widgets
+            addDragSupportToEffectWidget(effectWidget, effect);
             timelinePanel.add(effectWidget);
             
             // Make the effect widget transparent to middle mouse events (pass through to timeline panel)
@@ -330,6 +331,411 @@ public class TimelineGUI {
             effectRows.get(rowIndex).add(effectRange);
         }
         timelinePanel.setPreferredSize(new Dimension(calculateTimelineWidth(), TRIGGER_ROW_HEIGHT + effectRows.size() * ROW_HEIGHT));
+    }
+
+    /**
+     * Update the timeline data in-place without recreating the entire GUI.
+     * Keeps the same scrollpane and other components so callers can reuse the TimelineGUI instance.
+     */
+    public void updateData(ArrayList<Effect> newEffects, HashMap<Integer, RFTrigger> count2RFTrigger, int newMaxCount) {
+        this.effects = newEffects == null ? new ArrayList<>() : newEffects;
+        this.triggers.clear();
+        if (count2RFTrigger != null) {
+            for (Map.Entry<Integer, RFTrigger> entry : count2RFTrigger.entrySet()) {
+                RFTrigger t = entry.getValue();
+                this.triggers.add(t);
+            }
+            this.triggers.sort(Comparator.comparingInt(RFTrigger::getCount));
+        }
+        this.maxCount = newMaxCount;
+        updateTimelineLayout();
+    }
+
+    private void addDragSupportToEffectWidget(JToggleButton effectWidget, Effect effect) {
+        final int EDGE_THRESHOLD = 6; // pixels
+        final int MIN_WIDTH_PIXELS = 5; // minimum effect width in pixels
+
+        MouseAdapter ma = new MouseAdapter() {
+            private boolean dragging = false;
+            private boolean resizingLeft = false;
+            private boolean resizingRight = false;
+            private int dragStartX;
+            private double origStartCount, origEndCount;
+            private Effect originalCopy;
+            private boolean ctrlPressed = false;
+
+            @Override
+            public void mouseMoved(java.awt.event.MouseEvent e) {
+                if (e.getX() <= EDGE_THRESHOLD || e.getX() >= effectWidget.getWidth() - EDGE_THRESHOLD) {
+                    effectWidget.setCursor(java.awt.Cursor.getPredefinedCursor(java.awt.Cursor.E_RESIZE_CURSOR));
+                } else {
+                    effectWidget.setCursor(java.awt.Cursor.getPredefinedCursor(java.awt.Cursor.HAND_CURSOR));
+                }
+            }
+
+            @Override
+            public void mousePressed(java.awt.event.MouseEvent e) {
+                // Only respond to left button drags
+                if (e.getButton() != java.awt.event.MouseEvent.BUTTON1) return;
+                dragging = true;
+                dragStartX = e.getXOnScreen();
+                ctrlPressed = e.isControlDown();
+                
+                // Store original positions in precise count values
+                origStartCount = timeManager.MSec2CountPrecise(effect.getStartTimeMSec());
+                origEndCount = timeManager.MSec2CountPrecise(effect.getStartTimeMSec() + effect.getDuration().toMillis());
+                originalCopy = effect.makeDeepCopy();
+
+                int localX = e.getX();
+                if (localX <= EDGE_THRESHOLD) {
+                    resizingLeft = true;
+                    resizingRight = false;
+                } else if (localX >= effectWidget.getWidth() - EDGE_THRESHOLD) {
+                    resizingRight = true;
+                    resizingLeft = false;
+                } else {
+                    resizingLeft = false;
+                    resizingRight = false;
+                }
+            }
+
+            @Override
+            public void mouseDragged(java.awt.event.MouseEvent e) {
+                if (!dragging) return;
+                
+                // Update ctrl state during drag
+                ctrlPressed = e.isControlDown();
+                
+                // Calculate delta in screen coordinates
+                int deltaPixels = e.getXOnScreen() - dragStartX;
+                
+                // Convert pixel delta to precise count delta
+                double deltaCount = deltaPixels / (PIXELS_PER_COUNT * zoomFactor);
+                
+                // Calculate new positions in precise count values
+                double newStartCount = origStartCount;
+                double newEndCount = origEndCount;
+                
+                if (resizingLeft) {
+                    // Only change start position, keep end position fixed
+                    newStartCount = origStartCount + deltaCount;
+                    newEndCount = origEndCount; // Keep original end position
+                    
+                    // Apply snapping if ctrl is not pressed
+                    if (!ctrlPressed) {
+                        newStartCount = snapToNearestReference(newStartCount);
+                    }
+                    
+                    // Ensure minimum duration (at least 0.1 counts)
+                    if (newEndCount - newStartCount < 0.1) {
+                        newStartCount = newEndCount - 0.1;
+                    }
+                    // Clamp start to valid range
+                    newStartCount = Math.max(0, Math.min(newStartCount, newEndCount - 0.1));
+                    
+                } else if (resizingRight) {
+                    // Only change end position, keep start position fixed
+                    newStartCount = origStartCount; // Keep original start position
+                    newEndCount = origEndCount + deltaCount;
+                    
+                    // Apply snapping if ctrl is not pressed
+                    if (!ctrlPressed) {
+                        newEndCount = snapToNearestReference(newEndCount);
+                    }
+                    
+                    // Ensure minimum duration (at least 0.1 counts)
+                    if (newEndCount - newStartCount < 0.1) {
+                        newEndCount = newStartCount + 0.1;
+                    }
+                    // Clamp end to valid range
+                    newEndCount = Math.max(newStartCount + 0.1, Math.min(newEndCount, maxCount));
+                    
+                } else {
+                    // Moving the entire effect - preserve duration
+                    double effectDuration = origEndCount - origStartCount;
+                    newStartCount = origStartCount + deltaCount;
+                    newEndCount = newStartCount + effectDuration;
+                    
+                    // Apply snapping if ctrl is not pressed - try both start and end positions
+                    if (!ctrlPressed) {
+                        double candidateStartCount = newStartCount;
+                        double candidateEndCount = newEndCount;
+                        
+                        // Try snapping the start position
+                        double snappedStart = snapToNearestReferenceForMove(candidateStartCount, false);
+                        double startSnapDistance = Math.abs(snappedStart - candidateStartCount);
+                        
+                        // Try snapping the end position  
+                        double snappedEnd = snapToNearestReferenceForMove(candidateEndCount, true);
+                        double endSnapDistance = Math.abs(snappedEnd - candidateEndCount);
+                        
+                        // Choose the snap that requires less movement, or start if equal
+                        if (endSnapDistance < startSnapDistance) {
+                            // Snap to end position
+                            newEndCount = snappedEnd;
+                            newStartCount = newEndCount - effectDuration;
+                        } else if (startSnapDistance <= 0.5) { // Only snap start if within threshold
+                            // Snap to start position
+                            newStartCount = snappedStart;
+                            newEndCount = newStartCount + effectDuration;
+                        }
+                    }
+                    
+                    // Clamp to valid range while preserving duration
+                    if (newStartCount < 0) {
+                        newStartCount = 0;
+                        newEndCount = effectDuration;
+                    } else if (newEndCount > maxCount) {
+                        newEndCount = maxCount;
+                        newStartCount = maxCount - effectDuration;
+                    }
+                }
+                
+                // Update widget position based on precise count values
+                int newX = (int)(newStartCount * PIXELS_PER_COUNT * zoomFactor);
+                int newWidth = Math.max(MIN_WIDTH_PIXELS, (int)((newEndCount - newStartCount) * PIXELS_PER_COUNT * zoomFactor));
+                
+                effectWidget.setBounds(newX, effectWidget.getY(), newWidth, effectWidget.getHeight());
+                timelinePanel.repaint();
+            }
+
+            @Override
+            public void mouseReleased(java.awt.event.MouseEvent e) {
+                if (!dragging) return;
+                dragging = false;
+                
+                // Calculate final positions using precise count conversion
+                double finalStartCount = effectWidget.getX() / (PIXELS_PER_COUNT * zoomFactor);
+                double finalEndCount = (effectWidget.getX() + effectWidget.getWidth()) / (PIXELS_PER_COUNT * zoomFactor);
+                
+                // Apply final snapping if ctrl was not pressed
+                if (!ctrlPressed) {
+                    if (resizingLeft) {
+                        finalStartCount = snapToNearestReference(finalStartCount);
+                    } else if (resizingRight) {
+                        finalEndCount = snapToNearestReference(finalEndCount);
+                    } else {
+                        // For moving, try snapping both start and end positions
+                        double duration = finalEndCount - finalStartCount;
+                        
+                        // Try snapping the start position
+                        double snappedStart = snapToNearestReferenceForMove(finalStartCount, false);
+                        double startSnapDistance = Math.abs(snappedStart - finalStartCount);
+                        
+                        // Try snapping the end position  
+                        double snappedEnd = snapToNearestReferenceForMove(finalEndCount, true);
+                        double endSnapDistance = Math.abs(snappedEnd - finalEndCount);
+                        
+                        // Choose the snap that requires less movement, or start if equal
+                        if (endSnapDistance < startSnapDistance) {
+                            // Snap to end position
+                            finalEndCount = snappedEnd;
+                            finalStartCount = finalEndCount - duration;
+                        } else if (startSnapDistance <= 0.5) { // Only snap start if within threshold
+                            // Snap to start position
+                            finalStartCount = snappedStart;
+                            finalEndCount = finalStartCount + duration;
+                        }
+                    }
+                }
+                
+                // Clamp to valid ranges
+                finalStartCount = Math.max(0, Math.min(finalStartCount, maxCount));
+                finalEndCount = Math.max(finalStartCount + 0.1, Math.min(finalEndCount, maxCount));
+
+                // Create updated effect
+                Effect updated = originalCopy.makeDeepCopy();
+                
+                // Handle different drag operations correctly
+                if (resizingLeft) {
+                    // Only change start time, keep original end time
+                    long newStartMS = convertCountToMS(finalStartCount);
+                    long originalEndMS = originalCopy.getStartTimeMSec() + originalCopy.getDuration().toMillis();
+                    
+                    // Ensure start time doesn't go past end time
+                    if (newStartMS >= originalEndMS) {
+                        newStartMS = originalEndMS - 100; // minimum 100ms duration
+                    }
+                    
+                    updated.setStartTimeMSec(newStartMS);
+                    long newDuration = originalEndMS - newStartMS;
+                    updated.setDuration(java.time.Duration.ofMillis(newDuration));
+                    
+                } else if (resizingRight) {
+                    // Only change end time (via duration), keep original start time
+                    long newEndMS = convertCountToMS(finalEndCount);
+                    long originalStartMS = originalCopy.getStartTimeMSec();
+                    
+                    // Ensure end time doesn't go before start time
+                    if (newEndMS <= originalStartMS) {
+                        newEndMS = originalStartMS + 100; // minimum 100ms duration
+                    }
+                    
+                    updated.setStartTimeMSec(originalStartMS); // Keep original start time
+                    long newDuration = newEndMS - originalStartMS;
+                    updated.setDuration(java.time.Duration.ofMillis(newDuration));
+                    
+                } else {
+                    // Moving entire effect - preserve duration, only change start time
+                    long newStartMS = convertCountToMS(finalStartCount);
+                    long originalDuration = originalCopy.getDuration().toMillis();
+                    
+                    updated.setStartTimeMSec(newStartMS);
+                    updated.setDuration(java.time.Duration.ofMillis(originalDuration));
+                }
+                
+                // Calculate end time based on start time and duration
+                updated.calculateEndTimeMSec();
+
+                // Notify global effect listener (MediaEditorGUI) to persist the change
+                if (Effect.effectListener != null) {
+                    // click the effect to select it and its associated strips
+                    effectWidget.doClick();
+                    updated.setId(effect.getId()); // ensure ID is set for lookup
+                    Effect.effectListener.onUpdateEffect(effect, updated);
+                }
+
+                // Reset flags
+                resizingLeft = false;
+                resizingRight = false;
+            }
+            
+            /**
+             * Snap a count position to the nearest reference point for move operations
+             * @param count The position to snap
+             * @param isEndPosition Whether this is an end position (affects offset application)
+             * @return The snapped position
+             */
+            private double snapToNearestReferenceForMove(double count, boolean isEndPosition) {
+                final double SNAP_THRESHOLD = 0.5; // Maximum distance for snapping (in counts)
+                final double END_OFFSET = 0.001; // Offset for end positions to avoid overlapping
+                
+                // First, check for nearby RF triggers
+                double nearestTriggerDistance = Double.MAX_VALUE;
+                double nearestTriggerCount = count;
+                
+                for (RFTrigger trigger : triggers) {
+                    double triggerPos = trigger.getCount();
+                    double distance = Math.abs(triggerPos - count);
+                    if (distance < nearestTriggerDistance && distance <= SNAP_THRESHOLD) {
+                        nearestTriggerDistance = distance;
+                        // If this is an end position, offset slightly before the trigger
+                        nearestTriggerCount = isEndPosition ? triggerPos - END_OFFSET : triggerPos;
+                    }
+                }
+                
+                // Also check for nearby effect start positions
+                for (Effect otherEffect : effects) {
+                    if (otherEffect == effect) continue; // Skip the effect we're currently dragging
+                    
+                    double effectStartCount = timeManager.MSec2CountPrecise(otherEffect.getStartTimeMSec());
+                    double distance = Math.abs(effectStartCount - count);
+                    if (distance < nearestTriggerDistance && distance <= SNAP_THRESHOLD) {
+                        nearestTriggerDistance = distance;
+                        // If this is an end position, offset slightly before the other effect
+                        nearestTriggerCount = isEndPosition ? effectStartCount - END_OFFSET : effectStartCount;
+                    }
+                }
+                
+                // Also check for nearby effect end positions
+                for (Effect otherEffect : effects) {
+                    if (otherEffect == effect) continue; // Skip the effect we're currently dragging
+                    
+                    double effectEndCount = timeManager.MSec2CountPrecise(otherEffect.getStartTimeMSec() + otherEffect.getDuration().toMillis());
+                    double distance = Math.abs(effectEndCount - count);
+                    if (distance < nearestTriggerDistance && distance <= SNAP_THRESHOLD) {
+                        nearestTriggerDistance = distance;
+                        // If this is an end position, offset slightly before the other effect end
+                        nearestTriggerCount = isEndPosition ? effectEndCount - END_OFFSET : effectEndCount + END_OFFSET;
+                    }
+                }
+                
+                // If we found a nearby trigger or effect, use it
+                if (nearestTriggerDistance <= SNAP_THRESHOLD) {
+                    return nearestTriggerCount;
+                }
+                
+                // Otherwise, snap to nearest integer count
+                double nearestIntegerCount = Math.round(count);
+                double distanceToInteger = Math.abs(nearestIntegerCount - count);
+                
+                if (distanceToInteger <= SNAP_THRESHOLD) {
+                    // Apply offset for end positions even when snapping to integer counts
+                    return isEndPosition ? nearestIntegerCount - END_OFFSET : nearestIntegerCount;
+                }
+                
+                // If nothing is close enough, return original position
+                return count;
+            }
+            
+            /**
+             * Snap a count position to the nearest reference point (integer count or RF trigger)
+             */
+            private double snapToNearestReference(double count) {
+                final double SNAP_THRESHOLD = 0.5; // Maximum distance for snapping (in counts)
+                final double END_OFFSET = 0.001; // Offset for end positions to avoid overlapping
+                
+                // First, check for nearby RF triggers
+                double nearestTriggerDistance = Double.MAX_VALUE;
+                double nearestTriggerCount = count;
+                
+                for (RFTrigger trigger : triggers) {
+                    double triggerPos = trigger.getCount();
+                    double distance = Math.abs(triggerPos - count);
+                    if (distance < nearestTriggerDistance && distance <= SNAP_THRESHOLD) {
+                        nearestTriggerDistance = distance;
+                        // If this is an end position (resizing right edge), offset slightly before the trigger
+                        nearestTriggerCount = resizingRight ? triggerPos - END_OFFSET : triggerPos;
+                    }
+                }
+                
+                // Also check for nearby effect start positions
+                for (Effect otherEffect : effects) {
+                    if (otherEffect == effect) continue; // Skip the effect we're currently dragging
+                    
+                    double effectStartCount = timeManager.MSec2CountPrecise(otherEffect.getStartTimeMSec());
+                    double distance = Math.abs(effectStartCount - count);
+                    if (distance < nearestTriggerDistance && distance <= SNAP_THRESHOLD) {
+                        nearestTriggerDistance = distance;
+                        // If this is an end position (resizing right edge), offset slightly before the other effect
+                        nearestTriggerCount = resizingRight ? effectStartCount - END_OFFSET : effectStartCount;
+                    }
+                }
+                
+                // Also check for nearby effect end positions
+                for (Effect otherEffect : effects) {
+                    if (otherEffect == effect) continue; // Skip the effect we're currently dragging
+                    
+                    double effectEndCount = timeManager.MSec2CountPrecise(otherEffect.getStartTimeMSec() + otherEffect.getDuration().toMillis());
+                    double distance = Math.abs(effectEndCount - count);
+                    if (distance < nearestTriggerDistance && distance <= SNAP_THRESHOLD) {
+                        nearestTriggerDistance = distance;
+                        // If this is an end position (resizing right edge), offset slightly before the other effect end
+                        nearestTriggerCount = !resizingRight ? effectEndCount + END_OFFSET : effectEndCount;
+                    }
+                }
+                
+                // If we found a nearby trigger or effect, use it
+                if (nearestTriggerDistance <= SNAP_THRESHOLD) {
+                    return nearestTriggerCount;
+                }
+                
+                // Otherwise, snap to nearest integer count
+                double nearestIntegerCount = Math.round(count);
+                double distanceToInteger = Math.abs(nearestIntegerCount - count);
+                
+                if (distanceToInteger <= SNAP_THRESHOLD) {
+                    // Apply offset for end positions even when snapping to integer counts
+                    return resizingRight ? nearestIntegerCount - END_OFFSET : nearestIntegerCount;
+                }
+                
+                // If nothing is close enough, return original position
+                return count;
+            }
+        };
+
+        effectWidget.addMouseListener(ma);
+        effectWidget.addMouseMotionListener(ma);
     }
 
     private void createTimelinePane() {
@@ -371,12 +777,30 @@ public class TimelineGUI {
         double count = timeManager.MSec2CountPrecise((long)ms);
         return (int)(count * PIXELS_PER_COUNT * zoomFactor);
     }
+    
+    /**
+     * Calculate precise X position from decimal count value
+     */
+    private int calculateXPositionFromCount(double count) {
+        return (int)(count * PIXELS_PER_COUNT * zoomFactor);
+    }
+    
+    /**
+     * Convert decimal count to milliseconds using precise interpolation
+     */
+    private long convertCountToMS(double count) {
+        // Clamp count to valid range
+        count = Math.max(0, Math.min(count, maxCount));
+        
+        // Use the precise conversion method from TimeManager
+        return timeManager.getCount2MSecPrecise(count);
+    }
 
     private int calculateEffectWidth(Effect effect) {
-        long durationMillis = effect.getDuration().toMillis();
-        // Convert duration to count-based width
-        // This is an approximation - assumes 1 second per count
-        return (int)((durationMillis / 1000.0) * PIXELS_PER_COUNT * zoomFactor);
+        // Use precise count-based calculation
+        double startCount = timeManager.MSec2CountPrecise(effect.getStartTimeMSec());
+        double endCount = timeManager.MSec2CountPrecise(effect.getStartTimeMSec() + effect.getDuration().toMillis());
+        return (int)((endCount - startCount) * PIXELS_PER_COUNT * zoomFactor);
     }
 
     private int calculateTimelineWidth() {
@@ -673,6 +1097,12 @@ public class TimelineGUI {
             scrubBar.repaint();
         });
     }
+
+    public void setShowAllEffects(boolean showAll) {
+        this.showAllEffects = showAll;
+        // trigger a layout update
+        updateTimelineLayout();
+    }
     
     // List to store references to mouse adapters to prevent garbage collection
     private final List<MouseAdapter> panAdapters = new ArrayList<>();
@@ -698,7 +1128,7 @@ public class TimelineGUI {
         );
         panAdapters.add(scrubPanAdapter);
     }
-    
+
     public static void main(String[] args) {
         JFrame frame = new JFrame("Timeline Demo");
         frame.setPreferredSize(new Dimension(900, 400));

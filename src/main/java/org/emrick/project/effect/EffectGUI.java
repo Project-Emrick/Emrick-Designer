@@ -22,8 +22,8 @@ public class EffectGUI implements ActionListener {
             = "<html><body style='text-align: center;'>Load a time-synced Emrick project to get started using " +
               "effects" + ".</body></html>";
     public static String
-            noPerformerMsg
-            = "<html><body style='text-align: center;'>Select one or more performers to modify their effects" +
+            selectEffectMsg
+            = "<html><body style='text-align: center;'>Select/Create an Effect or RFTrigger to modify its parameters" +
               ".</body></html>";
     public static String
             noCommonEffectMsg
