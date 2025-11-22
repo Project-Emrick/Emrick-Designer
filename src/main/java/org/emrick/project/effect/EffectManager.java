@@ -304,6 +304,32 @@ public class EffectManager {
         return selectedPerformers;
     }
 
+    public long getNextEffectOrTriggerStartMS(long currentMS) {
+        long nextMS = Long.MAX_VALUE;
+        boolean found = false;
+        
+        // Find the minimum start time greater than currentMS
+        for (LEDStrip ledStrip : getSelectedLEDStrips()) {
+            for (Effect effect : ledStrip.getEffects()) {
+                long startTime = effect.getStartTimeMSec();
+                if (startTime > currentMS && startTime < nextMS) {
+                    nextMS = startTime;
+                    found = true;
+                }
+            }
+        }
+        
+        for (Map.Entry<Integer, RFTrigger> entry : count2RFTrigger.entrySet()) {
+            long tsMSec = timeManager.getCount2MSec().get(entry.getKey());
+            if (tsMSec > currentMS && tsMSec < nextMS) {
+                nextMS = tsMSec;
+                found = true;
+            }
+        }
+        
+        return found ? nextMS : null;
+    }
+
     public FootballFieldPanel getFootballFieldPanel() {
         return footballFieldPanel;
     }

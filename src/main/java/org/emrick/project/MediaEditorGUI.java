@@ -1925,8 +1925,18 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             return;
         }
         
+        // current ms is the offset of where the set ms starts plus the current ms in the football field panel
         long currentMS = footballFieldPanel.currentMS;
-        long endMS = currentMS + 1000; // 1 second duration
+        if (timeManager.getCount2MSec() != null && timeManager.getCount2MSec().containsKey(footballFieldPanel.getCurrentCount())) {
+            currentMS = timeManager.getCount2MSec().get(footballFieldPanel.getCurrentCount());
+        }
+        // make the endms either 0.001 seconds before the next effect/trigger or 8 seconds after currentms whichever is smaller
+        long endMS = currentMS + 8000; // default to 8 seconds
+        
+        Long nextEffectMS = effectManager.getNextEffectOrTriggerStartMS(currentMS);
+        if (nextEffectMS != null) {
+            endMS = Math.min(endMS, nextEffectMS - 1);
+        }
         
         // Create a basic effect with default colors
         GeneratedEffect newEffect = GeneratedEffectAdapter.createDefaultEffect(
