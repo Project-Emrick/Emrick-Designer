@@ -24,17 +24,8 @@ def concatText(text1, text2):
     header1 = lines1[0]
     header2 = lines2[0]
 
-    # --- Extract packet count (2nd word) ---
-    count1 = int(header1.split()[1][:-1])
-    count2 = int(header2.split()[1][:-1])
-
-    # --- Compute new count ---
-    total_packets = count1 + count2
-
-    # --- Replace the 2nd word in header1 ---
-    header1_parts = header1.split()
-    header1_parts[1] = str(total_packets)+","
-    new_header1 = " ".join(header1_parts)
+    # --- Extract packet count (2nd word) - this will be recalculated ---
+    # We don't use these counts directly anymore, but extract the header structure
 
     # --- Get bodies (all lines after header) ---
     body1 = lines1[1:]
@@ -42,8 +33,8 @@ def concatText(text1, text2):
     # Extract the first effect from header2 (everything after "Pkt_count: #,")
     # The header format is: "Pkt_count: 78, Size: 0, Strip_id: 0, Set_id: 0..."
     header2_effect = None
-    if ", " in header2:
-        parts = header2.split(", ", 1)  # Split only on first comma
+    if "\n" in header2:
+        parts = header2.split("\n", 1)  # Split only on first comma
         if len(parts) > 1:
             header2_effect = parts[1]  # Everything after "Pkt_count: #,"
     
@@ -95,6 +86,18 @@ def concatText(text1, text2):
                     except ValueError:
                         pass
         body2_updated.append(line)
+
+    # --- Calculate actual packet count (all effects including header effects) ---
+    # Count all effect lines: body1 + header2 effect (if exists) + body2
+    total_packets = len(body1)  # Body1 effects
+    if header2_effect:
+        total_packets += 1  # Header2 effect
+    total_packets += len(body2)  # Body2 effects
+    
+    # --- Replace the 2nd word in header1 with the correct count ---
+    header1_parts = header1.split()
+    header1_parts[1] = str(total_packets)
+    new_header1 = " ".join(header1_parts)
 
     # --- Re-assemble the merged text ---
     newText = "\n".join([new_header1] + body1 + body2_updated)
