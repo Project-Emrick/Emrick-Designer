@@ -70,10 +70,13 @@ public class EffectManager {
 
         // Update: can be in different sets, can't overrun an RF trigger (although effects can start or end on triggers)
         for (Map.Entry<Integer, RFTrigger> entry : count2RFTrigger.entrySet()) {
-            long tsMSec = timeManager.getCount2MSec().get(entry.getKey());
-            if (effect.getStartTimeMSec() < tsMSec && tsMSec < effect.getEndTimeMSec()) {
-                System.out.println("Effect overrun detected with RF trigger at count " + entry.getKey() + " on LED strip " + ledStrip.getLabel());
-                return false;
+            Long tsMSecLong = timeManager.getCount2MSec().get(entry.getKey());
+            if (tsMSecLong != null) {
+                long tsMSec = tsMSecLong.longValue();
+                if (effect.getStartTimeMSec() < tsMSec && tsMSec < effect.getEndTimeMSec()) {
+                    System.out.println("Effect overrun detected with RF trigger at count " + entry.getKey() + " on LED strip " + ledStrip.getLabel());
+                    return false;
+                }
             }
         }
         return true;
@@ -90,7 +93,17 @@ public class EffectManager {
             return false;
         }
         // Get timestamp in milliseconds for where the RF trigger is to be placed
-        long tsMSec = timeManager.getCount2MSec().get(rfTrigger.getCount());
+        Long tsMSecLong = timeManager.getCount2MSec().get(rfTrigger.getCount());
+        if (tsMSecLong == null) {
+            return false; // Can't validate if timestamp doesn't exist
+        }
+        long tsMSec = tsMSecLong.longValue();
+
+        // if there is already an rf trigger at this timestamp, invalid
+        if (count2RFTrigger.containsKey(rfTrigger.getCount())) {
+            showAddRFTriggerErrorDialog(null);
+            return false;
+        }
 
         for (LEDStrip ledStrip : footballFieldPanel.drill.ledStrips) {
             for (Effect effect : ledStrip.getEffects()) {
@@ -164,7 +177,7 @@ public class EffectManager {
 
     public void showAddRFTriggerErrorDialog(LEDStrip ledStrip) {
         JOptionPane.showMessageDialog(null,
-                "RF trigger could not be added. Please check for collision with effect(s) on LED strip " + ledStrip.getLabel() + ".",
+                "RF trigger could not be added. Please check for collision with" + (ledStrip != null ? "effect(s) on LED strip " + ledStrip.getLabel() : " an existing RF trigger") + ".",
                 "Create RF Trigger: Error", JOptionPane.ERROR_MESSAGE);
     }
 
@@ -320,9 +333,22 @@ public class EffectManager {
         }
         
         for (Map.Entry<Integer, RFTrigger> entry : count2RFTrigger.entrySet()) {
-            long tsMSec = timeManager.getCount2MSec().get(entry.getKey());
-            if (tsMSec > currentMS && tsMSec < nextMS) {
-                nextMS = tsMSec;
+            Long tsMSecLong = timeManager.getCount2MSec().get(entry.getKey());
+            if (tsMSecLong != null) {
+                long tsMSec = tsMSecLong.longValue();
+                if (tsMSec > currentMS && tsMSec < nextMS) {
+                    nextMS = tsMSec;
+                    found = true;
+                }
+            }
+        }
+        
+        // Check for the end of timeline (last count's timestamp)
+        if (timeManager.getCount2MSec() != null && !timeManager.getCount2MSec().isEmpty()) {
+            int maxCount = timeManager.getCount2MSec().keySet().stream().max(Integer::compareTo).orElse(0);
+            Long endOfTimelineMS = timeManager.getCount2MSec().get(maxCount);
+            if (endOfTimelineMS != null && endOfTimelineMS > currentMS && endOfTimelineMS < nextMS) {
+                nextMS = endOfTimelineMS;
                 found = true;
             }
         }
