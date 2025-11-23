@@ -3954,6 +3954,10 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
 
     @Override
     public void onCreateRFTrigger(RFTrigger rfTrigger) {
+        if (count2RFTrigger.containsKey(rfTrigger.getCount())) { // already an rf trigger at this count
+            effectManager.showAddRFTriggerErrorDialog(null);
+            return;
+        }
         if (!effectManager.isValid(rfTrigger)) {
             return;
         }

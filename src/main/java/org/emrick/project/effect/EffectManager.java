@@ -99,12 +99,6 @@ public class EffectManager {
         }
         long tsMSec = tsMSecLong.longValue();
 
-        // if there is already an rf trigger at this timestamp, invalid
-        if (count2RFTrigger.containsKey(rfTrigger.getCount())) {
-            showAddRFTriggerErrorDialog(null);
-            return false;
-        }
-
         for (LEDStrip ledStrip : footballFieldPanel.drill.ledStrips) {
             for (Effect effect : ledStrip.getEffects()) {
                 if (effect.getEndTimeMSec() <= tsMSec || tsMSec <= effect.getStartTimeMSec()) {
