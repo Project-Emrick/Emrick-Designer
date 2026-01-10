@@ -27,3 +27,4 @@ tempPkt.pkt
 # MacOS
 **/.DS_store
 /gradle
+/.vscode
