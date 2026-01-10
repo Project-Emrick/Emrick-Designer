@@ -1,3 +1,26 @@
 {
-
+  // Java Language Server Performance
+  "java.jdt.ls.vmargs": "-XX:+UseParallelGC -XX:GCTimeRatio=4 -XX:AdaptiveSizePolicyWeight=90 -Xmx2G -Xms100m -Xlog:disable",
+  "java.configuration.runtimes": [],
+  "java.autobuild.enabled": true,
+  
+  // Speed up Gradle import
+  "java.import.gradle.offline.enabled": false,
+  "java.import.gradle.wrapper.enabled": true,
+  "java.import.gradle.home": null,
+  "java.import.gradle.arguments": "--no-daemon",
+  
+  // Reduce initial project scanning
+  "java.completion.maxResults": 50,
+  "java.codeGeneration.hashCodeEquals.useJava7Objects": true,
+  "java.sharedIndexes.enabled": "auto",
+  
+  // Disable heavy features during startup
+  "java.references.includeAccessors": false,
+  "java.implementationsCodeLens.enabled": false,
+  "java.referencesCodeLens.enabled": false,
+  
+  // Faster validation
+  "java.maxConcurrentBuilds": 2,
+  "java.compile.nullAnalysis.mode": "disabled"
 }
