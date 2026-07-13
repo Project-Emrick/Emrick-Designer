@@ -209,8 +209,8 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
 
         // Main frame
         frame = new JFrame("Emrick Designer");
-        Image icon = Toolkit.getDefaultToolkit().getImage(PathConverter.pathConverter("res/images/icon.png", true));
-        frame.setIconImage(icon);
+        // Image icon = Toolkit.getDefaultToolkit().getImage(PathConverter.pathConverter("res/images/icon.png", true));
+        frame.setIconImage(Icons.loadToolkitImage("/images/icon.png"));
         frame.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
         
         Toolkit toolkit = Toolkit.getDefaultToolkit();
@@ -414,11 +414,22 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         footballFieldBackground = new FootballFieldBackground(this);
 
         try {
-            BufferedImage surface = ImageIO.read(new File(PathConverter.pathConverter("res/images/field/Surface.png", true)));
-            BufferedImage cover = ImageIO.read(new File(PathConverter.pathConverter("res/images/field/Cover.png", true)));
+            // BufferedImage surface = ImageIO.read(new File(PathConverter.pathConverter("res/images/field/Surface.png", true)));
+            // BufferedImage cover = ImageIO.read(new File(PathConverter.pathConverter("res/images/field/Cover.png", true)));
+
+            BufferedImage surface = ImageIO.read(Objects.requireNonNull(
+                getClass().getResourceAsStream("/images/field/Surface.png"),
+                "Missing resource: /images/field/Surface.png"
+            ));
+
+            BufferedImage cover = ImageIO.read(Objects.requireNonNull(
+                getClass().getResourceAsStream("/images/field/Cover.png"),
+                "Missing resource: /images/field/Cover.png"
+            ));
+
             footballFieldBackground.setSurfaceImage(surface);
             footballFieldBackground.setFloorCoverImage(cover);
-        } catch (IOException ioe) {
+        } catch (IOException | NullPointerException ioe) {
             throw new RuntimeException(ioe);
         }
 
@@ -2034,7 +2045,8 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         if (port.isEmpty()) {
             port = (String) JOptionPane.showInputDialog(null, "Choose",
                     "Menu", JOptionPane.INFORMATION_MESSAGE,
-                    new ImageIcon(PathConverter.pathConverter("icon.ico", true)),
+                    Icons.loadImageIcon("/images/icon.png"),
+                    // new ImageIcon(PathConverter.pathConverter("icon.ico", true)),
                     allPortNames, allPortNames[0]);
         } else {
             writeSysMsg("Found Emrick Hardware at: " + port);
@@ -2341,7 +2353,8 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             webServerFrame = new JFrame("Board Programming Tracker");
             webServerFrame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
             webServerFrame.setSize(800, 600);
-            webServerFrame.setIconImage(Toolkit.getDefaultToolkit().getImage(PathConverter.pathConverter("res/images/icon.png", true)));
+            webServerFrame.setIconImage(Icons.loadToolkitImage("/images/icon.png"));
+            // webServerFrame.setIconImage(Toolkit.getDefaultToolkit().getImage(PathConverter.pathConverter("res/images/icon.png", true)));
 
             /* Create a new Private Class Instance of Programming Tracker */
             programmingTracker = new ProgrammingTracker(footballFieldPanel.drill.ledStrips, requestIDs);
