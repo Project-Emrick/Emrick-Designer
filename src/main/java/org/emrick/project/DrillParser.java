@@ -106,12 +106,11 @@ public class DrillParser {
         Performer performer = new Performer(symbol, label, id);
         String[] lines = text.split("\n");
 
-        System.out.println("======================");
-        System.out.println("Performer: " + symbol + label);
-        System.out.println("# lines:   " + lines.length);
-        System.out.println("Text:\n" + java.util.Arrays.toString(lines));
-        System.out.println("======================");
-        System.out.println();
+        // System.out.println("======================");
+        // System.out.println("Performer: " + symbol + label);
+        // System.out.println("# lines:   " + lines.length);
+        // System.out.println("======================");
+        // System.out.println();
 
         for (int i = 1; i < lines.length-2; i++) {
             // temporary fix for some improperly formatted drill files
@@ -127,10 +126,10 @@ public class DrillParser {
                 j++;
             }
 
-            System.out.println("Set:      " + set + " (i=" + i + ")");
-            System.out.println("Line:     " + lines[i]);
-            System.out.println("Duration: " + splitLine[j]);
-            System.out.println();
+            // System.out.println("Set:      " + set + " (i=" + i + ")");
+            // System.out.println("Line:     " + lines[i]);
+            // System.out.println("Duration: " + splitLine[j]);
+            // System.out.println();
             
             duration = Integer.parseInt(splitLine[j]);
             double x = getX(lines[i]);

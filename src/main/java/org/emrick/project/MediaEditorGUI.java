@@ -3570,6 +3570,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         }
 
     }
+
     @Override
     public void onConcatAudioImport(ArrayList<File> audioFiles) {
         for (File f : audioFiles) {
@@ -3582,11 +3583,39 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
     public void onDrillImport(String drill) {
         String text = DrillParser.extractText(drill);
         footballFieldPanel.drill = DrillParser.parseWholeDrill(text);
-        if (csvFile != null) {
+
+        System.out.println("Drill parsed and loaded.");
+
+        boolean csvFileAvailable = csvFile != null;
+
+        if (!csvFileAvailable) {
+            try {
+                csvFile = CSVLEDWriter.createDefaultCSV(footballFieldPanel.drill.performers);
+                csvFileAvailable = true;
+            } catch (IOException e) {
+                e.printStackTrace();
+                
+                csvFile = null;
+                csvFileAvailable = false;
+            }
+        }
+
+        System.out.println("CSV file availability: " + csvFileAvailable);
+        
+        if (csvFileAvailable) {
             parseCsvFileForPerformerDeviceIDs(csvFile);
         } else {
             applyDefaultLEDConfiguration();
         }
+
+        System.out.println("LED configurations applied.");
+
+        // if (csvFile != null) {
+        //     parseCsvFileForPerformerDeviceIDs(csvFile);
+        // } else {
+        //     applyDefaultLEDConfiguration();
+        // }
+        
         footballFieldPanel.addSetToField(footballFieldPanel.drill.sets.get(0));
         currentMovement = 1;  //cannot be other movements if drill is being imported
         count2RFTrigger = new HashMap<>();
