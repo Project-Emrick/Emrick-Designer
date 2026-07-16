@@ -60,9 +60,28 @@ public class SelectFileGUI implements ActionListener {
         dialogWindow.setLocationRelativeTo(null); // center on screen
         dialogWindow.setResizable(false); // resize window option
 
+        JPanel headerPanel = new JPanel();
+        headerPanel.setLayout(new BoxLayout(headerPanel, BoxLayout.PAGE_AXIS));
+        headerPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+
         JLabel titleLabel = new JLabel("New Project - Import");
         titleLabel.setFont(new Font("Arial", Font.BOLD, 14));
-        titleLabel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        titleLabel.setBorder(BorderFactory.createEmptyBorder(0, 0, 10, 0));
+
+        JLabel descriptionLabel = new JLabel("""
+            <html> \
+                <p style=\"font-style: italic\"> \
+                    <span style="color: red">*</span> indicates required fields \
+                </p> \
+                <p style=\"margin-top: 8px\"> \
+                    Leave .csv file empty to auto-generate based on drill file (.pdf). \
+                </p> \
+            </html>""");
+        descriptionLabel.setFont(new Font("Arial", Font.PLAIN, 12));
+        // descriptionLabel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+
+        headerPanel.add(titleLabel);
+        headerPanel.add(descriptionLabel);
 
         // Here, "ul" is short for "upload"
         JPanel ulPanel = new JPanel();
@@ -70,7 +89,10 @@ public class SelectFileGUI implements ActionListener {
         ulPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
         // Upload coordinates
-        JLabel ulCoordsLabel = new JLabel("Coordinates (.pdf)");
+        JLabel ulCoordsLabel = new JLabel("""
+            <html> \
+                Coordinates (.pdf) <span style=\"color: red\">*</span> \
+            </html>""");
         this.ulCoordsButton = new JButton("Select File");
         this.ulCoordsFilename = new JLabel("No File Selected");
 
@@ -80,7 +102,10 @@ public class SelectFileGUI implements ActionListener {
         ulCoordsPanel.add(ulCoordsFilename);
 
         // Upload pyware archive (3dz)
-        JLabel ulArchiveLabel = new JLabel("Pyware Archive (.3dz)");
+        JLabel ulArchiveLabel = new JLabel("""
+            <html> \
+                Pyware Archive (.3dz) <span style=\"color: red\">*</span> \
+            </html>""");
         this.ulArchiveButton = new JButton("Select File");
         this.ulArchiveFilename = new JLabel("No File Selected");
 
@@ -90,7 +115,10 @@ public class SelectFileGUI implements ActionListener {
         ulArchivePanel.add(ulArchiveFilename);
 
         // Upload CSV (csv)
-        JLabel ulCsvLabel = new JLabel("Device ID Comma Separated Values (.csv)");
+        JLabel ulCsvLabel = new JLabel("""
+            <html> \
+                Device ID Comma Separated Values (.csv) \
+            </html>""");
         this.ulCsvButton = new JButton("Select File");
         this.ulCsvFilename = new JLabel("No File Selected");
 
@@ -128,7 +156,7 @@ public class SelectFileGUI implements ActionListener {
         buttonPane.add(Box.createRigidArea(new Dimension(10, 0)));
         buttonPane.add(importButton);
 
-        dialogWindow.add(titleLabel, BorderLayout.NORTH);
+        dialogWindow.add(headerPanel, BorderLayout.NORTH);
         dialogWindow.add(ulPanel, BorderLayout.CENTER);
         dialogWindow.add(buttonPane, BorderLayout.SOUTH);
         // frame.pack(); // Constricts window size with just enough room for components
