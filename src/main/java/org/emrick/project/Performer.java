@@ -3,7 +3,7 @@ package org.emrick.project;
 import java.awt.geom.*;
 import java.util.*;
 
-public class Performer {
+public class Performer implements Comparable<Performer> {
 
     public Point2D currentLocation;
     private String symbol;
@@ -116,6 +116,11 @@ public class Performer {
 
     public void setLabel(int label) {
         this.label = label;
+    }
+
+    @Override
+    public int compareTo(Performer o) {
+        return Integer.compare(getPerformerID(), o.getPerformerID());
     }
 
 }

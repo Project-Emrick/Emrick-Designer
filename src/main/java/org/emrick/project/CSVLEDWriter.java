@@ -4,6 +4,8 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import org.emrick.project.actions.LEDConfig;
@@ -15,7 +17,6 @@ public class CSVLEDWriter {
     private static final int DEFAULT_H_OFFSET_L = 1;
     private static final int DEFAULT_H_OFFSET_R = -6;
     private static final int DEFAULT_V_OFFSET = -6;
-    private static final int DEFAULT_SIZE = 699;
 
     private static final String LEFT = "L";
     private static final String RIGHT = "R";
@@ -59,50 +60,58 @@ public class CSVLEDWriter {
     }
 
     public void write(String path, List<Performer> performers) throws IOException {
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter(path))) {
-            writeHeaderRow(writer);
+        int ledStripCount = 0;
 
-            int currentPerformerId = 0;
-            int currentLEDStripId = 0;
+        for (Performer currPerformer : performers) {
+            String section = currPerformer.getSymbol();
+
+            int prefix = Symbol.getIdPrefix(section);
+            int label = currPerformer.getLabel();
+
+            int performerId = prefix + currPerformer.getLabel();
+            currPerformer.setPerformerID(performerId);
+
+            if (!Symbol.isLeftOnly(section, label)) {
+                ledStripCount++;
+            }
+
+            ledStripCount++;
+        }
+
+        Collections.sort(performers);
+        
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(path))) {
+            writeHeaderRow(writer, ledStripCount);
 
             for (Performer currPerformer : performers) {
-                currPerformer.setPerformerID(currentPerformerId++);
-
                 String performerLabel = currPerformer.getIdentifier();
                 writePerformerRow(writer, performerLabel);
 
-                String section = currPerformer.getSymbol();
-                int ledCount = switch (section) {
-                    case Symbol.TOOBAH, Symbol.BBD_DRUM, Symbol.BASS, Symbol.GOLDEN_SILK -> 60;
-                    default -> 50;
-                };
+                int performerId = currPerformer.getPerformerID();
 
-                if (section.equals(Symbol.DRUM_MAJOR_MACE) && currPerformer.getLabel() >= 3) {
-                    ledCount = 60;
-                }
+                String section = currPerformer.getSymbol();
+                int label = currPerformer.getLabel();
+
+                int ledCount = Symbol.isLargeStrip(section, label) ? 60 : 50;
 
                 LEDConfig leftLED = new LEDConfig(ledCount, DEFAULT_HEIGHT,
                                                   DEFAULT_WIDTH, DEFAULT_H_OFFSET_L,
                                                   DEFAULT_V_OFFSET, LEFT);
-                writeLEDRow(writer, currentLEDStripId++, performerLabel, leftLED);
+                writeLEDRow(writer, performerId * 2, performerLabel, leftLED);
 
-                if (section.equals(Symbol.GOLDEN_SILK)) {
-                    continue;
-                }
-
-                if (section.equals(Symbol.DRUM_MAJOR_MACE) && currPerformer.getLabel() >= 3) {
+                if (Symbol.isLeftOnly(section, label)) {
                     continue;
                 }
 
                 LEDConfig rightLED = new LEDConfig(ledCount, DEFAULT_HEIGHT,
                                                    DEFAULT_WIDTH, DEFAULT_H_OFFSET_R,
                                                    DEFAULT_V_OFFSET, RIGHT);
-                writeLEDRow(writer, currentLEDStripId++, performerLabel, rightLED);
+                writeLEDRow(writer, performerId * 2 + 1, performerLabel, rightLED);
             }
         }
     }
 
-    private void writeHeaderRow(BufferedWriter writer) throws IOException {
+    private void writeHeaderRow(BufferedWriter writer, int size) throws IOException {
         StringBuilder sb = new StringBuilder();
 
         for (String currHeader : HEADERS) {
@@ -111,7 +120,7 @@ public class CSVLEDWriter {
         }
 
         sb.append(delimiter + "Size:" + delimiter);
-        sb.append(DEFAULT_SIZE);
+        sb.append(size);
 
         writer.write(sb.toString());
         writer.newLine();
