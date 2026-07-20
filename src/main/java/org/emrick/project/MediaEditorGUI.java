@@ -10,10 +10,42 @@ import com.google.gson.JsonIOException;
 import com.google.gson.JsonSyntaxException;
 import com.jthemedetecor.OsThemeDetector;
 import com.sun.net.httpserver.HttpServer;
+import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.CellStyle;
+import org.apache.poi.ss.usermodel.ConditionalFormattingRule;
+import org.apache.poi.ss.usermodel.DataValidation;
+import org.apache.poi.ss.usermodel.DataValidationConstraint;
+import org.apache.poi.ss.usermodel.DataValidationHelper;
+import org.apache.poi.ss.usermodel.BorderStyle;
+import org.apache.poi.ss.usermodel.FillPatternType;
+import org.apache.poi.ss.usermodel.IndexedColors;
+import org.apache.poi.ss.usermodel.PatternFormatting;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.SheetConditionalFormatting;
+import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.ss.util.CellRangeAddress;
+import org.apache.poi.ss.util.CellRangeAddressList;
+import org.apache.poi.ss.util.CellReference;
 import org.emrick.project.actions.LEDConfig;
 import org.emrick.project.audio.AudioPlayer;
 import org.emrick.project.effect.*;
 import org.emrick.project.serde.*;
+import org.apache.poi.xddf.usermodel.chart.ChartTypes;
+import org.apache.poi.xddf.usermodel.chart.XDDFChartData;
+import org.apache.poi.xddf.usermodel.chart.XDDFDataSource;
+import org.apache.poi.xddf.usermodel.chart.XDDFDataSourcesFactory;
+import org.apache.poi.xddf.usermodel.chart.XDDFNumericalDataSource;
+import org.apache.poi.xssf.usermodel.XSSFChart;
+import org.apache.poi.xssf.usermodel.XSSFClientAnchor;
+import org.apache.poi.xssf.usermodel.XSSFDrawing;
+import org.apache.poi.xssf.usermodel.XSSFSheet;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.openxmlformats.schemas.drawingml.x2006.chart.CTDPt;
+import org.openxmlformats.schemas.drawingml.x2006.chart.CTPieSer;
+import org.openxmlformats.schemas.drawingml.x2006.main.CTSRgbColor;
+import org.openxmlformats.schemas.drawingml.x2006.main.CTShapeProperties;
+import org.openxmlformats.schemas.drawingml.x2006.main.CTSolidColorFillProperties;
 
 import javax.imageio.ImageIO;
 import java.awt.font.TextAttribute;
@@ -591,6 +623,25 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                 csvFile = selectedFile;
                 parseCsvFileForPerformerDeviceIDs(csvFile);
                 footballFieldPanel.repaint();
+            }
+        });
+
+        // Export checklist workbook file
+        JMenuItem exportChecklistItem = new JMenuItem("Export Board Checklist Workbook");
+        fileMenu.add(exportChecklistItem);
+        exportChecklistItem.addActionListener(e -> {
+            JFileChooser fileChooser = new JFileChooser();
+            fileChooser.setDialogTitle("Export Board Checklist Workbook");
+            fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
+            fileChooser.setFileFilter(new FileNameExtensionFilter("Excel Workbook (*.xlsx)", "xlsx"));
+
+            int retVal = fileChooser.showSaveDialog(null);
+            if (retVal == JFileChooser.APPROVE_OPTION) {
+                File selectedFile = fileChooser.getSelectedFile();
+                if (!selectedFile.getAbsolutePath().toLowerCase().endsWith(".xlsx")) {
+                    selectedFile = new File(selectedFile.getAbsolutePath() + ".xlsx");
+                }
+                exportBoardChecklistWorkbook(selectedFile);
             }
         });
 
@@ -1716,7 +1767,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         helpMenu.add(submitIssueItem);
         submitIssueItem.addActionListener(e -> JOptionPane.showMessageDialog(frame, "You clicked: Submit an Issue"));
 
-        // TODO: Actually implement this with a real login server or delete this feature
+        // Account sign-in is currently local UI only.
         JMenuItem loginItem = new JMenu("Account");
         menuBar.add(loginItem);
 
@@ -2148,7 +2199,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             if (useSavedCred.isSelected()) {
                 File cred = new File (PathConverter.pathConverter("wifiConfig.txt", false));
                 if (cred.exists()) {
-                    // TODO: add encryption
+                    // Encryption is not yet implemented for saved WiFi credentials.
                     BufferedReader bfr = new BufferedReader(new FileReader(cred));
                     ssidField.setText(bfr.readLine());
                     StringBuilder pass = new StringBuilder(bfr.readLine());
@@ -2446,7 +2497,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             if (useSavedCred.isSelected()) {
                 File cred = new File (PathConverter.pathConverter("wifiConfig.txt", false));
                 if (cred.exists()) {
-                    // TODO: add encryption
+                    // Encryption is not yet implemented for saved WiFi credentials.
                     BufferedReader bfr = new BufferedReader(new FileReader(cred));
                     ssidField.setText(bfr.readLine());
                     StringBuilder pass = new StringBuilder(bfr.readLine());
@@ -3296,6 +3347,479 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         }
     }
 
+    private void exportBoardChecklistWorkbook(File selectedFile) {
+        if (footballFieldPanel == null || footballFieldPanel.drill == null) {
+            JOptionPane.showMessageDialog(frame,
+                    "No active project is loaded.",
+                    "Export Error",
+                    JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        try (XSSFWorkbook workbook = new XSSFWorkbook()) {
+            XSSFSheet sheet = workbook.createSheet("Unit Checklist");
+            Sheet metadataSheet = workbook.createSheet("Metadata");
+
+            CellStyle headerStyle = workbook.createCellStyle();
+            org.apache.poi.ss.usermodel.Font headerFont = workbook.createFont();
+            headerFont.setBold(true);
+            headerStyle.setFont(headerFont);
+            headerStyle.setFillForegroundColor(IndexedColors.GREY_25_PERCENT.getIndex());
+            headerStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+            headerStyle.setBorderTop(BorderStyle.THIN);
+            headerStyle.setBorderBottom(BorderStyle.THIN);
+            headerStyle.setBorderLeft(BorderStyle.THIN);
+            headerStyle.setBorderRight(BorderStyle.THIN);
+
+            CellStyle sectionHeaderStyle = workbook.createCellStyle();
+            org.apache.poi.ss.usermodel.Font sectionHeaderFont = workbook.createFont();
+            sectionHeaderFont.setBold(true);
+            sectionHeaderStyle.setFont(sectionHeaderFont);
+            sectionHeaderStyle.setFillForegroundColor(IndexedColors.WHITE.getIndex());
+            sectionHeaderStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+
+            CellStyle dataCellStyle = workbook.createCellStyle();
+            dataCellStyle.setBorderTop(BorderStyle.THIN);
+            dataCellStyle.setBorderBottom(BorderStyle.THIN);
+            dataCellStyle.setBorderLeft(BorderStyle.THIN);
+            dataCellStyle.setBorderRight(BorderStyle.THIN);
+
+            CellStyle dataLeftStyle = workbook.createCellStyle();
+            dataLeftStyle.cloneStyleFrom(dataCellStyle);
+
+            CellStyle statusStyle = workbook.createCellStyle();
+            statusStyle.cloneStyleFrom(dataCellStyle);
+
+            CellStyle notesStyle = workbook.createCellStyle();
+            notesStyle.cloneStyleFrom(dataCellStyle);
+
+            CellStyle statsLabelStyle = workbook.createCellStyle();
+            org.apache.poi.ss.usermodel.Font statsLabelFont = workbook.createFont();
+            statsLabelFont.setBold(true);
+            statsLabelStyle.setFont(statsLabelFont);
+
+            CellStyle percentStyle = workbook.createCellStyle();
+            percentStyle.setDataFormat(workbook.createDataFormat().getFormat("0.00%"));
+
+            CellStyle statsBoxTopLabelStyle = createChecklistCellStyle(workbook, BorderStyle.THICK, BorderStyle.THIN, BorderStyle.THICK, BorderStyle.THIN);
+            CellStyle statsBoxTopValueStyle = createChecklistCellStyle(workbook, BorderStyle.THIN, BorderStyle.THICK, BorderStyle.THICK, BorderStyle.THIN);
+            CellStyle statsBoxMiddleLabelStyle = createChecklistCellStyle(workbook, BorderStyle.THICK, BorderStyle.THIN, BorderStyle.THIN, BorderStyle.THIN);
+            CellStyle statsBoxMiddleValueStyle = createChecklistCellStyle(workbook, BorderStyle.THIN, BorderStyle.THICK, BorderStyle.THIN, BorderStyle.THIN);
+            CellStyle statsBoxBottomLabelStyle = createChecklistCellStyle(workbook, BorderStyle.THICK, BorderStyle.THIN, BorderStyle.THIN, BorderStyle.THICK);
+            CellStyle statsBoxBottomValueStyle = createChecklistCellStyle(workbook, BorderStyle.THIN, BorderStyle.THICK, BorderStyle.THIN, BorderStyle.THICK);
+            CellStyle statsBoxSingleLabelStyle = createChecklistCellStyle(workbook, BorderStyle.THICK, BorderStyle.THIN, BorderStyle.THICK, BorderStyle.THICK);
+            CellStyle statsBoxSingleValueStyle = createChecklistCellStyle(workbook, BorderStyle.THIN, BorderStyle.THICK, BorderStyle.THICK, BorderStyle.THICK);
+            CellStyle statsBoxPercentTopValueStyle = createChecklistCellStyle(workbook, BorderStyle.THIN, BorderStyle.THICK, BorderStyle.THICK, BorderStyle.THIN);
+            statsBoxPercentTopValueStyle.setDataFormat(workbook.createDataFormat().getFormat("0.00%"));
+            CellStyle statsBoxPercentBottomValueStyle = createChecklistCellStyle(workbook, BorderStyle.THIN, BorderStyle.THICK, BorderStyle.THIN, BorderStyle.THICK);
+            statsBoxPercentBottomValueStyle.setDataFormat(workbook.createDataFormat().getFormat("0.00%"));
+
+            CellStyle thinLeftStyle = createChecklistCellStyle(workbook, BorderStyle.THIN, BorderStyle.THIN, BorderStyle.THIN, BorderStyle.THIN);
+            CellStyle thinMiddleStyle = createChecklistCellStyle(workbook, BorderStyle.THIN, BorderStyle.THIN, BorderStyle.THIN, BorderStyle.THIN);
+            CellStyle thinRightStyle = createChecklistCellStyle(workbook, BorderStyle.THIN, BorderStyle.THIN, BorderStyle.THIN, BorderStyle.THIN);
+            CellStyle topLeftStyle = createChecklistCellStyle(workbook, BorderStyle.THICK, BorderStyle.THIN, BorderStyle.THICK, BorderStyle.THIN);
+            CellStyle topMiddleStyle = createChecklistCellStyle(workbook, BorderStyle.THIN, BorderStyle.THIN, BorderStyle.THICK, BorderStyle.THIN);
+            CellStyle topRightStyle = createChecklistCellStyle(workbook, BorderStyle.THIN, BorderStyle.THICK, BorderStyle.THICK, BorderStyle.THIN);
+            CellStyle middleLeftStyle = createChecklistCellStyle(workbook, BorderStyle.THICK, BorderStyle.THIN, BorderStyle.THIN, BorderStyle.THIN);
+            CellStyle middleMiddleStyle = createChecklistCellStyle(workbook, BorderStyle.THIN, BorderStyle.THIN, BorderStyle.THIN, BorderStyle.THIN);
+            CellStyle middleRightStyle = createChecklistCellStyle(workbook, BorderStyle.THIN, BorderStyle.THICK, BorderStyle.THIN, BorderStyle.THIN);
+            CellStyle bottomLeftStyle = createChecklistCellStyle(workbook, BorderStyle.THICK, BorderStyle.THIN, BorderStyle.THIN, BorderStyle.THICK);
+            CellStyle bottomMiddleStyle = createChecklistCellStyle(workbook, BorderStyle.THIN, BorderStyle.THIN, BorderStyle.THIN, BorderStyle.THICK);
+            CellStyle bottomRightStyle = createChecklistCellStyle(workbook, BorderStyle.THIN, BorderStyle.THICK, BorderStyle.THIN, BorderStyle.THICK);
+            CellStyle singleLeftStyle = createChecklistCellStyle(workbook, BorderStyle.THICK, BorderStyle.THIN, BorderStyle.THICK, BorderStyle.THICK);
+            CellStyle singleMiddleStyle = createChecklistCellStyle(workbook, BorderStyle.THIN, BorderStyle.THIN, BorderStyle.THICK, BorderStyle.THICK);
+            CellStyle singleRightStyle = createChecklistCellStyle(workbook, BorderStyle.THIN, BorderStyle.THICK, BorderStyle.THICK, BorderStyle.THICK);
+
+            String[] statusOptions = new String[]{"Incomplete", "Needs Attention", "Complete"};
+
+            Row headerRow = sheet.createRow(0);
+            String[] headers = new String[]{"Board Label", "Board ID", "LED Count", "Status", "Notes"};
+            for (int i = 0; i < headers.length; i++) {
+                Cell headerCell = headerRow.createCell(i);
+                headerCell.setCellValue(headers[i]);
+                headerCell.setCellStyle(headerStyle);
+            }
+
+            class UnitRow {
+                String section;
+                String boardLabel;
+                int boardId;
+                int ledCount;
+
+                UnitRow(String section, String boardLabel, int boardId, int ledCount) {
+                    this.section = section;
+                    this.boardLabel = boardLabel;
+                    this.boardId = boardId;
+                    this.ledCount = ledCount;
+                }
+            }
+
+            LinkedHashMap<String, ArrayList<UnitRow>> sectionRows = new LinkedHashMap<>();
+            ArrayList<UnitRow> gdsRows = new ArrayList<>();
+
+            for (Performer performer : footballFieldPanel.drill.performers) {
+                for (Integer stripIndex : performer.getLedStrips()) {
+                    if (stripIndex < 0 || stripIndex >= footballFieldPanel.drill.ledStrips.size()) {
+                        continue;
+                    }
+                    LEDStrip ledStrip = footballFieldPanel.drill.ledStrips.get(stripIndex);
+                    String boardLabel = ledStrip.getLabel();
+                    UnitRow row = new UnitRow(
+                            getSectionFromBoardLabel(boardLabel),
+                            boardLabel,
+                            ledStrip.getId(),
+                            ledStrip.getLedConfig().getLEDCount());
+                    if (isGdsUnit(boardLabel)) {
+                        gdsRows.add(row);
+                    } else {
+                        sectionRows.computeIfAbsent(row.section, k -> new ArrayList<>()).add(row);
+                    }
+                }
+            }
+
+            int rowNum = 1;
+            boolean firstSection = true;
+            for (Map.Entry<String, ArrayList<UnitRow>> entry : sectionRows.entrySet()) {
+                if (!firstSection) {
+                    rowNum++; // blank row before later sections only
+                }
+                firstSection = false;
+
+                Row sectionRow = sheet.createRow(rowNum++);
+                Cell sectionCell = sectionRow.createCell(0);
+                sectionCell.setCellValue(entry.getKey() + ":");
+                sectionCell.setCellStyle(sectionHeaderStyle);
+
+                ArrayList<UnitRow> units = entry.getValue();
+                for (int i = 0; i < units.size(); i++) {
+                    UnitRow unitRow = units.get(i);
+                    Row row = sheet.createRow(rowNum++);
+                    boolean single = units.size() == 1;
+                    boolean isFirst = i == 0;
+                    boolean isLast = i == units.size() - 1;
+
+                    CellStyle labelStyle = single ? singleLeftStyle : (isFirst ? topLeftStyle : (isLast ? bottomLeftStyle : middleLeftStyle));
+                    CellStyle idStyle = single ? singleMiddleStyle : (isFirst ? topMiddleStyle : (isLast ? bottomMiddleStyle : middleMiddleStyle));
+                    CellStyle countStyle = idStyle;
+                    CellStyle statusCellStyle = single ? singleMiddleStyle : (isFirst ? topMiddleStyle : (isLast ? bottomMiddleStyle : middleMiddleStyle));
+                    CellStyle notesCellStyle = single ? singleRightStyle : (isFirst ? topRightStyle : (isLast ? bottomRightStyle : middleRightStyle));
+
+                    Cell labelCell = row.createCell(0);
+                    labelCell.setCellValue(unitRow.boardLabel);
+                    labelCell.setCellStyle(labelStyle);
+                    Cell idCell = row.createCell(1);
+                    idCell.setCellValue(unitRow.boardId);
+                    idCell.setCellStyle(idStyle);
+                    Cell countCell = row.createCell(2);
+                    countCell.setCellValue(unitRow.ledCount);
+                    countCell.setCellStyle(countStyle);
+                    Cell statusCell = row.createCell(3);
+                    statusCell.setCellValue("Incomplete");
+                    statusCell.setCellStyle(statusCellStyle);
+                    Cell notesCell = row.createCell(4);
+                    notesCell.setCellValue("");
+                    notesCell.setCellStyle(notesCellStyle);
+                }
+            }
+
+            if (!gdsRows.isEmpty()) {
+                rowNum++; // blank row before GDS section only
+                Row sectionRow = sheet.createRow(rowNum++);
+                Cell sectionCell = sectionRow.createCell(0);
+                sectionCell.setCellValue("GDS Units:");
+                sectionCell.setCellStyle(sectionHeaderStyle);
+
+                for (int i = 0; i < gdsRows.size(); i++) {
+                    UnitRow unitRow = gdsRows.get(i);
+                    Row row = sheet.createRow(rowNum++);
+                    boolean single = gdsRows.size() == 1;
+                    boolean isFirst = i == 0;
+                    boolean isLast = i == gdsRows.size() - 1;
+
+                    CellStyle labelStyle = single ? singleLeftStyle : (isFirst ? topLeftStyle : (isLast ? bottomLeftStyle : middleLeftStyle));
+                    CellStyle idStyle = single ? singleMiddleStyle : (isFirst ? topMiddleStyle : (isLast ? bottomMiddleStyle : middleMiddleStyle));
+                    CellStyle countStyle = idStyle;
+                    CellStyle statusCellStyle = single ? singleMiddleStyle : (isFirst ? topMiddleStyle : (isLast ? bottomMiddleStyle : middleMiddleStyle));
+                    CellStyle notesCellStyle = single ? singleRightStyle : (isFirst ? topRightStyle : (isLast ? bottomRightStyle : middleRightStyle));
+
+                    Cell labelCell = row.createCell(0);
+                    labelCell.setCellValue(unitRow.boardLabel);
+                    labelCell.setCellStyle(labelStyle);
+                    Cell idCell = row.createCell(1);
+                    idCell.setCellValue(unitRow.boardId);
+                    idCell.setCellStyle(idStyle);
+                    Cell countCell = row.createCell(2);
+                    countCell.setCellValue(unitRow.ledCount);
+                    countCell.setCellStyle(countStyle);
+                    Cell statusCell = row.createCell(3);
+                    statusCell.setCellValue("Incomplete");
+                    statusCell.setCellStyle(statusCellStyle);
+                    Cell notesCell = row.createCell(4);
+                    notesCell.setCellValue("");
+                    notesCell.setCellStyle(notesCellStyle);
+                }
+            }
+
+            int dataStartRow = 1;
+            int dataEndRow = rowNum - 1;
+            if (dataEndRow >= dataStartRow) {
+                DataValidationHelper helper = sheet.getDataValidationHelper();
+                DataValidationConstraint constraint = helper.createExplicitListConstraint(statusOptions);
+                CellRangeAddressList statusRange = new CellRangeAddressList(dataStartRow, dataEndRow, 3, 3);
+                DataValidation validation = helper.createValidation(constraint, statusRange);
+                validation.setSuppressDropDownArrow(true);
+                validation.setShowErrorBox(true);
+                sheet.addValidationData(validation);
+
+                SheetConditionalFormatting conditionalFormatting = sheet.getSheetConditionalFormatting();
+
+                ConditionalFormattingRule incompleteRule = conditionalFormatting.createConditionalFormattingRule("$D2=\"Incomplete\"");
+                PatternFormatting incompletePattern = incompleteRule.createPatternFormatting();
+                incompletePattern.setFillBackgroundColor(IndexedColors.CORAL.getIndex());
+                incompletePattern.setFillForegroundColor(IndexedColors.CORAL.getIndex());
+                incompletePattern.setFillPattern(PatternFormatting.SOLID_FOREGROUND);
+
+                ConditionalFormattingRule needsAttentionRule = conditionalFormatting.createConditionalFormattingRule("$D2=\"Needs Attention\"");
+                PatternFormatting needsAttentionPattern = needsAttentionRule.createPatternFormatting();
+                needsAttentionPattern.setFillBackgroundColor(IndexedColors.LEMON_CHIFFON.getIndex());
+                needsAttentionPattern.setFillForegroundColor(IndexedColors.LEMON_CHIFFON.getIndex());
+                needsAttentionPattern.setFillPattern(PatternFormatting.SOLID_FOREGROUND);
+
+                ConditionalFormattingRule completeRule = conditionalFormatting.createConditionalFormattingRule("$D2=\"Complete\"");
+                PatternFormatting completePattern = completeRule.createPatternFormatting();
+                completePattern.setFillBackgroundColor(IndexedColors.LIGHT_GREEN.getIndex());
+                completePattern.setFillForegroundColor(IndexedColors.LIGHT_GREEN.getIndex());
+                completePattern.setFillPattern(PatternFormatting.SOLID_FOREGROUND);
+
+                CellRangeAddress[] rows = {
+                        CellRangeAddress.valueOf("A2:E" + (dataEndRow + 1))
+                };
+                conditionalFormatting.addConditionalFormatting(
+                        rows,
+                        new ConditionalFormattingRule[]{incompleteRule, needsAttentionRule, completeRule});
+            }
+
+            Row statsTitle = getOrCreateRow(sheet, 0);
+            Cell statsTitleCell = statsTitle.createCell(6);
+            statsTitleCell.setCellValue("Progress Stats");
+            statsTitleCell.setCellStyle(statsLabelStyle);
+
+            int excelEndRow = Math.max(dataEndRow + 1, 2);
+            Row totalRow = getOrCreateRow(sheet, 1);
+            totalRow.createCell(6).setCellValue("Total Units");
+            totalRow.getCell(6).setCellStyle(statsBoxTopLabelStyle);
+            Cell totalValueCell = totalRow.createCell(7);
+            totalValueCell.setCellFormula("COUNT($B$2:$B$" + excelEndRow + ")");
+            totalValueCell.setCellStyle(statsBoxTopValueStyle);
+
+            Row incompleteRow = getOrCreateRow(sheet, 2);
+            incompleteRow.createCell(6).setCellValue("Incomplete");
+            incompleteRow.getCell(6).setCellStyle(statsBoxMiddleLabelStyle);
+            Cell incompleteValueCell = incompleteRow.createCell(7);
+            incompleteValueCell.setCellFormula("COUNTIF($D$2:$D$" + excelEndRow + ",\"Incomplete\")");
+            incompleteValueCell.setCellStyle(statsBoxMiddleValueStyle);
+
+            Row attentionRow = getOrCreateRow(sheet, 3);
+            attentionRow.createCell(6).setCellValue("Needs Attention");
+            attentionRow.getCell(6).setCellStyle(statsBoxMiddleLabelStyle);
+            Cell attentionValueCell = attentionRow.createCell(7);
+            attentionValueCell.setCellFormula("COUNTIF($D$2:$D$" + excelEndRow + ",\"Needs Attention\")");
+            attentionValueCell.setCellStyle(statsBoxMiddleValueStyle);
+
+            Row completeRow = getOrCreateRow(sheet, 4);
+            completeRow.createCell(6).setCellValue("Complete");
+            completeRow.getCell(6).setCellStyle(statsBoxBottomLabelStyle);
+            Cell completeValueCell = completeRow.createCell(7);
+            completeValueCell.setCellFormula("COUNTIF($D$2:$D$" + excelEndRow + ",\"Complete\")");
+            completeValueCell.setCellStyle(statsBoxBottomValueStyle);
+
+            Row spacerRow = getOrCreateRow(sheet, 5);
+
+            Row percentCompleteRow = getOrCreateRow(sheet, 6);
+            percentCompleteRow.createCell(6).setCellValue("Percent Complete");
+            percentCompleteRow.getCell(6).setCellStyle(statsBoxTopLabelStyle);
+            Cell percentCompleteCell = percentCompleteRow.createCell(7);
+            percentCompleteCell.setCellFormula("IF(H2=0,0,H5/H2)");
+            percentCompleteCell.setCellStyle(statsBoxPercentTopValueStyle);
+
+            Row percentIncompleteRow = getOrCreateRow(sheet, 7);
+            percentIncompleteRow.createCell(6).setCellValue("Percent Incomplete");
+            percentIncompleteRow.getCell(6).setCellStyle(statsBoxBottomLabelStyle);
+            Cell percentIncompleteCell = percentIncompleteRow.createCell(7);
+            percentIncompleteCell.setCellFormula("IF(H2=0,0,H3/H2)");
+            percentIncompleteCell.setCellStyle(statsBoxPercentBottomValueStyle);
+
+            XSSFDrawing drawing = sheet.createDrawingPatriarch();
+            XSSFClientAnchor anchor = drawing.createAnchor(0, 0, 0, 0, 9, 1, 15, 18);
+            XSSFChart chart = drawing.createChart(anchor);
+            chart.setTitleText("Completion Status");
+            chart.setTitleOverlay(false);
+
+            XDDFDataSource<String> categories = XDDFDataSourcesFactory.fromStringCellRange(sheet,
+                    new CellRangeAddress(2, 4, 6, 6));
+            XDDFNumericalDataSource<Double> values = XDDFDataSourcesFactory.fromNumericCellRange(sheet,
+                    new CellRangeAddress(2, 4, 7, 7));
+            XDDFChartData pieData = chart.createData(ChartTypes.PIE, null, null);
+            pieData.addSeries(categories, values);
+            chart.plot(pieData);
+
+            CTPieSer pieSeries = chart.getCTChart().getPlotArea().getPieChartArray(0).getSerArray(0);
+            String[] pieHex = new String[]{"FF6666", "FFC000", "66BB66"};
+            for (int i = 0; i < pieHex.length; i++) {
+                CTDPt point = pieSeries.sizeOfDPtArray() > i ? pieSeries.getDPtArray(i) : pieSeries.addNewDPt();
+                if (point.getIdx() == null) {
+                    point.addNewIdx();
+                }
+                point.getIdx().setVal(i);
+
+                CTShapeProperties shape = point.isSetSpPr() ? point.getSpPr() : point.addNewSpPr();
+                if (shape.isSetSolidFill()) {
+                    shape.unsetSolidFill();
+                }
+                CTSolidColorFillProperties fill = shape.addNewSolidFill();
+                CTSRgbColor rgb = fill.addNewSrgbClr();
+                rgb.setVal(hexToRgbBytes(pieHex[i]));
+            }
+
+            String[][] metadata = new String[][]{
+                    {"SchemaVersion", "1.0"},
+                    {"ExportType", "BoardChecklistWorkbook"},
+                    {"ExportTimestamp", new Date().toString()},
+                    {"ProjectFile", emrickPath != null ? emrickPath.getAbsolutePath() : "unsaved"},
+                    {"ProjectName", emrickPath != null ? emrickPath.getName() : "unsaved"},
+                    {"TotalRows", Integer.toString(Math.max(0, dataEndRow - dataStartRow + 1))}
+            };
+
+            for (int i = 0; i < metadata.length; i++) {
+                Row row = metadataSheet.createRow(i);
+                row.createCell(0).setCellValue(metadata[i][0]);
+                row.createCell(1).setCellValue(metadata[i][1]);
+            }
+            workbook.setSheetHidden(workbook.getSheetIndex(metadataSheet), true);
+
+            sheet.createFreezePane(0, 1);
+            for (int col = 0; col <= 7; col++) {
+                sheet.autoSizeColumn(col);
+            }
+            sheet.setColumnWidth(3, Math.max(sheet.getColumnWidth(3), 18 * 256));
+            sheet.setColumnWidth(4, Math.max(sheet.getColumnWidth(4), 16 * 256));
+            sheet.setColumnWidth(6, Math.max(sheet.getColumnWidth(6), 18 * 256));
+            sheet.setColumnWidth(7, Math.max(sheet.getColumnWidth(7), 14 * 256));
+
+            try (FileOutputStream fileOut = new FileOutputStream(selectedFile)) {
+                workbook.write(fileOut);
+            }
+
+            writeSysMsg("Exported checklist workbook: " + selectedFile.getAbsolutePath());
+        } catch (IOException e) {
+            JOptionPane.showMessageDialog(frame,
+                    "Failed to export checklist workbook:\n" + e.getMessage(),
+                    "Export Error",
+                    JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    private Row getOrCreateRow(Sheet sheet, int rowIndex) {
+        Row row = sheet.getRow(rowIndex);
+        if (row == null) {
+            row = sheet.createRow(rowIndex);
+        }
+        return row;
+    }
+
+    private String getSectionFromBoardLabel(String boardLabel) {
+        if (boardLabel == null || boardLabel.isEmpty()) {
+            return "Unknown";
+        }
+        char symbol = boardLabel.charAt(0);
+
+        // Numeric-only labels map to Snare.
+        if (Character.isDigit(symbol)) {
+            return "Snare";
+        }
+
+        switch (symbol) {
+            case 'F': return "Drum Major";
+            case 'P': return "Piccolo";
+            case 'C': return "Clarinet";
+            case 'A': return "Alto Saxophone";
+            case 'S': return "Tenor Saxophone";
+            case 'T': return "Trumpet";
+            case 'M': return "Mellophone";
+            case 'R': return "Trombone";
+            case 'E': return "Baritone";
+            case 'U': return "Tuba";
+            case '+': return "Snare";
+            case 'n': return "Tenor";
+            case 'O': return "Bass";
+            case 'Y': return "Cymbal";
+            case '$': return "BBD Crew";
+            case '@': return "BBD";
+            case '&': return "Big Ten Flags";
+            case '^': return "Golden Silks";
+            case 'D': return "Golduster";
+            case 'G': return "Golden Girl";
+            case 'B': return "Girl In Black";
+            case 'K': return "Miss Boilermette";
+            case 'N': return "Silver Twin";
+            case 'W': return "AATT";
+            default: return "Unknown";
+        }
+    }
+
+    private boolean isGdsUnit(String boardLabel) {
+        if (boardLabel == null || boardLabel.length() < 2) {
+            return false;
+        }
+        StringBuilder digits = new StringBuilder();
+        for (int i = 1; i < boardLabel.length(); i++) {
+            char c = boardLabel.charAt(i);
+            if (Character.isDigit(c)) {
+                digits.append(c);
+            } else {
+                break;
+            }
+        }
+        if (digits.length() == 0) {
+            return false;
+        }
+        try {
+            return Integer.parseInt(digits.toString()) >= 100;
+        } catch (NumberFormatException ignored) {
+            return false;
+        }
+    }
+
+    private byte[] hexToRgbBytes(String hex) {
+        return new byte[]{
+                (byte) Integer.parseInt(hex.substring(0, 2), 16),
+                (byte) Integer.parseInt(hex.substring(2, 4), 16),
+                (byte) Integer.parseInt(hex.substring(4, 6), 16)
+        };
+    }
+
+    private CellStyle createChecklistCellStyle(Workbook workbook,
+                                               BorderStyle left,
+                                               BorderStyle right,
+                                               BorderStyle top,
+                                               BorderStyle bottom) {
+        CellStyle style = workbook.createCellStyle();
+        style.setBorderLeft(left);
+        style.setBorderRight(right);
+        style.setBorderTop(top);
+        style.setBorderBottom(bottom);
+        return style;
+    }
+
+    private CellStyle createBorderStyle(Workbook workbook, BorderStyle left, BorderStyle right, BorderStyle top, BorderStyle bottom) {
+        CellStyle style = workbook.createCellStyle();
+        style.setBorderLeft(left);
+        style.setBorderRight(right);
+        style.setBorderTop(top);
+        style.setBorderBottom(bottom);
+        return style;
+    }
+
     /**
      * Applies a default led configuration to all performers
      */
@@ -3378,7 +3902,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                         currPerformerID++;
                         newPerformerList.add(currPerformer);
                     } catch (NoSuchElementException e) {
-                        // TODO: show error message and prompt for a new csv file
+                        // CSV import error handling still needs a user-facing retry flow.
                         throw new RuntimeException(e);
                     }
                 } else {
