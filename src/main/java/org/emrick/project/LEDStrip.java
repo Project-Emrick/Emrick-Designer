@@ -8,6 +8,10 @@ import java.util.Comparator;
 import java.util.Objects;
 
 public class LEDStrip {
+
+    public static final int LARGE   = 60;
+    public static final int REGULAR = 50;
+
     private int id;
     private ArrayList<Effect> effects;
     private Performer performer;
@@ -92,4 +96,5 @@ public class LEDStrip {
     public String toString() {
         return "LEDStrip: " + getLabel() + ", " + id;
     }
+    
 }

@@ -118,9 +118,77 @@ public class Performer implements Comparable<Performer> {
         this.label = label;
     }
 
+    public boolean isLeftOnly() {
+        if (symbol.equals(Symbol.GOLDEN_SILK)) {
+            return true;
+        }
+
+        // assuming there are two drum majors
+        // if not, change `label >= 3` accordingly
+        if (symbol.equals(Symbol.DRUM_MAJOR_MACE) && label >= 3) {
+            return true;
+        }
+
+        return false;
+    }
+
+    private boolean isGDS() {
+        // e.g., P11.5 is stored as P115
+        // no section has >= 100 members
+        if (label > 100) {
+            return true;
+        }
+
+        // quad GDS is n1.5
+        if (symbol.equals(Symbol.QUAD) && label > 10) {
+            return true;
+        }
+
+        // bass GDS is O1.5
+        if (symbol.equals(Symbol.BASS) && label > 10) {
+            return true;
+        }
+
+        return false;
+    }
+
+    public int getLEDCount() {
+        if (symbol.equals(Symbol.TOOBAH) || symbol.equals(Symbol.BBD_DRUM) ||
+            symbol.equals(Symbol.BASS)   || symbol.equals(Symbol.GOLDEN_SILK)) {
+            return LEDStrip.LARGE;
+        }
+        
+        // assuming there are two drum majors
+        // if not, change `label >= 3` accordingly
+        if (symbol.equals(Symbol.DRUM_MAJOR_MACE) && label >= 3) {
+            return LEDStrip.LARGE;
+        }
+
+        return LEDStrip.REGULAR;
+    }
+
+    /**
+     * Compare sections and labels to determine the relative ordering
+     * of two performers as they would appear in the CSV file.
+     * 
+     * See Symbol.java for section ordering.
+     */
     @Override
     public int compareTo(Performer o) {
-        return Integer.compare(getPerformerID(), o.getPerformerID());
+        if (isGDS() && !o.isGDS()) {
+            return 1;
+        }
+
+        if (!isGDS() && o.isGDS()) {
+            return -1;
+        }
+
+        if (!symbol.equals(o.symbol)) { // different sections, refer to section ordering
+            return Integer.compare(Symbol.CSV_ORDER.indexOf(symbol),
+                                   Symbol.CSV_ORDER.indexOf(o.symbol));
+        }
+
+        return Integer.compare(label, o.label); // same section, compare label numbers
     }
 
 }

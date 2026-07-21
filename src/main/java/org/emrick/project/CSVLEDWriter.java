@@ -4,7 +4,6 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -62,51 +61,47 @@ public class CSVLEDWriter {
     public void write(String path, List<Performer> performers) throws IOException {
         int ledStripCount = 0;
 
+        // count the total number of LED strips
+        // to include at the top of the CSV file
         for (Performer currPerformer : performers) {
-            String section = currPerformer.getSymbol();
-
-            int prefix = Symbol.getIdPrefix(section);
-            int label = currPerformer.getLabel();
-
-            int performerId = prefix + currPerformer.getLabel();
-            currPerformer.setPerformerID(performerId);
-
-            if (!Symbol.isLeftOnly(section, label)) {
+            if (!currPerformer.isLeftOnly()) {
                 ledStripCount++;
             }
 
             ledStripCount++;
         }
 
+        // sort performers based on section and label
+        // see Performer.compareTo() for more information
         Collections.sort(performers);
         
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(path))) {
             writeHeaderRow(writer, ledStripCount);
 
+            int currPerformerId = 0;
+            int currLEDStripId  = 0;
+
             for (Performer currPerformer : performers) {
+                currPerformer.setPerformerID(currPerformerId++);
+
                 String performerLabel = currPerformer.getIdentifier();
                 writePerformerRow(writer, performerLabel);
 
-                int performerId = currPerformer.getPerformerID();
-
-                String section = currPerformer.getSymbol();
-                int label = currPerformer.getLabel();
-
-                int ledCount = Symbol.isLargeStrip(section, label) ? 60 : 50;
+                int ledCount = currPerformer.getLEDCount();
 
                 LEDConfig leftLED = new LEDConfig(ledCount, DEFAULT_HEIGHT,
                                                   DEFAULT_WIDTH, DEFAULT_H_OFFSET_L,
                                                   DEFAULT_V_OFFSET, LEFT);
-                writeLEDRow(writer, performerId * 2, performerLabel, leftLED);
+                writeLEDRow(writer, currLEDStripId++, performerLabel, leftLED);
 
-                if (Symbol.isLeftOnly(section, label)) {
+                if (currPerformer.isLeftOnly()) {
                     continue;
                 }
 
                 LEDConfig rightLED = new LEDConfig(ledCount, DEFAULT_HEIGHT,
                                                    DEFAULT_WIDTH, DEFAULT_H_OFFSET_R,
                                                    DEFAULT_V_OFFSET, RIGHT);
-                writeLEDRow(writer, performerId * 2 + 1, performerLabel, rightLED);
+                writeLEDRow(writer, currLEDStripId++, performerLabel, rightLED);
             }
         }
     }

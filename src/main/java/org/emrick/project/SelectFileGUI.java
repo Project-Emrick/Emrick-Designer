@@ -73,9 +73,6 @@ public class SelectFileGUI implements ActionListener {
                 <p style=\"font-style: italic\"> \
                     <span style="color: red">*</span> indicates required fields \
                 </p> \
-                <p style=\"margin-top: 8px\"> \
-                    Leave .csv file empty to auto-generate based on drill file (.pdf). \
-                </p> \
             </html>""");
         descriptionLabel.setFont(new Font("Arial", Font.PLAIN, 12));
         // descriptionLabel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
@@ -91,7 +88,9 @@ public class SelectFileGUI implements ActionListener {
         // Upload coordinates
         JLabel ulCoordsLabel = new JLabel("""
             <html> \
-                Coordinates (.pdf) <span style=\"color: red\">*</span> \
+                <p style=\"margin: 4px 0px\"> \
+                    Coordinates (.pdf) <span style=\"color: red\">*</span> \
+                </p> \
             </html>""");
         this.ulCoordsButton = new JButton("Select File");
         this.ulCoordsFilename = new JLabel("No File Selected");
@@ -104,7 +103,9 @@ public class SelectFileGUI implements ActionListener {
         // Upload pyware archive (3dz)
         JLabel ulArchiveLabel = new JLabel("""
             <html> \
-                Pyware Archive (.3dz) <span style=\"color: red\">*</span> \
+                <p style=\"margin: 4px 0px\"> \
+                    Pyware Archive (.3dz) <span style=\"color: red\">*</span> \
+                </p> \
             </html>""");
         this.ulArchiveButton = new JButton("Select File");
         this.ulArchiveFilename = new JLabel("No File Selected");
@@ -118,6 +119,9 @@ public class SelectFileGUI implements ActionListener {
         JLabel ulCsvLabel = new JLabel("""
             <html> \
                 Device ID Comma Separated Values (.csv) \
+                <p style=\"margin: 4px 0px; font-style: italic\"> \
+                    Leave empty to auto-generate based on drill file (.pdf). \
+                </p> \
             </html>""");
         this.ulCsvButton = new JButton("Select File");
         this.ulCsvFilename = new JLabel("No File Selected");
