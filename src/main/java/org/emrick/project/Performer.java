@@ -85,7 +85,8 @@ public class Performer implements Comparable<Performer> {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         Performer performer = (Performer) o;
-        return performerID == performer.getPerformerID();
+        // return performerID == performer.getPerformerID();
+        return getIdentifier().equals(performer.getIdentifier());
     }
 
     @Override

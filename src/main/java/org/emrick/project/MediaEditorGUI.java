@@ -4802,7 +4802,23 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             public void onDrillImport(String drill) {
                 Drill newDrill = DrillParser.parseWholeDrill(DrillParser.extractText(drill));
                 Drill oldDrill = footballFieldPanel.drill;
+
+                boolean csvFileAvailable = false;
+
+                try {
+                    csvFile = CSVLEDWriter.createDefaultCSV(newDrill.performers);
+                    csvFileAvailable = true;
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+
+                if (csvFileAvailable) {
+                    footballFieldPanel.drill.performers = newDrill.performers;
+                    parseCsvFileForPerformerDeviceIDs(csvFile);
+                }
+
                 boolean same = true;
+
                 for (int i = 0 ; i < oldDrill.sets.size(); i++) {
                     if (newDrill.sets.size() > i) {
                         if (!newDrill.sets.get(i).equals(oldDrill.sets.get(i))
@@ -5219,9 +5235,11 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                     rebuildPageTabCounts();
                     setupEffectView(effectManager.getIds());
                     updateTimelinePanel();
-
-
                 }
+
+                // determine if any performers were added, removed, or modified
+                // update performers and led strips accordingly to preserve existing effects
+                // how to handle full band effects? (e.g., wave, chase, etc.)
 
                 oldDrill.coordinates = newDrill.coordinates;
                 for (Performer p : oldDrill.performers) {
