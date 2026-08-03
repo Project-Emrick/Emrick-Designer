@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Scanner;
+import java.util.function.Consumer;
 
 /**
  * This class handles importing the zipped Pyware archive (.3dz) contents into the project for use.
@@ -28,7 +29,25 @@ public class ImportArchive {
 
     //for current file types
     public void fullImport(ArrayList<File> archiveFiles, String drillSrc) {
-        importListener.onBeginImport();
+        fullImportInternal(archiveFiles, drillSrc, null, false);
+    }
+
+    public void fullImportInBackground(ArrayList<File> archiveFiles,
+                                       String drillSrc,
+                                       Consumer<ThemedLoadingDialog.StatusUpdate> progressConsumer) {
+        fullImportInternal(archiveFiles, drillSrc, progressConsumer, true);
+    }
+
+    private void fullImportInternal(ArrayList<File> archiveFiles,
+                                    String drillSrc,
+                                    Consumer<ThemedLoadingDialog.StatusUpdate> progressConsumer,
+                                    boolean backgroundSafe) {
+        if (backgroundSafe) {
+            runOnEdtAndWait(importListener::onBeginImport);
+        } else {
+            importListener.onBeginImport();
+        }
+        publish(progressConsumer, "Preparing import", "Copying archive references and unpacking show data...");
 
         ArrayList<String> absoluteArchivePaths = new ArrayList<>();
         for (File f : archiveFiles) {
@@ -63,6 +82,7 @@ public class ImportArchive {
         for (String s : unzipPaths) {
             Map<String, Map<String, String>> iniData = new HashMap<>();
             try {
+                publish(progressConsumer, "Reading archive", "Scanning package metadata from " + new File(s).getName() + "...");
                 File iniFile = new File(s + File.separator + "package.ini");
                 Scanner iniReader = new Scanner(iniFile);
                 String currentSection = null;
@@ -110,13 +130,19 @@ public class ImportArchive {
 
         }
         if (audioPaths.size() > 0) {
+            publish(progressConsumer, "Loading audio", "Creating audio tracks for the imported project...");
             importAudio(audioPaths);
         }
 
-        importListener.onImport();
+        if (backgroundSafe) {
+            runOnEdtAndWait(importListener::onImport);
+        } else {
+            importListener.onImport();
+        }
 
         // Import drill
         if (drillSrc != null) {
+            publish(progressConsumer, "Parsing drill", "Building the drill view and performer data...");
             importDrill(drillSrc);
         }
     }
@@ -232,5 +258,24 @@ public class ImportArchive {
             importFiles.add(new File(s));
         }
         importListener.onConcatAudioImport(importFiles);
+    }
+
+    private void publish(Consumer<ThemedLoadingDialog.StatusUpdate> progressConsumer, String title, String detail) {
+        if (progressConsumer != null) {
+            progressConsumer.accept(new ThemedLoadingDialog.StatusUpdate(title, detail));
+        }
+    }
+
+    private void runOnEdtAndWait(Runnable runnable) {
+        if (EventQueue.isDispatchThread()) {
+            runnable.run();
+            return;
+        }
+
+        try {
+            EventQueue.invokeAndWait(runnable);
+        } catch (Exception ex) {
+            throw new RuntimeException(ex);
+        }
     }
 }

@@ -237,10 +237,27 @@ public class SelectFileGUI implements ActionListener {
                                                   JOptionPane.ERROR_MESSAGE);
                     return;
                 }*/
-                // TODO: add status of import here?
                 System.out.println("begin import...");
+                startImportWithLoading();
+            }
 
-                // TODO: Import Coordinates Pdf and Pyware Archive
+        }
+    }
+
+    private void startImportWithLoading() {
+        ThemedLoadingDialog loadingDialog = new ThemedLoadingDialog(
+                dialogWindow,
+                "Create Project",
+                "PROJECT IMPORT",
+                "Preparing project import...",
+                "Copying the selected files into the project workspace.",
+                "This window stays up while Emrick Designer builds the new project."
+        );
+
+        SwingWorker<Void, ThemedLoadingDialog.StatusUpdate> worker = new SwingWorker<>() {
+            @Override
+            protected Void doInBackground() {
+                publish(new ThemedLoadingDialog.StatusUpdate("Copying files", "Moving selected drill, archive, and csv files into show_data..."));
 
                 ArrayList<String> files = new ArrayList<>();
                 for (File f : archiveFiles) {
@@ -249,25 +266,55 @@ public class SelectFileGUI implements ActionListener {
                 if (csvFile != null) {
                     files.add(csvFile.getAbsolutePath());
                 }
-                copyFiles(files, PathConverter.pathConverter("show_data", false));
-                ArrayList<File> archiveFilesCopy = new ArrayList<>();
 
+                copyFiles(files, PathConverter.pathConverter("show_data", false));
+
+                ArrayList<File> archiveFilesCopy = new ArrayList<>();
                 for (File f : archiveFiles) {
                     archiveFilesCopy.add(new File(PathConverter.pathConverter("show_data/" + f.getName(), false)));
                 }
-                this.archiveFiles = archiveFilesCopy;
 
+                File copiedCsvFile = null;
                 if (csvFile != null) {
-                    csvFile = new File(PathConverter.pathConverter("show_data/" + csvFile.getName(), false));
+                    copiedCsvFile = new File(PathConverter.pathConverter("show_data/" + csvFile.getName(), false));
                 }
 
-                importListener.onFileSelect(archiveFiles, csvFile);
-                importArchive.fullImport(archiveFiles, coordsFile.getAbsolutePath());
+                File finalCopiedCsvFile = copiedCsvFile;
+                runOnEdtAndWait(() -> importListener.onFileSelect(archiveFilesCopy, finalCopiedCsvFile));
 
-                dialogWindow.dispose();
+                importArchive.fullImportInBackground(
+                        archiveFilesCopy,
+                        coordsFile.getAbsolutePath(),
+                        update -> publish(update)
+                );
+
+                return null;
             }
 
-        }
+            @Override
+            protected void process(java.util.List<ThemedLoadingDialog.StatusUpdate> chunks) {
+                for (ThemedLoadingDialog.StatusUpdate update : chunks) {
+                    loadingDialog.update(update.title(), update.detail());
+                }
+            }
+
+            @Override
+            protected void done() {
+                loadingDialog.dispose();
+                try {
+                    get();
+                    dialogWindow.dispose();
+                } catch (Exception ex) {
+                    JOptionPane.showMessageDialog(dialogWindow,
+                            "Project creation failed: " + ex.getMessage(),
+                            "Import Error",
+                            JOptionPane.ERROR_MESSAGE);
+                }
+            }
+        };
+
+        worker.execute();
+        loadingDialog.setVisible(true);
     }
 
     private void copyFiles(ArrayList<String> files, String dir) {
@@ -279,8 +326,9 @@ public class SelectFileGUI implements ActionListener {
                 FileInputStream fis = new FileInputStream(f);
                 FileOutputStream fos = new FileOutputStream(directory.getAbsolutePath() + "/" + f.getName());
                 byte[] buf = new byte[1024];
-                while (fis.read(buf) > 0) {
-                    fos.write(buf);
+                int bytesRead;
+                while ((bytesRead = fis.read(buf)) > 0) {
+                    fos.write(buf, 0, bytesRead);
                     fos.flush();
                 }
                 fis.close();
@@ -288,6 +336,19 @@ public class SelectFileGUI implements ActionListener {
             }
         } catch (IOException ioe) {
             throw new RuntimeException(ioe);
+        }
+    }
+
+    private void runOnEdtAndWait(Runnable runnable) {
+        if (EventQueue.isDispatchThread()) {
+            runnable.run();
+            return;
+        }
+
+        try {
+            EventQueue.invokeAndWait(runnable);
+        } catch (Exception ex) {
+            throw new RuntimeException(ex);
         }
     }
 
