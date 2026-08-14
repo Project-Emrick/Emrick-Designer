@@ -576,18 +576,15 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         fileMenu.add(exportItem);
         exportItem.addActionListener(e -> {
             writeSysMsg("Exporting packets...");
-            JFileChooser fileChooser = new JFileChooser();
-            fileChooser.setDialogTitle("Export Project");
-            fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
-            fileChooser.setFileFilter(new FileNameExtensionFilter("Emrick Project Packets (*.pkt)",
-                    "pkt"));
-            if (fileChooser.showSaveDialog(fileMenu) == JFileChooser.APPROVE_OPTION) {
-                String path = fileChooser.getSelectedFile().getAbsolutePath();
-                if (!path.endsWith(".pkt")) {
-                    path += ".pkt";
-                }
-                writeSysMsg("Exporting file `" + path + "`.");
-                exportPackets(new File(path));
+            File selectedFile = EmrickFileChooser.chooseSaveFile(
+                    frame,
+                    "PACKET_EXPORT",
+                    "Export Project",
+                    "Emrick Project Packets (*.pkt)",
+                    ".pkt");
+            if (selectedFile != null) {
+                writeSysMsg("Exporting file `" + selectedFile.getAbsolutePath() + "`.");
+                exportPackets(selectedFile);
             }
         });
 
@@ -599,18 +596,13 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         exportCsvItem.addActionListener(e -> {
             ArrayList<Performer> performers = footballFieldPanel.drill.performers;
 
-            JFileChooser fileChooser = SelectFileGUI.getFileChooser("Device ID Comma Separated Values (*.csv)", ".csv");
-
-            int retVal = fileChooser.showSaveDialog(null);
-
-            System.out.println("retVal = " + retVal);
-
-            if (retVal == JFileChooser.APPROVE_OPTION) {
-                File selectedFile = fileChooser.getSelectedFile();
-                if (!selectedFile.getAbsolutePath().endsWith(".csv")) {
-                    File tmp = selectedFile;
-                    selectedFile = new File(tmp.getAbsolutePath() + ".csv");
-                }
+            File selectedFile = EmrickFileChooser.chooseSaveFile(
+                    frame,
+                    "CSV_EXPORT",
+                    "Export Device IDs CSV",
+                    "Device ID Comma Separated Values (*.csv)",
+                    ".csv");
+            if (selectedFile != null) {
                 exportCsvFileForPerformerDeviceIDs(selectedFile);
             }
 
@@ -620,11 +612,13 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         JMenuItem importCsvItem = new JMenuItem("Import Device IDs CSV");
         fileMenu.add(importCsvItem);
         importCsvItem.addActionListener(e -> {
-            JFileChooser fileChooser = SelectFileGUI.getFileChooser("Device ID Comma Separated Values (*.csv)", ".csv");
-
-            int returnValue = fileChooser.showOpenDialog(null);
-            if (returnValue == JFileChooser.APPROVE_OPTION) {
-                File selectedFile = fileChooser.getSelectedFile();
+            File selectedFile = EmrickFileChooser.chooseOpenFile(
+                    frame,
+                    "CSV_IMPORT",
+                    "Import Device IDs CSV",
+                    "Device ID Comma Separated Values (*.csv)",
+                    ".csv");
+            if (selectedFile != null) {
                 System.out.println("CSV     | Selected file: " + selectedFile.getAbsoluteFile());
                 csvFile = selectedFile;
                 parseCsvFileForPerformerDeviceIDs(csvFile);
@@ -636,17 +630,13 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         JMenuItem exportChecklistItem = new JMenuItem("Export Board Checklist Workbook");
         fileMenu.add(exportChecklistItem);
         exportChecklistItem.addActionListener(e -> {
-            JFileChooser fileChooser = new JFileChooser();
-            fileChooser.setDialogTitle("Export Board Checklist Workbook");
-            fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
-            fileChooser.setFileFilter(new FileNameExtensionFilter("Excel Workbook (*.xlsx)", "xlsx"));
-
-            int retVal = fileChooser.showSaveDialog(null);
-            if (retVal == JFileChooser.APPROVE_OPTION) {
-                File selectedFile = fileChooser.getSelectedFile();
-                if (!selectedFile.getAbsolutePath().toLowerCase().endsWith(".xlsx")) {
-                    selectedFile = new File(selectedFile.getAbsolutePath() + ".xlsx");
-                }
+            File selectedFile = EmrickFileChooser.chooseSaveFile(
+                    frame,
+                    "CHECKLIST_EXPORT",
+                    "Export Board Checklist Workbook",
+                    "Excel Workbook (*.xlsx)",
+                    ".xlsx");
+            if (selectedFile != null) {
                 exportBoardChecklistWorkbook(selectedFile);
             }
         });
@@ -2157,17 +2147,18 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             // delete file after server is stopped.
             if(archivePaths == null) { //if no project open
                 if (path.isEmpty()) {
-                    JFileChooser fileChooser = new JFileChooser();
-                    fileChooser.setDialogTitle("Select Packets (.pkt) file");
-                    fileChooser.setFileFilter(new FileNameExtensionFilter("Emrick Designer Packets File (*.pkt)", "pkt"));
-                    fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
-                    if (fileChooser.showOpenDialog(null) != JFileChooser.APPROVE_OPTION) {
+                    f = EmrickFileChooser.chooseOpenFile(
+                            frame,
+                            "PACKET_OPEN",
+                            "Select Packets (.pkt) File",
+                            "Emrick Designer Packets File (*.pkt)",
+                            ".pkt");
+                    if (f == null) {
                         stopWebServer.setEnabled(false);
                         runWebServer.setEnabled(true);
                         runLightBoardWebServer.setEnabled(true);
                         return;
                     }
-                    f = fileChooser.getSelectedFile();
                 } else {
                     f = new File(path);
                 }
@@ -2473,12 +2464,12 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             /* Select Results Save Path */
             String rssiResultsSavePath = "";
 
-            JFileChooser fileChooser = new JFileChooser();
-            fileChooser.setDialogTitle("Select RSSI Results Save Location");
-            fileChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
-
-            if (fileChooser.showSaveDialog(null) == JFileChooser.APPROVE_OPTION) {
-                rssiResultsSavePath = fileChooser.getSelectedFile().getAbsolutePath();
+            File selectedDirectory = EmrickFileChooser.chooseDirectory(
+                    frame,
+                    "RSSI_RESULTS_DIRECTORY",
+                    "Select RSSI Results Save Location");
+            if (selectedDirectory != null) {
+                rssiResultsSavePath = selectedDirectory.getAbsolutePath();
             }
 
             /* WiFi Credentials Input */
@@ -4137,28 +4128,30 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
      */
     private void openProjectDialog() {
         writeSysMsg("Opening project...");
-        JFileChooser fileChooser = new JFileChooser();
-        fileChooser.setDialogTitle("Open Project");
-        fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
-        fileChooser.setFileFilter(new FileNameExtensionFilter("Emrick Project Files (*.emrick)","emrick"));
-
-        if (fileChooser.showOpenDialog(null) == JFileChooser.APPROVE_OPTION) {
-            writeSysMsg("Opening file `" + fileChooser.getSelectedFile().getAbsolutePath() + "`.");
-            loadProject(fileChooser.getSelectedFile());
+        File selectedFile = EmrickFileChooser.chooseOpenFile(
+            frame,
+            "PROJECT_OPEN",
+            "Open Project",
+            "Emrick Project Files (*.emrick)",
+            ".emrick");
+        if (selectedFile != null) {
+            writeSysMsg("Opening file `" + selectedFile.getAbsolutePath() + "`.");
+            loadProject(selectedFile);
         }
     }
 
     private void concatenateDialog() {
         writeSysMsg("Concatenating Project");
 
-        JFileChooser fileChooser = new JFileChooser();
-        fileChooser.setDialogTitle("Choose Project");
-        fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
-        fileChooser.setFileFilter(new FileNameExtensionFilter("Emrick Project Files (*.emrick)", "emrick"));
-
-        if (fileChooser.showOpenDialog(null) == JFileChooser.APPROVE_OPTION) {
-            writeSysMsg("Opening file '" + fileChooser.getSelectedFile().getAbsolutePath() + "' for concatenation.");
-            concatenateProject(fileChooser.getSelectedFile());
+        File selectedFile = EmrickFileChooser.chooseOpenFile(
+            frame,
+            "PROJECT_CONCATENATE",
+            "Choose Project",
+            "Emrick Project Files (*.emrick)",
+            ".emrick");
+        if (selectedFile != null) {
+            writeSysMsg("Opening file '" + selectedFile.getAbsolutePath() + "' for concatenation.");
+            concatenateProject(selectedFile);
         }
     }
 
@@ -4194,19 +4187,15 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         }
 
         writeSysMsg("Saving New Project...");
-        JFileChooser fileChooser = new JFileChooser();
-        fileChooser.setDialogTitle("Save Project");
-        fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
-        fileChooser.setFileFilter(new FileNameExtensionFilter("Emrick Project Files (*.emrick)",
-                "emrick"));
-
-        if (fileChooser.showSaveDialog(null) == JFileChooser.APPROVE_OPTION) {
-            String path = fileChooser.getSelectedFile().getAbsolutePath();
-            if (!path.endsWith(".emrick")) {
-                path += ".emrick";
-            }
-            writeSysMsg("Saving file `" + path + "`.");
-            saveProject(new File(path), archivePaths);
+        File selectedFile = EmrickFileChooser.chooseSaveFile(
+                frame,
+                "PROJECT_SAVE",
+                "Save Project",
+                "Emrick Project Files (*.emrick)",
+                ".emrick");
+        if (selectedFile != null) {
+            writeSysMsg("Saving file `" + selectedFile.getAbsolutePath() + "`.");
+            saveProject(selectedFile, archivePaths);
         }
     }
 

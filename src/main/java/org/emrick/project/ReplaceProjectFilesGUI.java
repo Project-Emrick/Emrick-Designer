@@ -73,22 +73,26 @@ public class ReplaceProjectFilesGUI extends JDialog implements ActionListener {
     @Override
     public void actionPerformed(ActionEvent e) {
         if (e.getSource() == drillButton) {
-            JFileChooser chooser = new JFileChooser();
-            chooser.setDialogTitle("Drill Select");
-            chooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
-            chooser.setFileFilter(new FileNameExtensionFilter("PDF files", "pdf"));
-            if (chooser.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
-                drillLabel.setText(chooser.getSelectedFile().getName());
-                drill = chooser.getSelectedFile();
+            File selectedFile = EmrickFileChooser.chooseOpenFile(
+                    this,
+                    "REPLACE_PROJECT_DRILL",
+                    "Drill Select",
+                    "PDF Files (*.pdf)",
+                    ".pdf");
+            if (selectedFile != null) {
+                drillLabel.setText(selectedFile.getName());
+                drill = selectedFile;
             }
         } else if (e.getSource() == archiveButton) {
-            JFileChooser chooser = new JFileChooser();
-            chooser.setDialogTitle("Archive Select");
-            chooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
-            chooser.setFileFilter(new FileNameExtensionFilter("Pyware Archives", "3dz"));
-            if (chooser.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
-                archiveLabel.setText(chooser.getSelectedFile().getName());
-                archive = chooser.getSelectedFile();
+            File selectedFile = EmrickFileChooser.chooseOpenFile(
+                    this,
+                    "REPLACE_PROJECT_ARCHIVE",
+                    "Archive Select",
+                    "Pyware Archives (*.3dz)",
+                    ".3dz");
+            if (selectedFile != null) {
+                archiveLabel.setText(selectedFile.getName());
+                archive = selectedFile;
             }
         } else if (e.getSource() == importButton) {
             if (listener.onNewFileSelect(drill, archive)) {

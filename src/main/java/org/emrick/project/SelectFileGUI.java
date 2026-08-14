@@ -174,11 +174,13 @@ public class SelectFileGUI implements ActionListener {
 
             // Select coordinates file (.pdf)
             if (sourceButton.equals(ulCoordsButton)) {
-                JFileChooser fileChooser = getFileChooser("PDF Documents (*.pdf)", ".pdf");
-
-                int returnValue = fileChooser.showOpenDialog(null);
-                if (returnValue == JFileChooser.APPROVE_OPTION) {
-                    File selectedFile = fileChooser.getSelectedFile();
+                File selectedFile = EmrickFileChooser.chooseOpenFile(
+                        dialogWindow,
+                        "NEW_PROJECT_COORDINATES",
+                        "Select Coordinates PDF",
+                        "PDF Documents (*.pdf)",
+                        ".pdf");
+                if (selectedFile != null) {
                     System.out.println("Coordinates | Selected file: " + selectedFile.getAbsoluteFile());
                     ulCoordsFilename.setText(selectedFile.getName());
                     coordsFile = selectedFile;
@@ -187,11 +189,13 @@ public class SelectFileGUI implements ActionListener {
 
             // Select archive file (.3dz)
             else if (sourceButton.equals(ulArchiveButton)) {
-                JFileChooser fileChooser = getFileChooser("Pyware Drill Archive (*.3dz)", ".3dz");
-
-                int returnValue = fileChooser.showOpenDialog(null);
-                if (returnValue == JFileChooser.APPROVE_OPTION) {
-                    File selectedFile = fileChooser.getSelectedFile();
+                File selectedFile = EmrickFileChooser.chooseOpenFile(
+                        dialogWindow,
+                        "NEW_PROJECT_ARCHIVE",
+                        "Select Pyware Drill Archive",
+                        "Pyware Drill Archive (*.3dz)",
+                        ".3dz");
+                if (selectedFile != null) {
                     System.out.println("Archive     | Selected file: " + selectedFile.getAbsoluteFile());
                     ulArchiveFilename.setText(selectedFile.getName());
                     this.archiveFiles.add(selectedFile);
@@ -200,11 +204,13 @@ public class SelectFileGUI implements ActionListener {
 
             // Select csv file (.csv)
             else if (sourceButton.equals(ulCsvButton)) {
-                JFileChooser fileChooser = getFileChooser("Device ID Comma Separated Values (*.csv)", ".csv");
-
-                int returnValue = fileChooser.showOpenDialog(null);
-                if (returnValue == JFileChooser.APPROVE_OPTION) {
-                    File selectedFile = fileChooser.getSelectedFile();
+                File selectedFile = EmrickFileChooser.chooseOpenFile(
+                        dialogWindow,
+                        "NEW_PROJECT_CSV",
+                        "Select Device IDs CSV",
+                        "Device ID Comma Separated Values (*.csv)",
+                        ".csv");
+                if (selectedFile != null) {
                     System.out.println("CSV     | Selected file: " + selectedFile.getAbsoluteFile());
                     ulCsvFilename.setText(selectedFile.getName());
                     csvFile = selectedFile;
@@ -352,27 +358,4 @@ public class SelectFileGUI implements ActionListener {
         }
     }
 
-    static JFileChooser getFileChooser(String x, String suffix) {
-        JFileChooser fileChooser = new JFileChooser();
-        fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
-
-        // Filter for archive files (e.g., pyware_archive.3dz)
-        fileChooser.setFileFilter(new FileFilter() {
-
-            public boolean accept(File f) {
-                if (f.isDirectory()) {
-                    return true;
-                } else {
-                    String filename = f.getName().toLowerCase();
-                    return filename.endsWith(suffix);
-                }
-            }
-
-            public String getDescription() {
-                return x;
-            }
-        });
-
-        return fileChooser;
-    }
 }
