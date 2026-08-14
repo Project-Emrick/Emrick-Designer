@@ -38,6 +38,7 @@ public class HardwareStatusIndicator extends JPanel {
     private static final Color DISCONNECTED_COLOR = new Color(220, 20, 60); // Crimson
     private static final Color MULTIPLE_COLOR = new Color(255, 140, 0); // Dark Orange
     private static final Color SCANNING_COLOR = new Color(255, 200, 0); // yellow for scanning
+    private static final String EMOJI_FONT = "Segoe UI Emoji";
 
     public HardwareStatusIndicator(MediaEditorGUI parent) {
         this.parent = parent;
@@ -64,9 +65,9 @@ public class HardwareStatusIndicator extends JPanel {
         JPanel txRow = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
         txRow.setOpaque(false);
 
-        JLabel txIcon = new JLabel("<html>&#x1F4E1;</html>");
+        JLabel txIcon = new JLabel(emoji(0x1F4E1));
         txIcon.setToolTipText("Transmitter Status");
-        txIcon.setFont(new Font(Font.SANS_SERIF, Font.PLAIN, 10));
+        txIcon.setFont(createEmojiFont(10));
         // Fix icon size to prevent growing
         txIcon.setPreferredSize(new Dimension(16, 12));
         txIcon.setMinimumSize(new Dimension(16, 12));
@@ -90,9 +91,9 @@ public class HardwareStatusIndicator extends JPanel {
         JPanel rxRow = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
         rxRow.setOpaque(false);
 
-        JLabel rxIcon = new JLabel("<html>&#x1F4FB;</html>");
+        JLabel rxIcon = new JLabel(emoji(0x1F4FB));
         rxIcon.setToolTipText("Receiver Status");
-        rxIcon.setFont(new Font(Font.SANS_SERIF, Font.PLAIN, 10));
+        rxIcon.setFont(createEmojiFont(10));
         // Fix icon size to prevent growing
         rxIcon.setPreferredSize(new Dimension(16, 12));
         rxIcon.setMinimumSize(new Dimension(16, 12));
@@ -124,14 +125,25 @@ public class HardwareStatusIndicator extends JPanel {
         add(spinnerLabel);
 
         // Refresh button on the right side - make it non-focusable
-        JButton refreshButton = new JButton("<html>&#x1F504;</html>");
-        refreshButton.setFont(new Font(Font.SANS_SERIF, Font.PLAIN, 10));
+        JButton refreshButton = new JButton(emoji(0x1F504));
+        refreshButton.setFont(createEmojiFont(10));
         refreshButton.setToolTipText("Refresh Hardware Detection");
         refreshButton.setPreferredSize(new Dimension(20, 20));
         refreshButton.setMargin(new Insets(0, 0, 0, 0));
         refreshButton.setFocusable(false); // Prevent focus stealing
         refreshButton.addActionListener(e -> scanForHardware());
         add(refreshButton);
+    }
+
+    private static Font createEmojiFont(int size) {
+        Font emojiFont = new Font(EMOJI_FONT, Font.PLAIN, size);
+        return EMOJI_FONT.equals(emojiFont.getFamily())
+                ? emojiFont
+                : new Font(Font.SANS_SERIF, Font.PLAIN, size);
+    }
+
+    private static String emoji(int codePoint) {
+        return new String(Character.toChars(codePoint));
     }
 
     private void startHardwareScanning() {
