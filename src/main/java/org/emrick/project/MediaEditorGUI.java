@@ -76,7 +76,6 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
     public static final String FILE_MENU_CONCATENATE = "Concatenate";
     public static final String FILE_MENU_NEW_PROJECT = "New Project";
     public static final String FILE_MENU_OPEN_PROJECT = "Open Project";
-    public static final String FILE_MENU_CLOSE_TEMP = "Close Project (Temp)";
     public static final String FILE_MENU_SAVE = "Save Project";
     public static final String FILE_MENU_SAVE_AS = "Save Project As";
 
@@ -527,10 +526,6 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         openItem.addActionListener(e -> {
             openProjectDialog();
         });
-
-        JMenuItem closeProjectTempItem = new JMenuItem(FILE_MENU_CLOSE_TEMP);
-        fileMenu.add(closeProjectTempItem);
-        closeProjectTempItem.addActionListener(e -> closeProjectToWelcome());
 
         fileMenu.addSeparator();
 
@@ -4926,43 +4921,6 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         }
         mainContentPanel.revalidate();
         mainContentPanel.repaint();
-    }
-
-    private void closeProjectToWelcome() {
-        if (archivePaths == null) {
-            replaceMainView(buildWelcomePanel(this), scrubBarPanel);
-            if (frame != null) {
-                frame.setTitle("Emrick Designer");
-                frame.revalidate();
-                frame.repaint();
-            }
-            return;
-        }
-
-        int response = JOptionPane.showConfirmDialog(
-                frame,
-                "Do you want to save before closing this project?",
-                "Close Project",
-                JOptionPane.YES_NO_CANCEL_OPTION,
-                JOptionPane.QUESTION_MESSAGE
-        );
-
-        if (response == JOptionPane.CANCEL_OPTION || response == JOptionPane.CLOSED_OPTION) {
-            return;
-        }
-        if (response == JOptionPane.YES_OPTION) {
-            saveProjectDialog();
-        }
-
-        emrickPath = null;
-        archivePaths = null;
-        replaceMainView(buildWelcomePanel(this), scrubBarPanel);
-        if (frame != null) {
-            frame.setTitle("Emrick Designer");
-            frame.revalidate();
-            frame.repaint();
-        }
-        writeSysMsg("Project closed. Returned to welcome screen.");
     }
 
     /**
