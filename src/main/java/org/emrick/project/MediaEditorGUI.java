@@ -209,8 +209,8 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
 
         // Main frame
         frame = new JFrame("Emrick Designer");
-        Image icon = Toolkit.getDefaultToolkit().getImage(PathConverter.pathConverter("res/images/icon.png", true));
-        frame.setIconImage(icon);
+        // Image icon = Toolkit.getDefaultToolkit().getImage(PathConverter.pathConverter("res/images/icon.png", true));
+        frame.setIconImage(Icons.loadToolkitImage("/images/icon.png"));
         frame.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
         
         Toolkit toolkit = Toolkit.getDefaultToolkit();
@@ -414,11 +414,22 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         footballFieldBackground = new FootballFieldBackground(this);
 
         try {
-            BufferedImage surface = ImageIO.read(new File(PathConverter.pathConverter("res/images/field/Surface.png", true)));
-            BufferedImage cover = ImageIO.read(new File(PathConverter.pathConverter("res/images/field/Cover.png", true)));
+            // BufferedImage surface = ImageIO.read(new File(PathConverter.pathConverter("res/images/field/Surface.png", true)));
+            // BufferedImage cover = ImageIO.read(new File(PathConverter.pathConverter("res/images/field/Cover.png", true)));
+
+            BufferedImage surface = ImageIO.read(Objects.requireNonNull(
+                getClass().getResourceAsStream("/images/field/Surface.png"),
+                "Missing resource: /images/field/Surface.png"
+            ));
+
+            BufferedImage cover = ImageIO.read(Objects.requireNonNull(
+                getClass().getResourceAsStream("/images/field/Cover.png"),
+                "Missing resource: /images/field/Cover.png"
+            ));
+
             footballFieldBackground.setSurfaceImage(surface);
             footballFieldBackground.setFloorCoverImage(cover);
-        } catch (IOException ioe) {
+        } catch (IOException | NullPointerException ioe) {
             throw new RuntimeException(ioe);
         }
 
@@ -2034,7 +2045,8 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         if (port.isEmpty()) {
             port = (String) JOptionPane.showInputDialog(null, "Choose",
                     "Menu", JOptionPane.INFORMATION_MESSAGE,
-                    new ImageIcon(PathConverter.pathConverter("icon.ico", true)),
+                    Icons.loadImageIcon("/images/icon.png"),
+                    // new ImageIcon(PathConverter.pathConverter("icon.ico", true)),
                     allPortNames, allPortNames[0]);
         } else {
             writeSysMsg("Found Emrick Hardware at: " + port);
@@ -2341,7 +2353,8 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             webServerFrame = new JFrame("Board Programming Tracker");
             webServerFrame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
             webServerFrame.setSize(800, 600);
-            webServerFrame.setIconImage(Toolkit.getDefaultToolkit().getImage(PathConverter.pathConverter("res/images/icon.png", true)));
+            webServerFrame.setIconImage(Icons.loadToolkitImage("/images/icon.png"));
+            // webServerFrame.setIconImage(Toolkit.getDefaultToolkit().getImage(PathConverter.pathConverter("res/images/icon.png", true)));
 
             /* Create a new Private Class Instance of Programming Tracker */
             programmingTracker = new ProgrammingTracker(footballFieldPanel.drill.ledStrips, requestIDs);
@@ -3557,6 +3570,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         }
 
     }
+
     @Override
     public void onConcatAudioImport(ArrayList<File> audioFiles) {
         for (File f : audioFiles) {
@@ -3569,11 +3583,39 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
     public void onDrillImport(String drill) {
         String text = DrillParser.extractText(drill);
         footballFieldPanel.drill = DrillParser.parseWholeDrill(text);
-        if (csvFile != null) {
+
+        System.out.println("Drill parsed and loaded.");
+
+        boolean csvFileAvailable = csvFile != null;
+
+        if (!csvFileAvailable) {
+            try {
+                csvFile = CSVLEDWriter.createDefaultCSV(footballFieldPanel.drill.performers);
+                csvFileAvailable = true;
+            } catch (IOException e) {
+                e.printStackTrace();
+                
+                csvFile = null;
+                csvFileAvailable = false;
+            }
+        }
+
+        System.out.println("CSV file availability: " + csvFileAvailable);
+        
+        if (csvFileAvailable) {
             parseCsvFileForPerformerDeviceIDs(csvFile);
         } else {
             applyDefaultLEDConfiguration();
         }
+
+        System.out.println("LED configurations applied.");
+
+        // if (csvFile != null) {
+        //     parseCsvFileForPerformerDeviceIDs(csvFile);
+        // } else {
+        //     applyDefaultLEDConfiguration();
+        // }
+        
         footballFieldPanel.addSetToField(footballFieldPanel.drill.sets.get(0));
         currentMovement = 1;  //cannot be other movements if drill is being imported
         count2RFTrigger = new HashMap<>();
@@ -4760,7 +4802,23 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             public void onDrillImport(String drill) {
                 Drill newDrill = DrillParser.parseWholeDrill(DrillParser.extractText(drill));
                 Drill oldDrill = footballFieldPanel.drill;
+
+                boolean csvFileAvailable = false;
+
+                try {
+                    csvFile = CSVLEDWriter.createDefaultCSV(newDrill.performers);
+                    csvFileAvailable = true;
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+
+                if (csvFileAvailable) {
+                    footballFieldPanel.drill.performers = newDrill.performers;
+                    parseCsvFileForPerformerDeviceIDs(csvFile);
+                }
+
                 boolean same = true;
+
                 for (int i = 0 ; i < oldDrill.sets.size(); i++) {
                     if (newDrill.sets.size() > i) {
                         if (!newDrill.sets.get(i).equals(oldDrill.sets.get(i))
@@ -5177,9 +5235,11 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                     rebuildPageTabCounts();
                     setupEffectView(effectManager.getIds());
                     updateTimelinePanel();
-
-
                 }
+
+                // determine if any performers were added, removed, or modified
+                // update performers and led strips accordingly to preserve existing effects
+                // how to handle full band effects? (e.g., wave, chase, etc.)
 
                 oldDrill.coordinates = newDrill.coordinates;
                 for (Performer p : oldDrill.performers) {
