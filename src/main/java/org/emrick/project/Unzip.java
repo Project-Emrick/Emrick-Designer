@@ -1,6 +1,7 @@
 package org.emrick.project;
 
 import java.io.*;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.zip.*;
 
@@ -17,7 +18,7 @@ public class Unzip {
             ZipEntry ze = zis.getNextEntry();
             while (ze != null) {
                 String fileName = ze.getName();
-                File newFile = new File(archiveDest + File.separator + fileName);
+                File newFile = safeExtractionFile(destDir, fileName);
                 new File(newFile.getParent()).mkdirs(); // Ensure parent directories exist
 
                 try (FileOutputStream fos = new FileOutputStream(newFile)) {
@@ -59,7 +60,7 @@ public class Unzip {
                 ZipEntry ze = zis.getNextEntry();
                 while (ze != null) {
                     String fileName = ze.getName();
-                    File newFile = new File(archiveDest.get(i) + File.separator + fileName);
+                    File newFile = safeExtractionFile(destDirs.get(i), fileName);
                     new File(newFile.getParent()).mkdirs(); // Ensure parent directories exist
 
                     try (FileOutputStream fos = new FileOutputStream(newFile)) {
@@ -81,6 +82,15 @@ public class Unzip {
                 e.printStackTrace();
             }
         }
+    }
+
+    private static File safeExtractionFile(File destinationDirectory, String entryName) throws IOException {
+        Path destinationPath = destinationDirectory.toPath().toAbsolutePath().normalize();
+        Path extractedPath = destinationPath.resolve(entryName).normalize();
+        if (!extractedPath.startsWith(destinationPath)) {
+            throw new IOException("Archive contains an unsafe entry path: " + entryName);
+        }
+        return extractedPath.toFile();
     }
 
     public static void zip(ArrayList<String> files, String dest, boolean delete) {

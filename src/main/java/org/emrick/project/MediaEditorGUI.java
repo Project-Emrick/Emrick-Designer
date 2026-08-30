@@ -2649,6 +2649,8 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
 
     private LoadedProjectData loadProjectData(File projectPath, Consumer<ThemedLoadingDialog.StatusUpdate> progressConsumer) {
         try {
+            publishLoading(progressConsumer, "Validating project", "Checking that the selected project archive is complete...");
+            ProjectPersistence.validateProjectArchive(projectPath.toPath(), gson);
             publishLoading(progressConsumer, "Preparing project", "Resetting extracted show data...");
 
             File showDataDir = new File(PathConverter.pathConverter("show_data/", false));
@@ -2883,28 +2885,28 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         OldProjectFile opf = loadedProjectData.oldProjectFile();
 
         if (pf != null) {
+            count2RFTrigger = pf.count2RFTrigger == null ? new HashMap<>() : pf.count2RFTrigger;
+            footballFieldPanel.setCount2RFTrigger(count2RFTrigger);
+            rebuildPageTabCounts();
             if (pf.timeSync != null && pf.startDelay != null) {
                 timeSync = pf.timeSync;
-                onSync(timeSync, pf.startDelay);
-                scrubBarGUI.setTimeSync(timeSync);
                 startDelay = pf.startDelay;
-                count2RFTrigger = pf.count2RFTrigger;
-                footballFieldPanel.setCount2RFTrigger(count2RFTrigger);
+                onSync(timeSync, startDelay);
+                scrubBarGUI.setTimeSync(timeSync);
                 setupEffectView(pf.ids);
-                rebuildPageTabCounts();
                 updateTimelinePanel();
                 updateEffectViewPanel(selectedEffectType, null);
             }
         } else if (opf != null) {
+            count2RFTrigger = opf.count2RFTrigger == null ? new HashMap<>() : opf.count2RFTrigger;
+            footballFieldPanel.setCount2RFTrigger(count2RFTrigger);
+            rebuildPageTabCounts();
             if (opf.timeSync != null && opf.startDelay != null) {
                 timeSync = opf.timeSync;
-                onSync(timeSync, opf.startDelay);
-                scrubBarGUI.setTimeSync(timeSync);
                 startDelay = opf.startDelay;
-                count2RFTrigger = opf.count2RFTrigger;
-                footballFieldPanel.setCount2RFTrigger(count2RFTrigger);
+                onSync(timeSync, startDelay);
+                scrubBarGUI.setTimeSync(timeSync);
                 setupEffectView(opf.ids);
-                rebuildPageTabCounts();
                 updateTimelinePanel();
                 updateEffectViewPanel(selectedEffectType, null);
             }
@@ -4397,8 +4399,6 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         this.startDelay = startDelay;
 
         scrubBarGUI.setTimeSync(timeSync);
-            count2RFTrigger = new HashMap<>();
-            footballFieldPanel.setCount2RFTrigger(count2RFTrigger);
 
         setupEffectView(null);
         rebuildPageTabCounts();
@@ -4479,6 +4479,9 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
 
     @Override
     public long onScrub() {
+        if (timeManager == null) {
+            return 0;
+        }
         // If time cursor is at start of first set, arm the start-delay
         useStartDelay = scrubBarGUI.isAtFirstSet() && scrubBarGUI.isAtStartOfSet();
         // If triggers are ready to be used, refresh on scroll
@@ -4500,6 +4503,9 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
     public void onTimeChange(long time) {
         footballFieldPanel.currentMS = time;
         ledStripViewGUI.setCurrentMS(time);
+        if (timelineGUI == null) {
+            return;
+        }
         if (playbackTimer != null) { // this if for timeline when playing, ever so slightly off
             timelineGUI.scrubToMS(scrubBarGUI.getTime() * 1000);
         } else { // accurate
@@ -5207,12 +5213,6 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             groupsList.add(toAdd);
         }
 
-        ArrayList<Performer> recoverPerformers = new ArrayList<>();
-        for (LEDStrip ledStrip : footballFieldPanel.drill.ledStrips) {
-            recoverPerformers.add(ledStrip.getPerformer());
-            ledStrip.setPerformer(null);
-        }
-
         ArrayList<String> archiveNames = new ArrayList<>();
         if (archivePaths == null) {
             System.out.println("Archive Paths Null!");
@@ -5237,36 +5237,40 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         File dir = new File(PathConverter.pathConverter("show_data/", false));
         dir.mkdirs();
         File[] cleanJson = dir.listFiles();
-        for (File f : cleanJson) {
-            if (f.getName().endsWith(".json")) {
-                f.delete();
+        if (cleanJson != null) {
+            for (File f : cleanJson) {
+                if (f.getName().endsWith(".json")) {
+                    f.delete();
+                }
             }
         }
 
-        try {
-            FileWriter w = new FileWriter(PathConverter.pathConverter("show_data/" + jsonName, false));
-            w.write(g);
-            w.close();
-            emrickPath = path;
+        File jsonFile = new File(PathConverter.pathConverter("show_data/" + jsonName, false));
+        try (FileWriter writer = new FileWriter(jsonFile)) {
+            writer.write(g);
         } catch (IOException e) {
             writeSysMsg("Failed to save to `" + path + "`.");
             throw new RuntimeException(e);
         }
 
-        for (int i = 0; i < recoverPerformers.size(); i++) {
-            footballFieldPanel.drill.ledStrips.get(i).setPerformer(recoverPerformers.get(i));
-        }
-
         File showDataDir = new File(PathConverter.pathConverter("show_data/", false));
         showDataDir.mkdirs();
         File[] saveFiles = showDataDir.listFiles();
-        ArrayList<String> files = new ArrayList<>();
-        for (File f : saveFiles) {
-            if (!f.isDirectory()) {
-                files.add(f.getAbsolutePath());
+        ArrayList<Path> files = new ArrayList<>();
+        if (saveFiles != null) {
+            for (File f : saveFiles) {
+                if (!f.isDirectory() && !f.equals(jsonFile)) {
+                    files.add(f.toPath());
+                }
             }
         }
-        Unzip.zip(files, path.getAbsolutePath(), false);
+        try {
+            ProjectPersistence.save(path.toPath(), jsonName, g, files, gson);
+            emrickPath = path;
+        } catch (IOException e) {
+            writeSysMsg("Failed to save to `" + path + "`. Your existing project was not replaced.");
+            throw new RuntimeException(e);
+        }
 
         writeSysMsg("Saved project to `" + path + "`.");
     }

@@ -14,7 +14,7 @@ public class LEDStrip {
 
     private int id;
     private ArrayList<Effect> effects;
-    private Performer performer;
+    private transient Performer performer;
     private int performerID;
     private LEDConfig ledConfig;
 

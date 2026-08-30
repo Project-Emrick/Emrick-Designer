@@ -27,6 +27,9 @@ public class LightingDisplay {
         if (e.isUSE_DURATION()) {
             if (e.getStartTimeMSec() + e.getDelay().toMillis() + e.getDuration().toMillis() >= currMS) {
                 long startGradient = e.getStartTimeMSec() + e.getDelay().toMillis();
+                if (e.getDuration().isZero() || e.getDuration().isNegative()) {
+                    return currMS >= startGradient ? e.getEndColor() : e.getStartColor();
+                }
                 float shiftProgress = (float) (currMS - startGradient) / (float) e.getDuration().toMillis();
                 float[] hsvs = new float[3];
                 Color.RGBtoHSB(e.getStartColor().getRed(), e.getStartColor().getGreen(), e.getStartColor().getBlue(), hsvs);
@@ -113,6 +116,9 @@ public class LightingDisplay {
 
     public static ArrayList<Color> chaseFunction(Effect e, LEDStrip l, long setMS, long currMS) {
         ArrayList<Color> colors = new ArrayList<>();
+        if (e.getChaseSequence() == null || e.getChaseSequence().isEmpty() || e.getSpeed() <= 0) {
+            return colors;
+        }
         if (e.getStartTimeMSec() + e.getDuration().toMillis() >= currMS) {
             double percent = (currMS - e.getStartTimeMSec()) / (1.0 / e.getSpeed() * 1000.0);
             int tick = (int)percent % e.getChaseSequence().size();
@@ -157,6 +163,9 @@ public class LightingDisplay {
     public static Color randomNoiseFunction(Effect e, long setMS, long currMS) {
         if (e.getStartTimeMSec() + e.getDuration().toMillis() >= currMS) {
             ArrayList<Checkpoint> checkpoints = e.getNoiseCheckpoints();
+            if (checkpoints == null || checkpoints.isEmpty()) {
+                return e.getStartColor();
+            }
             long start = e.getStartTimeMSec();
             int i = 0;
             long checkPointStart = start;

@@ -245,7 +245,7 @@ public class ScrubBarGUI extends JComponent implements ActionListener {
                 footballFieldPanel.setCurrentCount(val);
 
                 long currTimeMSec = scrubBarListener.onScrub();
-                if (!isUseFps()) {
+                if (!isUseFps() && timeSync != null) {
                     float pastSetTime = 0;
                     for (int i = 0; i < getCurrentSetIndex(); i++) {
                         pastSetTime += timeSync.get(i).getValue();
@@ -276,6 +276,9 @@ public class ScrubBarGUI extends JComponent implements ActionListener {
     }
 
     public void setPlaybackTime() {
+        if (timeSync == null || timeSync.isEmpty()) {
+            return;
+        }
         //TODO rewrite
         float setSyncDuration = timeSync.get(getCurrentSetIndex()).getValue();
         float setDuration = this.getCurrSetDuration(); // in counts
