@@ -22,6 +22,9 @@ public final class ThemedLoadingDialog extends JDialog {
 
     private Timer animationTimer;
     private int animationTick = 0;
+    private Runnable cancelAction = () -> {
+    };
+    private boolean cancellationRequested;
 
     private final VisualStyle style;
     private final StyleSpec spec;
@@ -72,11 +75,19 @@ public final class ThemedLoadingDialog extends JDialog {
 
             @Override
             public void windowClosing(WindowEvent e) {
-                stopAnimation();
+                if (!cancellationRequested) {
+                    cancellationRequested = true;
+                    cancelAction.run();
+                }
+                dispose();
             }
         });
 
         startAnimation();
+    }
+
+    public void setCancelAction(Runnable cancelAction) {
+        this.cancelAction = Objects.requireNonNull(cancelAction);
     }
 
     public void update(String title, String detail) {

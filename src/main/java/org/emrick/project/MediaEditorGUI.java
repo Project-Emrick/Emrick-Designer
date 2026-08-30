@@ -2624,6 +2624,10 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
 
             @Override
             protected void done() {
+                if (isCancelled()) {
+                    loadingDialog.dispose();
+                    return;
+                }
                 try {
                     LoadedProjectData loadedProjectData = get();
                     startPhasedProjectApply(loadedProjectData, loadingDialog);
@@ -2638,6 +2642,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             }
         };
 
+        loadingDialog.setCancelAction(() -> worker.cancel(true));
         worker.execute();
         loadingDialog.setVisible(true);
     }
@@ -2778,12 +2783,21 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         SwingWorker<Void, ThemedLoadingDialog.StatusUpdate> uiApplyWorker = new SwingWorker<>() {
             @Override
             protected Void doInBackground() {
+                if (isCancelled()) {
+                    return null;
+                }
                 publish(new ThemedLoadingDialog.StatusUpdate("Finalizing view", "Updating field and strip views..."));
                 runOnEdtAndWait(() -> applyLoadedProjectPhaseOne(loadedProjectData));
 
+                if (isCancelled()) {
+                    return null;
+                }
                 publish(new ThemedLoadingDialog.StatusUpdate("Finalizing view", "Building timeline and effect data..."));
                 runOnEdtAndWait(() -> applyLoadedProjectPhaseTwo(loadedProjectData));
 
+                if (isCancelled()) {
+                    return null;
+                }
                 publish(new ThemedLoadingDialog.StatusUpdate("Finalizing view", "Rendering final layout..."));
                 runOnEdtAndWait(() -> applyLoadedProjectPhaseThree());
                 return null;
@@ -2800,6 +2814,9 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             @Override
             protected void done() {
                 try {
+                    if (isCancelled()) {
+                        return;
+                    }
                     get();
                     writeSysMsg("Opened project `" + loadedProjectData.projectPath().getAbsolutePath() + "`.");
                 } catch (Exception ex) {
@@ -2815,6 +2832,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             }
         };
 
+        loadingDialog.setCancelAction(() -> uiApplyWorker.cancel(true));
         uiApplyWorker.execute();
     }
 

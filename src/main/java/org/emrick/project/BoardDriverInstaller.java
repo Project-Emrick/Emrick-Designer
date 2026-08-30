@@ -62,7 +62,10 @@ public final class BoardDriverInstaller {
                 if (beforeProbe.devicePresent) {
                     publish(new ProgressUpdate("Driver needed", "Board detected, but no usable CP210x serial driver is active yet."));
                 } else {
-                    publish(new ProgressUpdate("Board not detected", "No CP210x device was detected. The installer will still prepare drivers, but verification may be limited."));
+                    return InstallOutcome.warning(
+                            "Board Not Detected",
+                            "No CP210x board was detected. Connect the board to a COM port, then run Install Board Driver again."
+                    );
                 }
 
                 try {
@@ -116,6 +119,10 @@ public final class BoardDriverInstaller {
             @Override
             protected void done() {
                 dialog.dispose();
+                if (isCancelled()) {
+                    safeWriter.accept("Board driver installation cancelled.");
+                    return;
+                }
                 try {
                     InstallOutcome outcome = get();
                     safeWriter.accept(outcome.message);
@@ -130,6 +137,7 @@ public final class BoardDriverInstaller {
             }
         };
 
+        dialog.setCancelAction(() -> worker.cancel(true));
         worker.execute();
         dialog.setVisible(true);
     }

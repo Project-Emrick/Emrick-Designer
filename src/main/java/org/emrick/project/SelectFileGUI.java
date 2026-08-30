@@ -339,6 +339,9 @@ public class SelectFileGUI implements ActionListener {
             @Override
             protected void done() {
                 loadingDialog.dispose();
+                if (isCancelled()) {
+                    return;
+                }
                 try {
                     get();
                     dialogWindow.dispose();
@@ -351,6 +354,7 @@ public class SelectFileGUI implements ActionListener {
             }
         };
 
+        loadingDialog.setCancelAction(() -> worker.cancel(true));
         worker.execute();
         loadingDialog.setVisible(true);
     }
