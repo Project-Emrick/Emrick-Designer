@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.*;
 
 public class EffectGUI implements ActionListener {
+    private static final int DEFAULT_DURATION_COUNTS = 16;
     private static List<EffectsGroup> EFFECTS_GROUPS;
     // Strings
     public static String
@@ -46,7 +47,7 @@ public class EffectGUI implements ActionListener {
     JLabel startColorLabel = new JLabel("Start color:");
     JLabel endColorLabel = new JLabel("End color:");
     JLabel delayLabel = new JLabel("Delay (s):");
-    JLabel durationLabel = new JLabel("Duration (s):");
+    JLabel durationLabel = new JLabel("Duration (cts):");
     JLabel timeoutLabel = new JLabel("Timeout (s):");
     JLabel staticColorLabel = new JLabel("Static color:");
     JLabel waveColorLabel = new JLabel("Wave Color:");
@@ -66,9 +67,9 @@ public class EffectGUI implements ActionListener {
     JButton deleteBtn = new JButton("Delete effect");
     JLabel batteryEstLabel = new JLabel("Estimated Battery Usage:");
     ArrayList<JButton> colorButtons = new ArrayList<>();
-    String[] durationTypeOptions = {"Seconds", "Counts"};
+    String[] durationTypeOptions = {"Counts", "Seconds"};
     JComboBox<String> durationTypeSelect = new JComboBox<String>(durationTypeOptions);
-    String durationType = "Seconds";
+    String durationType = "Counts";
     ArrayList<JComponent[]> panelComponents = new ArrayList<>();
     JLabel addShapeLabel = new JLabel("Add Shape");
     JButton addShapeBtn = new JButton();
@@ -841,7 +842,16 @@ public class EffectGUI implements ActionListener {
         String speedStr = String.valueOf(effect.getSpeed());
         String angleStr = String.valueOf(effect.getAngle());
         delayField.setText(delayStr);
-        durationField.setText(durationStr);
+        if (durationType.equals("Counts")) {
+            durationLabel.setText("Duration (cts):");
+            int durationCounts = effect.getDuration().isZero()
+                    ? DEFAULT_DURATION_COUNTS
+                    : convertMsecDurationToCounts(effect.getStartTimeMSec(), effect.getDuration().toMillis());
+            durationField.setText(Integer.toString(durationCounts));
+        } else {
+            durationLabel.setText("Duration (s):");
+            durationField.setText(durationStr);
+        }
         timeoutField.setText(timeoutStr);
         speedField.setText(speedStr);
         angleField.setText(angleStr);
@@ -892,6 +902,26 @@ public class EffectGUI implements ActionListener {
             applyBtn.setText("Update effect");
             deleteBtn.setEnabled(true);
         }
+    }
+
+    // Converts a duration in milliseconds starting at startTimeMsec into a whole-count duration
+    private int convertMsecDurationToCounts(long startTimeMsec, long durationMsec) {
+        TimeManager timeManager = effectListener.onTimeRequired();
+        int startCount = 0;
+        for (int i = 0; i < timeManager.getCount2MSec().size() - 1; i++) {
+            if (startTimeMsec >= timeManager.getCount2MSec().get(i) && startTimeMsec < timeManager.getCount2MSec().get(i + 1)) {
+                startCount = i;
+                break;
+            }
+        }
+        int endCount = 0;
+        long endMsec = startTimeMsec + durationMsec + 1;
+        for (int i = 0; i < timeManager.getCount2MSec().size() - 1; i++) {
+            if (endMsec >= timeManager.getCount2MSec().get(i) - 1 && endMsec < timeManager.getCount2MSec().get(i + 1) - 1) {
+                endCount = i;
+            }
+        }
+        return endCount - startCount;
     }
 
     private void liveUpdateEndTime() {
@@ -995,6 +1025,7 @@ public class EffectGUI implements ActionListener {
         } else if (e.getSource().equals(this.durationTypeSelect)) {
             if (durationTypeSelect.getSelectedItem().equals("Seconds") && durationType.equals("Counts")) {
                 durationType = "Seconds";
+                durationLabel.setText("Duration (s):");
                 TimeManager timeManager = effectListener.onTimeRequired();
                 int startCount = 0;
                 for (int i = 0; i < timeManager.getCount2MSec().size() - 1; i++) {
@@ -1013,6 +1044,7 @@ public class EffectGUI implements ActionListener {
                 liveUpdateEndTime();
             } else if (durationTypeSelect.getSelectedItem().equals("Counts") && durationType.equals("Seconds")) {
                 durationType = "Counts";
+                durationLabel.setText("Duration (cts):");
                 TimeManager timeManager = effectListener.onTimeRequired();
                 int startCount = 0;
                 for (int i = 0; i < timeManager.getCount2MSec().size() - 1; i++) {

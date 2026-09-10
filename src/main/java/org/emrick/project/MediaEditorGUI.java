@@ -1977,7 +1977,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
     }
 
     /**
-     * Helper method to create a 1-second effect of the given type at the current timeline position
+        * Helper method to create a 16-count effect of the given type at the current timeline position
      */
     private void createEffectAtCurrentTime(EffectList effectType) {
         if (footballFieldPanel == null || timeManager == null || effectManager == null) {
@@ -1989,8 +1989,9 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         if (timeManager.getCount2MSec() != null && timeManager.getCount2MSec().containsKey(footballFieldPanel.getCurrentCount())) {
             currentMS = timeManager.getCount2MSec().get(footballFieldPanel.getCurrentCount());
         }
-        // make the endms either 0.001 seconds before the next effect/trigger or 8 seconds after currentms whichever is smaller
-        long endMS = currentMS + 8000; // default to 8 seconds
+        // make the endms either 0.001 seconds before the next effect/trigger or 16 counts after currentms whichever is smaller
+        int defaultEndCount = footballFieldPanel.getCurrentCount() + 16;
+        long endMS = timeManager.getCount2MSecPrecise(defaultEndCount) - 1;
         
         Long nextEffectMS = effectManager.getNextEffectOrTriggerStartMS(currentMS);
         if (nextEffectMS != null) {
