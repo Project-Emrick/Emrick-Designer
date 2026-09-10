@@ -1914,7 +1914,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         });
         lightMenuPopup.add(circleChasePattern);
 
-        JMenuItem chasePattern = new JMenuItem("Create Chase Effect");
+        JMenuItem chasePattern = new JMenuItem("Create Unit Chase Effect");
         chasePattern.addActionListener(e -> {
             selectedEffectType = EffectList.CHASE;
             createEffectAtCurrentTime(selectedEffectType);
