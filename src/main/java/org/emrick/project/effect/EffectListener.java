@@ -3,6 +3,7 @@ package org.emrick.project.effect;
 import org.emrick.project.LEDStrip;
 import org.emrick.project.TimeManager;
 
+import java.awt.Color;
 import java.util.HashSet;
 
 /**
@@ -19,4 +20,13 @@ public interface EffectListener {
     TimeManager onTimeRequired();
 
     void onPressEffect(Effect effect);
+
+    /** Sends the given effect to a connected Receiver board for a live, on-hardware preview. */
+    void onPreviewOnHardware(Effect effect);
+
+    /** Returns a connected Receiver's LEDs to idle and exits its preview mode, if it was previewing. */
+    void onStopHardwarePreview();
+
+    /** Holds a solid color on a connected Receiver indefinitely, for quick verification while picking colors. */
+    void onPreviewColorOnHardware(Color color);
 }

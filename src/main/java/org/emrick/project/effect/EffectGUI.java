@@ -13,6 +13,7 @@ import java.awt.event.*;
 import java.time.*;
 import java.util.List;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicReference;
 
 public class EffectGUI implements ActionListener {
     private static final int DEFAULT_DURATION_COUNTS = 16;
@@ -65,6 +66,8 @@ public class EffectGUI implements ActionListener {
     JTextField angleField = new JTextField(10);
     JButton applyBtn = new JButton("REPLACE THIS TEXT WITH UPDATE OR CREATE EFFECT TEXT");
     JButton deleteBtn = new JButton("Delete effect");
+    JButton previewOnHardwareBtn = new JButton("Preview on Hardware");
+    JButton stopPreviewBtn = new JButton("Stop Preview");
     JLabel batteryEstLabel = new JLabel("Estimated Battery Usage:");
     ArrayList<JButton> colorButtons = new ArrayList<>();
     String[] durationTypeOptions = {"Counts", "Seconds"};
@@ -93,6 +96,7 @@ public class EffectGUI implements ActionListener {
 
     private JLabel placeholderLabel;
     private EffectList effectType;
+    private boolean standalonePreview;
 
     /**
      * @param effect    The current effect, as it exists. Passed in null if it doesn't exist.
@@ -100,8 +104,18 @@ public class EffectGUI implements ActionListener {
      *                  time for gui display.
      */
     public EffectGUI(Effect effect, long startTime, EffectListener effectListener, EffectList effectType, boolean isNew, int index) {
+        this(effect, startTime, effectListener, effectType, isNew, index, false);
+    }
+
+    /**
+     * @param standalonePreview When true, hides the "Create effect"/"Update effect" and "Delete
+     *                          effect" buttons, since the standalone Preview Effect window isn't
+     *                          meant to commit/delete effects directly.
+     */
+    public EffectGUI(Effect effect, long startTime, EffectListener effectListener, EffectList effectType, boolean isNew, int index, boolean standalonePreview) {
         this.effect = effect;
         this.effectListener = effectListener;
+        this.standalonePreview = standalonePreview;
         // Set this effect as the currently viewed effect in the Effect class
         Effect.currentlyViewedEffect = effect;
         effectListener.onChangeSelectionMode(index != -1, index != -1 ? effect.getShapes()[index].getLedStrips() : new HashSet<>());
@@ -232,10 +246,23 @@ public class EffectGUI implements ActionListener {
         applyBtn.setPreferredSize(new Dimension(120, 25));
         deleteBtn.setPreferredSize(new Dimension(120, 25));
         deleteBtn.setBackground(UIManager.getColor("Component.error.borderColor"));
-        
-        buttonPanel.add(applyBtn);
-        buttonPanel.add(deleteBtn);
-        
+
+        // The standalone Preview Effect window doesn't commit/delete effects directly.
+        if (!standalonePreview) {
+            buttonPanel.add(applyBtn);
+            buttonPanel.add(deleteBtn);
+        }
+
+        // Preview on Hardware isn't meaningful for Grid effects (spatial shapes, not previewed).
+        if (effectType != EffectList.GRID) {
+            previewOnHardwareBtn.setPreferredSize(new Dimension(150, 25));
+            stopPreviewBtn.setPreferredSize(new Dimension(110, 25));
+            previewOnHardwareBtn.addActionListener(this);
+            stopPreviewBtn.addActionListener(this);
+            buttonPanel.add(previewOnHardwareBtn);
+            buttonPanel.add(stopPreviewBtn);
+        }
+
         // Add components to the main panel
         this.effectPanel.add(scrollPane, BorderLayout.CENTER);
         this.effectPanel.add(buttonPanel, BorderLayout.SOUTH);
@@ -1004,20 +1031,30 @@ public class EffectGUI implements ActionListener {
         return effectPanel;
     }
 
+    /**
+     * Syncs current field values into the working effect and returns it, for external live-preview
+     * use (e.g. an animated timeline swatch). Invalid/mid-edit field text is ignored, keeping the
+     * last valid snapshot rather than throwing.
+     */
+    public Effect getLivePreviewEffect() {
+        try {
+            applyToEffectMod();
+        } catch (Exception ignored) {
+            // Fields mid-edit (e.g. an emptied text box); fall back to the last valid snapshot.
+        }
+        return effectMod;
+    }
+
     @Override
     public void actionPerformed(ActionEvent e) {
         if (e.getSource().equals(this.startColorBtn)) {
-            Color selectedColor = JColorChooser.showDialog(this.effectPanel,
-                                                           "Choose Start Color",
-                                                           this.effectMod.getStartColor());
+            Color selectedColor = showColorChooserWithPreview("Choose Start Color", this.effectMod.getStartColor());
             if (selectedColor != null) {
                 this.effectMod.setStartColor(selectedColor);
                 this.startColorBtn.setBackground(selectedColor);
             }
         } else if (e.getSource().equals(this.endColorBtn)) {
-            Color selectedColor = JColorChooser.showDialog(this.effectPanel,
-                                                           "Choose End Color",
-                                                           this.effectMod.getEndColor());
+            Color selectedColor = showColorChooserWithPreview("Choose End Color", this.effectMod.getEndColor());
             if (selectedColor != null) {
                 this.effectMod.setEndColor(selectedColor);
                 this.endColorBtn.setBackground(selectedColor);
@@ -1074,6 +1111,20 @@ public class EffectGUI implements ActionListener {
             else effectListener.onUpdateEffect(this.effect, this.effectMod);
         } else if (e.getSource().equals(this.deleteBtn)) {
             effectListener.onDeleteEffect(this.effect); // Delete target is the original
+        } else if (e.getSource().equals(this.previewOnHardwareBtn)) {
+            applyToEffectMod();
+            Effect previewEffect = this.effectMod.clone();
+            if (previewEffect.getEffectType() == EffectList.CHASE) {
+                ArrayList<Color> trimmed = new ArrayList<>(previewEffect.getChaseSequence());
+                if (!trimmed.isEmpty()) trimmed.remove(trimmed.size() - 1);
+                previewEffect.setChaseSequence(trimmed);
+            }
+            // Clone carries a cached GeneratedEffect built from stale/default values; clear it so
+            // it's rebuilt from the fields currently shown in this panel.
+            previewEffect.setGeneratedEffect(null);
+            effectListener.onPreviewOnHardware(previewEffect);
+        } else if (e.getSource().equals(this.stopPreviewBtn)) {
+            effectListener.onStopHardwarePreview();
         } else if (e.getSource() instanceof JButton) {
             JButton button = (JButton) e.getSource();
             int i;
@@ -1082,9 +1133,7 @@ public class EffectGUI implements ActionListener {
                     break;
                 }
             }
-            Color color = JColorChooser.showDialog(this.effectPanel,
-                                                    "Choose Color " + (i+1),
-                                                    button.getBackground());
+            Color color = showColorChooserWithPreview("Choose Color " + (i+1), button.getBackground());
             button.setBackground(color);
             if (effectType == EffectList.GRID) {
                 effectMod.getShapes()[showGridIndex].setColor(color);
@@ -1093,6 +1142,50 @@ public class EffectGUI implements ActionListener {
                 effectListener.onUpdateEffectPanel(effectMod, this.isNewEffect, -1);
             }
         }
+    }
+
+    /**
+     * Shows a color chooser with a "Preview on Hardware" button next to OK/Cancel/Reset, letting
+     * the user check a color on a connected Receiver before committing to it. Built manually
+     * (rather than {@link JColorChooser#createDialog}) so that button can sit in the same row
+     * instead of a separate nested panel. The preview is always stopped when the picker closes.
+     */
+    private Color showColorChooserWithPreview(String title, Color initialColor) {
+        JColorChooser chooser = new JColorChooser(initialColor != null ? initialColor : Color.WHITE);
+        Color startingColor = chooser.getColor();
+
+        JDialog dialog = new JDialog(JOptionPane.getFrameForComponent(this.effectPanel), title, true);
+        dialog.setLayout(new BorderLayout());
+        dialog.add(chooser, BorderLayout.CENTER);
+
+        AtomicReference<Color> chosenColor = new AtomicReference<>();
+        JButton okBtn = new JButton("OK");
+        okBtn.addActionListener(e -> {
+            chosenColor.set(chooser.getColor());
+            dialog.dispose();
+        });
+        JButton cancelBtn = new JButton("Cancel");
+        cancelBtn.addActionListener(e -> dialog.dispose());
+        JButton resetBtn = new JButton("Reset");
+        resetBtn.addActionListener(e -> {
+            chooser.setColor(startingColor);
+            effectListener.onStopHardwarePreview();
+        });
+        JButton previewBtn = new JButton("Preview on Hardware");
+        previewBtn.addActionListener(e -> effectListener.onPreviewColorOnHardware(chooser.getColor()));
+
+        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 5));
+        buttonPanel.add(okBtn);
+        buttonPanel.add(cancelBtn);
+        buttonPanel.add(resetBtn);
+        buttonPanel.add(previewBtn);
+        dialog.add(buttonPanel, BorderLayout.SOUTH);
+
+        dialog.pack();
+        dialog.setLocationRelativeTo(this.effectPanel);
+        dialog.setVisible(true); // modal: blocks until OK, Cancel, or closed
+        effectListener.onStopHardwarePreview();
+        return chosenColor.get();
     }
 
     private void applyToEffectMod() {

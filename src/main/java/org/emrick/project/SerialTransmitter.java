@@ -110,8 +110,12 @@ public class SerialTransmitter {
         sp.closePort();
     }
 
-    public void writeColorCheck(Color color) {
-        String query = "c" + color.getRed() + "\n" + color.getGreen() + "\n" + color.getBlue() + "\n";
+    private boolean inPreviewMode = false;
+
+    /** Resets the Receiver into hardware Preview Mode. Idempotent; leaves the port open for subsequent packets. */
+    public void enterPreviewMode() {
+        if (inPreviewMode) return;
+        String query = "e\n";
         sp.setDTR();
         sp.setRTS();
         if (!sp.openPort()) {
@@ -131,7 +135,29 @@ public class SerialTransmitter {
         byte[] out = query.getBytes();
         sp.writeBytes(out, query.length());
         sp.flushIOBuffers();
+        inPreviewMode = true;
+    }
+
+    /** Sends one packet line (Packet::fromString format) to be rendered immediately by the Receiver. */
+    public void writePreviewPacket(String packetLine) {
+        if (!inPreviewMode) {
+            enterPreviewMode();
+        }
+        String query = packetLine + "\n";
+        byte[] out = query.getBytes();
+        sp.writeBytes(out, query.length());
+        sp.flushIOBuffers();
+    }
+
+    /** Tells the Receiver to leave Preview Mode and resume normal operation. */
+    public void exitPreviewMode() {
+        if (!inPreviewMode) return;
+        String query = "stop\n";
+        byte[] out = query.getBytes();
+        sp.writeBytes(out, query.length());
+        sp.flushIOBuffers();
         sp.closePort();
+        inPreviewMode = false;
     }
 
     public void writeShow(String token, String show) {

@@ -27,6 +27,7 @@ import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.ss.util.CellRangeAddress;
 import org.apache.poi.ss.util.CellRangeAddressList;
 import org.apache.poi.ss.util.CellReference;
+import org.emrick.project.actions.EffectLEDStripMap;
 import org.emrick.project.actions.LEDConfig;
 import org.emrick.project.audio.AudioPlayer;
 import org.emrick.project.effect.*;
@@ -187,6 +188,8 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
     private File csvFile;
     
     private HardwareStatusIndicator hardwareStatusIndicator;
+    private SerialTransmitter previewReceiver; // Cached Receiver connection during a hardware effect-preview session
+    private Timer previewSequenceTimer; // Schedules multi-segment preview packets (e.g. Wave, Ripple)
     JFrame webServerFrame;
     
     
@@ -1091,8 +1094,10 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         verifyMenu.add(verifyLightBoardItem);
         verifyMenu.addSeparator();
 
-        JMenuItem checkColor = new JMenuItem("Check Color");
-        verifyMenu.add(checkColor);
+        JMenuItem previewEffectItem = new JMenuItem("Preview Effect");
+        verifyMenu.add(previewEffectItem);
+        JMenuItem previewColorItem = new JMenuItem("Preview Color");
+        verifyMenu.add(previewColorItem);
 
         /* Action Listeners For Buttons */
         // Verify Show
@@ -1114,58 +1119,13 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             st.writeToSerialPort("w");
         });
 
-        /* Check Color */
-        checkColor.addActionListener(e -> {
-            /* Check for Board Receiver Type */
-            SerialTransmitter st = comPortPrompt("Receiver");
-            if (st == null) return;
+        /* Preview Effect: pick an effect type, tweak params, preview on hardware, and
+           optionally create it on the currently selected performers. */
+        previewEffectItem.addActionListener(e -> openPreviewEffectWindow());
 
-            /* Add the java color wheel */
-            JColorChooser colorChooser = new JColorChooser(Color.WHITE);
-
-            // Create custom dialog that stays open
-            JDialog dialog = new JDialog(frame, "Color Check - Select and Send Colors", false);
-            dialog.setLayout(new BorderLayout());
-
-            // Create button panel with Send and Close buttons
-            JButton sendButton = new JButton("Send to Lights");
-            JButton closeButton = new JButton("Close");
-            JPanel buttonPanel = new JPanel();
-            buttonPanel.add(sendButton);
-            buttonPanel.add(closeButton);
-
-            // Add components to dialog
-            dialog.add(colorChooser, BorderLayout.CENTER);
-            dialog.add(buttonPanel, BorderLayout.SOUTH);
-
-            // Configure dialog properties
-            dialog.setSize(650, 450);
-            dialog.setLocationRelativeTo(frame);
-            dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
-
-            // Add button actions
-            sendButton.addActionListener(ev -> {
-                Color selectedColor = colorChooser.getColor();
-                if (st == null) return;
-
-                st.writeColorCheck(selectedColor);
-
-                // Visual feedback
-                sendButton.setText("Sent! Click to Send Again");
-                sendButton.setBackground(new Color(220, 255, 220));
-                Timer timer = new Timer(750, event -> {
-                    sendButton.setText("Send to Lights");
-                    sendButton.setBackground(null);
-                });
-                timer.setRepeats(false);
-                timer.start();
-            });
-
-            closeButton.addActionListener(ev -> dialog.dispose());
-
-            // Show the dialog
-            dialog.setVisible(true);
-        });
+        /* Preview Color: hold a solid color on a connected Receiver indefinitely for physical
+           verification, until a new color is sent or the dialog is closed. */
+        previewColorItem.addActionListener(e -> showPreviewColorDialog());
 
         /* Hardware Menu */
         JMenu hardwareMenu = new JMenu("Hardware");
@@ -2013,6 +1973,93 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         onCreateEffect(effectToCreate);
     }
 
+    /**
+     * Opens the Outlook-style "Preview Effect" window: a fixed list of effect types on the left,
+     * and the selected type's edit panel (with a timeline-box preview above it) filling the rest.
+     * Its built-in "Preview on Hardware" button sends live packets to a connected Receiver. Works
+     * even without a project loaded (falls back to a synthetic 120bpm timeline); Grid is excluded
+     * since it has no single-strip preview.
+     */
+    private void openPreviewEffectWindow() {
+        if (footballFieldPanel == null) {
+            JOptionPane.showMessageDialog(frame, "Application isn't ready yet. Please try again in a moment.",
+                    "Preview Effect: Error", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        EffectPreviewDialog dialog = new EffectPreviewDialog(frame, this, this::createDefaultEffectForPreview);
+        dialog.setVisible(true);
+    }
+
+    /** Builds a fresh default effect of the given type, anchored at the current timeline position. */
+    private Effect createDefaultEffectForPreview(EffectList effectType) {
+        TimeManager tm = onTimeRequired();
+        long currentMS = footballFieldPanel.currentMS;
+        if (tm.getCount2MSec() != null && tm.getCount2MSec().containsKey(footballFieldPanel.getCurrentCount())) {
+            currentMS = tm.getCount2MSec().get(footballFieldPanel.getCurrentCount());
+        }
+        int defaultEndCount = footballFieldPanel.getCurrentCount() + 16;
+        long endMS = tm.getCount2MSecPrecise(defaultEndCount) - 1;
+        if (effectManager != null) {
+            Long nextEffectMS = effectManager.getNextEffectOrTriggerStartMS(currentMS);
+            if (nextEffectMS != null) {
+                endMS = Math.min(endMS, nextEffectMS - 1);
+            }
+        }
+
+        int nextId = effectManager != null ? effectManager.nextId() : 0;
+        GeneratedEffect generatedEffect = GeneratedEffectAdapter.createDefaultEffect(effectType, currentMS, endMS, nextId);
+        return generatedEffect.generateEffectObj();
+    }
+
+    /**
+     * Opens a color-chooser dialog that holds a solid color on a connected Receiver indefinitely
+     * (until a new color is sent, or the dialog is closed), replacing the old one-shot Check Color.
+     */
+    private void showPreviewColorDialog() {
+        JColorChooser colorChooser = new JColorChooser(Color.WHITE);
+
+        JDialog dialog = new JDialog(frame, "Preview Color", false);
+        dialog.setLayout(new BorderLayout());
+
+        JButton sendButton = new JButton("Send to Lights");
+        JButton closeButton = new JButton("Close");
+        JPanel buttonPanel = new JPanel();
+        buttonPanel.add(sendButton);
+        buttonPanel.add(closeButton);
+
+        dialog.add(colorChooser, BorderLayout.CENTER);
+        dialog.add(buttonPanel, BorderLayout.SOUTH);
+        dialog.setSize(650, 450);
+        dialog.setLocationRelativeTo(frame);
+        dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
+
+        sendButton.addActionListener(ev -> {
+            onPreviewColorOnHardware(colorChooser.getColor());
+
+            sendButton.setText("Sent! Click to Send Again");
+            sendButton.setBackground(new Color(220, 255, 220));
+            Timer timer = new Timer(750, event -> {
+                sendButton.setText("Send to Lights");
+                sendButton.setBackground(null);
+            });
+            timer.setRepeats(false);
+            timer.start();
+        });
+
+        closeButton.addActionListener(ev -> {
+            onStopHardwarePreview();
+            dialog.dispose();
+        });
+        dialog.addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowClosing(WindowEvent e) {
+                onStopHardwarePreview();
+            }
+        });
+
+        dialog.setVisible(true);
+    }
     /**
      * Used to get a Serial Transmitter object.
      * Now uses the hardware status indicator instead of prompting the user each time.
@@ -4688,7 +4735,25 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
 
     @Override
     public TimeManager onTimeRequired() {
-        return timeManager;
+        // Falls back to a synthetic 120bpm timeline only when no project is loaded; a real,
+        // loaded show's TimeManager always takes priority.
+        return timeManager != null ? timeManager : getOrCreateDefaultPreviewTimeManager();
+    }
+
+    private TimeManager defaultPreviewTimeManager;
+
+    /** A synthetic 120bpm (0.5s/count) timeline, used only when previewing effects with no project loaded. */
+    private TimeManager getOrCreateDefaultPreviewTimeManager() {
+        if (defaultPreviewTimeManager == null) {
+            int totalCounts = 100_000;
+            Map<String, Integer> set2Count = new LinkedHashMap<>();
+            set2Count.put("1-1", 0);
+            set2Count.put("1-2", totalCounts);
+            ArrayList<SyncTimeGUI.Pair> timeSync = new ArrayList<>();
+            timeSync.add(new SyncTimeGUI.Pair("1-1", totalCounts * 0.5f));
+            defaultPreviewTimeManager = new TimeManager(set2Count, timeSync, 0f);
+        }
+        return defaultPreviewTimeManager;
     }
 
     ////////////////////////// Football Field Listeners //////////////////////////
@@ -4813,6 +4878,176 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         
         replaceEffectView(effectGUI.getEffectPanel(), null);
         updateEffectViewPanel(effect.getEffectType(), effect);
+    }
+
+    @Override
+    public void onPreviewOnHardware(Effect effect) {
+        try {
+            // Cache the receiver for the duration of the preview session: re-resolving it on every
+            // click would re-run hardware sanity checks that reset the board out of Preview Mode.
+            if (previewReceiver == null) {
+                previewReceiver = comPortPrompt("Receiver");
+                if (previewReceiver == null) return;
+            }
+
+            PreviewPlan plan = buildPreviewPlan(effect);
+            if (plan == null) {
+                JOptionPane.showMessageDialog(frame,
+                        "Could not build a preview packet for this effect. Make sure a project with a drill is loaded.",
+                        "Preview Effect: Error", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+
+            if (previewSequenceTimer != null) {
+                previewSequenceTimer.stop();
+                previewSequenceTimer = null;
+            }
+            playPreviewSegment(plan, 0);
+        } catch (Exception ex) {
+            // A bad packet must never leave the board/port in a stuck state: force a clean reset
+            // so the next preview attempt starts from scratch instead of reporting "port busy".
+            ex.printStackTrace();
+            onStopHardwarePreview();
+            JOptionPane.showMessageDialog(frame,
+                    "Preview failed and the connection was reset. Please try again.",
+                    "Preview Effect: Error", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    /**
+     * Sends one segment of a (possibly multi-segment, e.g. Wave/Ripple) previewed effect, then
+     * schedules the next segment to fire once this one's own duration elapses. After the last
+     * segment, schedules an automatic stop instead of requiring the "Stop Preview" button.
+     */
+    private void playPreviewSegment(PreviewPlan plan, int index) {
+        if (previewReceiver == null || index >= plan.segments.size()) return;
+        Effect segment = plan.segments.get(index);
+        previewReceiver.enterPreviewMode();
+        previewReceiver.writePreviewPacket(PacketFormatter.toPreviewPacketString(segment, plan.stripId));
+
+        if (index + 1 < plan.segments.size()) {
+            int delayMs = (int) Math.max(1, Math.min(Integer.MAX_VALUE, segment.getDuration().toMillis()));
+            Timer timer = new Timer(delayMs, ev -> playPreviewSegment(plan, index + 1));
+            timer.setRepeats(false);
+            timer.start();
+            previewSequenceTimer = timer;
+        } else {
+            long totalMs = segment.getDelay().toMillis() + segment.getDuration().toMillis() + segment.getTimeout().toMillis();
+            int stopDelayMs = (int) Math.max(1, Math.min(Integer.MAX_VALUE, totalMs + 300));
+            Timer timer = new Timer(stopDelayMs, ev -> onStopHardwarePreview());
+            timer.setRepeats(false);
+            timer.start();
+            previewSequenceTimer = timer;
+        }
+    }
+
+    @Override
+    public void onStopHardwarePreview() {
+        if (previewSequenceTimer != null) {
+            previewSequenceTimer.stop();
+            previewSequenceTimer = null;
+        }
+        if (previewReceiver != null) {
+            previewReceiver.exitPreviewMode();
+            previewReceiver = null;
+        }
+    }
+
+    @Override
+    public void onPreviewColorOnHardware(Color color) {
+        try {
+            if (previewReceiver == null) {
+                previewReceiver = comPortPrompt("Receiver");
+                if (previewReceiver == null) return;
+            }
+            if (previewSequenceTimer != null) {
+                previewSequenceTimer.stop();
+                previewSequenceTimer = null;
+            }
+            previewReceiver.enterPreviewMode();
+            previewReceiver.writePreviewPacket(PacketFormatter.toHoldColorPacketString(color, 0));
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            onStopHardwarePreview();
+            JOptionPane.showMessageDialog(frame,
+                    "Preview failed and the connection was reset. Please try again.",
+                    "Preview Color: Error", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    /** Holds the ordered packet segments (and target strip) for one hardware preview run. */
+    private static class PreviewPlan {
+        final int stripId;
+        final ArrayList<Effect> segments;
+        PreviewPlan(int stripId, ArrayList<Effect> segments) {
+            this.stripId = stripId;
+            this.segments = segments;
+        }
+    }
+
+    /**
+     * Builds the ordered list of packet segments for previewing the given effect on hardware.
+     * Simple effect types generate exactly one segment; spatial/generated types (e.g. Wave) can
+     * decompose into several chained segments per strip, which are all collected here (sorted by
+     * start time) so the full animation plays instead of just its first slice. For spatial types,
+     * the drill's performer "1" (N1) in the first Set stands in for the connected Receiver. If no
+     * project/drill is loaded, spatial resolution is skipped and the effect is previewed directly,
+     * so hardware preview still works without a show open.
+     */
+    private PreviewPlan buildPreviewPlan(Effect effect) {
+        LEDStrip n1Strip = null;
+        if (footballFieldPanel != null && footballFieldPanel.drill != null) {
+            Drill drill = footballFieldPanel.drill;
+            if (!drill.sets.isEmpty() && !drill.ledStrips.isEmpty()) {
+                n1Strip = findN1LedStrip(drill);
+                if (n1Strip != null) {
+                    // Position performers per the first Set so spatial effects compute correctly.
+                    footballFieldPanel.addSetToField(drill.sets.get(0));
+                }
+            }
+        }
+
+        if (n1Strip == null) {
+            ArrayList<Effect> segments = new ArrayList<>();
+            segments.add(effect);
+            return new PreviewPlan(0, segments);
+        }
+
+        GeneratedEffect generatedEffect = effect.getGeneratedEffect();
+        ArrayList<Effect> segments = new ArrayList<>();
+        if (generatedEffect != null) {
+            ArrayList<EffectLEDStripMap> map = generatedEffect.generateEffects(footballFieldPanel.drill.ledStrips);
+            for (EffectLEDStripMap entry : map) {
+                if (entry.getLedStrip().equals(n1Strip)) {
+                    segments.add(entry.getEffect());
+                }
+            }
+            segments.sort(Comparator.comparingLong(Effect::getStartTimeMSec));
+        }
+        if (segments.isEmpty()) {
+            segments.add(effect);
+        }
+        return new PreviewPlan(n1Strip.getId(), segments);
+    }
+
+    private LEDStrip findN1LedStrip(Drill drill) {
+        Performer n1 = null;
+        for (Performer p : drill.performers) {
+            if (p.getLabel() == 1) {
+                n1 = p;
+                break;
+            }
+        }
+        if (n1 == null && !drill.performers.isEmpty()) {
+            n1 = drill.performers.get(0);
+        }
+        if (n1 == null) return null;
+        for (LEDStrip ledStrip : drill.ledStrips) {
+            if (ledStrip.getPerformerID() == n1.getPerformerID()) {
+                return ledStrip;
+            }
+        }
+        return null;
     }
 
     /**
