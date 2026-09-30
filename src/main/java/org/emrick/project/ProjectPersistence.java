@@ -1,12 +1,14 @@
 package org.emrick.project;
 
 import com.google.gson.Gson;
-import org.emrick.project.serde.ProjectFile;
+import com.google.gson.stream.JsonReader;
+import com.google.gson.stream.JsonToken;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
+import java.io.Reader;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.AtomicMoveNotSupportedException;
 import java.nio.file.Files;
@@ -14,6 +16,7 @@ import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
@@ -144,32 +147,63 @@ public final class ProjectPersistence {
     }
 
     private static void validateArchive(Path archive, Gson gson) throws IOException {
-        String projectJson = null;
-        int jsonCount = 0;
         try (ZipFile zipFile = new ZipFile(archive.toFile(), StandardCharsets.UTF_8)) {
+            List<ZipEntry> jsonEntries = new ArrayList<>();
             var entries = zipFile.entries();
             while (entries.hasMoreElements()) {
                 ZipEntry entry = entries.nextElement();
                 if (!entry.isDirectory() && entry.getName().endsWith(".json")) {
-                    jsonCount++;
-                    try (BufferedReader reader = new BufferedReader(new InputStreamReader(
-                            zipFile.getInputStream(entry), StandardCharsets.UTF_8))) {
-                        projectJson = reader.lines().reduce("", (left, right) -> left + right);
-                    }
+                    jsonEntries.add(entry);
+                }
+            }
+            if (jsonEntries.size() != 1) {
+                throw new IOException("Project archive must contain exactly one JSON project file.");
+            }
+            try (Reader reader = new BufferedReader(new InputStreamReader(
+                    zipFile.getInputStream(jsonEntries.get(0)), StandardCharsets.UTF_8))) {
+                if (!isCompleteProject(reader)) {
+                    throw new IOException("Project JSON does not contain a complete project.");
                 }
             }
         }
-        if (jsonCount != 1 || projectJson == null) {
-            throw new IOException("Project archive must contain exactly one JSON project file.");
-        }
+    }
+
+    /**
+     * Streams through the whole project JSON, so a truncated or malformed file is rejected, without
+     * building the project in memory (large shows can be hundreds of MB of JSON).
+     * Accepts every format MediaEditorGUI.loadProjectData can open: the current format (archiveNames)
+     * and the legacy single-archive format (archivePath), which is upgraded on the next save.
+     */
+    private static boolean isCompleteProject(Reader projectJson) throws IOException {
+        boolean hasDrill = false;
+        boolean hasArchiveNames = false;
+        boolean hasArchivePath = false;
         try {
-            ProjectFile projectFile = gson.fromJson(projectJson, ProjectFile.class);
-            if (projectFile == null || projectFile.drill == null || projectFile.archiveNames == null) {
-                throw new IOException("Project JSON does not contain a complete project.");
+            JsonReader reader = new JsonReader(projectJson);
+            reader.setLenient(true); // matches Gson.fromJson, which the loader uses
+            if (reader.peek() != JsonToken.BEGIN_OBJECT) {
+                return false;
             }
-        } catch (RuntimeException exception) {
+            reader.beginObject();
+            while (reader.hasNext()) {
+                String name = reader.nextName();
+                JsonToken value = reader.peek();
+                switch (name) {
+                    case "drill" -> hasDrill = value == JsonToken.BEGIN_OBJECT;
+                    case "archiveNames" -> hasArchiveNames = value == JsonToken.BEGIN_ARRAY;
+                    case "archivePath" -> hasArchivePath = value == JsonToken.STRING;
+                    default -> { }
+                }
+                reader.skipValue();
+            }
+            reader.endObject();
+            if (reader.peek() != JsonToken.END_DOCUMENT) {
+                return false;
+            }
+        } catch (IllegalStateException | NumberFormatException exception) {
             throw new IOException("Project archive JSON could not be read.", exception);
         }
+        return hasDrill && (hasArchiveNames || hasArchivePath);
     }
 
     private static void moveReplace(Path source, Path destination) throws IOException {
