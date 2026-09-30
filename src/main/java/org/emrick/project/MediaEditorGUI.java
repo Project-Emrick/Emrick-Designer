@@ -935,7 +935,8 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         flowViewerItem = new JMenuItem("Run Show via Flow View");
         runMenu.add(flowViewerItem);
         lightBoardFlowViewerItem = new JMenuItem("Run Parade Mode via View");
-        runMenu.add(lightBoardFlowViewerItem);
+        // Parade Mode is hidden from the Run menu but kept intact in case it's needed again
+        // runMenu.add(lightBoardFlowViewerItem);
         stopShowItem = new JMenuItem("Stop show");
         stopShowItem.setEnabled(false);
         runMenu.add(stopShowItem);
@@ -944,13 +945,14 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         runLightBoardWebServer = new JMenuItem("Run Parade Mode Web Server");
         stopWebServer = new JMenuItem("Stop Web Server");
         runMenu.add(runWebServer);
-        runMenu.add(runLightBoardWebServer);
+        // runMenu.add(runLightBoardWebServer); // Parade Mode hidden, see above
         runMenu.add(stopWebServer);
-        runMenu.addSeparator();
+        // RSSI Logger is hidden from the Run menu but kept intact (items, listeners, server) in case it's needed again
         runRSSILogger = new JMenuItem("Run RSSI Logger");
         stopRSSILogger = new JMenuItem(("Stop RSSI Logger"));
-        runMenu.add(runRSSILogger);
-        runMenu.add(stopRSSILogger);
+        // runMenu.addSeparator();
+        // runMenu.add(runRSSILogger);
+        // runMenu.add(stopRSSILogger);
 
         // Update Visual Status Of Server Menu Items
         if (server == null) {
@@ -1092,7 +1094,8 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         JMenuItem verifyShowItem = new JMenuItem("Verify Show");
         verifyMenu.add(verifyShowItem);
         JMenuItem verifyLightBoardItem = new JMenuItem("Verify Light Board");
-        verifyMenu.add(verifyLightBoardItem);
+        // Light Board verification is hidden from the Verify menu but kept intact in case it's needed again
+        // verifyMenu.add(verifyLightBoardItem);
         verifyMenu.addSeparator();
 
         JMenuItem previewEffectItem = new JMenuItem("Preview Effect");
@@ -1738,7 +1741,8 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
 
         // Account sign-in is currently local UI only.
         JMenuItem loginItem = new JMenu("Account");
-        menuBar.add(loginItem);
+        // Account menu is hidden from the menu bar but kept intact in case it's needed again
+        // menuBar.add(loginItem);
 
         JMenuItem signIn = new JMenuItem("Sign In");
         signIn.addActionListener(e -> {
