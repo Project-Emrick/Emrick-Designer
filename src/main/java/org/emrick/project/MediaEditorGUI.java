@@ -317,27 +317,8 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
 
         // Delete leftover files from show_data/
         File showDataDir = new File(PathConverter.pathConverter("show_data/", false));
-        if (showDataDir.exists()) {
-            showDataDir.mkdirs();
-            if (showDataDir.isDirectory()) {
-                if (showDataDir.listFiles().length > 0) {
-                    ArrayList<File> files = new ArrayList<>(Arrays.stream(showDataDir.listFiles()).toList());
-                    int i = 0;
-                    File file1;
-                    while (i < files.size()) {
-                        file1 = files.get(i);
-                        if (file1.isDirectory() && file1.listFiles().length > 0) {
-                            File[] files1 = file1.listFiles();
-                            for (File f1 : files1) {
-                                files.add(i, f1);
-                            }
-                        } else {
-                            file1.delete();
-                            i++;
-                        }
-                    }
-                }
-            }
+        if (showDataDir.isDirectory()) {
+            deleteDirectoryContents(showDataDir);
         }
 
         // Delete leftover files from packet export
@@ -382,6 +363,25 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         float setSyncDuration = timeSync.get(scrubBarGUI.getCurrentSetIndex()).getValue();
         float setDuration = scrubBarGUI.getCurrSetDuration();
         return Math.round(setSyncDuration / setDuration * 1000 / playbackSpeed);
+    }
+
+    /**
+     * Recursively deletes everything inside dir. Files that can't be deleted (e.g. audio still held
+     * open by another running Emrick Designer) are skipped rather than retried, so this always finishes.
+     */
+    private static void deleteDirectoryContents(File dir) {
+        File[] children = dir.listFiles();
+        if (children == null) {
+            return;
+        }
+        for (File child : children) {
+            if (child.isDirectory()) {
+                deleteDirectoryContents(child);
+            }
+            if (!child.delete()) {
+                System.err.println("Could not delete leftover file: " + child);
+            }
+        }
     }
 
     /**
@@ -935,7 +935,8 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         flowViewerItem = new JMenuItem("Run Show via Flow View");
         runMenu.add(flowViewerItem);
         lightBoardFlowViewerItem = new JMenuItem("Run Parade Mode via View");
-        runMenu.add(lightBoardFlowViewerItem);
+        // Parade Mode is hidden from the Run menu but kept intact in case it's needed again
+        // runMenu.add(lightBoardFlowViewerItem);
         stopShowItem = new JMenuItem("Stop show");
         stopShowItem.setEnabled(false);
         runMenu.add(stopShowItem);
@@ -944,13 +945,14 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         runLightBoardWebServer = new JMenuItem("Run Parade Mode Web Server");
         stopWebServer = new JMenuItem("Stop Web Server");
         runMenu.add(runWebServer);
-        runMenu.add(runLightBoardWebServer);
+        // runMenu.add(runLightBoardWebServer); // Parade Mode hidden, see above
         runMenu.add(stopWebServer);
-        runMenu.addSeparator();
+        // RSSI Logger is hidden from the Run menu but kept intact (items, listeners, server) in case it's needed again
         runRSSILogger = new JMenuItem("Run RSSI Logger");
         stopRSSILogger = new JMenuItem(("Stop RSSI Logger"));
-        runMenu.add(runRSSILogger);
-        runMenu.add(stopRSSILogger);
+        // runMenu.addSeparator();
+        // runMenu.add(runRSSILogger);
+        // runMenu.add(stopRSSILogger);
 
         // Update Visual Status Of Server Menu Items
         if (server == null) {
@@ -1092,7 +1094,8 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         JMenuItem verifyShowItem = new JMenuItem("Verify Show");
         verifyMenu.add(verifyShowItem);
         JMenuItem verifyLightBoardItem = new JMenuItem("Verify Light Board");
-        verifyMenu.add(verifyLightBoardItem);
+        // Light Board verification is hidden from the Verify menu but kept intact in case it's needed again
+        // verifyMenu.add(verifyLightBoardItem);
         verifyMenu.addSeparator();
 
         JMenuItem previewEffectItem = new JMenuItem("Preview Effect");
@@ -1738,7 +1741,8 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
 
         // Account sign-in is currently local UI only.
         JMenuItem loginItem = new JMenu("Account");
-        menuBar.add(loginItem);
+        // Account menu is hidden from the menu bar but kept intact in case it's needed again
+        // menuBar.add(loginItem);
 
         JMenuItem signIn = new JMenuItem("Sign In");
         signIn.addActionListener(e -> {
@@ -4655,9 +4659,9 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         }
         StringBuilder title = new StringBuilder("Emrick Designer");
         if (emrickPath != null) {
-            title.append(" — ").append(emrickPath.getName());
+            title.append(" \u2014 ").append(emrickPath.getName());
         } else if (archivePaths != null) {
-            title.append(" — Untitled Project");
+            title.append(" \u2014 Untitled Project");
         }
         if (loggedInUsername != null) {
             title.append(" - Welcome ").append(loggedInUsername);
