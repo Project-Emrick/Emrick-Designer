@@ -48,10 +48,6 @@ tasks.javadoc {
     destinationDir = new File("$projectDir\\docs")
 }
 
-tasks.build {
-    finalizedBy(javadoc)
-}
-
 jar {
     manifest {
         attributes["Main-Class"] = "org.emrick.project.MediaEditorGUI"

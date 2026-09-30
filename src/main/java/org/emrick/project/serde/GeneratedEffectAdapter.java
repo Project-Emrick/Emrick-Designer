@@ -814,7 +814,7 @@ public class GeneratedEffectAdapter extends TypeAdapter<GeneratedEffect> {
     }
 
     public static GeneratedEffect createDefaultEffect(EffectList effectType, long startMS, long endMS, int id) {
-        Duration dur = Duration.ofSeconds((endMS - startMS) / 1000);
+        Duration dur = Duration.ofMillis(endMS - startMS);
         switch (effectType) {
             case GENERATED_FADE:
                 return new FadeEffect(startMS, endMS, Color.WHITE, Color.BLACK, dur, id);
