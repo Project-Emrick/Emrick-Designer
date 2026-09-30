@@ -45,7 +45,7 @@ application {
 
 tasks.javadoc {
     options.memberLevel = JavadocMemberLevel.PRIVATE
-    destinationDir = new File("$projectDir\\docs")
+    destinationDir = new File("${buildDir}/docs/javadoc")
 }
 
 jar {
