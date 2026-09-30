@@ -317,27 +317,8 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
 
         // Delete leftover files from show_data/
         File showDataDir = new File(PathConverter.pathConverter("show_data/", false));
-        if (showDataDir.exists()) {
-            showDataDir.mkdirs();
-            if (showDataDir.isDirectory()) {
-                if (showDataDir.listFiles().length > 0) {
-                    ArrayList<File> files = new ArrayList<>(Arrays.stream(showDataDir.listFiles()).toList());
-                    int i = 0;
-                    File file1;
-                    while (i < files.size()) {
-                        file1 = files.get(i);
-                        if (file1.isDirectory() && file1.listFiles().length > 0) {
-                            File[] files1 = file1.listFiles();
-                            for (File f1 : files1) {
-                                files.add(i, f1);
-                            }
-                        } else {
-                            file1.delete();
-                            i++;
-                        }
-                    }
-                }
-            }
+        if (showDataDir.isDirectory()) {
+            deleteDirectoryContents(showDataDir);
         }
 
         // Delete leftover files from packet export
@@ -382,6 +363,25 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         float setSyncDuration = timeSync.get(scrubBarGUI.getCurrentSetIndex()).getValue();
         float setDuration = scrubBarGUI.getCurrSetDuration();
         return Math.round(setSyncDuration / setDuration * 1000 / playbackSpeed);
+    }
+
+    /**
+     * Recursively deletes everything inside dir. Files that can't be deleted (e.g. audio still held
+     * open by another running Emrick Designer) are skipped rather than retried, so this always finishes.
+     */
+    private static void deleteDirectoryContents(File dir) {
+        File[] children = dir.listFiles();
+        if (children == null) {
+            return;
+        }
+        for (File child : children) {
+            if (child.isDirectory()) {
+                deleteDirectoryContents(child);
+            }
+            if (!child.delete()) {
+                System.err.println("Could not delete leftover file: " + child);
+            }
+        }
     }
 
     /**
@@ -4653,9 +4653,9 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         }
         StringBuilder title = new StringBuilder("Emrick Designer");
         if (emrickPath != null) {
-            title.append(" — ").append(emrickPath.getName());
+            title.append(" \u2014 ").append(emrickPath.getName());
         } else if (archivePaths != null) {
-            title.append(" — Untitled Project");
+            title.append(" \u2014 Untitled Project");
         }
         if (loggedInUsername != null) {
             title.append(" - Welcome ").append(loggedInUsername);
