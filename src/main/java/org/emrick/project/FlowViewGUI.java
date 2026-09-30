@@ -1,13 +1,19 @@
 package org.emrick.project;
 
+import java.awt.AlphaComposite;
 import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.Component;
 import java.awt.Dimension;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
 import java.awt.Image;
+import java.awt.RenderingHints;
 import java.awt.Rectangle;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
+import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -17,6 +23,7 @@ import javax.swing.Timer;
 import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
+import javax.swing.Icon;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JFrame;
@@ -164,6 +171,57 @@ public class FlowViewGUI extends JPanel {
         initializeFlowViewPanel();
     }
 
+    private static Icon loadPlayIcon() {
+        return new ThemedPlayIcon();
+    }
+
+    /**
+     * Play icon recolored to the current theme's button text color so it stays visible in both
+     * light and dark mode. It is rendered at the screen's real pixel density (HiDPI / Windows
+     * display scaling) and downscaled with area averaging, so it stays crisp instead of being
+     * a 16px bitmap stretched by the OS.
+     */
+    private static class ThemedPlayIcon implements Icon {
+        private static final int SIZE = 16;
+        // PATH_PLAY_ICON is a classpath resource, so it must go through Icons rather than new ImageIcon(path)
+        private static final Image SOURCE = Icons.loadImageIcon(ScrubBarGUI.PATH_PLAY_ICON).getImage();
+        private static final HashMap<String, BufferedImage> cache = new HashMap<>();
+
+        @Override
+        public void paintIcon(Component c, Graphics g, int x, int y) {
+            Graphics2D g2 = (Graphics2D) g.create();
+            double scale = g2.getTransform().getScaleX();
+            int px = Math.max(SIZE, (int) Math.round(SIZE * scale));
+            Color color = c != null ? c.getForeground() : UIManager.getColor("Button.foreground");
+            BufferedImage img = cache.computeIfAbsent(px + ":" + color.getRGB(), k -> render(px, color));
+            g2.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BICUBIC);
+            g2.drawImage(img, x, y, SIZE, SIZE, null);
+            g2.dispose();
+        }
+
+        private static BufferedImage render(int px, Color color) {
+            BufferedImage img = new BufferedImage(px, px, BufferedImage.TYPE_INT_ARGB);
+            Graphics2D g = img.createGraphics();
+            // SCALE_AREA_AVERAGING gives a smooth result for large downscales (512 -> 16..32 px)
+            g.drawImage(new ImageIcon(SOURCE.getScaledInstance(px, px, Image.SCALE_AREA_AVERAGING)).getImage(), 0, 0, null);
+            g.setComposite(AlphaComposite.SrcIn);
+            g.setColor(color);
+            g.fillRect(0, 0, px, px);
+            g.dispose();
+            return img;
+        }
+
+        @Override
+        public int getIconWidth() {
+            return SIZE;
+        }
+
+        @Override
+        public int getIconHeight() {
+            return SIZE;
+        }
+    }
+
     public void setCurrentTriggerVisible() {
         Rectangle r = items.get(currentTrigger % items.size()).getVisibleRect();
         if (!r.getSize().equals(items.get(currentTrigger % items.size()).getSize())) {
@@ -206,8 +264,7 @@ public class FlowViewGUI extends JPanel {
             timestamp = current;
             
             // Make sure the button shows the play icon
-            ImageIcon playIcon = new ImageIcon(ScrubBarGUI.PATH_PLAY_ICON);
-            executeButton.setIcon(new ImageIcon(playIcon.getImage().getScaledInstance(16, 16, Image.SCALE_SMOOTH)));
+            executeButton.setIcon(loadPlayIcon());
             executeButton.setText("");
             
             return true;
@@ -394,15 +451,46 @@ public class FlowViewGUI extends JPanel {
             this.cue = cue;
             this.executeListener = initializeExecuteListener();
             this.executeButton = new JButton();
-            ImageIcon i = new ImageIcon(ScrubBarGUI.PATH_PLAY_ICON);
-            executeButton.setIcon(new ImageIcon(i.getImage().getScaledInstance(16,16, Image.SCALE_SMOOTH)));
+            executeButton.setIcon(loadPlayIcon());
             executeButton.addActionListener(executeListener);
             this.setLayout(new BoxLayout(this, BoxLayout.X_AXIS));
             this.setPreferredSize(new Dimension(800, 50));
             this.setMaximumSize(new Dimension(800, 50));
             this.setMinimumSize(new Dimension(800, 50));
-            this.setBackground(new Color(UIManager.getColor("Component.borderColor").getRGB()));
             this.setOpaque(true);
+            applyThemeColors();
+        }
+
+        @Override
+        public void updateUI() {
+            super.updateUI();
+            // Called by SwingUtilities.updateComponentTreeUI on light/dark switch; executeButton is null
+            // while the JPanel superclass constructor runs, so skip until this item is fully built
+            if (executeButton != null) {
+                applyThemeColors();
+            }
+        }
+
+        /**
+         * Colors this row from the active look and feel so it follows light/dark mode.
+         * The highlighted (current) row is tinted with the application accent color.
+         */
+        private void applyThemeColors() {
+            Color base = UIManager.getColor("Button.background");
+            Color accent = UIManager.getColor("Component.accentColor");
+            Color border = UIManager.getColor("Component.borderColor");
+            boolean isCurrent = items != null && !items.isEmpty() && currentTrigger % items.size() == index;
+            if (isCurrent) {
+                this.setBackground(new Color(
+                    (int)(base.getRed() * 0.7 + accent.getRed() * 0.3),
+                    (int)(base.getGreen() * 0.7 + accent.getGreen() * 0.3),
+                    (int)(base.getBlue() * 0.7 + accent.getBlue() * 0.3)
+                ));
+                this.setBorder(BorderFactory.createLineBorder(accent, 2));
+            } else {
+                this.setBackground(base);
+                this.setBorder(BorderFactory.createLineBorder(border, 1));
+            }
         }
 
         public static String wrap(String s) {
@@ -461,18 +549,7 @@ public class FlowViewGUI extends JPanel {
 
             executeButton.requestFocusInWindow();
             this.add(executeButton);
-            if ((currentTrigger) % items.size() == index) {
-                // add a hint of the accent color to the panel background
-                Color base = UIManager.getColor("Component.borderColor");
-                Color accent = UIManager.getColor("MenuItem.underlineSelectionColor");
-                this.setBackground(new Color(
-                    (int)(base.getRed() * 0.8 + accent.getRed() * 0.2),
-                    (int)(base.getGreen() * 0.8 + accent.getGreen() * 0.2),
-                    (int)(base.getBlue() * 0.8 + accent.getBlue() * 0.2)
-                ));
-            } else {
-                this.setBackground(new Color(UIManager.getColor("Component.borderColor").getRGB()));
-            }
+            applyThemeColors();
         }
 
         public ActionListener initializeExecuteListener() {
@@ -542,9 +619,8 @@ public class FlowViewGUI extends JPanel {
         public void setIndex(int index) {
             this.index = index;
             executeButton = new JButton();
-            ImageIcon i = new ImageIcon(ScrubBarGUI.PATH_PLAY_ICON);
             executeListener = initializeExecuteListener();
-            executeButton.setIcon(new ImageIcon(i.getImage().getScaledInstance(16,16, Image.SCALE_SMOOTH)));
+            executeButton.setIcon(loadPlayIcon());
             executeButton.addActionListener(executeListener);
         }
 

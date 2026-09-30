@@ -185,6 +185,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
     // Project info
     private ArrayList<File> archivePaths = null;
     private File emrickPath = null;
+    private String loggedInUsername = null;
     private File csvFile;
     
     private HardwareStatusIndicator hardwareStatusIndicator;
@@ -1775,7 +1776,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             frame.pack();
             frame.setLocationRelativeTo(null);
             frame.setVisible(true);
-            frame.setTitle("Emrick Designer");
+            updateFrameTitle();
         } else {
             frame.revalidate();
             frame.repaint();
@@ -2893,6 +2894,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
     private void applyLoadedProjectPhaseOne(LoadedProjectData loadedProjectData) {
         emrickPath = loadedProjectData.projectPath();
         archivePaths = loadedProjectData.archivePaths();
+        updateFrameTitle();
 
         ProjectFile pf = loadedProjectData.projectFile();
         OldProjectFile opf = loadedProjectData.oldProjectFile();
@@ -3021,6 +3023,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         try {
 
             emrickPath = path;
+            updateFrameTitle();
 
             File showDataDir = new File(PathConverter.pathConverter("show_data/", false));
 
@@ -4321,6 +4324,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
          */
         this.csvFile = csvFile;
         emrickPath = null;
+        updateFrameTitle();
     }
 
     @Override
@@ -4631,7 +4635,33 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
 
     @Override
     public void onUserLoggedIn(String username) {
-        frame.setTitle("Emrick Designer - Welcome "+username);
+        loggedInUsername = username;
+        updateFrameTitle();
+    }
+
+    /**
+     * Shows the name of the currently open project file in the window title bar.
+     * Call whenever emrickPath or the open project changes.
+     */
+    private void updateFrameTitle() {
+        if (frame == null) {
+            return;
+        }
+        StringBuilder title = new StringBuilder("Emrick Designer");
+        if (emrickPath != null) {
+            title.append(" — ").append(emrickPath.getName());
+        } else if (archivePaths != null) {
+            title.append(" — Untitled Project");
+        }
+        if (loggedInUsername != null) {
+            title.append(" - Welcome ").append(loggedInUsername);
+        }
+        String t = title.toString();
+        if (SwingUtilities.isEventDispatchThread()) {
+            frame.setTitle(t);
+        } else {
+            SwingUtilities.invokeLater(() -> frame.setTitle(t));
+        }
     }
 
     /**
@@ -5484,6 +5514,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             w.write(g);
             w.close();
             emrickPath = path;
+            updateFrameTitle();
         } catch (IOException e) {
             writeSysMsg("Failed to save to `" + path + "`.");
             throw new RuntimeException(e);
