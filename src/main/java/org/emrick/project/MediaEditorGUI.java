@@ -62,6 +62,17 @@ import java.net.InetSocketAddress;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Duration;
+import java.nio.charset.StandardCharsets;
+import java.security.DigestOutputStream;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import com.google.gson.ExclusionStrategy;
+import com.google.gson.FieldAttributes;
+import com.google.gson.TypeAdapter;
+import com.google.gson.TypeAdapterFactory;
+import com.google.gson.reflect.TypeToken;
+import com.google.gson.stream.JsonReader;
+import com.google.gson.stream.JsonWriter;
 import java.util.*;
 import java.util.function.Consumer;
 
@@ -110,6 +121,8 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
     });
     // JSON serde
     private final Gson gson;
+    // Serializes only show content, for detecting unsaved changes (see currentProjectFingerprint)
+    private final Gson fingerprintGson;
     private final Path userHome = Paths.get(System.getProperty("user.home"), ".emrick");
 
     // Audio Components
@@ -185,6 +198,8 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
     // Project info
     private ArrayList<File> archivePaths = null;
     private File emrickPath = null;
+    // Fingerprint of the project content as last saved or loaded; null when it has never been saved
+    private String savedProjectFingerprint = null;
     private String loggedInUsername = null;
     private File csvFile;
     
@@ -232,6 +247,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         builder.registerTypeAdapter(JButton.class, new JButtonAdapter());
         builder.serializeNulls();
         gson = builder.create();
+        fingerprintGson = createFingerprintGson(gson);
 
         // Autosave and system message things
         clearSysMsg.setRepeats(false);
@@ -275,21 +291,28 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                     hardwareStatusIndicator.stopScanning();
                 }
                 
-                if (archivePaths != null) {
-                    if (effectManager != null && !effectManager.getUndoStack().isEmpty()) {
-                        int resp = JOptionPane.showConfirmDialog(frame,
-                                "Would you like to save before quitting?",
-                                "Save and Quit?",
-                                JOptionPane.YES_NO_CANCEL_OPTION);
-                        if (resp == JOptionPane.CANCEL_OPTION) {
-                            System.out.println("User cancelled exit.");
-                            return;
-                        } else if (resp == JOptionPane.YES_OPTION) {
-                            System.out.println("User saving and quitting.");
+                if (hasUnsavedChanges()) {
+                    int resp = JOptionPane.showConfirmDialog(frame,
+                            "Would you like to save before quitting?",
+                            "Save and Quit?",
+                            JOptionPane.YES_NO_CANCEL_OPTION);
+                    if (resp == JOptionPane.CANCEL_OPTION || resp == JOptionPane.CLOSED_OPTION) {
+                        System.out.println("User cancelled exit.");
+                        return;
+                    } else if (resp == JOptionPane.YES_OPTION) {
+                        System.out.println("User saving and quitting.");
+                        try {
                             saveProjectDialog();
-                        } else if (resp == JOptionPane.NO_OPTION) {
-                            System.out.println("User not saving but quitting anyway.");
+                        } catch (RuntimeException ex) {
+                            ex.printStackTrace();
                         }
+                        // Save As cancelled or the save failed: stay open rather than lose the changes
+                        if (hasUnsavedChanges()) {
+                            writeSysMsg("Project was not saved, so Emrick Designer stayed open.");
+                            return;
+                        }
+                    } else if (resp == JOptionPane.NO_OPTION) {
+                        System.out.println("User not saving but quitting anyway.");
                     }
                 }
                 File showDataDir = new File(PathConverter.pathConverter("show_data/", false));
@@ -2702,6 +2725,8 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
 
     private LoadedProjectData loadProjectData(File projectPath, Consumer<ThemedLoadingDialog.StatusUpdate> progressConsumer) {
         try {
+            publishLoading(progressConsumer, "Validating project", "Checking that the selected project archive is complete...");
+            ProjectPersistence.validateProjectArchive(projectPath.toPath(), gson);
             publishLoading(progressConsumer, "Preparing project", "Resetting extracted show data...");
 
             File showDataDir = new File(PathConverter.pathConverter("show_data/", false));
@@ -2898,6 +2923,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
     private void applyLoadedProjectPhaseOne(LoadedProjectData loadedProjectData) {
         emrickPath = loadedProjectData.projectPath();
         archivePaths = loadedProjectData.archivePaths();
+        savedProjectFingerprint = null;
         updateFrameTitle();
 
         ProjectFile pf = loadedProjectData.projectFile();
@@ -2937,28 +2963,28 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         OldProjectFile opf = loadedProjectData.oldProjectFile();
 
         if (pf != null) {
+            count2RFTrigger = pf.count2RFTrigger == null ? new HashMap<>() : pf.count2RFTrigger;
+            footballFieldPanel.setCount2RFTrigger(count2RFTrigger);
+            rebuildPageTabCounts();
             if (pf.timeSync != null && pf.startDelay != null) {
                 timeSync = pf.timeSync;
-                onSync(timeSync, pf.startDelay);
-                scrubBarGUI.setTimeSync(timeSync);
                 startDelay = pf.startDelay;
-                count2RFTrigger = pf.count2RFTrigger;
-                footballFieldPanel.setCount2RFTrigger(count2RFTrigger);
+                onSync(timeSync, startDelay);
+                scrubBarGUI.setTimeSync(timeSync);
                 setupEffectView(pf.ids);
-                rebuildPageTabCounts();
                 updateTimelinePanel();
                 updateEffectViewPanel(selectedEffectType, null);
             }
         } else if (opf != null) {
+            count2RFTrigger = opf.count2RFTrigger == null ? new HashMap<>() : opf.count2RFTrigger;
+            footballFieldPanel.setCount2RFTrigger(count2RFTrigger);
+            rebuildPageTabCounts();
             if (opf.timeSync != null && opf.startDelay != null) {
                 timeSync = opf.timeSync;
-                onSync(timeSync, opf.startDelay);
-                scrubBarGUI.setTimeSync(timeSync);
                 startDelay = opf.startDelay;
-                count2RFTrigger = opf.count2RFTrigger;
-                footballFieldPanel.setCount2RFTrigger(count2RFTrigger);
+                onSync(timeSync, startDelay);
+                scrubBarGUI.setTimeSync(timeSync);
                 setupEffectView(opf.ids);
-                rebuildPageTabCounts();
                 updateTimelinePanel();
                 updateEffectViewPanel(selectedEffectType, null);
             }
@@ -2967,6 +2993,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
 
     private void applyLoadedProjectPhaseThree() {
         currentMovement = 1;
+        markProjectSaved();
         scrubBarGUI.setCurrAudioPlayer(this.currentAudioPlayer);
         try {
             if (emrickPath != null) {
@@ -4237,6 +4264,112 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
     }
 
     /**
+     * @return true if the open project differs from what was last saved or loaded, or has never been saved.
+     * Compares the actual project content, so edits that were undone, and changes outside the undo
+     * history (RF triggers, time sync, LED setup, groups), are judged correctly.
+     */
+    private boolean hasUnsavedChanges() {
+        if (archivePaths == null) {
+            return false;
+        }
+        if (savedProjectFingerprint == null) {
+            return true;
+        }
+        try {
+            return !savedProjectFingerprint.equals(currentProjectFingerprint());
+        } catch (RuntimeException ex) {
+            ex.printStackTrace();
+            return true; // when in doubt, offer to save
+        }
+    }
+
+    /** Records the current project content as the saved state. */
+    private void markProjectSaved() {
+        if (archivePaths == null) {
+            savedProjectFingerprint = null;
+            return;
+        }
+        try {
+            savedProjectFingerprint = currentProjectFingerprint();
+        } catch (RuntimeException ex) {
+            ex.printStackTrace();
+            savedProjectFingerprint = null;
+        }
+    }
+
+    /**
+     * Hashes the project's show content, streamed so large shows aren't held in memory.
+     * Uses fingerprintGson so viewing the show (scrubbing, exporting packets) doesn't count as a change.
+     */
+    private String currentProjectFingerprint() {
+        MessageDigest digest;
+        try {
+            digest = MessageDigest.getInstance("SHA-256");
+        } catch (NoSuchAlgorithmException ex) {
+            throw new IllegalStateException(ex);
+        }
+        try (Writer writer = new OutputStreamWriter(
+                new DigestOutputStream(OutputStream.nullOutputStream(), digest), StandardCharsets.UTF_8)) {
+            fingerprintGson.toJson(buildProjectFile(archivePaths), writer);
+        } catch (IOException ex) {
+            throw new UncheckedIOException(ex);
+        }
+        return HexFormat.of().formatHex(digest.digest());
+    }
+
+    /**
+     * Project serializer for change detection. It ignores state that changes just from viewing the show:
+     * performer positions (updated while scrubbing) and the order of each strip's effects
+     * (packet export sorts them in place; playback and export only depend on effect times).
+     */
+    private static Gson createFingerprintGson(Gson projectGson) {
+        TypeToken<ArrayList<Effect>> effectListType = new TypeToken<>() {};
+        TypeAdapterFactory timeOrderedEffects = new TypeAdapterFactory() {
+            @Override
+            @SuppressWarnings("unchecked")
+            public <T> TypeAdapter<T> create(Gson gson, TypeToken<T> type) {
+                if (!type.equals(effectListType)) {
+                    return null;
+                }
+                TypeAdapter<ArrayList<Effect>> delegate = gson.getDelegateAdapter(this, effectListType);
+                return (TypeAdapter<T>) new TypeAdapter<ArrayList<Effect>>() {
+                    @Override
+                    public void write(JsonWriter out, ArrayList<Effect> effects) throws IOException {
+                        if (effects == null) {
+                            delegate.write(out, null);
+                            return;
+                        }
+                        ArrayList<Effect> ordered = new ArrayList<>(effects);
+                        ordered.sort(Comparator.comparingLong(Effect::getStartTimeMSec)
+                                .thenComparingLong(Effect::getEndTimeMSec)
+                                .thenComparingInt(Effect::getId));
+                        delegate.write(out, ordered);
+                    }
+
+                    @Override
+                    public ArrayList<Effect> read(JsonReader in) throws IOException {
+                        return delegate.read(in);
+                    }
+                };
+            }
+        };
+        return projectGson.newBuilder()
+                .setExclusionStrategies(new ExclusionStrategy() {
+                    @Override
+                    public boolean shouldSkipField(FieldAttributes field) {
+                        return field.getDeclaringClass() == Performer.class && field.getName().equals("currentLocation");
+                    }
+
+                    @Override
+                    public boolean shouldSkipClass(Class<?> clazz) {
+                        return false;
+                    }
+                })
+                .registerTypeAdapterFactory(timeOrderedEffects)
+                .create();
+    }
+
+    /**
      * Attempts to save the project to a file.
      * If the currently open project is a new project, the user will be prompted to specify
      * a save location before the project is saved.
@@ -4291,7 +4424,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
     @Override
     public void onBeginImport() {
         if (effectManager != null) {
-            if (!effectManager.getUndoStack().isEmpty()) {
+            if (hasUnsavedChanges()) {
                 int resp = JOptionPane.showConfirmDialog(frame,
                         "Would you like to save before quitting?",
                         "Save and Quit?",
@@ -4328,6 +4461,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
          */
         this.csvFile = csvFile;
         emrickPath = null;
+        savedProjectFingerprint = null;
         updateFrameTitle();
     }
 
@@ -4453,8 +4587,6 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         this.startDelay = startDelay;
 
         scrubBarGUI.setTimeSync(timeSync);
-            count2RFTrigger = new HashMap<>();
-            footballFieldPanel.setCount2RFTrigger(count2RFTrigger);
 
         setupEffectView(null);
         rebuildPageTabCounts();
@@ -4535,6 +4667,9 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
 
     @Override
     public long onScrub() {
+        if (timeManager == null) {
+            return 0;
+        }
         // If time cursor is at start of first set, arm the start-delay
         useStartDelay = scrubBarGUI.isAtFirstSet() && scrubBarGUI.isAtStartOfSet();
         // If triggers are ready to be used, refresh on scroll
@@ -4556,6 +4691,9 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
     public void onTimeChange(long time) {
         footballFieldPanel.currentMS = time;
         ledStripViewGUI.setCurrentMS(time);
+        if (timelineGUI == null) {
+            return;
+        }
         if (playbackTimer != null) { // this if for timeline when playing, ever so slightly off
             timelineGUI.scrubToMS(scrubBarGUI.getTime() * 1000);
         } else { // accurate
@@ -5468,6 +5606,58 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
      * @param archivePaths The locations of the .3dz files in user files when the project is loaded.
      */
     private void saveProject(File path, ArrayList<File> archivePaths) {
+        ProjectFile pf = buildProjectFile(archivePaths);
+        String g = gson.toJson(pf);
+
+        writeSysMsg("saving to `" + path + "`");
+
+        String jsonName = path.getName();
+        jsonName = jsonName.substring(0, jsonName.indexOf(".emrick")) + ".json";
+        File dir = new File(PathConverter.pathConverter("show_data/", false));
+        dir.mkdirs();
+        File[] cleanJson = dir.listFiles();
+        if (cleanJson != null) {
+            for (File f : cleanJson) {
+                if (f.getName().endsWith(".json")) {
+                    f.delete();
+                }
+            }
+        }
+
+        File jsonFile = new File(PathConverter.pathConverter("show_data/" + jsonName, false));
+        try (FileWriter writer = new FileWriter(jsonFile)) {
+            writer.write(g);
+        } catch (IOException e) {
+            writeSysMsg("Failed to save to `" + path + "`.");
+            throw new RuntimeException(e);
+        }
+
+        File showDataDir = new File(PathConverter.pathConverter("show_data/", false));
+        showDataDir.mkdirs();
+        File[] saveFiles = showDataDir.listFiles();
+        ArrayList<Path> files = new ArrayList<>();
+        if (saveFiles != null) {
+            for (File f : saveFiles) {
+                if (!f.isDirectory() && !f.equals(jsonFile)) {
+                    files.add(f.toPath());
+                }
+            }
+        }
+        try {
+            ProjectPersistence.save(path.toPath(), jsonName, g, files, gson);
+            emrickPath = path;
+            markProjectSaved();
+            updateFrameTitle();
+        } catch (IOException e) {
+            writeSysMsg("Failed to save to `" + path + "`. Your existing project was not replaced.");
+            throw new RuntimeException(e);
+        }
+
+        writeSysMsg("Saved project to `" + path + "`.");
+    }
+
+    /** Builds the serializable project exactly as it is written to the .emrick file. */
+    private ProjectFile buildProjectFile(ArrayList<File> archivePaths) {
         ProjectFile pf;
 
         ArrayList<SelectionGroupGUI.SelectionGroup> groupsList = new ArrayList<>();
@@ -5475,12 +5665,6 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             SelectionGroupGUI.SelectionGroup toAdd = group.clone();
             toAdd.setTitleButton(null);
             groupsList.add(toAdd);
-        }
-
-        ArrayList<Performer> recoverPerformers = new ArrayList<>();
-        for (LEDStrip ledStrip : footballFieldPanel.drill.ledStrips) {
-            recoverPerformers.add(ledStrip.getPerformer());
-            ledStrip.setPerformer(null);
         }
 
         ArrayList<String> archiveNames = new ArrayList<>();
@@ -5498,48 +5682,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         } else {
             pf = new ProjectFile(footballFieldPanel.drill, archiveNames, timeSync, startDelay, count2RFTrigger, null, groupsList);
         }
-        String g = gson.toJson(pf);
-
-        writeSysMsg("saving to `" + path + "`");
-
-        String jsonName = path.getName();
-        jsonName = jsonName.substring(0, jsonName.indexOf(".emrick")) + ".json";
-        File dir = new File(PathConverter.pathConverter("show_data/", false));
-        dir.mkdirs();
-        File[] cleanJson = dir.listFiles();
-        for (File f : cleanJson) {
-            if (f.getName().endsWith(".json")) {
-                f.delete();
-            }
-        }
-
-        try {
-            FileWriter w = new FileWriter(PathConverter.pathConverter("show_data/" + jsonName, false));
-            w.write(g);
-            w.close();
-            emrickPath = path;
-            updateFrameTitle();
-        } catch (IOException e) {
-            writeSysMsg("Failed to save to `" + path + "`.");
-            throw new RuntimeException(e);
-        }
-
-        for (int i = 0; i < recoverPerformers.size(); i++) {
-            footballFieldPanel.drill.ledStrips.get(i).setPerformer(recoverPerformers.get(i));
-        }
-
-        File showDataDir = new File(PathConverter.pathConverter("show_data/", false));
-        showDataDir.mkdirs();
-        File[] saveFiles = showDataDir.listFiles();
-        ArrayList<String> files = new ArrayList<>();
-        for (File f : saveFiles) {
-            if (!f.isDirectory()) {
-                files.add(f.getAbsolutePath());
-            }
-        }
-        Unzip.zip(files, path.getAbsolutePath(), false);
-
-        writeSysMsg("Saved project to `" + path + "`.");
+        return pf;
     }
 
     /**
