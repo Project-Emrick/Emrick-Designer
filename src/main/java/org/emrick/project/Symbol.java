@@ -29,21 +29,21 @@ public class Symbol {
     // GDS will appear separately as last entries in the CSV file
     public static final List<String> CSV_ORDER = Collections.unmodifiableList(List.of(
         PICCOLO,
+        CLARINET,
         ALTO_SAX,
         TENOR_SAX,
-        CLARINET,
-        TROMBONE,
-        TRUMPET,
-        MELLOPHONE,
         BARITONE,
-        BIG_TEN_FLAG,
+        TRUMPET,
+        TROMBONE,
+        MELLOPHONE,
         TOOBAH,
+        BIG_TEN_FLAG,
         SNARE,
         QUAD,
-        BASS,
         CYMBAL,
-        BBD_DRUM,
+        BASS,
         BBD_CREW,
+        BBD_DRUM,
         GOLDEN_SILK,
         DRUM_MAJOR
     ));
