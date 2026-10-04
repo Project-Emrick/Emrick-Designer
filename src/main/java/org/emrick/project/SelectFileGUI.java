@@ -291,6 +291,7 @@ public class SelectFileGUI implements ActionListener {
                 "Copying the selected files into the project workspace.",
                 "This window stays up while Emrick Designer builds the new project."
         );
+        loadingDialog.setStages("Copying files", "Preparing import", "Reading archive", "Loading audio", "Parsing drill");
 
         SwingWorker<Void, ThemedLoadingDialog.StatusUpdate> worker = new SwingWorker<>() {
             @Override

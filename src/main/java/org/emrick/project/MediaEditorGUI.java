@@ -2329,10 +2329,12 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                 frame,
                 "Open Project",
                 "PROJECT LOAD",
-                "Preparing project...",
+                "Opening project...",
                 "Opening the saved Emrick project and restoring its assets.",
                 "This window stays up while Emrick Designer unpacks and rebuilds the project."
         );
+        loadingDialog.setStages("Validating project", "Preparing project", "Unpacking project", "Reading project",
+                "Loading assets", "Finalizing data", "Finalizing view");
 
         SwingWorker<LoadedProjectData, ThemedLoadingDialog.StatusUpdate> worker = new SwingWorker<>() {
             @Override

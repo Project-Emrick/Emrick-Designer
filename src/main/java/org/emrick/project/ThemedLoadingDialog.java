@@ -12,29 +12,16 @@ import java.util.Objects;
 /**
  * Progress window for long tasks (opening a project, importing, installing the board driver).
  *
- * Shows a spinner, the current step, and a progress bar. For project loading the bar moves forward through the
- * known stages (unpacking, reading, assets, building the view); for other tasks it slides until done. Colors
- * come from the current theme so it matches the rest of Emrick Designer in dark and light mode.
+ * Shows a spinner, the current step, and a progress bar. A task that knows its stages up front lists them with
+ * {@link #setStages}; the bar and "Step n of N" then move forward one stage at a time. Other tasks get a bar
+ * that slides until done. Colors come from the current theme so it matches the rest of Emrick Designer in
+ * dark and light mode.
  */
 public final class ThemedLoadingDialog extends JDialog {
     private static final int DIALOG_WIDTH = 460;
 
-    /**
-     * Known stages of opening/importing a project, matched against the status title, and how far along each
-     * one is. Unknown titles keep the bar where it is.
-     */
-    private static final String[][] STAGES = {
-            {"validat", "0.06"},
-            {"prepar", "0.10"},
-            {"unpack", "0.25"},
-            {"reading", "0.40"},
-            {"loading asset", "0.55"},
-            {"loading audio", "0.55"},
-            {"parsing", "0.65"},
-            {"finalizing data", "0.75"},
-            {"finalizing view", "0.88"},
-    };
-    private static final int STAGE_COUNT = 5; // shown to the user as "Step n of 5"
+    private String[] stages = new String[0]; // status titles in the order they happen; empty = no steps shown
+    private int currentStep = 0;
 
     private final JLabel titleLabel = new JLabel();
     private final JTextArea detailText = new JTextArea();
@@ -101,17 +88,25 @@ public final class ThemedLoadingDialog extends JDialog {
         pack();
     }
 
+    /**
+     * Lists the status titles this task will report, in order, so each one shows as its own numbered step.
+     * Stages a task ends up skipping are fine; the step just jumps ahead.
+     */
+    public void setStages(String... titles) {
+        stages = titles.clone();
+        currentStep = 0;
+    }
+
     public void update(String title, String detail) {
         titleLabel.setText(Objects.requireNonNullElse(title, "Working..."));
         detailText.setText(Objects.requireNonNullElse(detail, ""));
 
-        String t = String.valueOf(title).toLowerCase();
-        for (int i = 0; i < STAGES.length; i++) {
-            if (t.contains(STAGES[i][0])) {
-                float target = Float.parseFloat(STAGES[i][1]);
-                progress.setTarget(target);
-                int step = Math.min(STAGE_COUNT, 1 + (int) (target * STAGE_COUNT));
-                stepLabel.setText("Step " + step + " of " + STAGE_COUNT);
+        // A title that isn't a stage (or belongs to an earlier one) is a sub-task of the current step
+        for (int i = currentStep; i < stages.length; i++) {
+            if (stages[i].equalsIgnoreCase(title)) {
+                currentStep = i + 1;
+                progress.setTarget((currentStep - 0.5f) / stages.length);
+                stepLabel.setText("Step " + currentStep + " of " + stages.length);
                 break;
             }
         }
