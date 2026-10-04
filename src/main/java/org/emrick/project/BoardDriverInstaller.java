@@ -3,17 +3,22 @@ package org.emrick.project;
 import com.fazecast.jSerialComm.SerialPort;
 
 import javax.swing.*;
+import java.awt.Desktop;
 import java.io.BufferedInputStream;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.net.URI;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.time.Duration;
 import java.util.ArrayList;
+import java.util.HexFormat;
 import java.util.List;
 import java.util.Locale;
 import java.util.function.Consumer;
@@ -23,7 +28,11 @@ import java.util.zip.ZipInputStream;
 
 public final class BoardDriverInstaller {
 
-    private static final String WINDOWS_DRIVER_URL = "https://www.silabs.com/documents/public/software/CP210x_Universal_Windows_Driver.zip";
+    // Silicon Labs' site rejects downloads that don't come from a web browser (HTTP 403), so the Windows
+    // driver comes from Microsoft's Windows Update catalog instead: the same signed CP210x driver
+    // (11.4.0.393, x86/x64/ARM), packaged as a .cab.
+    private static final String WINDOWS_DRIVER_URL = "https://catalog.s.download.windowsupdate.com/d/msdownload/update/driver/drvs/2025/02/c88935e9-3a58-4d62-9f2e-1e57f76f0a18_daa26e176a8b975367075ea24f0dfeeda779ef4c.cab";
+    private static final String WINDOWS_DRIVER_SHA256 = "9fd3f276f7af17e29d2ad29a1f28554c2103b3c944dfd87f6d37db45aa83cd0e";
     private static final String MAC_DRIVER_URL = "https://www.silabs.com/documents/public/software/Mac_OSX_VCP_Driver.zip";
     private static final String DRIVER_INFO_URL = "https://www.silabs.com/software-and-tools/usb-to-uart-bridge-vcp-drivers?tab=downloads";
     private static final Duration POST_INSTALL_VERIFY_TIMEOUT = Duration.ofSeconds(15);
@@ -157,7 +166,24 @@ public final class BoardDriverInstaller {
 
     private static void installWindowsDriver(Consumer<ProgressUpdate> progressConsumer) throws IOException, InterruptedException {
         progressConsumer.accept(new ProgressUpdate("Downloading driver", "Downloading the Silicon Labs Windows CP210x driver package..."));
-        Path extractedDir = downloadAndExtract(WINDOWS_DRIVER_URL, "cp210x-windows", progressConsumer);
+        Path tempRoot = Files.createTempDirectory("emrick-board-driver-");
+        Path cabPath = tempRoot.resolve("cp210x-windows.cab");
+        Path extractedDir = tempRoot.resolve("cp210x-windows");
+        Files.createDirectories(extractedDir);
+        try {
+            download(WINDOWS_DRIVER_URL, cabPath);
+            if (!sha256(cabPath).equalsIgnoreCase(WINDOWS_DRIVER_SHA256)) {
+                throw new IOException("The downloaded driver package failed its checksum check.");
+            }
+        } catch (IOException ex) {
+            throw manualInstallNeeded(ex);
+        }
+
+        progressConsumer.accept(new ProgressUpdate("Preparing package", "Extracting the downloaded driver package..."));
+        CommandResult expandResult = runCommand(List.of("expand.exe", cabPath.toString(), "-F:*", extractedDir.toString()));
+        if (expandResult.exitCode != 0) {
+            throw new IOException("Couldn't unpack the driver package. " + joinOutput(expandResult));
+        }
 
         progressConsumer.accept(new ProgressUpdate("Installing driver", "Installing Windows CP210x drivers with pnputil..."));
         CommandResult installResult = runCommand(List.of(
@@ -186,7 +212,12 @@ public final class BoardDriverInstaller {
 
     private static void installMacDriver(Consumer<ProgressUpdate> progressConsumer) throws IOException, InterruptedException {
         progressConsumer.accept(new ProgressUpdate("Downloading driver", "Downloading the Silicon Labs macOS CP210x driver package..."));
-        Path extractedDir = downloadAndExtract(MAC_DRIVER_URL, "cp210x-macos", progressConsumer);
+        Path extractedDir;
+        try {
+            extractedDir = downloadAndExtract(MAC_DRIVER_URL, "cp210x-macos", progressConsumer);
+        } catch (IOException ex) {
+            throw manualInstallNeeded(ex);
+        }
 
         Path installer = findFirstMatching(extractedDir, path -> {
             String lower = path.getFileName().toString().toLowerCase(Locale.ENGLISH);
@@ -268,13 +299,46 @@ public final class BoardDriverInstaller {
         Path extractDir = tempRoot.resolve(folderName);
         Files.createDirectories(extractDir);
 
-        try (InputStream inputStream = new BufferedInputStream(new URL(url).openStream())) {
-            Files.copy(inputStream, zipPath, StandardCopyOption.REPLACE_EXISTING);
-        }
+        download(url, zipPath);
 
         progressConsumer.accept(new ProgressUpdate("Preparing package", "Extracting the downloaded driver package..."));
         unzip(zipPath, extractDir);
         return extractDir;
+    }
+
+    private static void download(String url, Path destination) throws IOException {
+        try (InputStream inputStream = new BufferedInputStream(new URL(url).openStream())) {
+            Files.copy(inputStream, destination, StandardCopyOption.REPLACE_EXISTING);
+        }
+    }
+
+    private static String sha256(Path file) throws IOException {
+        try {
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            return HexFormat.of().formatHex(digest.digest(Files.readAllBytes(file)));
+        } catch (NoSuchAlgorithmException e) {
+            throw new IllegalStateException(e);
+        }
+    }
+
+    /**
+     * The automatic download didn't work (no internet, or the server refused it), so send the user to the
+     * Silicon Labs driver page, which only allows downloads from a web browser.
+     */
+    private static IOException manualInstallNeeded(IOException cause) {
+        boolean opened = false;
+        try {
+            if (Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(Desktop.Action.BROWSE)) {
+                Desktop.getDesktop().browse(URI.create(DRIVER_INFO_URL));
+                opened = true;
+            }
+        } catch (Exception ignored) {
+        }
+        return new IOException("The CP210x driver couldn't be downloaded automatically.\n\n"
+                + (opened ? "The Silicon Labs driver page has been opened in your browser. "
+                          : "Open " + DRIVER_INFO_URL + " in a web browser. ")
+                + "Download and install the CP210x VCP driver from there, then run Install Board Driver again."
+                + "\n\nDetails: " + cause.getMessage(), cause);
     }
 
     private static void unzip(Path zipPath, Path destinationDir) throws IOException {

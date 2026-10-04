@@ -90,7 +90,22 @@ public final class Esptool {
                 ? home.resolve("penv/Scripts/python.exe").toFile()
                 : home.resolve("penv/bin/python").toFile();
         if (script.isFile() && python.isFile()) {
-            return List.of(python.getAbsolutePath(), script.getAbsolutePath());
+            List<String> cmd = List.of(python.getAbsolutePath(), script.getAbsolutePath());
+            // A PlatformIO install can be missing esptool's Python modules (e.g. intelhex), in which case
+            // it can't run at all. Only use it if it starts; otherwise fall back to the standalone build.
+            try {
+                List<String> check = new ArrayList<>(cmd);
+                check.add("version");
+                Process p = new ProcessBuilder(check).redirectErrorStream(true).start();
+                p.getInputStream().readAllBytes();
+                if (p.waitFor() == 0) {
+                    return cmd;
+                }
+            } catch (IOException e) {
+                // fall through to the standalone build
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
         }
         return null;
     }
