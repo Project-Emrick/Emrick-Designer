@@ -160,6 +160,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
     // Time keeping
     private TimeManager timeManager;
     private ArrayList<SyncTimeGUI.Pair> timeSync = null;
+    private String projectLoadWarning = null;
     private boolean useStartDelay; // If we are at the first count of the first set, useStartDelay = true
     private float startDelay; // Drills might not start immediately, therefore use this. Unit: seconds.
     private float playbackSpeed = 1; // The selected playback speed. For example "0.5", "1.0", "1.5". Use as a multiplier
@@ -1893,7 +1894,8 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             if (result == null) {
                 writeSysMsg("No receiver available - check hardware status indicator");
                 JOptionPane.showMessageDialog(frame,
-                        "No receiver detected. Please connect an Emrick receiver and make sure it is not busy to appear in the hardware scanner.",
+                        "No receiver detected. Please connect an Emrick receiver and make sure it is not busy to appear in the hardware scanner."
+                                + portsHeldByDeveloperMode(),
                         "No Receiver Available",
                         JOptionPane.WARNING_MESSAGE);
             } else {
@@ -1902,6 +1904,19 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         }
         
         return result;
+    }
+
+    /** @return a note naming any units Developer Mode currently has open, or "" if none */
+    private String portsHeldByDeveloperMode() {
+        StringBuilder held = new StringBuilder();
+        for (SerialPort p : org.emrick.project.dev.UnitPort.emrickPorts()) {
+            String owner = org.emrick.project.dev.UnitPort.ownerOf(p.getSystemPortName());
+            if (owner != null) {
+                held.append("\n\n").append(p.getSystemPortName()).append(" is in use by Developer Mode (")
+                        .append(owner).append("). Disconnect it there and try again.");
+            }
+        }
+        return held.toString();
     }
 
     public SerialTransmitter comPortPromptFlow() {
@@ -2535,10 +2550,21 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                     }
                     get();
                     writeSysMsg("Opened project `" + loadedProjectData.projectPath().getAbsolutePath() + "`.");
+                    if (projectLoadWarning != null) {
+                        JOptionPane.showMessageDialog(frame, projectLoadWarning,
+                                "Open Project Warning", JOptionPane.WARNING_MESSAGE);
+                        projectLoadWarning = null;
+                    }
                 } catch (Exception ex) {
+                    // Unwrap the worker/invokeAndWait wrappers so the dialog names the real failure.
+                    Throwable cause = ex;
+                    while (cause.getCause() != null) {
+                        cause = cause.getCause();
+                    }
+                    cause.printStackTrace();
                     writeSysMsg("Failed to fully render project `" + loadedProjectData.projectPath().getAbsolutePath() + "`.");
                     JOptionPane.showMessageDialog(frame,
-                            "Project loaded but failed during final render: " + ex.getMessage(),
+                            "Project loaded but failed during final render: " + cause,
                             "Open Project Error",
                             JOptionPane.ERROR_MESSAGE);
                 } finally {
@@ -2607,7 +2633,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             count2RFTrigger = pf.count2RFTrigger == null ? new HashMap<>() : pf.count2RFTrigger;
             footballFieldPanel.setCount2RFTrigger(count2RFTrigger);
             rebuildPageTabCounts();
-            if (pf.timeSync != null && pf.startDelay != null) {
+            if (pf.timeSync != null && pf.startDelay != null && timeSyncCoversDrillSets(pf.timeSync)) {
                 timeSync = pf.timeSync;
                 startDelay = pf.startDelay;
                 onSync(timeSync, startDelay);
@@ -2620,7 +2646,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             count2RFTrigger = opf.count2RFTrigger == null ? new HashMap<>() : opf.count2RFTrigger;
             footballFieldPanel.setCount2RFTrigger(count2RFTrigger);
             rebuildPageTabCounts();
-            if (opf.timeSync != null && opf.startDelay != null) {
+            if (opf.timeSync != null && opf.startDelay != null && timeSyncCoversDrillSets(opf.timeSync)) {
                 timeSync = opf.timeSync;
                 startDelay = opf.startDelay;
                 onSync(timeSync, startDelay);
@@ -2630,6 +2656,33 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                 updateEffectViewPanel(selectedEffectType, null);
             }
         }
+    }
+
+    /**
+     * Checks that a saved time sync has a duration for every set TimeManager will look up (all but the last).
+     * A sync saved against a different drill would otherwise crash the load, so the project is opened
+     * un-synced instead and the user is told to re-sync.
+     */
+    private boolean timeSyncCoversDrillSets(ArrayList<SyncTimeGUI.Pair> sync) {
+        HashSet<String> syncedSets = new HashSet<>();
+        for (SyncTimeGUI.Pair pair : sync) {
+            syncedSets.add(pair.getKey());
+        }
+        ArrayList<String> missingSets = new ArrayList<>();
+        ArrayList<Set> sets = footballFieldPanel.drill.sets;
+        for (int i = 0; i < sets.size() - 1; i++) {
+            if (!syncedSets.contains(sets.get(i).label)) {
+                missingSets.add(sets.get(i).label);
+            }
+        }
+        if (missingSets.isEmpty()) {
+            return true;
+        }
+        timeSync = null;
+        projectLoadWarning = "The saved time sync does not match this drill's sets (no timing for "
+                + String.join(", ", missingSets) + ").\nThe project was opened without it. Run Time Sync again.";
+        writeSysMsg(projectLoadWarning);
+        return false;
     }
 
     private void applyLoadedProjectPhaseThree() {

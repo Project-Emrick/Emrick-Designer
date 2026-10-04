@@ -1,6 +1,7 @@
 package org.emrick.project;
 
 import com.fazecast.jSerialComm.SerialPort;
+import org.emrick.project.dev.UnitPort;
 
 import java.awt.*;
 import java.io.IOException;
@@ -245,36 +246,19 @@ public class SerialTransmitter {
 
         if (s != null) {
             if (s.getDescriptivePortName().toLowerCase().contains("cp210x")) {
-                String query = "q";
-                if (!s.openPort()) {
-                    System.out.println("Port is busy");
+                // Same probe Developer Mode uses: it retries through the boot window and ignores boot
+                // messages, where a single timed read could miss the reply and report no board.
+                String owner = UnitPort.ownerOf(s.getSystemPortName());
+                if (owner != null) {
+                    System.out.println("Port is busy: " + s.getSystemPortName() + " is in use by Developer Mode (" + owner + ")");
                     return "";
                 }
-                s.closePort();
-                s.clearDTR();
-                s.clearRTS();
-                s.openPort();
-                s.flushIOBuffers();
-                try {
-                    Thread.sleep(1000);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
+                String type = UnitPort.probeType(s);
+                if (UnitPort.UNKNOWN.equals(type)) {
+                    System.out.println("No board type reply on " + s.getSystemPortName());
+                    return "";
                 }
-                s.writeBytes(query.getBytes(), query.length());
-                byte[] buf = new byte[100];
-                s.setComPortTimeouts(SerialPort.TIMEOUT_READ_SEMI_BLOCKING, 1000, 0);
-                int read = s.readBytes(buf, 100);
-                s.closePort();
-                if (read > 0) {
-                    char type = (char) buf[read-1];
-                    String out;
-                    switch (type) {
-                        case 'r' : out = "Receiver"; break;
-                        case 't' : out = "Transmitter"; break;
-                        default : out = "";
-                    }
-                    return out;
-                }
+                return type;
             }
         }
         return "";
