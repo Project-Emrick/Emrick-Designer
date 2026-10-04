@@ -30,6 +30,9 @@ import org.apache.poi.ss.util.CellReference;
 import org.emrick.project.actions.EffectLEDStripMap;
 import org.emrick.project.actions.LEDConfig;
 import org.emrick.project.audio.AudioPlayer;
+import org.emrick.project.dev.AppLog;
+import org.emrick.project.dev.DevModeHost;
+import org.emrick.project.dev.DeveloperModeGUI;
 import org.emrick.project.effect.*;
 import org.emrick.project.serde.*;
 import org.apache.poi.xddf.usermodel.chart.ChartTypes;
@@ -82,7 +85,7 @@ import java.util.function.Consumer;
  */
 public class MediaEditorGUI extends Component implements ImportListener, ScrubBarListener, SyncListener,
         FootballFieldListener, EffectListener, SelectListener, UserAuthListener, RFTriggerListener, RFSignalListener, RequestCompleteListener,
-        LEDConfigListener, ReplaceFilesListener, TimelineListener {
+        LEDConfigListener, ReplaceFilesListener, TimelineListener, DevModeHost {
 
     // String definitions
     public static final String FILE_MENU_CONCATENATE = "Concatenate";
@@ -165,7 +168,6 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
 
     // Web Server
     private HttpServer server;
-    private HttpServer rssiServer;
     private String ssid;
     private String password;
     private int port;
@@ -177,21 +179,15 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
     private Timer noRequestTimer;
     private HashSet<Integer> requestIDs;
     private JMenuItem runWebServer;
-    private JMenuItem runLightBoardWebServer;
     private JMenuItem stopWebServer;
-    private JMenuItem runRSSILogger;
-    private JMenuItem stopRSSILogger;
     private ProgrammingTracker programmingTracker;
     private JProgressBar programmingProgressBar;
-    private boolean lightBoardMode;
     JLabel programmingProgressLabel = new JLabel();
 
     // Flow viewer
     private JMenuItem runShowItem;
     private JMenuItem flowViewerItem;
-    private JMenuItem lightBoardFlowViewerItem;
     private JMenuItem stopShowItem;
-    private boolean isLightBoardMode;
 
     private JCheckBoxMenuItem showIndividualView;
 
@@ -204,6 +200,11 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
     private File csvFile;
     
     private HardwareStatusIndicator hardwareStatusIndicator;
+
+    // Developer Mode takes the place of the designer view (under the same menu bar) while open
+    private DeveloperModeGUI developerModeGUI;
+    private Container designerContentPane;
+    private JMenuItem developerModeItem;
     private SerialTransmitter previewReceiver; // Cached Receiver connection during a hardware effect-preview session
     private Timer previewSequenceTimer; // Schedules multi-segment preview packets (e.g. Wave, Ripple)
     JFrame webServerFrame;
@@ -217,6 +218,9 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
      * @param args - Only used when opening the application via an associated file type rather than an executable
      */
     public static void main(String[] args) {
+        // Keep a copy of console output for the Developer Mode terminal
+        AppLog.install();
+
         // Process file argument
         final String file = args.length != 0 ? args[0] : "";
         
@@ -273,6 +277,17 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         windowListener = new WindowAdapter() {
             @Override
             public void windowClosing(WindowEvent e) {
+                if (developerModeGUI != null) {
+                    if (developerModeGUI.isBusy()) {
+                        int resp = JOptionPane.showConfirmDialog(frame,
+                                "Units are still being flashed. Quitting now can leave them unusable until they are flashed again.\nQuit anyway?",
+                                "Flash In Progress", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
+                        if (resp != JOptionPane.YES_OPTION) {
+                            return;
+                        }
+                    }
+                    developerModeGUI.shutdown();
+                }
                 if (server != null) {
                     stopServer();
                     webServerFrame.dispose();
@@ -366,9 +381,8 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             } else {
                 createAndShowGUI();
                 runWebServer.setEnabled(false);
-                runLightBoardWebServer.setEnabled(false);
                 stopWebServer.setEnabled(true);
-                runServer(file, false);
+                runServer(file);
             }
         } else {
             createAndShowGUI();
@@ -447,6 +461,22 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
      * This method should be called on startup and on project loading when another project is already loaded.
      */
     private void createAndShowGUI() {
+        // The designer view is rebuilt directly into the frame, so step out of Developer Mode's view for the
+        // rebuild and return to it afterwards (e.g. when a project is opened while Developer Mode is showing)
+        boolean showingDeveloperMode = developerModeGUI != null;
+        if (showingDeveloperMode) {
+            frame.setContentPane(designerContentPane);
+        }
+        buildDesignerGUI();
+        if (showingDeveloperMode) {
+            designerContentPane = frame.getContentPane();
+            frame.setContentPane(developerModeGUI);
+            frame.revalidate();
+            frame.repaint();
+        }
+    }
+
+    private void buildDesignerGUI() {
         RFTrigger.rfTriggerListener = this;
         Effect.effectListener = this;
 
@@ -957,52 +987,27 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         runMenu.add(runShowItem);
         flowViewerItem = new JMenuItem("Run Show via Flow View");
         runMenu.add(flowViewerItem);
-        lightBoardFlowViewerItem = new JMenuItem("Run Parade Mode via View");
-        // Parade Mode is hidden from the Run menu but kept intact in case it's needed again
-        // runMenu.add(lightBoardFlowViewerItem);
         stopShowItem = new JMenuItem("Stop show");
         stopShowItem.setEnabled(false);
         runMenu.add(stopShowItem);
         runMenu.addSeparator();
         runWebServer = new JMenuItem("Run Web Server");
-        runLightBoardWebServer = new JMenuItem("Run Parade Mode Web Server");
         stopWebServer = new JMenuItem("Stop Web Server");
         runMenu.add(runWebServer);
-        // runMenu.add(runLightBoardWebServer); // Parade Mode hidden, see above
         runMenu.add(stopWebServer);
-        // RSSI Logger is hidden from the Run menu but kept intact (items, listeners, server) in case it's needed again
-        runRSSILogger = new JMenuItem("Run RSSI Logger");
-        stopRSSILogger = new JMenuItem(("Stop RSSI Logger"));
-        // runMenu.addSeparator();
-        // runMenu.add(runRSSILogger);
-        // runMenu.add(stopRSSILogger);
 
         // Update Visual Status Of Server Menu Items
         if (server == null) {
             stopWebServer.setEnabled(false);
         } else {
             runWebServer.setEnabled(false);
-            runLightBoardWebServer.setEnabled(false);
-        }
-
-        if (rssiServer == null) {
-            stopRSSILogger.setEnabled(false);
-        } else {
-            runRSSILogger.setEnabled(false);
         }
 
         // Option Action Listeners
         runWebServer.addActionListener(e -> {
             runWebServer.setEnabled(false);
-            runLightBoardWebServer.setEnabled(false);
             stopWebServer.setEnabled(true);
-            runServer("", false);
-        });
-        runLightBoardWebServer.addActionListener(e -> {
-            runWebServer.setEnabled(false);
-            runLightBoardWebServer.setEnabled(false);
-            stopWebServer.setEnabled(true);
-            runServer("", true);
+            runServer("");
         });
         stopWebServer.addActionListener(e -> {
             stopServer();
@@ -1024,7 +1029,6 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             stopShowItem.setEnabled(false);
             runShowItem.setEnabled(true);
             flowViewerItem.setEnabled(true);
-            lightBoardFlowViewerItem.setEnabled(true);
         });
         flowViewerItem.addActionListener(e -> {
             if (count2RFTrigger == null) {
@@ -1033,47 +1037,16 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                 return;
             }
 
-            isLightBoardMode = false;
+            yieldDeveloperModeForShow();
             SerialTransmitter st = comPortPrompt("Transmitter");
             if (st == null) {return;}
 
             runShowItem.setEnabled(false);
             flowViewerItem.setEnabled(false);
-            lightBoardFlowViewerItem.setEnabled(false);
             stopShowItem.setEnabled(true);
 
             flowViewGUI = new FlowViewGUI(count2RFTrigger, this, footballFieldPanel.drill.sets);
 
-            if (footballField.isShowing()) {
-                mainContentPanel.remove(footballField);
-            } else if (ledStripViewGUI.isShowing()) {
-                showIndividualView.setState(false);
-                mainContentPanel.remove(ledStripViewGUI);
-            } else if (ledConfigurationGUI.isShowing()) {
-                mainContentPanel.remove(ledConfigurationGUI);
-            }
-            mainContentPanel.add(flowViewGUI);
-            mainContentPanel.revalidate();
-            mainContentPanel.repaint();
-        });
-
-        lightBoardFlowViewerItem.addActionListener(e -> {
-            if (count2RFTrigger == null) {
-                JOptionPane.showMessageDialog(null, "There is no project currently open. Please open a project file to run show.",
-                                               "Error", JOptionPane.ERROR_MESSAGE);
-                return;
-            }
-
-            isLightBoardMode = true;
-
-            SerialTransmitter st = comPortPrompt("Transmitter");
-            if (st == null) return;
-
-            runShowItem.setEnabled(false);
-            flowViewerItem.setEnabled(false);
-            lightBoardFlowViewerItem.setEnabled(false);
-            stopShowItem.setEnabled(true);
-            flowViewGUI = new FlowViewGUI(count2RFTrigger, this, footballFieldPanel.drill.sets);
             if (footballField.isShowing()) {
                 mainContentPanel.remove(footballField);
             } else if (ledStripViewGUI.isShowing()) {
@@ -1088,27 +1061,14 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         });
 
         runShowItem.addActionListener(e -> {
+            yieldDeveloperModeForShow();
             SerialTransmitter st = comPortPrompt("Transmitter");
             if (st == null) return;
 
             footballFieldPanel.addSetToField(footballFieldPanel.drill.sets.get(0));
             runShowItem.setEnabled(false);
             flowViewerItem.setEnabled(false);
-            lightBoardFlowViewerItem.setEnabled(false);
             stopShowItem.setEnabled(true);
-        });
-
-        // Marker
-        runRSSILogger.addActionListener(e -> {
-            runRSSILogger.setEnabled(false);
-            stopRSSILogger.setEnabled(true);
-            runRSSIServer();
-        });
-
-        // Marker
-        stopRSSILogger.addActionListener(e -> {
-            runRSSILogger.setEnabled(true);
-            stopRSSILogger.setEnabled(false);
         });
 
         /* Verify Menu */
@@ -1116,9 +1076,6 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         menuBar.add(verifyMenu);
         JMenuItem verifyShowItem = new JMenuItem("Verify Show");
         verifyMenu.add(verifyShowItem);
-        JMenuItem verifyLightBoardItem = new JMenuItem("Verify Light Board");
-        // Light Board verification is hidden from the Verify menu but kept intact in case it's needed again
-        // verifyMenu.add(verifyLightBoardItem);
         verifyMenu.addSeparator();
 
         JMenuItem previewEffectItem = new JMenuItem("Preview Effect");
@@ -1136,14 +1093,6 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                     "Show Token Input", JOptionPane.QUESTION_MESSAGE);
             if (token == null) return;
             st.writeToSerialPort("v" + token);
-        });
-
-        // Verify Light Board
-        verifyLightBoardItem.addActionListener(e -> {
-            SerialTransmitter st = comPortPrompt("Transmitter");
-            if (st == null) return;
-
-            st.writeToSerialPort("w");
         });
 
         /* Preview Effect: pick an effect type, tweak params, preview on hardware, and
@@ -1183,8 +1132,6 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         // hardwareMenu.add(wiredProgramming);
         JMenuItem realWiredProgramming = new JMenuItem("Wired Show Programming");
         hardwareMenu.add(realWiredProgramming);
-        JMenuItem resetRSSIItem = new JMenuItem("Reset RSSI Log");
-        // hardwareMenu.add(resetRSSIItem);
 
         /* Action Listeners For Buttons */
         // Battery Check
@@ -1216,7 +1163,23 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             SerialTransmitter st = comPortPrompt("Transmitter");
             if (st == null) return;
 
+            // Broadcast to every unit, so confirm first. "No" is the default so an accidental Enter does nothing.
+            Object[] choices = {"Yes, enter Storage Mode", "No"};
+            int response = JOptionPane.showOptionDialog(
+                    frame,
+                    "Put ALL units in range into Storage Mode?\n\nThis is sent to every unit, not just one.",
+                    "Confirm Storage Mode",
+                    JOptionPane.YES_NO_OPTION,
+                    JOptionPane.WARNING_MESSAGE,
+                    null,
+                    choices,
+                    choices[1]);
+            if (response != JOptionPane.YES_OPTION) {
+                writeSysMsg("Storage Mode cancelled");
+                return;
+            }
             st.writeToSerialPort("d");
+            writeSysMsg("Storage Mode sent to all units");
         });
 
         // Mass Idle
@@ -1267,155 +1230,18 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
 
         // Modify Board
         modifyBoardItem.addActionListener(e -> {
-            try {
-                SerialTransmitter st = comPortPrompt("Receiver");
-                if (!st.getType().equals("Receiver")) {
-                    throw new IllegalStateException("Not a receiver");
-                }
-            } catch (IllegalStateException er) {
-                JOptionPane.showMessageDialog(
-                        null,
-                        "Transmitter Detected, Please plug in a receiver.",
-                        "Error",
-                        JOptionPane.ERROR_MESSAGE
-                );
-                return;
-            } catch (Exception err) {
-                JOptionPane.showMessageDialog(
-                        null,
-                        "Please plug a board in before proceeding.",
-                        "Error",
-                        JOptionPane.ERROR_MESSAGE
-                );
+            SerialTransmitter st = comPortPrompt("Receiver"); // explains what to do if no receiver is plugged in
+            if (st == null) {
                 return;
             }
-            /* Create st Object for Later Handling */
-            SerialTransmitter st = comPortPrompt("Receiver");
-
-            // Marker
-            if (archivePaths == null) { // No Project Open
-                JTextField boardIDField = new JTextField();
-                JCheckBox boardIDEnable = new JCheckBox("Write new Board ID");
-                boardIDEnable.setSelected(true);
-                JTextField ledCountField = new JTextField();
-                JCheckBox enableLedCount = new JCheckBox("Write new LED Count");
-                enableLedCount.setSelected(true);
-
-                Object[] inputs = {
-                        new JLabel("Board ID: "), boardIDField, boardIDEnable,
-                        new JLabel("LED Count: "), ledCountField, enableLedCount
-                };
-
-                int option = JOptionPane.showConfirmDialog(null, inputs, "Enter board parameters:", JOptionPane.OK_CANCEL_OPTION);
-                if (option == JOptionPane.OK_OPTION) {
-                    if (boardIDEnable.isSelected()) {
-                        try {
-                            int id = Integer.parseInt(boardIDField.getText());
-                            String position = "";
-                            if (!footballFieldPanel.drill.ledStrips.isEmpty()) {
-                                LEDStrip ledStrip = footballFieldPanel.drill.ledStrips.get(id);
-                                position = ledStrip.getLedConfig().getLabel();
-                            }
-
-
-                            st.writeBoardID(boardIDField.getText(), position);
-                            try {
-                                Thread.sleep(5000);
-                            } catch (InterruptedException ex) {
-                                throw new RuntimeException(ex);
-                            }
-                        } catch (Exception ex) {
-                            JOptionPane.showMessageDialog(null, "Board ID Error. Please try again. " + ex.getMessage(),
-                                    "Input Error", JOptionPane.ERROR_MESSAGE);
-                        }
-                    }
-                    if (enableLedCount.isSelected()) {
-                        st.writeLEDCount(ledCountField.getText());
-                    }
-                }
-            } else { // Project Open
-                // Set csv File path
-                File showDatapath = new File(PathConverter.pathConverter("show_data", false));
-
-                // Search + Set csvFile
-                File[] csvFiles = showDatapath.listFiles((dir, name) -> name.toLowerCase().endsWith(".csv"));
-                assert csvFiles != null;
-                csvFile = csvFiles[0];
-
-                if (csvFile != null) { // Ensure there is a csvFile in the correct location
-                    // Have the user input the physical box label
-                    JTextField boardLabelField = new JTextField();
-                    Object[] inputs = {
-                            new JLabel("Board Label: "), boardLabelField
-                    };
-
-                    int option = JOptionPane.showConfirmDialog(null, inputs, "Enter board parameters:", JOptionPane.OK_CANCEL_OPTION);
-                    if (option == JOptionPane.OK_OPTION) {
-                        // Parse input in
-                        String boardLabel = boardLabelField.getText().toUpperCase();
-
-                        // Ensure there is an input
-                        if (boardLabel == null || boardLabel.trim().isEmpty()) {
-                            JOptionPane.showMessageDialog(null, "No label entered.", "Input Error", JOptionPane.ERROR_MESSAGE);
-                        }
-
-                        // Search csv file
-                        try (BufferedReader br = new BufferedReader(new FileReader(csvFile))) {
-                            String line;
-                            boolean found = false;
-
-                            String boardID = "";
-                            String ledCount = "";
-
-                            while ((line = br.readLine()) != null) {
-                                String[] tokens = line.split(",");
-
-                                for (int i = 0; i < tokens.length; i++) {
-                                    if (tokens[i].equalsIgnoreCase(boardLabel)) {
-                                        boardID = (i > 0) ? tokens[i - 1].trim() : null;
-                                        ledCount = (i < tokens.length - 1) ? tokens[i + 1].trim() : null;
-
-                                        if (boardID == null || ledCount == null) {
-                                            JOptionPane.showMessageDialog(null, "CSV format is invalid around label: " + boardLabel,
-                                                    "Parsing Error", JOptionPane.ERROR_MESSAGE);
-                                            return;
-                                        }
-
-                                        // Found variables
-                                        found = true;
-                                        break;
-                                    }
-                                }
-                                if (found) break;
-                            }
-
-                            // Write BoardID and ledCount
-                            // Board ID
-                            String position = "";
-                            if (!footballFieldPanel.drill.ledStrips.isEmpty()) {
-                                LEDStrip ledStrip = footballFieldPanel.drill.ledStrips.get(Integer.parseInt(boardID));
-                                position = ledStrip.getLedConfig().getLabel();
-                            }
-
-                            st.writeBoardID(boardID, position);
-                            try {
-                                Thread.sleep(5000);
-                            } catch (InterruptedException ex) {
-                                throw new RuntimeException(ex);
-                            }
-
-                            // ledCount
-                            st.writeLEDCount(ledCount);
-
-                        } catch (Exception ex) {
-                            JOptionPane.showMessageDialog(null, "Error reading CSV: " + ex.getMessage(),
-                                    "File Error", JOptionPane.ERROR_MESSAGE);
-                        }
-                    }
-                } else {
-                    System.out.println("CSV File is Null");
-                }
+            if (!"Receiver".equals(st.getType())) {
+                JOptionPane.showMessageDialog(frame, "Transmitter detected. Please plug in a receiver.",
+                        "Modify Board", JOptionPane.ERROR_MESSAGE);
+                return;
             }
+            // One dialog for board label, ID, and LED count. With a show open, the label and ID fill each other
+            // in from the show.
+            ModifyBoardDialog.show(frame, st, getLedStrips());
         });
 
         // Wired Show Programming
@@ -1682,74 +1508,21 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             }
         });
 
-        /* Resetting RSSI Log On Board */
-        resetRSSIItem.addActionListener(j -> {
-            /* Check for Board Receiver Type */
-            try {
-                SerialTransmitter st = comPortPrompt("Receiver");
-                if (!st.getType().equals("Receiver")) {
-                    throw new IllegalStateException("Not a receiver");
-                }
-            } catch (IllegalStateException e) {
-                JOptionPane.showMessageDialog(
-                        null,
-                        "Transmitter Detected, Please plug in a receiver.",
-                        "Error",
-                        JOptionPane.ERROR_MESSAGE
-                );
-                return;
-            } catch (Exception e) {
-                JOptionPane.showMessageDialog(
-                        null,
-                        "Please plug a board in before proceeding.",
-                        "Error",
-                        JOptionPane.ERROR_MESSAGE
-                );
-                return;
-            }
-
-            /* Check for Windows OS */
-            String os = System.getProperty("os.name").toLowerCase();
-            if (!os.contains("win")) {
-                JOptionPane.showMessageDialog(null,
-                        "PlatformIO check is only supported on Windows at this time.",
-                        "Unsupported OS",
-                        JOptionPane.WARNING_MESSAGE);
-                return;
-            }
-
-            /* Send the Clear Message Over Serial */
-            try {
-                SerialTransmitter st = comPortPrompt("Receiver");
-                if (!st.getType().equals("Receiver")) {
-                    throw new IllegalStateException("Not a receiver");
-                }
-
-                // Clear RSSI Data
-                st.clearRSSIData();
-
-                JOptionPane.showMessageDialog(
-                        null,
-                        "RSSI Data Cleared Successfully",
-                        "Success",
-                        JOptionPane.INFORMATION_MESSAGE
-                );
-            } catch (IllegalStateException e) {
-                JOptionPane.showMessageDialog(
-                        null,
-                        "Transmitter Detected, Please Plug In A Receiver.",
-                        "Error",
-                        JOptionPane.ERROR_MESSAGE
-                );
-            } catch (Exception e) {
-                JOptionPane.showMessageDialog(
-                        null,
-                        "Please Plug In A Board Before Proceeding",
-                        "Error",
-                        JOptionPane.ERROR_MESSAGE
-                );
+        // Developer menu
+        JMenu developerMenu = new JMenu("Developer");
+        menuBar.add(developerMenu);
+        developerModeItem = new JMenuItem(developerModeGUI == null ? "Open Developer Mode" : "Leave Developer Mode");
+        developerModeItem.setToolTipText("Unit details, live terminal, unit lookup, and receiver firmware flashing");
+        developerModeItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_D,
+                Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx() | InputEvent.SHIFT_DOWN_MASK));
+        developerModeItem.addActionListener(e -> {
+            if (developerModeGUI == null) {
+                enterDeveloperMode();
+            } else {
+                exitDeveloperMode();
             }
         });
+        developerMenu.add(developerModeItem);
 
         // Help menu
         JMenu helpMenu = new JMenu("Help");
@@ -2186,7 +1959,6 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         mainContentPanel.remove(flowViewGUI);
         runShowItem.setEnabled(true);
         flowViewerItem.setEnabled(true);
-        lightBoardFlowViewerItem.setEnabled(true);
         stopShowItem.setEnabled(false);
     }
 
@@ -2201,7 +1973,6 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         requestIDs = null;
         stopWebServer.setEnabled(false);
         runWebServer.setEnabled(true);
-        runLightBoardWebServer.setEnabled(true);
 
         File dir = new File(PathConverter.pathConverter("tmp/", false));
         File[] files = dir.listFiles();
@@ -2219,10 +1990,8 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
      * Prompts the user for information and then starts a web server using this information
      *
      * @param path A path to the .pkt file whose contents should be served by the web server.
-     * @param lightBoard true - Run the web server to serve light board packets
-     *                   false - Run the web server to serve show packets
      */
-    private void runServer(String path, boolean lightBoard) {
+    private void runServer(String path) {
         try {
             /* File PKT Selection */
             File f;
@@ -2239,7 +2008,6 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                     if (f == null) {
                         stopWebServer.setEnabled(false);
                         runWebServer.setEnabled(true);
-                        runLightBoardWebServer.setEnabled(true);
                         return;
                     }
                 } else {
@@ -2277,7 +2045,6 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             if (option != JOptionPane.OK_OPTION) {
                 stopWebServer.setEnabled(false);
                 runWebServer.setEnabled(true);
-                runLightBoardWebServer.setEnabled(true);
                 deleteDirectory(f);
                 return;
             }
@@ -2319,7 +2086,6 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                     /* Reset Menu Options */
                     stopWebServer.setEnabled(false);
                     runWebServer.setEnabled(true);
-                    runLightBoardWebServer.setEnabled(true);
                     deleteDirectory(f);
 
                     JOptionPane.showMessageDialog(
@@ -2341,7 +2107,6 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                 /* Reset Menu Options */
                 stopWebServer.setEnabled(false);
                 runWebServer.setEnabled(true);
-                runLightBoardWebServer.setEnabled(true);
                 deleteDirectory(f);
                 return;
             }
@@ -2363,7 +2128,6 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             } else {    // User didn't input anything + closed box
                 stopWebServer.setEnabled(false);
                 runWebServer.setEnabled(true);
-                runLightBoardWebServer.setEnabled(true);
                 deleteDirectory(f);
                 return;
             }
@@ -2394,7 +2158,6 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                 if (verificationColor == null) {
                     stopWebServer.setEnabled(false);
                     runWebServer.setEnabled(true);
-                    runLightBoardWebServer.setEnabled(true);
                     return;
                 }
 
@@ -2438,7 +2201,6 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                             if (verificationColor == null) {
                                 stopWebServer.setEnabled(false);
                                 runWebServer.setEnabled(true);
-                                runLightBoardWebServer.setEnabled(true);
                                 return;
                             }
 
@@ -2510,11 +2272,10 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                 }
             });
             webServerFrame.setVisible(true);
-            lightBoardMode = lightBoard;
 
             SerialTransmitter serialTransmitter = comPortPrompt("Transmitter");
             System.out.println("Starting Programming Mode");
-            serialTransmitter.enterProgMode(ssid, password, port, currentID, token, verificationColor, lightBoardMode);
+            serialTransmitter.enterProgMode(ssid, password, port, currentID, token, verificationColor);
 
             noRequestTimer.start();
         } catch (IOException ioe) {
@@ -2538,129 +2299,6 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                 : Color.BLACK;
         label.setForeground(foreground);
     }
-
-    // Marker3
-    /**
-     * Prompts the user for information and then starts a web server using this information for RSSI Logging
-     */
-    private void runRSSIServer() {
-        try {
-            /* Select Results Save Path */
-            String rssiResultsSavePath = "";
-
-            File selectedDirectory = EmrickFileChooser.chooseDirectory(
-                    frame,
-                    "RSSI_RESULTS_DIRECTORY",
-                    "Select RSSI Results Save Location");
-            if (selectedDirectory != null) {
-                rssiResultsSavePath = selectedDirectory.getAbsolutePath();
-            }
-
-            /* WiFi Credentials Input */
-            JTextField ssidField = new JTextField();
-            JPasswordField passwordField = new JPasswordField();
-            JTextField portField = new JTextField("8080");
-            JCheckBox useSavedCred = new JCheckBox("Use Saved Credentials");
-            useSavedCred.setSelected(true);
-            JCheckBox rememberCredentials = new JCheckBox("Remember Credentials");
-
-            Object[] inputs = {
-                    new JLabel("WiFi SSID:"), ssidField,
-                    new JLabel("WiFi Password:"), passwordField,
-                    new JLabel("Server Port:"), portField,
-                    useSavedCred, rememberCredentials
-            };
-
-            int option = 0;
-
-
-            option = JOptionPane.showConfirmDialog(null, inputs, "Enter WiFi Credentials", JOptionPane.OK_CANCEL_OPTION);
-            if (option != JOptionPane.OK_OPTION) {
-                stopRSSILogger.setEnabled(false);
-                runRSSILogger.setEnabled(true);
-                return;
-            }
-
-            if (useSavedCred.isSelected()) {
-                File cred = new File (PathConverter.pathConverter("wifiConfig.txt", false));
-                if (cred.exists()) {
-                    // Encryption is not yet implemented for saved WiFi credentials.
-                    BufferedReader bfr = new BufferedReader(new FileReader(cred));
-                    ssidField.setText(bfr.readLine());
-                    StringBuilder pass = new StringBuilder(bfr.readLine());
-                    String[] tmp = pass.toString().split(", ");
-                    pass = new StringBuilder();
-                    for (String s : tmp) {
-                        pass.append(s);
-                    }
-                    passwordField.setText(pass.substring(1, pass.length() - 1));
-                    portField.setText(bfr.readLine());
-                }
-            }
-            if (rememberCredentials.isSelected()) {
-                File cred = new File (PathConverter.pathConverter("wifiConfig.txt", false));
-                BufferedWriter bfw = new BufferedWriter(new FileWriter(cred));
-                String out = ssidField.getText() + "\n" + Arrays.toString(passwordField.getPassword()) + "\n" + portField.getText() + "\n";
-                bfw.write(out);
-                bfw.flush();
-                bfw.close();
-            }
-
-            ssid = ssidField.getText();
-            char[] passwordChar = passwordField.getPassword();
-            password = new String(passwordChar);
-            port = Integer.parseInt(portField.getText());
-
-            /* Check For Transmitter */
-            try {
-                SerialTransmitter st1 = comPortPrompt("Transmitter");
-                if (!st1.getType().equals("Transmitter")) {
-                    /* Reset Menu Options */
-                    stopRSSILogger.setEnabled(false);
-                    runRSSILogger.setEnabled(true);
-
-                    JOptionPane.showMessageDialog(
-                            null,
-                            "Receiver Detected, Please plug in a transmitter.",
-                            "Error",
-                            JOptionPane.ERROR_MESSAGE
-                    );
-                    return;
-                }
-            } catch (Exception ex) {
-                JOptionPane.showMessageDialog(
-                        null,
-                        "Please plug a transmitter board in before proceeding.",
-                        "Error",
-                        JOptionPane.ERROR_MESSAGE
-                );
-
-                /* Reset Menu Options */
-                stopRSSILogger.setEnabled(false);
-                runRSSILogger.setEnabled(true);
-                return;
-            }
-
-            /* NEW */
-            /* Define The Amount of Allowed Connections to Webserver */
-            int allowedConnections = footballFieldPanel.drill.ledStrips.size();
-
-            /* Create Webserver */
-            rssiServer = HttpServer.create(new InetSocketAddress(port), 250);
-            writeSysMsg("server started at " + port);
-            System.out.println("Server Started at " + port);
-            requestIDs = new HashSet<>();
-
-            rssiServer.createContext("/upload", new RSSIFileUploaderHandler(rssiResultsSavePath));
-            rssiServer.setExecutor(null);
-            rssiServer.start();
-
-
-        } catch (IOException ioe) {
-            throw new RuntimeException(ioe);
-        }
-    }
-
 
     /**
      * Loads a new .emrick file to the viewport to be edited.
@@ -2906,6 +2544,9 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                 } finally {
                     // Dispose on the next EDT turn so the last paint can present before closing.
                     SwingUtilities.invokeLater(loadingDialog::dispose);
+                    if (developerModeGUI != null) {
+                        developerModeGUI.onProjectChanged();
+                    }
                 }
             }
         };
@@ -4246,6 +3887,98 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             writeSysMsg("Opening file `" + selectedFile.getAbsolutePath() + "`.");
             loadProject(selectedFile);
         }
+    }
+
+    /**
+     * Shows Developer Mode in place of the designer view, under the same menu bar. The project stays loaded so
+     * its board list can be used for lookups, and File > Open still works while Developer Mode is showing.
+     */
+    private void enterDeveloperMode() {
+        if (developerModeGUI == null && isShowRunning()) {
+            JOptionPane.showMessageDialog(frame,
+                    "A show is running. Stop the show (Run > Stop show) before opening Developer Mode.",
+                    "Show Running", JOptionPane.INFORMATION_MESSAGE);
+            syncDeveloperModeItem();
+            return;
+        }
+        if (developerModeGUI == null) {
+            designerContentPane = frame.getContentPane();
+            developerModeGUI = new DeveloperModeGUI(this);
+            frame.setContentPane(developerModeGUI);
+            frame.revalidate();
+            frame.repaint();
+            developerModeGUI.start();
+        }
+        syncDeveloperModeItem();
+    }
+
+    @Override
+    public void exitDeveloperMode() {
+        if (developerModeGUI != null) {
+            if (developerModeGUI.isBusy()) {
+                JOptionPane.showMessageDialog(frame, "Units are still being flashed. Wait for flashing to finish before leaving Developer Mode.",
+                        "Flash In Progress", JOptionPane.WARNING_MESSAGE);
+            } else {
+                developerModeGUI.shutdown();
+                showDesignerView();
+            }
+        }
+    }
+
+    /** @return true while a show is being run from the Run menu */
+    private boolean isShowRunning() {
+        return stopShowItem != null && stopShowItem.isEnabled();
+    }
+
+    /**
+     * Running a show takes priority over Developer Mode: close it (its features let go of the transmitter and any
+     * other ports) and bring back the designer view before the show starts. Receivers being flashed keep flashing.
+     */
+    private void yieldDeveloperModeForShow() {
+        if (developerModeGUI == null) {
+            return;
+        }
+        boolean flashing = developerModeGUI.isBusy();
+        developerModeGUI.shutdownForShow(2000);
+        showDesignerView();
+        writeSysMsg(flashing
+                ? "Developer Mode closed for the show; receivers already being flashed will finish in the background"
+                : "Developer Mode closed so the show can run");
+    }
+
+    /** Puts the designer view back in place of Developer Mode (after Developer Mode has been shut down). */
+    private void showDesignerView() {
+        developerModeGUI = null;
+        frame.setContentPane(designerContentPane);
+        frame.revalidate();
+        frame.repaint();
+        syncDeveloperModeItem();
+    }
+
+    private void syncDeveloperModeItem() {
+        if (developerModeItem != null) {
+            developerModeItem.setText(developerModeGUI == null ? "Open Developer Mode" : "Leave Developer Mode");
+        }
+    }
+
+    @Override
+    public JFrame getFrame() {
+        return frame;
+    }
+
+    @Override
+    public java.util.List<LEDStrip> getLedStrips() {
+        if (archivePaths == null || footballFieldPanel == null || footballFieldPanel.drill == null
+                || footballFieldPanel.drill.ledStrips == null) {
+            return java.util.List.of();
+        }
+        return new ArrayList<>(footballFieldPanel.drill.ledStrips);
+    }
+
+    @Override
+    public void openProjectForDevMode() {
+        // Developer Mode stays open; it picks up the project's board list once loading finishes
+        openProjectDialog();
     }
 
     private void concatenateDialog() {
@@ -5865,7 +5598,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         SerialTransmitter st = comPortPromptFlow();
 
         if (st != null) {
-            st.writeSet(i, isLightBoardMode);
+            st.writeSet(i);
         }
     }
 
@@ -5900,7 +5633,7 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         if (!allReceived) {
             if (lastRun + 20000 < System.currentTimeMillis()) {
                 SerialTransmitter serialTransmitter = comPortPrompt("Transmitter");
-                serialTransmitter.enterProgMode(ssid, password, port, currentID, token, verificationColor, lightBoardMode);
+                serialTransmitter.enterProgMode(ssid, password, port, currentID, token, verificationColor);
                 lastRun = System.currentTimeMillis();
             }
             noRequestTimer.setDelay(10000);
@@ -5908,7 +5641,6 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
         } else {
             server.stop(0);
             runWebServer.setEnabled(true);
-            runLightBoardWebServer.setEnabled(true);
             stopWebServer.setEnabled(false);
             server = null;
             requestIDs = null;
