@@ -121,6 +121,19 @@ public class SerialTransmitter {
         sp.closePort();
     }
 
+    /**
+     * Stores the board label (e.g. T10L) on a receiver so it can identify itself without a project open.
+     * Sent as a runtime command after boot, so receivers on firmware without label support simply ignore it.
+     * @return true if the receiver confirmed the label
+     */
+    public boolean writeLabel(String label) {
+        if (label == null || label.isBlank()) {
+            return false;
+        }
+        String reply = org.emrick.project.dev.UnitPort.sendCommand(sp, "label " + label.trim(), "@OK label", 8000);
+        return reply != null;
+    }
+
     public void writeLEDCount(String ledCount) {
         String query = "l" + ledCount + "\n";
         sp.setDTR();
@@ -267,26 +280,20 @@ public class SerialTransmitter {
         return "";
     }
 
-    public void writeSet(int set, boolean isLightBoardMode) {
+    public void writeSet(int set) {
         sp.clearRTS();
         sp.clearDTR();
         if (!sp.openPort()) {
             System.out.println("Port is busy");
         }
-        String str;
-        if (isLightBoardMode) {
-            str = "b";
-        } else {
-            str = "s";
-        }
-        str += set + "\n";
+        String str = "s" + set + "\n";
         byte[] out = str.getBytes();
         writeFully(sp, out);
         drainOutput(sp, out.length);
         sp.closePort();
     }
 
-    public synchronized void enterProgMode(String ssid, String password, int port, int id, long token, Color verificationColor, boolean mode) {
+    public synchronized void enterProgMode(String ssid, String password, int port, int id, long token, Color verificationColor) {
         sp.clearRTS();
         sp.clearDTR();
         try {
@@ -297,12 +304,7 @@ public class SerialTransmitter {
         if (!sp.openPort()) {
             System.out.println("Port is busy");
         }
-        String str;
-        if (mode) {
-            str = "l";
-        } else {
-            str = "p";
-        }
+        String str = "p";
         try {
             str += InetAddress.getLocalHost().getHostAddress() + "\n" + ssid + "\n" + password + "\n" + port + "\n" + id + "\n"
                     + token + "\n" + verificationColor.getRed() + "\n" + verificationColor.getGreen() + "\n" + verificationColor.getBlue() + "\n";
@@ -359,55 +361,4 @@ public class SerialTransmitter {
             drainOutput(sp, out.length);
         }
     }
-
-    public synchronized void enterRSSILoggerMode(String ssid, String password, int port, int allowedConnections) {
-        sp.clearRTS();
-        sp.clearDTR();
-        try {
-            Thread.sleep(250);
-        } catch(InterruptedException e) {
-            e.printStackTrace();
-        }
-        if (!sp.openPort()) {
-            System.out.println("Port is busy");
-        }
-        String str;
-
-        try {
-            str = "t" + InetAddress.getLocalHost().getHostAddress() + "\n" + ssid + "\n" + password + "\n" + port + "\n" + allowedConnections + "\n";
-        } catch (UnknownHostException uhe) {
-            throw new RuntimeException(uhe);
-        }
-
-        byte[] out = str.getBytes();
-        writeFully(sp, out);
-        drainOutput(sp, out.length);
-        sp.closePort();
-    }
-
-    public void clearRSSIData() {
-        String query = "x\n";
-
-        sp.setDTR();
-        sp.setRTS();
-        if (!sp.openPort()) {
-            System.out.println("Port is busy");
-            return;
-        }
-        sp.closePort();
-        sp.clearDTR();
-        sp.clearRTS();
-        sp.openPort();
-        sp.flushIOBuffers();
-        try {
-            Thread.sleep(1000);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-        byte[] out = query.getBytes();
-        writeFully(sp, out);
-        drainOutput(sp, out.length);
-        sp.closePort();
-    }
 }
-
