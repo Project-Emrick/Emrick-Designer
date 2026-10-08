@@ -212,8 +212,8 @@ public class ModifyBoardDialog {
         }
         if (writeLabel.isSelected()) {
             String label = labelField.getText().trim();
-            if (label.isEmpty() || label.length() > 16 || !label.matches("[A-Za-z0-9_-]+")) {
-                return "Board label must be 1 to 16 letters or numbers, e.g. T10L.";
+            if (label.isEmpty() || label.length() > 16 || !label.matches("[PASCRTME&U+nOY@$^F][0-9]{1,2}[LR]")) {
+                return "Board label must be in valid format, e.g. T10L.";
             }
         }
         if (writeId.isSelected()) {
