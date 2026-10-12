@@ -145,11 +145,16 @@ public class ScrubBarGUI extends JComponent implements ActionListener {
             return;
         }
 
+        /*
+        Commenting this out because time sync does not work with non-opener files
+        with this check
+        
         // Can't find Page Tab 1
         else if (pageTabCounts.get("1-1") == null && pageTabCounts.get("1") == null) {
             System.out.println("Note: Can't find page tab 1.");
             return;
         }
+        */
 
         reinitialize();
     }
