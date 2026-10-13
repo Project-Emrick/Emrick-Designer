@@ -15,10 +15,13 @@ import java.util.Arrays;
 import java.util.Objects;
 
 public class SelectionGroupGUI implements ActionListener {
+    
     private ArrayList<SelectionGroup> groups;
     private JPanel selectionPanel;
+    private JScrollPane scrollPane;
     private SelectListener selectListener;
     private boolean controlHeld = false;
+
     public SelectionGroupGUI(SelectListener selectListener) {
         groups = new ArrayList<>();
         selectionPanel = null;
@@ -32,12 +35,19 @@ public class SelectionGroupGUI implements ActionListener {
     }
 
     public JPanel getSelectionPanel() {
-
         return selectionPanel;
     }
 
     public void setSelectionPanel(JPanel panel) {
         this.selectionPanel = panel;
+    }
+
+    public JScrollPane getScrollPane() {
+        return scrollPane;
+    }
+
+    public void setScrollPane(JScrollPane scrollPane) {
+        this.scrollPane = scrollPane;
     }
 
     public void initializeSelectionPanel() {
@@ -134,8 +144,13 @@ public class SelectionGroupGUI implements ActionListener {
             gc.anchor = GridBagConstraints.NORTHWEST;
             gc.insets = spacedInsets;
             selectionPanel.add(deleteGroup, gc);
-
         }
+
+        // TODO make this look better?
+        scrollPane = new JScrollPane(selectionPanel);
+        scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+        scrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
+        scrollPane.getVerticalScrollBar().setUnitIncrement(15);
     }
 
     public void addGroup(LEDStrip[] group, String title) {
@@ -234,4 +249,5 @@ public class SelectionGroupGUI implements ActionListener {
             this.titleButton = titleButton;
         }
     }
+
 }

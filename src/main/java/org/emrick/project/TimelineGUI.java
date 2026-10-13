@@ -326,6 +326,8 @@ public class TimelineGUI {
             // Add drag/move support to effect widgets
             addDragSupportToEffectWidget(effectWidget, effect);
             timelinePanel.add(effectWidget);
+
+            // System.out.println("DEBUG_PRINT: effect " + effect.getEffectType() + " id " + effect.getId() + " start " + effect.getStartTimeMSec() + " duration " + effect.getDuration().getSeconds());
             
             // Make the effect widget transparent to middle mouse events (pass through to timeline panel)
             panAdapters.add(PanningMouseAdapter.passMiddleMouseEvents(effectWidget, timelinePanel));
@@ -908,10 +910,10 @@ public class TimelineGUI {
             
             // Convert x position directly to a count
             double clickedCount = (adjustedX / (PIXELS_PER_COUNT * zoomFactor));
-            System.out.println("Clicked count: " + clickedCount + 
-                              ", Mouse X: " + x + 
-                              ", Scroll X: " + scrollX + 
-                              ", Viewport Width: " + viewportWidth);
+            // System.out.println("Clicked count: " + clickedCount + 
+            //                   ", Mouse X: " + x + 
+            //                   ", Scroll X: " + scrollX + 
+            //                   ", Viewport Width: " + viewportWidth);
             // Ensure clickedCount is within bounds
             clickedCount = Math.max(0, Math.min(clickedCount, maxCount));
             

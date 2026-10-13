@@ -5094,8 +5094,10 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
             replaceEffectView(effectGUI.getEffectPanel(), null);
         } else {
             groupsGUI.initializeSelectionPanel();
-            JPanel panel = groupsGUI.getSelectionPanel();
-            replaceEffectView(panel, null);
+            // JPanel panel = groupsGUI.getSelectionPanel();
+            // replaceEffectView(panel, null);
+            JScrollPane scrollPane = groupsGUI.getScrollPane();
+            replaceEffectView(scrollPane, null);
         }
     }
 
@@ -5384,6 +5386,11 @@ public class MediaEditorGUI extends Component implements ImportListener, ScrubBa
                 timelinePanel.add(timelineGUI.getTimelineScrollPane());
             }
         }
+        
+        for (Effect e : effectsList) {
+            effectManager.addId(e.getId());
+        }
+
         timelinePanel.revalidate();
         timelinePanel.repaint();
     }

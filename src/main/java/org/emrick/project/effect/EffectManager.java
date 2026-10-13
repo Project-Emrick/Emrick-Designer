@@ -25,17 +25,13 @@ public class EffectManager {
     }
 
     public int nextId() {
-        int id = 0;
-        if (ids.size() > 0) {
-            int prev = ids.get(0);
-            for (int i : ids) {
-                if (i > prev) {
-                    prev = i;
-                }
-            }
-            id = prev + 1;
+        int max = -1;
+        
+        for (int i : ids) {
+            max = max > i ? max : i;
         }
-        return id;
+        
+        return max + 1;
     }
 
     /**
@@ -58,9 +54,11 @@ public class EffectManager {
             if (oldEffect != null && exist.id == oldEffect.id) {
                 continue;
             }
-            if (exist.getEndTimeMSec() < startMSec || endMSec < exist.getStartTimeMSec()) {
+            if (exist.getEndTimeMSec() <= startMSec || endMSec <= exist.getStartTimeMSec()) {
                 continue;
             }
+            System.out.println("DEBUG_PRINT: overlap with " + exist);
+
             System.out.println("Effect overlap detected on LED strip " + ledStrip.getLabel());
             System.out.println("Either startMSec " + startMSec + " < exist end " + exist.getEndTimeMSec() +
                     " or endMSec " + endMSec + " > exist start " + exist.getStartTimeMSec());
@@ -132,21 +130,16 @@ public class EffectManager {
     }
 
     public boolean addEffectToSelectedLEDStrips(Effect effect) {
-        int id = 0;
-        if (ids.size() > 0) {
-            int prev = ids.get(0);
-            for (int i : ids) {
-                if (i > prev) {
-                    prev = i;
-                }
-            }
-            id = prev + 1;
-        }
+        int id = nextId();
+        
+        System.out.println("DEBUG_PRINT: list of ids " + ids);
+        System.out.println("DEBUG_PRINT: new id " + id);
+
         if (effect == null)
             return false;
         effect.setId(id);
         ArrayList<LEDStrip> ledStrips = getSelectedLEDStrips();
-
+        System.out.println("DEBUG_PRINT: Adding effect to the following LED strips: " + ledStrips);
         // Check if any LED strips are selected
         if (ledStrips.isEmpty()) {
             showNoPerformersSelectedErrorDialog();
@@ -368,5 +361,13 @@ public class EffectManager {
 
     public void setIds(ArrayList<Integer> ids) {
         this.ids = ids;
+    }
+
+    public void addId(int id) {
+        if (ids.contains(id)) {
+            return;
+        }
+
+        this.ids.add(id);
     }
 }
