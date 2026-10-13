@@ -58,6 +58,11 @@ public class TimelineGUI {
     private static final int TRIGGER_ROW_HEIGHT = 60;
     private static final int PIXELS_PER_COUNT = 10; // Base scale: 10 pixels per count at zoom 1.0
     private static final int MIN_WIDTH_PIXELS = 5; // Minimum effect width in pixels
+
+    // update this value for faster/slower scrolling in timeline
+    // may want to add this to a "settings" menu for the user
+    private static final int TIMELINE_SCROLL_SPEED = 20;
+
     // Track the count position instead of time
     private final double totalDurationMSec; // Keeping for compatibility
     private static double curMS = 0;          // Keeping for compatibility
@@ -763,8 +768,13 @@ public class TimelineGUI {
         updateComponentPositions();
 
         timelineScrollPane = new JScrollPane(timelinePanel);
+        
         timelineScrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
+        timelineScrollPane.getVerticalScrollBar().setUnitIncrement(TIMELINE_SCROLL_SPEED);
+
         timelineScrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+        timelineScrollPane.getHorizontalScrollBar().setUnitIncrement(TIMELINE_SCROLL_SPEED);
+
         timelineScrollPane.setBorder(BorderFactory.createEmptyBorder());
         
         // Make the scrub bar synchronized with the timeline horizontal scrolling
